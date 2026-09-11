@@ -64,7 +64,23 @@ if (process.env.ASSETS === 's3' && !process.env.ASSETS_S3_URI) {
   throw new Error(`[envs] ASSETS_S3_URI must be set when using ASSETS=s3`)
 }
 
-const fastify = Fastify({ logger: { level: 'error' } })
+const tlsKeyFile = process.env.TLS_KEY_FILE
+const tlsCertFile = process.env.TLS_CERT_FILE
+if ((tlsKeyFile && !tlsCertFile) || (!tlsKeyFile && tlsCertFile)) {
+  throw new Error('[envs] TLS_KEY_FILE and TLS_CERT_FILE must be set together')
+}
+
+const fastify = Fastify({
+  logger: { level: 'error' },
+  ...(tlsKeyFile && tlsCertFile
+    ? {
+        https: {
+          key: fs.readFileSync(tlsKeyFile),
+          cert: fs.readFileSync(tlsCertFile),
+        },
+      }
+    : {}),
+})
 
 // create world folder if needed
 await fs.ensureDir(worldDir)

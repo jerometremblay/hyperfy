@@ -28,6 +28,8 @@
     "client:build": "node scripts/build-client.mjs",
     "node-client:dev": "node scripts/build-node-client.mjs --dev",
     "node-client:build": "node scripts/build-node-client.mjs",
+    "prototype:snowman": "node prototypes/watch-snowman.mjs",
+    "test:prototype:snowman": "node --test prototypes/snowman.test.mjs",
     "lint": "eslint . --ext .js,.jsx",
     "lint:fix": "eslint . --ext .js,.jsx --fix",
     "format": "prettier --write .",

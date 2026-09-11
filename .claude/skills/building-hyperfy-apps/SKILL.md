@@ -10,11 +10,15 @@ description: >
 
 Create interactive 3D apps for Hyperfy virtual worlds.
 
+## Project Wiki
+
+Before changing an app's user interactions, shared state, persistence, or multiplayer behavior, read the project [App Design Rules](../../../wiki/app-design-rules.md). The required contract is: client actions send server intents, the server owns and persists shared state, and authoritative server updates drive every client's world.
+
 ## When NOT to Use This Skill
 
 - Non-Hyperfy JavaScript projects
 - Modifying server infrastructure (not app scripts)
-- Working with files outside `world/` or `examples/`
+- Working with files outside `world/`, `examples/`, or `prototypes/`
 
 ---
 
