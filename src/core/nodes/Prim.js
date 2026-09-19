@@ -10,6 +10,18 @@ import { geometryToPxMesh } from '../extras/geometryToPxMesh'
 const defaults = {
   type: 'box',
   size: null,
+  profile: [
+    [-0.5, -0.5],
+    [0.5, -0.5],
+    [0.5, 0.5],
+    [-0.5, 0.5],
+  ],
+  depth: 1,
+  bevelEnabled: true,
+  bevelThickness: 0.04,
+  bevelSize: 0.04,
+  bevelSegments: 2,
+  curveSegments: 12,
   color: '#ffffff',
   emissive: null,
   emissiveIntensity: 0,
@@ -45,7 +57,7 @@ const _m2 = new THREE.Matrix4()
 const _m3 = new THREE.Matrix4()
 const _defaultScale = new THREE.Vector3(1, 1, 1)
 
-const types = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane']
+const types = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane', 'extrude']
 
 const defaultSizes = {
   box: [1, 1, 1], // width, height, depth
@@ -54,14 +66,15 @@ const defaultSizes = {
   cone: [0.5, 1], // radius, height
   torus: [0.4, 0.1], // radius, tubeRadius
   plane: [1, 1], // width, height
+  extrude: [], // profile, depth, and bevel properties define the shape
 }
 
 // Geometry cache
 let geometryCache = new Map()
 
-const getGeometry = (type, size) => {
+const getGeometry = (type, size, extrudeOptions) => {
   // All primitives of the same type share one unit-sized geometry
-  const key = `${type}${size}`
+  const key = type === 'extrude' ? `${type}${JSON.stringify(extrudeOptions)}` : `${type}${size}`
   let geometry = geometryCache.get(key)
   if (!geometry) {
     switch (type) {
@@ -100,6 +113,9 @@ const getGeometry = (type, size) => {
           const [width, height] = size
           geometry = new THREE.PlaneGeometry(width, height)
         }
+        break
+      case 'extrude':
+        geometry = createExtrudeGeometry(extrudeOptions)
         break
       default:
         geometry = new THREE.BoxGeometry(1, 1, 1)
@@ -177,6 +193,13 @@ export class Prim extends Node {
 
     this.type = data.type
     this.size = data.size
+    this.profile = data.profile
+    this.depth = data.depth
+    this.bevelEnabled = data.bevelEnabled
+    this.bevelThickness = data.bevelThickness
+    this.bevelSize = data.bevelSize
+    this.bevelSegments = data.bevelSegments
+    this.curveSegments = data.curveSegments
     this.color = data.color
     this.emissive = data.emissive
     this.emissiveIntensity = data.emissiveIntensity
@@ -226,7 +249,7 @@ export class Prim extends Node {
     this.updateMatrixWorldOffset()
 
     // Get unit-sized geometry for this type
-    const geometry = getGeometry(this._type, size)
+    const geometry = getGeometry(this._type, size, this.getExtrudeOptions())
 
     // Create material with current properties
     const material = getMaterial({
@@ -286,6 +309,19 @@ export class Prim extends Node {
     }
   }
 
+  getExtrudeOptions() {
+    if (this._type !== 'extrude') return null
+    return {
+      profile: this._profile,
+      depth: this._depth,
+      bevelEnabled: this._bevelEnabled,
+      bevelThickness: this._bevelThickness,
+      bevelSize: this._bevelSize,
+      bevelSegments: this._bevelSegments,
+      curveSegments: this._curveSegments,
+    }
+  }
+
   mountPhysics(size) {
     if (!PHYSX) return
 
@@ -326,8 +362,9 @@ export class Prim extends Node {
       const [radius] = size
       pxGeometry = new PHYSX.PxSphereGeometry(radius * _v2.x)
     } else {
-      // Use convex mesh for cylinder, cone, torus, and plane
-      const threeGeometry = getGeometry(this._type, size)
+      // Use a convex mesh for cylinder, cone, torus, plane, and extrude.
+      // Concave extrude profiles therefore use their convex hull for physics.
+      const threeGeometry = getGeometry(this._type, size, this.getExtrudeOptions())
 
       // Create convex mesh
       pmesh = geometryToPxMesh(this.ctx.world, threeGeometry, true)
@@ -460,6 +497,10 @@ export class Prim extends Node {
       case 'torus':
         const diameter = (this.scale.x + this.scale.x * 0.3) * 2
         return [diameter, this.scale.x * 0.3 * 2, diameter]
+      case 'extrude': {
+        const { minX, maxX, minY, maxY } = getProfileBounds(this._profile)
+        return [(maxX - minX) * this.scale.x, (maxY - minY) * this.scale.y, this._depth * this.scale.z]
+      }
       default:
         return [this.scale.x, this.scale.y, this.scale.z]
     }
@@ -503,6 +544,13 @@ export class Prim extends Node {
     super.copy(source, recursive)
     this._type = source._type
     this._size = source._size
+    this._profile = source._profile.map(point => point.slice())
+    this._depth = source._depth
+    this._bevelEnabled = source._bevelEnabled
+    this._bevelThickness = source._bevelThickness
+    this._bevelSize = source._bevelSize
+    this._bevelSegments = source._bevelSegments
+    this._curveSegments = source._curveSegments
     this._color = source._color
     this._emissive = source._emissive
     this._emissiveIntensity = source._emissiveIntensity
@@ -577,6 +625,102 @@ export class Prim extends Node {
     }
     if (isEqual(this._size, value)) return
     this._size = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get profile() {
+    return this._profile
+  }
+
+  set profile(value = defaults.profile) {
+    validateProfile(value)
+    if (isEqual(this._profile, value)) return
+    this._profile = value.map(point => point.slice())
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get depth() {
+    return this._depth
+  }
+
+  set depth(value = defaults.depth) {
+    if (!isNumber(value) || !Number.isFinite(value) || value <= 0) {
+      throw new Error('[prim] depth must be a positive number')
+    }
+    if (this._depth === value) return
+    this._depth = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get bevelEnabled() {
+    return this._bevelEnabled
+  }
+
+  set bevelEnabled(value = defaults.bevelEnabled) {
+    if (!isBoolean(value)) {
+      throw new Error('[prim] bevelEnabled must be a boolean')
+    }
+    if (this._bevelEnabled === value) return
+    this._bevelEnabled = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get bevelThickness() {
+    return this._bevelThickness
+  }
+
+  set bevelThickness(value = defaults.bevelThickness) {
+    if (!isNumber(value) || !Number.isFinite(value) || value < 0) {
+      throw new Error('[prim] bevelThickness must be a non-negative number')
+    }
+    if (this._bevelThickness === value) return
+    this._bevelThickness = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get bevelSize() {
+    return this._bevelSize
+  }
+
+  set bevelSize(value = defaults.bevelSize) {
+    if (!isNumber(value) || !Number.isFinite(value) || value < 0) {
+      throw new Error('[prim] bevelSize must be a non-negative number')
+    }
+    if (this._bevelSize === value) return
+    this._bevelSize = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get bevelSegments() {
+    return this._bevelSegments
+  }
+
+  set bevelSegments(value = defaults.bevelSegments) {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error('[prim] bevelSegments must be a non-negative integer')
+    }
+    if (this._bevelSegments === value) return
+    this._bevelSegments = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  get curveSegments() {
+    return this._curveSegments
+  }
+
+  set curveSegments(value = defaults.curveSegments) {
+    if (!Number.isInteger(value) || value < 1) {
+      throw new Error('[prim] curveSegments must be a positive integer')
+    }
+    if (this._curveSegments === value) return
+    this._curveSegments = value
     this.needsRebuild = true
     this.setDirty()
   }
@@ -921,6 +1065,48 @@ export class Prim extends Node {
         set size(value) {
           self.size = value
         },
+        get profile() {
+          return self.profile
+        },
+        set profile(value) {
+          self.profile = value
+        },
+        get depth() {
+          return self.depth
+        },
+        set depth(value) {
+          self.depth = value
+        },
+        get bevelEnabled() {
+          return self.bevelEnabled
+        },
+        set bevelEnabled(value) {
+          self.bevelEnabled = value
+        },
+        get bevelThickness() {
+          return self.bevelThickness
+        },
+        set bevelThickness(value) {
+          self.bevelThickness = value
+        },
+        get bevelSize() {
+          return self.bevelSize
+        },
+        set bevelSize(value) {
+          self.bevelSize = value
+        },
+        get bevelSegments() {
+          return self.bevelSegments
+        },
+        set bevelSegments(value) {
+          self.bevelSegments = value
+        },
+        get curveSegments() {
+          return self.curveSegments
+        },
+        set curveSegments(value) {
+          self.curveSegments = value
+        },
         get color() {
           return self.color
         },
@@ -1144,6 +1330,14 @@ function getGeometryConfig(type, requestedSize) {
       break
     }
 
+    case 'extrude': {
+      // Extrusions keep their authored dimensions in the geometry. Ordinary
+      // node scaling still applies, but size is intentionally not used.
+      size = [1, 1, 1]
+      scaleOffset = [1, 1, 1]
+      break
+    }
+
     default: {
       size = [1, 1, 1]
       scaleOffset = [1, 1, 1]
@@ -1151,6 +1345,59 @@ function getGeometryConfig(type, requestedSize) {
   }
 
   return { size, scaleOffset }
+}
+
+function createExtrudeGeometry(options) {
+  const shape = new THREE.Shape()
+  const profile = options.profile
+  shape.moveTo(profile[0][0], profile[0][1])
+  for (let i = 1; i < profile.length; i++) {
+    shape.lineTo(profile[i][0], profile[i][1])
+  }
+  shape.closePath()
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: options.depth,
+    bevelEnabled: options.bevelEnabled,
+    bevelThickness: options.bevelThickness,
+    bevelSize: options.bevelSize,
+    bevelSegments: options.bevelSegments,
+    curveSegments: options.curveSegments,
+  })
+  geometry.center()
+  return geometry
+}
+
+function validateProfile(value) {
+  if (!isArray(value) || value.length < 3) {
+    throw new Error('[prim] profile must be an array of at least 3 points')
+  }
+  for (const point of value) {
+    if (
+      !isArray(point) ||
+      point.length !== 2 ||
+      !isNumber(point[0]) ||
+      !isNumber(point[1]) ||
+      !Number.isFinite(point[0]) ||
+      !Number.isFinite(point[1])
+    ) {
+      throw new Error('[prim] profile points must be [x, y] finite number pairs')
+    }
+  }
+}
+
+function getProfileBounds(profile) {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const [x, y] of profile) {
+    minX = Math.min(minX, x)
+    maxX = Math.max(maxX, x)
+    minY = Math.min(minY, y)
+    maxY = Math.max(maxY, y)
+  }
+  return { minX, maxX, minY, maxY }
 }
 
 function quantizeOpacity(opacity) {

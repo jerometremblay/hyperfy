@@ -10,7 +10,7 @@ Primitives origins are the in the middle of their shapes.
 
 The type of primitive shape to create. 
 
-Available options: `box`, `sphere`, `cylinder`, `cone`, `torus`, `plane`.
+Available options: `box`, `sphere`, `cylinder`, `cone`, `torus`, `plane`, `extrude`.
 
 Defaults to `box`.
 
@@ -24,6 +24,7 @@ The size of the shape, depending on the `type` (defaults shown):
 - **Cone**: `[radius = 0.5, height = 1]`
 - **Torus**: `[radius = 0.4, tubeRadius = 0.1]`
 - **Plane**: `[width = 1, height = 1]`
+- **Extrude**: does not use `.size`; set `.profile` and `.depth` instead.
 
 Default sizes all roughly fit inside a 1m cubed space for consistency.
 
@@ -33,6 +34,45 @@ Default sizes all roughly fit inside a 1m cubed space for consistency.
 - Cylinder: `position.y = height / 2`
 - Cone: `position.y = height / 2`
 - Torus: `position.y = innerRadius + tubeRadius`
+
+### `.profile`: Array
+
+The closed 2D outline for an `extrude` primitive. Each point is an `[x, y]` pair. The outline is extruded along the local Z axis and centered at its bounds. It must contain at least three points.
+
+Defaults to a 1m square profile:
+
+```javascript
+[
+  [-0.5, -0.5],
+  [0.5, -0.5],
+  [0.5, 0.5],
+  [-0.5, 0.5],
+]
+```
+
+### `.depth`: Number
+
+The local Z depth of an `extrude` primitive. Must be positive. Defaults to `1`.
+
+### `.bevelEnabled`: Boolean
+
+Whether to bevel the front and back edges of an `extrude` primitive. Defaults to `true`.
+
+### `.bevelThickness`: Number
+
+The bevel extrusion thickness. Must be non-negative. Defaults to `0.04`.
+
+### `.bevelSize`: Number
+
+The bevel size in the profile plane. Must be non-negative. Defaults to `0.04`.
+
+### `.bevelSegments`: Number
+
+The number of segments used to represent the bevel. Defaults to `2`.
+
+### `.curveSegments`: Number
+
+The number of segments used when triangulating the profile. Defaults to `12`.
 
 ### `.color`: String
 
@@ -188,6 +228,27 @@ const torus = app.create('prim', {
   color: '#ffff00'
 })
 
+// A beveled custom profile, extruded along local Z
+const blade = app.create('prim', {
+  type: 'extrude',
+  profile: [
+    [-0.12, 0.0],
+    [-0.08, 0.22],
+    [-0.02, 0.58],
+    [0.06, 0.91],
+    [0.1, 1.04],
+    [0.03, 1.1],
+    [-0.1, 0.94],
+    [-0.19, 0.55],
+    [-0.2, 0.2],
+  ],
+  depth: 0.065,
+  bevelSize: 0.025,
+  bevelThickness: 0.025,
+  bevelSegments: 3,
+  color: '#805329',
+})
+
 // Textured plane (double-sided)
 const texturedPlane = app.create('prim', {
   type: 'plane',
@@ -202,6 +263,7 @@ app.add(box)
 app.add(sphere)
 app.add(cylinder)
 app.add(torus)
+app.add(blade)
 app.add(texturedPlane)
 
 // Animate emissive intensity
@@ -272,6 +334,7 @@ app.add(triggerZone)
 - `box` and `sphere` primitives have exact physics collision shapes
 - `cylinder`, `cone`, and `torus` use box approximations for physics
 - `plane` uses a thin box for collision
+- `extrude` uses a convex mesh for physics, so a concave profile collides as its convex hull
 - Physics bodies are centered to match the visual geometry
 - Dynamic bodies require the `mass` property to be set
 - Trigger volumes don't cause physical collisions but can detect overlaps

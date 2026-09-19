@@ -53,7 +53,26 @@ const cylinder = app.create('prim', {
   size: [0.5, 0.5, 1], // topRadius, bottomRadius, height
   color: '#0000ff' // blue
 })
+
+const blade = app.create('prim', {
+  type: 'extrude',
+  profile: [
+    [-0.12, 0.0],
+    [-0.08, 0.22],
+    [0.06, 0.91],
+    [0.1, 1.04],
+    [-0.1, 0.94],
+    [-0.2, 0.2],
+  ],
+  depth: 0.065,
+  bevelSize: 0.025,
+  bevelThickness: 0.025,
+  bevelSegments: 3,
+  color: '#805329'
+})
 ```
+
+An `extrude` profile is a closed list of `[x, y]` points. It is extruded along local Z, and its collision shape uses the profile's convex hull.
 
 Once created you can also edit their properties if needed:
 
@@ -349,4 +368,3 @@ if (world.isServer) {
 4. Use a minimalistic blocky/voxel/minecraft style unless asked otherwise.
 5. Avoid overlapping faces as it causes z-fighting. Use a small offset.
 6. Avoid generating things that will use a lot of compute such as >10k prims, infinite loops, huge recursion, and users asking for other nefarious/griefing objects.
-
