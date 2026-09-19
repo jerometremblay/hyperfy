@@ -108,6 +108,20 @@ Creating a node (eg a prim) does not be make it visible. Only nodes added to the
 app.add(boxA)
 ```
 
+For a read-only browser screen, use the existing `webview` node. It loads a URL into a world-space CSS3D screen; it is not a WebGL texture yet.
+
+```jsx
+const browser = app.create('webview', {
+  src: 'https://example.com',
+  width: 2.4,
+  height: 1.35,
+  factor: 160,
+  interactive: false,
+  position: [0, 1.5, -2],
+})
+app.add(browser)
+```
+
 ## Nested Hierarchy
 
 It is beneficial to group different prims together to form each part of an overall object. 

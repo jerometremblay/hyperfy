@@ -10,6 +10,7 @@ const defaults = {
   height: 1,
   factor: 100,
   doubleside: false,
+  interactive: true,
   space: 'world',
 }
 
@@ -25,6 +26,7 @@ export class WebView extends Node {
     this.height = data.height
     this.factor = data.factor
     this.doubleside = data.doubleside
+    this.interactive = data.interactive
     this.space = data.space
   }
 
@@ -35,6 +37,7 @@ export class WebView extends Node {
     this._height = source._height
     this._factor = source._factor
     this._doubleside = source._doubleside
+    this._interactive = source._interactive
     this._space = source._space
     return this
   }
@@ -157,23 +160,25 @@ export class WebView extends Node {
         this.ctx.world.controls &&
         !/iPhone|iPad|iPod|Android/i.test(globalThis.navigator?.userAgent || '')
 
-      if (!isDesktop) {
+      if (this._interactive && !isDesktop) {
         iframe.style.pointerEvents = 'auto'
       }
 
-      inner.addEventListener('mouseenter', () => {
-        if (isDesktop) {
-          this.objectCSS.interacting = true
-          iframe.style.pointerEvents = 'auto'
-        }
-      })
+      if (this._interactive) {
+        inner.addEventListener('mouseenter', () => {
+          if (isDesktop) {
+            this.objectCSS.interacting = true
+            iframe.style.pointerEvents = 'auto'
+          }
+        })
 
-      inner.addEventListener('mouseleave', () => {
-        if (isDesktop) {
-          this.objectCSS.interacting = false
-          iframe.style.pointerEvents = 'none'
-        }
-      })
+        inner.addEventListener('mouseleave', () => {
+          if (isDesktop) {
+            this.objectCSS.interacting = false
+            iframe.style.pointerEvents = 'none'
+          }
+        })
+      }
 
       // Add to CSS system
       this.ctx.world.css?.add(this.objectCSS)
@@ -193,7 +198,7 @@ export class WebView extends Node {
     container.style.position = 'absolute'
     container.style.width = `${widthPx}px`
     container.style.height = `${heightPx}px`
-    container.style.pointerEvents = 'auto'
+    container.style.pointerEvents = this._interactive ? 'auto' : 'none'
 
     // Position using percentage + transform offset
     // position.x/y are percentages (0-1), position.z is z-index
@@ -211,6 +216,7 @@ export class WebView extends Node {
     iframe.style.width = '100%'
     iframe.style.height = '100%'
     iframe.style.border = '0px'
+    iframe.style.pointerEvents = this._interactive ? 'auto' : 'none'
     iframe.src = this._src
 
     container.appendChild(iframe)
@@ -256,6 +262,7 @@ export class WebView extends Node {
       this._onPointerDown(e)
       if (e.defaultPrevented) return
     }
+    if (!this._interactive) return
     // Don't unlock pointer in build mode - user needs to manipulate the node
     if (this.ctx.world.builder?.enabled) return
     // Unlock pointer so user can interact with the iframe
@@ -334,6 +341,20 @@ export class WebView extends Node {
     this.setDirty()
   }
 
+  get interactive() {
+    return this._interactive
+  }
+
+  set interactive(value = defaults.interactive) {
+    if (!isBoolean(value)) {
+      throw new Error('[webview] interactive not a boolean')
+    }
+    if (this._interactive === value) return
+    this._interactive = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
   get space() {
     return this._space
   }
@@ -381,6 +402,12 @@ export class WebView extends Node {
         },
         set doubleside(value) {
           self.doubleside = value
+        },
+        get interactive() {
+          return self.interactive
+        },
+        set interactive(value) {
+          self.interactive = value
         },
         get space() {
           return self.space

@@ -7,6 +7,8 @@ Embeds an interactive iframe in either 3D world space or 2D screen space. WebVie
 
 When players click on a WebView, their pointer is unlocked so they can interact with the iframe content (world space mode only).
 
+For a simple read-only browser screen, set `.interactive` to `false`. The V1 implementation uses the existing CSS3D renderer, so it is a 3D screen rather than a WebGL texture. Rendering arbitrary web pages into a true texture requires a server-side browser renderer.
+
 ## Properties
 
 ### `.space`: String ('world' | 'screen')
@@ -56,13 +58,17 @@ When `true`, the iframe content is visible from both the front and back of the p
 
 This property has no effect in screen space mode.
 
+### `.interactive`: Boolean
+
+Whether the iframe accepts pointer interaction. Defaults to `true`. Set to `false` for a read-only browser screen.
+
 ### `.onPointerDown`: Function
 
 **World space only.** Callback function triggered when a player clicks on the WebView.
 
 By default, clicking unlocks the pointer to allow iframe interaction. In build mode, pointer unlocking is automatically prevented. You can override this behavior by setting a custom `onPointerDown` handler and calling `e.preventDefault()`.
 
-In screen space mode, the iframe is always interactive and pointer events work like regular DOM elements.
+In screen space mode, pointer events work like regular DOM elements when `.interactive` is `true`.
 
 ```javascript
 webview.onPointerDown = (e) => {
@@ -87,4 +93,18 @@ const webview = app.create('webview', {
   position: [0, 1.5, 0],
 })
 app.add(webview)
+```
+
+### Read-only Browser Screen
+
+```javascript
+const browser = app.create('webview', {
+  src: 'https://example.com',
+  width: 2.4,
+  height: 1.35,
+  factor: 160,
+  interactive: false,
+  position: [0, 1.5, -2],
+})
+app.add(browser)
 ```
