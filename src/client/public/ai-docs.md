@@ -55,6 +55,47 @@ const cylinder = app.create('prim', {
 })
 ```
 
+## Extrusion primitives
+
+`extrude` is a native `prim` type for turning one simple 2D polygon into a solid. The polygon is defined by `profile`, a list of finite `[x, y]` points in the primitive's local XY plane. The engine closes the polygon automatically, extrudes it along local Z by `depth`, and centers the resulting geometry on its bounds.
+
+```jsx
+// Profile coordinates are local X/Y. Do not repeat the first point.
+const irregular = app.create('prim', {
+  type: 'extrude',
+  profile: [
+    [-0.75, -0.5],
+    [0.55, -0.5],
+    [0.7, -0.18],
+    [0.22, -0.05],
+    [0.36, 0.62],
+    [-0.15, 0.72],
+    [-0.28, 0.16],
+    [-0.72, 0.32],
+  ],
+  depth: 0.3,
+  bevelEnabled: true,
+  bevelThickness: 0.03,
+  bevelSize: 0.04,
+  bevelSegments: 2,
+  curveSegments: 6,
+  smooth: true,
+  creaseAngle: Math.PI / 3,
+  position: [0, 0.35, 0],
+  color: '#d47a45',
+})
+app.add(irregular)
+```
+
+Rules for `extrude`:
+
+- Use a simple, non-self-intersecting polygon with at least three points. Holes are not supported.
+- `.size` is ignored; use `.profile`, `.depth`, and the node's `.scale` instead.
+- `depth` must be positive. `bevelThickness` and `bevelSize` must be non-negative. Segment counts must be integers in their documented ranges.
+- Set `smooth: true` to generate crease-angle-smoothed normals. `creaseAngle` defaults to `Math.PI / 3`; it must be between `0` and `Math.PI`. This smooths bevel/curved surfaces without changing the polygon silhouette.
+- Keep static generated extrusions visual-only (`physics: null`) unless collision is required. Physics uses a convex mesh, so a concave visual profile collides as its convex hull.
+- Create the primitive during script setup and add it with `app.add()`. Do not create geometry continuously from `update` or `fixedUpdate`.
+
 Once created you can also edit their properties if needed:
 
 ```jsx
@@ -349,4 +390,3 @@ if (world.isServer) {
 4. Use a minimalistic blocky/voxel/minecraft style unless asked otherwise.
 5. Avoid overlapping faces as it causes z-fighting. Use a small offset.
 6. Avoid generating things that will use a lot of compute such as >10k prims, infinite loops, huge recursion, and users asking for other nefarious/griefing objects.
-

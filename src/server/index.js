@@ -19,12 +19,14 @@ import { Storage } from './Storage'
 import { assets } from './assets'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
+import { BrowserCapture } from './BrowserCapture'
 
 const execAsync = promisify(exec)
 
 const rootDir = path.join(__dirname, '../')
 const worldDir = path.join(rootDir, process.env.WORLD)
 const port = process.env.PORT
+const browserCapture = new BrowserCapture()
 
 // check envs
 if (!process.env.WORLD) {
@@ -109,6 +111,13 @@ await world.init({
   assets,
   storage,
   collections: collections.list,
+})
+world.entities.on('removed', entity => {
+  if (entity.isApp) {
+    browserCapture.close(entity.data.id).catch(error => {
+      console.error('[browser] failed to close app session:', error.message)
+    })
+  }
 })
 
 fastify.register(cors, {
@@ -197,6 +206,7 @@ fastify.register(multipart, {
 })
 fastify.register(ws)
 fastify.register(worldNetwork)
+fastify.addHook('onClose', async () => browserCapture.closeAll())
 
 const publicEnvs = {}
 for (const key in process.env) {
@@ -261,6 +271,22 @@ fastify.post('/api/upload', async (req, reply) => {
 fastify.get('/api/upload-check', async (req, reply) => {
   const exists = await assets.exists(req.query.filename)
   return { exists }
+})
+
+fastify.get('/api/browser/screenshot', async (request, reply) => {
+  const { entityId, url } = request.query
+  const entity = world.entities.get(entityId)
+  if (!entity?.isApp || !appHasBrowserSource(entity, url)) {
+    return reply.code(404).send({ error: 'Browser app instance not found' })
+  }
+  try {
+    const screenshot = await browserCapture.capture(entityId, url)
+    reply.header('Cache-Control', 'no-store')
+    return reply.type('image/jpeg').send(screenshot)
+  } catch (error) {
+    console.error('[browser] screenshot failed:', error.message)
+    return reply.code(502).send({ error: 'Browser screenshot unavailable' })
+  }
 })
 
 fastify.get('/api/backup', async (req, reply) => {
@@ -363,6 +389,15 @@ async function worldNetwork(fastify) {
   fastify.get('/ws', { websocket: true }, (ws, req) => {
     world.network.onConnection(ws, req.query)
   })
+}
+
+function appHasBrowserSource(entity, url) {
+  if (typeof url !== 'string') return false
+  let found = false
+  entity.root?.traverse(node => {
+    if (node.name === 'browser' && node.src === url) found = true
+  })
+  return found
 }
 
 console.log(`server listening on port ${port}`)

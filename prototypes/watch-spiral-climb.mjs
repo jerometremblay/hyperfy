@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -8,10 +10,23 @@ import { readPacket, writePacket } from '../src/core/packets.js'
 
 const prototypesDir = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(prototypesDir, '..')
-const sourcePath = path.join(prototypesDir, 'snowman.js')
 const envPath = path.join(rootDir, '.env')
-const entityId = 'snowman-prototype-instance'
-const prototypeName = 'Snowman Prototype'
+const prototypes = [
+  {
+    sourcePath: path.join(prototypesDir, 'spiral-climb.js'),
+    blueprintId: 'spiral-climb-prototype',
+    entityId: 'spiral-climb-prototype-instance',
+    name: 'Spiral Climb',
+    description: 'A 200-step circular-plate spiral climb. Edit prototypes/spiral-climb.js to iterate live.',
+  },
+  {
+    sourcePath: path.join(prototypesDir, 'spiral-climb-leaderboard.js'),
+    blueprintId: 'spiral-climb-leaderboard',
+    entityId: 'spiral-climb-leaderboard-instance',
+    name: 'Spiral Climb Leaderboard',
+    description: 'A movable physical records board for Spiral Climb. Edit prototypes/spiral-climb-leaderboard.js to iterate live.',
+  },
+]
 
 function readEnv(text) {
   const values = {}
@@ -19,10 +34,7 @@ function readEnv(text) {
     const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
     if (!match) continue
     let value = match[2].trim()
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1)
     }
     values[match[1]] = value
@@ -69,15 +81,15 @@ async function uploadScript(source) {
   return `asset://${fileName}`
 }
 
-function createBlueprint(script) {
+function createBlueprint(prototype, script) {
   return {
-    id: 'snowman-prototype',
+    id: prototype.blueprintId,
     version: 0,
-    name: prototypeName,
+    name: prototype.name,
     image: null,
     author: 'Hyperfy prototype',
     url: null,
-    desc: 'A tiny clickable snowman prototype. Edit prototypes/snowman.js to iterate live.',
+    desc: prototype.description,
     model: 'script-only',
     script,
     props: {},
@@ -91,14 +103,14 @@ function createBlueprint(script) {
   }
 }
 
-function createEntity(blueprintId) {
+function createEntity(prototype, templateEntity) {
   return {
-    id: entityId,
+    id: prototype.entityId,
     type: 'app',
-    blueprint: blueprintId,
-    position: [0, 0, -2],
-    quaternion: [0, 0, 0, 1],
-    scale: [1, 1, 1],
+    blueprint: prototype.blueprintId,
+    position: templateEntity?.position || [0, 0, 0],
+    quaternion: templateEntity?.quaternion || [0, 0, 0, 1],
+    scale: templateEntity?.scale || [1, 1, 1],
     mover: null,
     uploader: null,
     pinned: false,
@@ -106,23 +118,24 @@ function createEntity(blueprintId) {
   }
 }
 
-async function deploy() {
-  const source = await readFile(sourcePath, 'utf8')
+async function deployPrototype(prototype) {
+  const source = await readFile(prototype.sourcePath, 'utf8')
   const script = await uploadScript(source)
-  const current = snapshot.blueprints.find(item => item.name === prototypeName)
-  const existingEntity = snapshot.entities.some(item => item.id === entityId)
+  const current = snapshot.blueprints.find(item => item.id === prototype.blueprintId)
+  const existingEntity = snapshot.entities.some(item => item.id === prototype.entityId)
 
   if (!current) {
-    const blueprint = createBlueprint(script)
+    const blueprint = createBlueprint(prototype, script)
     send('blueprintAdded', blueprint)
     snapshot.blueprints.push(blueprint)
 
     if (!existingEntity) {
-      const entity = createEntity(blueprint.id)
+      const climbEntity = snapshot.entities.find(item => item.id === 'spiral-climb-prototype-instance')
+      const entity = createEntity(prototype, prototype.entityId === 'spiral-climb-leaderboard-instance' ? climbEntity : null)
       send('entityAdded', entity)
       snapshot.entities.push(entity)
     }
-    console.log('[snowman] created and placed at world position [0, 0, -2]')
+    console.log(`[spiral-climb] created ${prototype.name}`)
     return
   }
 
@@ -135,25 +148,34 @@ async function deploy() {
   Object.assign(current, change)
 
   if (!existingEntity) {
-    const entity = createEntity(current.id)
+    const climbEntity = snapshot.entities.find(item => item.id === 'spiral-climb-prototype-instance')
+    const entity = createEntity(prototype, prototype.entityId === 'spiral-climb-leaderboard-instance' ? climbEntity : null)
     send('entityAdded', entity)
     snapshot.entities.push(entity)
-    console.log('[snowman] recreated missing app entity at world position [0, 0, -2]')
+    console.log(`[spiral-climb] recreated missing ${prototype.name}`)
   }
 
-  console.log(`[snowman] updated in-world to script version ${change.version}`)
+  console.log(`[spiral-climb] ${prototype.name} updated in-world to script version ${change.version}`)
+}
+
+async function deploy() {
+  for (const prototype of prototypes) {
+    await deployPrototype(prototype)
+  }
 }
 
 function scheduleDeploy() {
   pendingChange = true
-  deploying = deploying.then(async () => {
-    await sleep(150)
-    if (!pendingChange) return
-    pendingChange = false
-    await deploy()
-  }).catch(err => {
-    console.error(`[snowman] ${err.message}`)
-  })
+  deploying = deploying
+    .then(async () => {
+      await sleep(150)
+      if (!pendingChange) return
+      pendingChange = false
+      await deploy()
+    })
+    .catch(err => {
+      console.error(`[spiral-climb] ${err.message}`)
+    })
 }
 
 function connect() {
@@ -163,7 +185,7 @@ function connect() {
 
     socket.onerror = () => reject(new Error('Could not connect to Hyperfy WebSocket'))
     socket.onclose = () => {
-      console.error('[snowman] WebSocket closed; stop the watcher and restart it if the server was restarted')
+      console.error('[spiral-climb] WebSocket closed; stop the watcher and restart it if the server was restarted')
     }
     socket.onmessage = event => {
       const [method, data] = readPacket(event.data)
@@ -181,8 +203,12 @@ await sleep(250)
 scheduleDeploy()
 await deploying
 
-console.log(`[snowman] watching ${path.relative(rootDir, sourcePath)}`)
-console.log('[snowman] edit snowman.js; the placed app will rebuild automatically')
+for (const prototype of prototypes) {
+  console.log(`[spiral-climb] watching ${path.relative(rootDir, prototype.sourcePath)}`)
+}
+console.log('[spiral-climb] edit either Spiral Climb prototype; the matching placed app will rebuild automatically')
 
-fs.watch(sourcePath, { persistent: true }, () => scheduleDeploy())
+for (const prototype of prototypes) {
+  fs.watch(prototype.sourcePath, { persistent: true }, () => scheduleDeploy())
+}
 await new Promise(() => {})

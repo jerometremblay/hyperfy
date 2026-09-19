@@ -58,6 +58,7 @@ import { storage } from '../../core/storage'
 import { ScriptEditor } from './ScriptEditor'
 import { NodeHierarchy } from './NodeHierarchy'
 import { AppsList } from './AppsList'
+import { getAddableBlueprints } from './addableBlueprints'
 import { DEG2RAD, RAD2DEG } from '../../core/extras/general'
 import * as THREE from '../../core/extras/three'
 import { isTouch } from '../utils'
@@ -911,8 +912,8 @@ function Apps({ world, hidden }) {
 }
 
 function Add({ world, hidden }) {
-  // note: multiple collections are supported by the engine but for now we just use the 'default' collection.
-  const collection = world.collections.get('default')
+  // The default collection provides built-ins; installed world blueprints are added too.
+  const blueprints = getAddableBlueprints(world)
   const span = 4
   const gap = '0.5rem'
   const add = blueprint => {
@@ -998,12 +999,12 @@ function Add({ world, hidden }) {
         </div>
         <div className='add-content noscrollbar'>
           <div className='add-items'>
-            {collection.blueprints.map(blueprint => (
-              <div className='add-item' key={blueprint.id} onClick={() => add(blueprint)}>
+            {blueprints.map((blueprint, index) => (
+              <div className='add-item' key={blueprint.id || `collection-${index}`} onClick={() => add(blueprint)}>
                 <div
                   className='add-item-image'
                   css={css`
-                    background-image: url(${world.resolveURL(blueprint.image?.url)});
+                    background-image: ${blueprint.image?.url ? `url(${world.resolveURL(blueprint.image.url)})` : 'none'};
                   `}
                 ></div>
                 <div className='add-item-name'>{blueprint.name}</div>

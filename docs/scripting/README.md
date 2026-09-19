@@ -20,7 +20,7 @@ Apps are made up of a hierarchy of [nodes](./nodes/Node.md) that you can view an
 
 The gltf model that each app is based on is automatically converted into nodes and inserted into the app runtime for you to interact with.
 
-Certain node [types](./nodes/types/) can also be created and used on the fly using `app.create(nodeName)`.
+Certain node [types](./nodes/types/) can also be created and used on the fly using `app.create(nodeName)`. See the [Prim node](./nodes/types/Prim.md) reference for the built-in shapes, including the `extrude` primitive.
 
 ## World
 

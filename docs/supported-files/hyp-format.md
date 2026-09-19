@@ -54,6 +54,29 @@ The header is a JSON object with the following structure:
 - `props`: Object containing additional properties with associated assets
 - `frozen`: Boolean flag indicating if the app is locked/frozen
 
+## Primitive-only apps and `extrude`
+
+An extrusion app is still a normal Hyperfy app: the visible geometry belongs in the script as a `prim` with `type: "extrude"`. Do not put the extrusion mesh in the model asset or expose `THREE.ExtrudeGeometry` to the app sandbox.
+
+For the current Hyperfy runtime, a primitive-only blueprint may use the script-only model marker:
+
+```json
+{
+  "blueprint": {
+    "name": "Irregular Extrude",
+    "model": "script-only",
+    "script": "asset://<sha256>.js",
+    "props": {}
+  }
+}
+```
+
+The script asset URL must refer to the exact JavaScript bytes packaged in the payload. The canonical authoring convention is to SHA-256 those bytes and use `asset://<sha256>.js`; recompute the hash after every edit. Every asset URL in `blueprint` must also appear once in `assets` with the correct byte count, and the bytes must be present in the same order after the header.
+
+The bundled `hyperfy-hyp-app-authoring` 2.4.0 tools are stricter than the runtime: its packer and preview expect a model asset. When using those tools, use their minimal geometry-free GLB bootstrap and keep the requested extrusion entirely in the script. The bootstrap must not contain visible geometry. The archive's 2.4.0 preview viewer currently has no `extrude` renderer, so validate an extrusion in the target Hyperfy runtime rather than treating a blank preview as a geometry failure.
+
+If Hyperfy displays a red crash block, check the script and asset errors first. In particular, `[prim] type invalid` means the running client/server build does not contain the `extrude` primitive yet; rebuild that runtime before changing the `.hyp` geometry.
+
 ### Asset Types
 
 Assets can be of different types:

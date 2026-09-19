@@ -10,7 +10,7 @@ Primitives origins are the in the middle of their shapes.
 
 The type of primitive shape to create. 
 
-Available options: `box`, `sphere`, `cylinder`, `cone`, `torus`, `plane`.
+Available options: `box`, `sphere`, `cylinder`, `cone`, `torus`, `plane`, `extrude`.
 
 Defaults to `box`.
 
@@ -24,6 +24,7 @@ The size of the shape, depending on the `type` (defaults shown):
 - **Cone**: `[radius = 0.5, height = 1]`
 - **Torus**: `[radius = 0.4, tubeRadius = 0.1]`
 - **Plane**: `[width = 1, height = 1]`
+- **Extrude**: does not use `.size`; set `.profile` and `.depth` instead.
 
 Default sizes all roughly fit inside a 1m cubed space for consistency.
 
@@ -33,6 +34,55 @@ Default sizes all roughly fit inside a 1m cubed space for consistency.
 - Cylinder: `position.y = height / 2`
 - Cone: `position.y = height / 2`
 - Torus: `position.y = innerRadius + tubeRadius`
+
+### `.profile`: Array
+
+The polygon used by an `extrude` primitive. Each point is an `[x, y]` pair in the primitive's local XY plane. The engine closes the polygon automatically, so do not repeat the first point. The profile must contain at least three finite points and must be a simple, non-self-intersecting polygon; holes are not supported.
+
+The generated geometry is centered on its bounds. Use the node's `position`, `rotation`, and `scale` to place and size it. The extrusion depth runs along the primitive's local Z axis.
+
+Defaults to a 1m square profile:
+
+```javascript
+[
+  [-0.5, -0.5],
+  [0.5, -0.5],
+  [0.5, 0.5],
+  [-0.5, 0.5],
+]
+```
+
+### `.depth`: Number
+
+The local Z depth of an `extrude` primitive. Must be positive. Defaults to `1`.
+
+### `.bevelEnabled`: Boolean
+
+Whether to bevel the front and back edges of an `extrude` primitive. Defaults to `true`. Disable beveling for very thin or tightly concave profiles.
+
+### `.bevelThickness`: Number
+
+The bevel extrusion thickness. Must be non-negative. Defaults to `0.04`.
+
+### `.bevelSize`: Number
+
+The bevel size in the profile plane. Must be non-negative. Defaults to `0.04`.
+
+### `.bevelSegments`: Number
+
+The number of segments used to represent the bevel. Must be a non-negative integer. Defaults to `2`.
+
+### `.curveSegments`: Number
+
+The number of segments used when triangulating curved shape data. Must be a positive integer. Defaults to `12`.
+
+### `.smooth`: Boolean
+
+Whether to generate crease-angle-smoothed normals for an `extrude` primitive. Bevel and curved surfaces become smooth while edges sharper than `.creaseAngle` remain flat. Defaults to `false` for compatibility.
+
+### `.creaseAngle`: Number
+
+The maximum angle, in radians, across which normals are averaged when `.smooth` is enabled. Must be between `0` and `Math.PI`. Defaults to `Math.PI / 3` (60 degrees).
 
 ### `.color`: String
 
@@ -188,6 +238,32 @@ const torus = app.create('prim', {
   color: '#ffff00'
 })
 
+// An irregular profile, extruded along local Z.
+// The profile is closed automatically; do not repeat its first point.
+const irregular = app.create('prim', {
+  type: 'extrude',
+  profile: [
+    [-0.75, -0.5],
+    [0.55, -0.5],
+    [0.7, -0.18],
+    [0.22, -0.05],
+    [0.36, 0.62],
+    [-0.15, 0.72],
+    [-0.28, 0.16],
+    [-0.72, 0.32],
+  ],
+  depth: 0.3,
+  bevelEnabled: true,
+  bevelThickness: 0.03,
+  bevelSize: 0.04,
+  bevelSegments: 2,
+  curveSegments: 6,
+  smooth: true,
+  creaseAngle: Math.PI / 3,
+  position: [0, 0.35, 0],
+  color: '#d47a45',
+})
+
 // Textured plane (double-sided)
 const texturedPlane = app.create('prim', {
   type: 'plane',
@@ -202,6 +278,7 @@ app.add(box)
 app.add(sphere)
 app.add(cylinder)
 app.add(torus)
+app.add(irregular)
 app.add(texturedPlane)
 
 // Animate emissive intensity
@@ -272,7 +349,15 @@ app.add(triggerZone)
 - `box` and `sphere` primitives have exact physics collision shapes
 - `cylinder`, `cone`, and `torus` use box approximations for physics
 - `plane` uses a thin box for collision
+- `extrude` uses a convex mesh for physics, so a concave profile collides as its convex hull
 - Physics bodies are centered to match the visual geometry
 - Dynamic bodies require the `mass` property to be set
 - Trigger volumes don't cause physical collisions but can detect overlaps
 - Physics callbacks (onContactStart, etc.) receive the other colliding object as a parameter
+
+### Extrusion authoring notes
+
+- Keep generated extrusions visual-only (`physics: null`) unless collision is required. A concave visual profile still gets a convex-hull collider.
+- Create the node once, add it with `app.add()`, and avoid per-frame geometry creation. `app.create()` alone does not make a node visible.
+- A red crash block means the app failed while loading or executing. For this extension, `[prim] type invalid` indicates that the running client/server build predates `type: 'extrude'`; rebuild the runtime and reload the world.
+- When packaging a `.hyp`, the script asset must be included and the blueprint's `script` URL must match the packaged script bytes. See [.hyp File Format](../../../supported-files/hyp-format.md) for the container contract.

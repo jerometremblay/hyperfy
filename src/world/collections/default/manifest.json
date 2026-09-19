@@ -1,4 +1,12 @@
 {
   "name": "Default",
-  "apps": ["Model.hyp", "Image.hyp", "Video.hyp", "Text.hyp", "gs.hyp"]
+  "apps": [
+    "Model.hyp",
+    "Image.hyp",
+    "Video.hyp",
+    "Text.hyp",
+    "gs.hyp",
+    "primitive_cottage_script_app.hyp",
+    "primitive_cottage_detailed.hyp"
+  ]
 }

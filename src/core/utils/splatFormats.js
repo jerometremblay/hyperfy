@@ -47,6 +47,25 @@ export function detectSplatFormat(filename) {
 }
 
 /**
+ * Detect a file type accepted by the builder's drag-and-drop handler.
+ *
+ * Hyperfy apps and regular models share the same drop target as splat files,
+ * but are not splat formats themselves.
+ */
+export function detectBuilderFileType(filename) {
+  if (!filename || typeof filename !== 'string') {
+    return null
+  }
+
+  const ext = filename.toLowerCase().split('.').pop()
+  if (['hyp', 'glb', 'vrm'].includes(ext)) {
+    return ext
+  }
+
+  return detectSplatFormat(filename)
+}
+
+/**
  * Check if a file is a supported splat format
  * @param {string} filename - The filename or URL to check
  * @returns {boolean} - True if the format is supported

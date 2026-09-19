@@ -13,7 +13,7 @@ import { ControlPriorities } from '../extras/ControlPriorities'
 import { importApp } from '../extras/appTools'
 import { DEG2RAD, RAD2DEG } from '../extras/general'
 import { createNode } from '../extras/createNode'
-import { detectSplatFormat } from '../utils/splatFormats'
+import { detectBuilderFileType, detectSplatFormat } from '../utils/splatFormats'
 
 const FORWARD = new THREE.Vector3(0, 0, -1)
 const SNAP_DISTANCE = 1
@@ -1132,7 +1132,7 @@ export class ClientBuilder extends System {
     // slight delay to ensure we get updated pointer position from window focus
     await new Promise(resolve => setTimeout(resolve, 100))
     // get file type
-    const ext = detectSplatFormat(file.name)
+    const ext = detectBuilderFileType(file.name)
     // if vrm and we are not a builder and custom avatars are not allowed, stop here
     if (ext === 'vrm' && !this.canBuild() && !this.world.settings.customAvatars) {
       return
