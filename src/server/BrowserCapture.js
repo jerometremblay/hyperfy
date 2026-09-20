@@ -380,19 +380,31 @@ function browserInputCommand(input) {
       }
     }
     if (input.type === 'mousePressed' || input.type === 'mouseReleased') {
+      const button = input.button ?? 'left'
+      if (button !== 'left' && button !== 'right') throw invalid()
+      const buttonMask = button === 'right' ? 2 : 1
+      const buttons = input.buttons ?? (input.type === 'mousePressed' ? buttonMask : 0)
+      if (!Number.isInteger(buttons) || buttons < 0 || buttons > 3) throw invalid()
+      if (input.type === 'mousePressed' && !(buttons & buttonMask)) throw invalid()
+      if (input.type === 'mouseReleased' && buttons & buttonMask) throw invalid()
       return {
         method: 'Input.dispatchMouseEvent',
         params: {
           type: input.type,
           x,
           y,
-          button: 'left',
-          buttons: input.type === 'mousePressed' ? 1 : 0,
+          button,
+          buttons,
           clickCount: 1,
         },
       }
     }
-    if (input.buttons !== undefined && input.buttons !== 0 && input.buttons !== 1) throw invalid()
+    if (
+      input.buttons !== undefined &&
+      (!Number.isInteger(input.buttons) || input.buttons < 0 || input.buttons > 3)
+    ) {
+      throw invalid()
+    }
     return {
       method: 'Input.dispatchMouseEvent',
       params: { type: input.type, x, y, button: 'none', buttons: input.buttons || 0 },

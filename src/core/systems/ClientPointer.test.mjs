@@ -40,6 +40,7 @@ test('unlocked pointer targets interactive 3D nodes under the cursor', () => {
     xrRightTrigger: { value: 0 },
     pointer: { locked: false, position: pointerPosition },
     mouseLeft: { pressed: true, released: false, capture: false },
+    mouseRight: { pressed: false, released: false, capture: false },
   }
 
   pointer.update(0)
@@ -50,4 +51,64 @@ test('unlocked pointer targets interactive 3D nodes under the cursor', () => {
     ['pointermove', { x: 0.25, y: 0.75 }],
     ['pointerdown', { x: 0.25, y: 0.75 }],
   ])
+})
+
+test('unlocked pointer preserves right-button down and up events', () => {
+  const events = []
+  const hit = {
+    uv: { x: 0.25, y: 0.75 },
+    node: {
+      onPointerDown: event => events.push([event.type, event.button]),
+      onPointerUp: event => events.push([event.type, event.button]),
+    },
+  }
+  const pointer = new ClientPointer({
+    stage: { raycastPointer: () => [hit] },
+  })
+  const rightMouse = { pressed: true, released: false, capture: false }
+  pointer.control = {
+    xrLeftTrigger: { value: 0 },
+    xrRightTrigger: { value: 0 },
+    pointer: { locked: false, position: { x: 120, y: 80 } },
+    mouseLeft: { pressed: false, released: false, capture: false },
+    mouseRight: rightMouse,
+  }
+
+  pointer.update(0)
+  rightMouse.pressed = false
+  rightMouse.released = true
+  pointer.update(0)
+
+  assert.deepEqual(events, [
+    ['pointerdown', 'right'],
+    ['pointerup', 'right'],
+  ])
+})
+
+test('pointer mouse capture controls whether clicks reach lower-priority bindings', () => {
+  const pointer = new ClientPointer({})
+  pointer.control = {
+    mouseLeft: { capture: false },
+    mouseRight: { capture: false },
+  }
+
+  const screenHit = { node: {} }
+  pointer.setScreenHit(screenHit)
+  assert.equal(pointer.screenHit, screenHit)
+  assert.equal(pointer.control.mouseLeft.capture, true)
+
+  pointer.setScreenHit(null)
+  assert.equal(pointer.control.mouseLeft.capture, false)
+
+  pointer.setMouseCapture(true)
+  assert.equal(pointer.control.mouseLeft.capture, true)
+
+  pointer.setMouseCapture(false)
+  assert.equal(pointer.control.mouseLeft.capture, false)
+
+  pointer.setMouseCapture(true, 'right')
+  assert.equal(pointer.control.mouseRight.capture, true)
+
+  pointer.setMouseCapture(false, 'right')
+  assert.equal(pointer.control.mouseRight.capture, false)
 })

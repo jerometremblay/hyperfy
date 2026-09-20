@@ -31,23 +31,27 @@ export class ClientPointer extends System {
 
   update(delta) {
     let hit
-    let pressed
-    let released
+    const pressed = []
+    const released = []
     if (this.control.xrLeftTrigger.value || this.control.xrRightTrigger.value) {
       const ray = this.control.xrLeftTrigger.value ? this.control.xrLeftRayPose : this.control.xrRightRayPose
       const dir = v1.set(0, 0, -1).applyQuaternion(ray.quaternion)
       hit = this.world.stage.raycast(ray.position, dir)[0]
       const trigger = this.control.xrLeftTrigger.value ? this.control.xrLeftTrigger : this.control.xrRightTrigger
-      pressed = trigger.pressed
-      released = trigger.released
+      if (trigger.pressed) pressed.push('left')
+      if (trigger.released) released.push('left')
     } else if (this.control.pointer.locked) {
       hit = this.world.stage.raycastReticle()[0]
-      pressed = this.control.mouseLeft.pressed
-      released = this.control.mouseLeft.released
+      if (this.control.mouseLeft.pressed) pressed.push('left')
+      if (this.control.mouseLeft.released) released.push('left')
+      if (this.control.mouseRight.pressed) pressed.push('right')
+      if (this.control.mouseRight.released) released.push('right')
     } else {
       hit = this.screenHit || this.world.stage.raycastPointer(this.control.pointer.position)[0]
-      pressed = this.control.mouseLeft.pressed
-      released = this.control.mouseLeft.released
+      if (this.control.mouseLeft.pressed) pressed.push('left')
+      if (this.control.mouseLeft.released) released.push('left')
+      if (this.control.mouseRight.pressed) pressed.push('right')
+      if (this.control.mouseRight.released) released.push('right')
     }
     this.pointerState.update(hit, pressed, released)
   }
@@ -55,7 +59,13 @@ export class ClientPointer extends System {
   setScreenHit(screenHit) {
     this.screenHit = screenHit
     // capture all mouse click events if our pointer is interacting with world UI
-    this.control.mouseLeft.capture = !!screenHit
+    this.setMouseCapture(!!screenHit)
+  }
+
+  setMouseCapture(value, button = 'left') {
+    if (!this.control) return
+    const controlButton = button === 'right' ? this.control.mouseRight : this.control.mouseLeft
+    controlButton.capture = !!value
   }
 
   destroy() {
@@ -78,12 +88,14 @@ class PointerEvent {
   constructor() {
     this.type = null
     this.uv = null
+    this.button = null
     this._propagationStopped = false
   }
 
-  set(type, hit) {
+  set(type, hit, button = null) {
     this.type = type
     this.uv = hit?.uv ? { x: hit.uv.x, y: hit.uv.y } : null
+    this.button = button
     this._propagationStopped = false
   }
 
@@ -97,7 +109,7 @@ class PointerState {
     this.activePath = new Set()
     this.event = new PointerEvent()
     this.cursor = CURSOR_DEFAULT
-    this.pressedNodes = new Set()
+    this.pressedNodes = new Map()
   }
 
   update(hit, pointerPressed, pointerReleased) {
@@ -166,27 +178,29 @@ class PointerState {
     }
 
     // handle pointer down events
-    if (pointerPressed) {
+    for (const button of pointerPressed) {
+      const pressedNodes = new Set()
       for (let i = newPath.length - 1; i >= 0; i--) {
         const node = newPath[i]
         if (node.onPointerDown) {
-          this.event.set(PointerEvents.DOWN, hit)
+          this.event.set(PointerEvents.DOWN, hit, button)
           try {
             node.onPointerDown(this.event)
           } catch (err) {
             console.error(err)
           }
-          this.pressedNodes.add(node)
+          pressedNodes.add(node)
           if (this.event._propagationStopped) break
         }
       }
+      this.pressedNodes.set(button, pressedNodes)
     }
 
     // handle pointer up events
-    if (pointerReleased) {
-      for (const node of this.pressedNodes) {
+    for (const button of pointerReleased) {
+      for (const node of this.pressedNodes.get(button) || []) {
         if (node.onPointerUp) {
-          this.event.set(PointerEvents.UP, hit)
+          this.event.set(PointerEvents.UP, hit, button)
           try {
             node.onPointerUp(this.event)
           } catch (err) {
@@ -195,7 +209,7 @@ class PointerState {
           if (this.event._propagationStopped) break
         }
       }
-      this.pressedNodes.clear()
+      this.pressedNodes.delete(button)
     }
   }
 

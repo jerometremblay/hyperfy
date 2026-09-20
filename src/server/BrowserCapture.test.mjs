@@ -84,7 +84,65 @@ test('rejects malformed browser input before creating a browser session', async 
     }),
     /invalid browser input/i
   )
+  await assert.rejects(
+    browser.dispatchInput('shared-app', 'https://radio-canada.ca/', {
+      type: 'mousePressed',
+      button: 'middle',
+      u: 0.5,
+      v: 0.5,
+    }),
+    /invalid browser input/i
+  )
   assert.equal(opened, 0)
+})
+
+test('forwards shared-page right-clicks as right-button Chrome input', async () => {
+  const browser = new BrowserCapture()
+  const socket = new FakeWebSocket()
+  browser.openSession = async url => ({
+    url,
+    socket,
+    WebSocketImpl: FakeWebSocket,
+    sessionId: 'page-1',
+  })
+
+  const url = 'https://radio-canada.ca/'
+  await browser.dispatchInput('shared-app', url, {
+    type: 'mousePressed',
+    button: 'right',
+    buttons: 2,
+    u: 0.5,
+    v: 0.5,
+  })
+  await browser.dispatchInput('shared-app', url, {
+    type: 'mouseReleased',
+    button: 'right',
+    buttons: 0,
+    u: 0.5,
+    v: 0.5,
+  })
+
+  assert.deepEqual(
+    socket.commands.map(command => command.params),
+    [
+      {
+        type: 'mousePressed',
+        x: 640,
+        y: 360,
+        button: 'right',
+        buttons: 2,
+        clickCount: 1,
+      },
+      {
+        type: 'mouseReleased',
+        x: 640,
+        y: 360,
+        button: 'right',
+        buttons: 0,
+        clickCount: 1,
+      },
+    ]
+  )
 })
 
 test('forwards shared-page scrolling and keyboard text to the same Chrome page', async () => {

@@ -26,6 +26,7 @@ export class Browser extends Node {
     this.height = data.height
     this.interval = data.interval
     this.doubleside = data.doubleside
+    this.pointerButtonsDown = new Set()
   }
 
   mount() {
@@ -77,7 +78,7 @@ export class Browser extends Node {
     if (!apiUrl) return
 
     this.createKeyboardInput()
-    window.addEventListener('wheel', this.onWheel, { passive: false })
+    window.addEventListener('wheel', this.onWheel, { passive: false, capture: true })
 
     const image = document.createElement('img')
     image.crossOrigin = 'anonymous'
@@ -107,8 +108,9 @@ export class Browser extends Node {
   }
 
   unbuild() {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('wheel', this.onWheel)
+    this.setMouseCapture(false)
+    if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+      window.removeEventListener('wheel', this.onWheel, true)
     }
     if (focusedBrowser === this) {
       this.releaseKeys()
@@ -124,7 +126,7 @@ export class Browser extends Node {
       this.keyboardInput = null
     }
     this.isHovered = false
-    this.pointerDown = false
+    this.pointerButtonsDown.clear()
     this.lastUV = null
     if (this.poller) {
       clearInterval(this.poller)
@@ -173,14 +175,17 @@ export class Browser extends Node {
 
   onPointerEnter(event) {
     this.isHovered = true
+    this.setMouseCapture(this.isMouseMode())
     this.updatePointer(event.uv)
   }
 
   onPointerLeave() {
     this.isHovered = false
+    this.setMouseCapture(false)
   }
 
   onPointerMove(event) {
+    this.setMouseCapture(this.isMouseMode())
     const uv = this.updatePointer(event.uv)
     if (!uv) return
     const now = Date.now()
@@ -189,23 +194,46 @@ export class Browser extends Node {
     this.sendInput({
       type: 'mouseMoved',
       ...uv,
-      buttons: this.pointerDown ? 1 : 0,
+      buttons: this.getMouseButtons(),
     })
   }
 
   onPointerDown(event) {
+    if (!this._src || !this.isMouseMode()) {
+      this.setMouseCapture(false)
+      return
+    }
     const uv = this.updatePointer(event.uv)
     if (!uv) return
-    this.focusKeyboard()
-    this.pointerDown = true
-    this.sendInput({ type: 'mouseMoved', ...uv, buttons: 0 })
-    this.sendInput({ type: 'mousePressed', ...uv })
+    const button = event.button === 'right' ? 'right' : 'left'
+    event.stopPropagation?.()
+    if (button === 'left') this.focusKeyboard()
+    this.sendInput({ type: 'mouseMoved', ...uv, buttons: this.getMouseButtons() })
+    this.pointerButtonsDown.add(button)
+    this.sendInput({ type: 'mousePressed', button, buttons: this.getMouseButtons(), ...uv })
   }
 
-  onPointerUp() {
-    if (!this.pointerDown || !this.lastUV) return
-    this.sendInput({ type: 'mouseReleased', ...this.lastUV })
-    this.pointerDown = false
+  onPointerUp(event) {
+    const button = event.button === 'right' ? 'right' : 'left'
+    if (!this.pointerButtonsDown.has(button) || !this.lastUV) return
+    event.stopPropagation?.()
+    this.pointerButtonsDown.delete(button)
+    this.sendInput({ type: 'mouseReleased', button, buttons: this.getMouseButtons(), ...this.lastUV })
+  }
+
+  isMouseMode() {
+    return !this.ctx?.world?.controls?.pointer?.locked
+  }
+
+  setMouseCapture(value) {
+    const pointer = this.ctx?.world?.pointer
+    const capture = !!value && !!this._src && this.isMouseMode()
+    pointer?.setMouseCapture?.(capture)
+    pointer?.setMouseCapture?.(capture, 'right')
+  }
+
+  getMouseButtons() {
+    return (this.pointerButtonsDown.has('left') ? 1 : 0) | (this.pointerButtonsDown.has('right') ? 2 : 0)
   }
 
   updatePointer(uv) {
@@ -220,6 +248,7 @@ export class Browser extends Node {
   onWheel = event => {
     if (!this.isHovered || !this.lastUV) return
     event.preventDefault()
+    event.stopPropagation()
     this.sendInput({
       type: 'mouseWheel',
       ...this.lastUV,
