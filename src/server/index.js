@@ -19,6 +19,7 @@ import { Storage } from './Storage'
 import { assets } from './assets'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
+import { BrowserCapture } from './BrowserCapture'
 
 const execAsync = promisify(exec)
 
@@ -83,6 +84,7 @@ await cleaner.init({ db })
 
 // init storage
 const storage = new Storage(path.join(worldDir, '/storage.json'))
+const browserCapture = new BrowserCapture()
 
 // create world
 const world = createServerWorld()
@@ -245,6 +247,16 @@ fastify.post('/api/upload', async (req, reply) => {
 fastify.get('/api/upload-check', async (req, reply) => {
   const exists = await assets.exists(req.query.filename)
   return { exists }
+})
+
+fastify.get('/api/browser/screenshot', async (req, reply) => {
+  try {
+    const image = await browserCapture.capture(req.query?.url)
+    return reply.header('Cache-Control', 'no-store').type('image/jpeg').send(image)
+  } catch (err) {
+    console.error('[browser] screenshot failed:', err.message)
+    return reply.code(503).send({ error: 'Shared browser capture is unavailable' })
+  }
 })
 
 fastify.get('/api/backup', async (req, reply) => {

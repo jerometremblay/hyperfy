@@ -5,9 +5,7 @@ Embeds an interactive iframe in either 3D world space or 2D screen space. WebVie
 - **World Space**: Iframes positioned in 3D space using CSS3D rendering with proper depth occlusion, allowing 3D objects to pass in front naturally.
 - **Screen Space**: Iframes positioned as 2D overlays using CSS absolute positioning, like traditional UI elements.
 
-When players click on a WebView, their pointer is unlocked so they can interact with the iframe content (world space mode only).
-
-For a simple read-only browser screen, set `.interactive` to `false`. The V1 implementation uses the existing CSS3D renderer, so it is a 3D screen rather than a WebGL texture. Rendering arbitrary web pages into a true texture requires a server-side browser renderer.
+When players click on a WebView, their pointer is unlocked so they can interact with the iframe content (world space mode only). Each client has its own iframe and page state. For a shared read-only browser screen, use the [`browser`](Browser.md) node instead: the server captures the page once and distributes the same screenshot texture to every client.
 
 ## Properties
 
@@ -95,7 +93,7 @@ const webview = app.create('webview', {
 app.add(webview)
 ```
 
-### Read-only Browser Screen
+### Independent Read-only Browser Screen
 
 ```javascript
 const browser = app.create('webview', {
@@ -108,3 +106,5 @@ const browser = app.create('webview', {
 })
 app.add(browser)
 ```
+
+Use [`browser`](Browser.md) when every user must see the same page state.
