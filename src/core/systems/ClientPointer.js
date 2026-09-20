@@ -45,7 +45,7 @@ export class ClientPointer extends System {
       pressed = this.control.mouseLeft.pressed
       released = this.control.mouseLeft.released
     } else {
-      hit = this.screenHit
+      hit = this.screenHit || this.world.stage.raycastPointer(this.control.pointer.position)[0]
       pressed = this.control.mouseLeft.pressed
       released = this.control.mouseLeft.released
     }
@@ -67,6 +67,7 @@ export class ClientPointer extends System {
 const PointerEvents = {
   ENTER: 'pointerenter',
   LEAVE: 'pointerleave',
+  MOVE: 'pointermove',
   DOWN: 'pointerdown',
   UP: 'pointerup',
 }
@@ -76,11 +77,13 @@ const CURSOR_DEFAULT = 'default'
 class PointerEvent {
   constructor() {
     this.type = null
+    this.uv = null
     this._propagationStopped = false
   }
 
-  set(type) {
+  set(type, hit) {
     this.type = type
+    this.uv = hit?.uv ? { x: hit.uv.x, y: hit.uv.y } : null
     this._propagationStopped = false
   }
 
@@ -122,7 +125,7 @@ class PointerState {
     // pointer enter events bubble down from divergence
     for (let j = i; j < newPath.length; j++) {
       if (newPath[j].onPointerEnter) {
-        this.event.set(PointerEvents.ENTER)
+        this.event.set(PointerEvents.ENTER, hit)
         try {
           newPath[j].onPointerEnter?.(this.event)
         } catch (err) {
@@ -148,12 +151,26 @@ class PointerState {
       this.cursor = cursor
     }
 
+    // pointer move events bubble from leaf to root
+    for (let i = newPath.length - 1; i >= 0; i--) {
+      const node = newPath[i]
+      if (node.onPointerMove) {
+        this.event.set(PointerEvents.MOVE, hit)
+        try {
+          node.onPointerMove(this.event)
+        } catch (err) {
+          console.error(err)
+        }
+        if (this.event._propagationStopped) break
+      }
+    }
+
     // handle pointer down events
     if (pointerPressed) {
       for (let i = newPath.length - 1; i >= 0; i--) {
         const node = newPath[i]
         if (node.onPointerDown) {
-          this.event.set(PointerEvents.DOWN)
+          this.event.set(PointerEvents.DOWN, hit)
           try {
             node.onPointerDown(this.event)
           } catch (err) {
@@ -169,7 +186,7 @@ class PointerState {
     if (pointerReleased) {
       for (const node of this.pressedNodes) {
         if (node.onPointerUp) {
-          this.event.set(PointerEvents.UP)
+          this.event.set(PointerEvents.UP, hit)
           try {
             node.onPointerUp(this.event)
           } catch (err) {

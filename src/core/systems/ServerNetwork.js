@@ -4,6 +4,7 @@ import { Socket } from '../Socket'
 import { uuid } from '../utils'
 import { System } from './System'
 import { createJWT, readJWT } from '../utils-server'
+import { appHasBrowserSource } from '../utils/browser'
 import { cloneDeep, isNumber } from 'lodash-es'
 import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
@@ -31,6 +32,7 @@ export class ServerNetwork extends System {
     this.saveTimerId = null
     this.dirtyBlueprints = new Set()
     this.dirtyApps = new Set()
+    this.browserCapture = null
     this.isServer = true
     this.queue = []
   }
@@ -494,6 +496,21 @@ export class ServerNetwork extends System {
     const [id, version, name, data] = event
     const entity = this.world.entities.get(id)
     entity?.onEvent(version, name, data, socket.id)
+  }
+
+  onBrowserInput = (socket, data) => {
+    if (!socket.player?.isPlayer) return
+    const { entityId, url, input } = data || {}
+    const entity = this.world.entities.get(entityId)
+    if (!entity?.isApp || !appHasBrowserSource(entity, url)) return
+    if (input?.type === 'mouseMoved') {
+      const now = Date.now()
+      if (now - (socket.browserMoveAt || 0) < 30) return
+      socket.browserMoveAt = now
+    }
+    this.browserCapture?.dispatchInput(entityId, url, input).catch(error => {
+      console.error('[browser] input failed:', error.message)
+    })
   }
 
   onEntityRemoved = (socket, id) => {

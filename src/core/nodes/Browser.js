@@ -11,6 +11,12 @@ const defaults = {
   doubleside: false,
 }
 
+let focusedBrowser = null
+
+function getModifiers(event) {
+  return (event.altKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.metaKey ? 4 : 0) | (event.shiftKey ? 8 : 0)
+}
+
 export class Browser extends Node {
   constructor(data = {}) {
     super(data)
@@ -48,7 +54,7 @@ export class Browser extends Node {
 
     const geometry = new THREE.PlaneGeometry(this._width, this._height)
     const material = new THREE.MeshBasicMaterial({
-      color: 'black',
+      color: 'white',
       side: this._doubleside ? THREE.DoubleSide : THREE.FrontSide,
     })
     this.ctx.world.setupMaterial(material)
@@ -69,6 +75,9 @@ export class Browser extends Node {
     if (!this._src) return
     const apiUrl = this.ctx.world.network.apiUrl
     if (!apiUrl) return
+
+    this.createKeyboardInput()
+    window.addEventListener('wheel', this.onWheel, { passive: false })
 
     const image = document.createElement('img')
     image.crossOrigin = 'anonymous'
@@ -98,6 +107,25 @@ export class Browser extends Node {
   }
 
   unbuild() {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('wheel', this.onWheel)
+    }
+    if (focusedBrowser === this) {
+      this.releaseKeys()
+      focusedBrowser = null
+    }
+    if (this.keyboardInput) {
+      this.keyboardInput.removeEventListener('keydown', this.onKeyDown)
+      this.keyboardInput.removeEventListener('keyup', this.onKeyUp)
+      this.keyboardInput.removeEventListener('beforeinput', this.onBeforeInput)
+      this.keyboardInput.removeEventListener('compositionend', this.onCompositionEnd)
+      this.keyboardInput.removeEventListener('paste', this.onPaste)
+      this.keyboardInput.remove()
+      this.keyboardInput = null
+    }
+    this.isHovered = false
+    this.pointerDown = false
+    this.lastUV = null
     if (this.poller) {
       clearInterval(this.poller)
       this.poller = null
@@ -123,6 +151,167 @@ export class Browser extends Node {
       this.ctx.world.stage.octree.remove(this.sItem)
       this.sItem = null
     }
+  }
+
+  createKeyboardInput() {
+    const input = document.createElement('textarea')
+    input.setAttribute('aria-label', 'Shared browser keyboard input')
+    input.setAttribute('autocomplete', 'off')
+    input.setAttribute('autocapitalize', 'off')
+    input.spellcheck = false
+    input.tabIndex = -1
+    input.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;padding:0;border:0;opacity:0;z-index:-1;'
+    input.addEventListener('keydown', this.onKeyDown)
+    input.addEventListener('keyup', this.onKeyUp)
+    input.addEventListener('beforeinput', this.onBeforeInput)
+    input.addEventListener('compositionend', this.onCompositionEnd)
+    input.addEventListener('paste', this.onPaste)
+    document.body.appendChild(input)
+    this.keyboardInput = input
+    this.keysDown = new Map()
+  }
+
+  onPointerEnter(event) {
+    this.isHovered = true
+    this.updatePointer(event.uv)
+  }
+
+  onPointerLeave() {
+    this.isHovered = false
+  }
+
+  onPointerMove(event) {
+    const uv = this.updatePointer(event.uv)
+    if (!uv) return
+    const now = Date.now()
+    if (now - (this.lastMoveAt || 0) < 40) return
+    this.lastMoveAt = now
+    this.sendInput({
+      type: 'mouseMoved',
+      ...uv,
+      buttons: this.pointerDown ? 1 : 0,
+    })
+  }
+
+  onPointerDown(event) {
+    const uv = this.updatePointer(event.uv)
+    if (!uv) return
+    this.focusKeyboard()
+    this.pointerDown = true
+    this.sendInput({ type: 'mouseMoved', ...uv, buttons: 0 })
+    this.sendInput({ type: 'mousePressed', ...uv })
+  }
+
+  onPointerUp() {
+    if (!this.pointerDown || !this.lastUV) return
+    this.sendInput({ type: 'mouseReleased', ...this.lastUV })
+    this.pointerDown = false
+  }
+
+  updatePointer(uv) {
+    if (!uv || !Number.isFinite(uv.x) || !Number.isFinite(uv.y)) return null
+    this.lastUV = {
+      u: Math.max(0, Math.min(1, uv.x)),
+      v: Math.max(0, Math.min(1, uv.y)),
+    }
+    return this.lastUV
+  }
+
+  onWheel = event => {
+    if (!this.isHovered || !this.lastUV) return
+    event.preventDefault()
+    this.sendInput({
+      type: 'mouseWheel',
+      ...this.lastUV,
+      deltaX: Math.max(-2000, Math.min(2000, event.deltaX)),
+      deltaY: Math.max(-2000, Math.min(2000, event.deltaY)),
+    })
+  }
+
+  focusKeyboard() {
+    if (focusedBrowser && focusedBrowser !== this) focusedBrowser.releaseKeys()
+    focusedBrowser = this
+    this.keyboardInput?.focus({ preventScroll: true })
+  }
+
+  blurKeyboard() {
+    this.releaseKeys()
+    if (focusedBrowser === this) focusedBrowser = null
+    this.keyboardInput?.blur()
+  }
+
+  onKeyDown = event => {
+    if (focusedBrowser !== this || event.isComposing) return
+    const key = { key: event.key, code: event.code, modifiers: getModifiers(event) }
+    this.keysDown.set(event.code, key)
+    this.sendInput({ type: 'keyDown', ...key, autoRepeat: event.repeat })
+    const isText = event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey
+    const isPaste = event.key.toLowerCase() === 'v' && (event.ctrlKey || event.metaKey)
+    if (!isText && !isPaste) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+
+  onKeyUp = event => {
+    if (focusedBrowser !== this || event.isComposing) return
+    const key = this.keysDown.get(event.code) || {
+      key: event.key,
+      code: event.code,
+      modifiers: getModifiers(event),
+    }
+    this.keysDown.delete(event.code)
+    this.sendInput({ type: 'keyUp', ...key })
+    event.preventDefault()
+    event.stopPropagation()
+    if (event.key === 'Escape') this.blurKeyboard()
+  }
+
+  onBeforeInput = event => {
+    if (focusedBrowser !== this) return
+    if (event.isComposing) return
+    if (event.inputType.startsWith('insert') && event.data) {
+      this.sendText(event.data)
+    }
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  onCompositionEnd = event => {
+    if (focusedBrowser !== this) return
+    if (event.data) this.sendText(event.data)
+    if (this.keyboardInput) this.keyboardInput.value = ''
+  }
+
+  onPaste = event => {
+    if (focusedBrowser !== this) return
+    const text = event.clipboardData?.getData('text/plain')
+    if (text) this.sendText(text)
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  releaseKeys() {
+    for (const key of this.keysDown?.values() || []) {
+      this.sendInput({ type: 'keyUp', ...key })
+    }
+    this.keysDown?.clear()
+  }
+
+  sendText(text) {
+    const characters = Array.from(text)
+    for (let i = 0; i < characters.length; i += 1024) {
+      this.sendInput({ type: 'insertText', text: characters.slice(i, i + 1024).join('') })
+    }
+  }
+
+  sendInput(input) {
+    if (!this._src || !this.ctx?.world.network.isClient) return
+    this.ctx.world.network.send('browserInput', {
+      entityId: this.ctx.entity.data.id,
+      url: this._src,
+      input,
+    })
   }
 
   copy(source, recursive) {

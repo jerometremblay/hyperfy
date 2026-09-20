@@ -8,6 +8,8 @@ const CACHE_TIME = 500
 const START_TIMEOUT = 15000
 const RETRY_INTERVAL = 250
 const COMMAND_TIMEOUT = 10000
+const VIEWPORT_WIDTH = 1280
+const VIEWPORT_HEIGHT = 720
 
 export class BrowserCapture {
   constructor() {
@@ -36,6 +38,27 @@ export class BrowserCapture {
     return session.capturePromise
   }
 
+  async dispatchInput(entityId, url, input) {
+    const command = browserInputCommand(input)
+    const normalizedUrl = normalizeURL(url)
+    const session = await this.getSession(String(entityId), normalizedUrl)
+    const previous = session.inputQueue || Promise.resolve()
+    const current = previous.catch(() => {}).then(async () => {
+      const result = await sendCommand(
+        session.socket,
+        this.nextCommandId(),
+        command.method,
+        command.params,
+        session.sessionId
+      )
+      session.cached = null
+      session.cachedAt = 0
+      return result
+    })
+    session.inputQueue = current.catch(() => {})
+    return current
+  }
+
   async getSession(entityId, url) {
     let session = this.sessions.get(entityId)
     if (!session) {
@@ -45,6 +68,7 @@ export class BrowserCapture {
         cachedAt: 0,
         capturePromise: null,
         navigation: null,
+        inputQueue: null,
         ready: null,
       }
       const ready = this.openSession(url).then(opened => {
@@ -107,6 +131,18 @@ export class BrowserCapture {
       const sessionId = attachResponse.result?.sessionId
       if (!sessionId) throw new Error('Chrome returned no page session id')
 
+      await sendCommand(
+        socket,
+        this.nextCommandId(),
+        'Emulation.setDeviceMetricsOverride',
+        {
+          width: VIEWPORT_WIDTH,
+          height: VIEWPORT_HEIGHT,
+          deviceScaleFactor: 1,
+          mobile: false,
+        },
+        sessionId
+      )
       await sendCommand(socket, this.nextCommandId(), 'Page.enable', {}, sessionId)
       return { socket, WebSocketImpl, browserContextId, targetId, sessionId }
     } catch (error) {
@@ -125,6 +161,20 @@ export class BrowserCapture {
       socket.close()
       throw error
     }
+  }
+
+  async capturePage(session) {
+    const response = await sendCommand(
+      session.socket,
+      this.nextCommandId(),
+      'Page.captureScreenshot',
+      { format: 'jpeg', quality: 80, fromSurface: true },
+      session.sessionId
+    )
+    if (!response.result?.data) throw new Error('Chrome returned no screenshot data')
+    session.cached = Buffer.from(response.result.data, 'base64')
+    session.cachedAt = Date.now()
+    return session.cached
   }
 
   async navigate(session, url) {
@@ -151,20 +201,6 @@ export class BrowserCapture {
     } finally {
       if (session.navigation === navigation) session.navigation = null
     }
-  }
-
-  async capturePage(session) {
-    const response = await sendCommand(
-      session.socket,
-      this.nextCommandId(),
-      'Page.captureScreenshot',
-      { format: 'jpeg', quality: 80, fromSurface: true },
-      session.sessionId
-    )
-    if (!response.result?.data) throw new Error('Chrome returned no screenshot data')
-    session.cached = Buffer.from(response.result.data, 'base64')
-    session.cachedAt = Date.now()
-    return session.cached
   }
 
   async getBrowser() {
@@ -284,6 +320,7 @@ export class BrowserCapture {
       if (session.ready) await session.ready
       if (session.capturePromise) await session.capturePromise.catch(() => {})
       if (session.navigation) await session.navigation.catch(() => {})
+      if (session.inputQueue) await session.inputQueue.catch(() => {})
       if (session.socket?.readyState === session.WebSocketImpl?.OPEN) {
         await sendCommand(
           session.socket,
@@ -323,6 +360,68 @@ export class BrowserCapture {
     this.commandId += 1
     return this.commandId
   }
+}
+
+function browserInputCommand(input) {
+  const invalid = () => new Error('Invalid browser input')
+  if (!input || typeof input !== 'object') throw invalid()
+
+  if (['mouseMoved', 'mousePressed', 'mouseReleased', 'mouseWheel'].includes(input.type)) {
+    if (!Number.isFinite(input.u) || input.u < 0 || input.u > 1) throw invalid()
+    if (!Number.isFinite(input.v) || input.v < 0 || input.v > 1) throw invalid()
+    const x = Math.round(input.u * VIEWPORT_WIDTH)
+    const y = Math.round((1 - input.v) * VIEWPORT_HEIGHT)
+    if (input.type === 'mouseWheel') {
+      if (!Number.isFinite(input.deltaX) || !Number.isFinite(input.deltaY)) throw invalid()
+      if (Math.abs(input.deltaX) > 2000 || Math.abs(input.deltaY) > 2000) throw invalid()
+      return {
+        method: 'Input.dispatchMouseEvent',
+        params: { type: input.type, x, y, deltaX: input.deltaX, deltaY: input.deltaY },
+      }
+    }
+    if (input.type === 'mousePressed' || input.type === 'mouseReleased') {
+      return {
+        method: 'Input.dispatchMouseEvent',
+        params: {
+          type: input.type,
+          x,
+          y,
+          button: 'left',
+          buttons: input.type === 'mousePressed' ? 1 : 0,
+          clickCount: 1,
+        },
+      }
+    }
+    if (input.buttons !== undefined && input.buttons !== 0 && input.buttons !== 1) throw invalid()
+    return {
+      method: 'Input.dispatchMouseEvent',
+      params: { type: input.type, x, y, button: 'none', buttons: input.buttons || 0 },
+    }
+  }
+
+  if (input.type === 'keyDown' || input.type === 'keyUp') {
+    if (typeof input.key !== 'string' || !input.key || input.key.length > 32) throw invalid()
+    if (typeof input.code !== 'string' || input.code.length > 32) throw invalid()
+    const modifiers = input.modifiers ?? 0
+    if (!Number.isInteger(modifiers) || modifiers < 0 || modifiers > 15) throw invalid()
+    return {
+      method: 'Input.dispatchKeyEvent',
+      params: {
+        type: input.type === 'keyDown' ? 'rawKeyDown' : 'keyUp',
+        key: input.key,
+        code: input.code,
+        modifiers,
+        ...(input.autoRepeat ? { autoRepeat: true } : {}),
+      },
+    }
+  }
+
+  if (input.type === 'insertText') {
+    if (typeof input.text !== 'string' || !input.text || input.text.length > 2048) throw invalid()
+    return { method: 'Input.insertText', params: { text: input.text } }
+  }
+
+  throw invalid()
 }
 
 function normalizeURL(value) {

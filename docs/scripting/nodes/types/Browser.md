@@ -1,8 +1,8 @@
 # Browser
 
-Displays a shared, read-only browser page as a WebGL texture. The Hyperfy server captures the configured URL with the Chrome DevTools Protocol, and every client receives the same screenshot.
+Displays a shared browser page as a WebGL texture. The Hyperfy server owns the Chrome session, and every client viewing that app instance sees the same page. Clicking the screen, scrolling, and typing control that shared session; input from different viewers is applied in server arrival order.
 
-This node does not support interaction or navigation yet. Each browser app instance has an isolated server-side browser context; all clients viewing that instance receive the same screenshot and page state.
+Each browser app instance has its own server-side browser context. Clients viewing the same app instance share its page state; separate app instances remain isolated. Click the screen to focus keyboard input and press Escape to return keyboard focus to the world.
 
 ## Setup
 

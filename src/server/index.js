@@ -20,6 +20,7 @@ import { assets } from './assets'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { BrowserCapture } from './BrowserCapture'
+import { appHasBrowserSource } from '../core/utils/browser'
 
 const execAsync = promisify(exec)
 
@@ -112,6 +113,7 @@ await world.init({
   storage,
   collections: collections.list,
 })
+world.network.browserCapture = browserCapture
 world.entities.on('removed', entity => {
   if (entity.isApp) {
     browserCapture.close(entity.data.id).catch(error => {
@@ -389,15 +391,6 @@ async function worldNetwork(fastify) {
   fastify.get('/ws', { websocket: true }, (ws, req) => {
     world.network.onConnection(ws, req.query)
   })
-}
-
-function appHasBrowserSource(entity, url) {
-  if (typeof url !== 'string') return false
-  let found = false
-  entity.root?.traverse(node => {
-    if (node.name === 'browser' && node.src === url) found = true
-  })
-  return found
 }
 
 console.log(`server listening on port ${port}`)

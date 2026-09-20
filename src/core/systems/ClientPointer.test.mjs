@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { fileURLToPath } from 'node:url'
+
+import { build } from 'esbuild'
+
+const pointerBundle = await build({
+  entryPoints: [fileURLToPath(new URL('./ClientPointer.js', import.meta.url))],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  write: false,
+})
+const { ClientPointer } = await import(
+  `data:text/javascript;base64,${Buffer.from(pointerBundle.outputFiles[0].contents).toString('base64')}`
+)
+
+test('unlocked pointer targets interactive 3D nodes under the cursor', () => {
+  const events = []
+  const pointerPosition = { x: 120, y: 80 }
+  const hit = {
+    uv: { x: 0.25, y: 0.75 },
+    node: {
+      onPointerEnter: event => events.push([event.type, event.uv]),
+      onPointerMove: event => events.push([event.type, event.uv]),
+      onPointerDown: event => events.push([event.type, event.uv]),
+    },
+  }
+  let raycastPosition
+  const pointer = new ClientPointer({
+    stage: {
+      raycastPointer(position) {
+        raycastPosition = position
+        return [hit]
+      },
+    },
+  })
+  pointer.control = {
+    xrLeftTrigger: { value: 0 },
+    xrRightTrigger: { value: 0 },
+    pointer: { locked: false, position: pointerPosition },
+    mouseLeft: { pressed: true, released: false, capture: false },
+  }
+
+  pointer.update(0)
+
+  assert.equal(raycastPosition, pointerPosition)
+  assert.deepEqual(events, [
+    ['pointerenter', { x: 0.25, y: 0.75 }],
+    ['pointermove', { x: 0.25, y: 0.75 }],
+    ['pointerdown', { x: 0.25, y: 0.75 }],
+  ])
+})
