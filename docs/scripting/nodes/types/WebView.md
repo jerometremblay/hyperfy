@@ -5,7 +5,7 @@ Embeds an interactive iframe in either 3D world space or 2D screen space. WebVie
 - **World Space**: Iframes positioned in 3D space using CSS3D rendering with proper depth occlusion, allowing 3D objects to pass in front naturally.
 - **Screen Space**: Iframes positioned as 2D overlays using CSS absolute positioning, like traditional UI elements.
 
-When players click on a WebView, their pointer is unlocked so they can interact with the iframe content (world space mode only).
+When players click on a WebView, their pointer is unlocked so they can interact with the iframe content (world space mode only). Each client has its own iframe and page state. For a shared read-only browser screen, use the [`browser`](Browser.md) node instead: the server captures the page once and distributes the same screenshot texture to every client.
 
 ## Properties
 
@@ -56,13 +56,17 @@ When `true`, the iframe content is visible from both the front and back of the p
 
 This property has no effect in screen space mode.
 
+### `.interactive`: Boolean
+
+Whether the iframe accepts pointer interaction. Defaults to `true`. Set to `false` for a read-only browser screen.
+
 ### `.onPointerDown`: Function
 
 **World space only.** Callback function triggered when a player clicks on the WebView.
 
 By default, clicking unlocks the pointer to allow iframe interaction. In build mode, pointer unlocking is automatically prevented. You can override this behavior by setting a custom `onPointerDown` handler and calling `e.preventDefault()`.
 
-In screen space mode, the iframe is always interactive and pointer events work like regular DOM elements.
+In screen space mode, pointer events work like regular DOM elements when `.interactive` is `true`.
 
 ```javascript
 webview.onPointerDown = (e) => {
@@ -88,3 +92,19 @@ const webview = app.create('webview', {
 })
 app.add(webview)
 ```
+
+### Independent Read-only Browser Screen
+
+```javascript
+const browser = app.create('webview', {
+  src: 'https://example.com',
+  width: 2.4,
+  height: 1.35,
+  factor: 160,
+  interactive: false,
+  position: [0, 1.5, -2],
+})
+app.add(browser)
+```
+
+Use [`browser`](Browser.md) when every user must see the same page state.

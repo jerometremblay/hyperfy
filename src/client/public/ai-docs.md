@@ -53,6 +53,7 @@ const cylinder = app.create('prim', {
   size: [0.5, 0.5, 1], // topRadius, bottomRadius, height
   color: '#0000ff' // blue
 })
+
 ```
 
 ## Extrusion primitives
@@ -129,6 +130,21 @@ Creating a node (eg a prim) does not be make it visible. Only nodes added to the
 ```jsx
 app.add(boxA)
 ```
+
+For a shared read-only browser screen, use the `browser` node. The server captures the URL once and all clients display the same screenshot texture. It requires Chrome running with the DevTools Protocol enabled on the server.
+
+```javascript
+const browser = app.create('browser', {
+  src: 'https://ici.radio-canada.ca/',
+  width: 2.4,
+  height: 1.35,
+  interval: 1000,
+  position: [0, 1.5, -2],
+})
+app.add(browser)
+```
+
+Use `webview` when each user should have an independent iframe instead.
 
 ## Nested Hierarchy
 
