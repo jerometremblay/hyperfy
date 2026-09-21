@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
+import { VRMSpringBoneCollider, VRMSpringBoneColliderShapeSphere } from '@pixiv/three-vrm'
 import * as THREE from 'three'
 
 const editorBundle = await build({
@@ -14,11 +15,44 @@ const editorBundle = await build({
 const { ClientPoseEditor } = await import(
   `data:text/javascript;base64,${Buffer.from(editorBundle.outputFiles[0].contents).toString('base64')}`
 )
+const cloneBundle = await build({
+  entryPoints: [fileURLToPath(new URL('../extras/cloneAvatarScene.js', import.meta.url))],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  write: false,
+})
+const { cloneAvatarScene } = await import(
+  `data:text/javascript;base64,${Buffer.from(cloneBundle.outputFiles[0].contents).toString('base64')}`
+)
 
 function createFixture({ pointerLocked = false, profileId = null } = {}) {
   const scene = new THREE.Scene()
+  const viewportListeners = new Map()
+  const capturedPointers = []
   const viewport = {
     style: {},
+    ownerDocument: { pointerLockElement: null },
+    addEventListener(type, listener) {
+      const listeners = viewportListeners.get(type) ?? new Set()
+      listeners.add(listener)
+      viewportListeners.set(type, listeners)
+    },
+    removeEventListener(type, listener) {
+      viewportListeners.get(type)?.delete(listener)
+    },
+    dispatchEvent(event) {
+      for (const listener of viewportListeners.get(event.type) ?? []) listener(event)
+    },
+    setPointerCapture(pointerId) {
+      capturedPointers.push(pointerId)
+    },
+    releasePointerCapture() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+    capturedPointers,
+  }
+  const canvas = {
+    style: { pointerEvents: 'none' },
     addEventListener() {},
     removeEventListener() {},
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -174,7 +208,7 @@ function createFixture({ pointerLocked = false, profileId = null } = {}) {
     xr: { session: null },
     entities,
     controls,
-    graphics: { viewport },
+    graphics: { viewport, renderer: { domElement: canvas } },
     rig,
     camera,
     stage: { scene },
@@ -183,7 +217,7 @@ function createFixture({ pointerLocked = false, profileId = null } = {}) {
   const editor = new ClientPoseEditor(engineWorld)
   editor.start()
 
-  return { anchor, control, editor, engineWorld, events, head, hips, networkMessages, player, scene, sourceScene }
+  return { anchor, canvas, control, editor, engineWorld, events, head, hips, networkMessages, player, scene, sourceScene }
 }
 
 function syncEditorCamera(world, control) {
@@ -224,13 +258,153 @@ test('opens a local duplicate of the seated avatar without submitting pose chang
   )
 })
 
+test('keeps the skinned avatar aligned with its skeleton in the posture preview', () => {
+  const { anchor, editor, player, sourceScene } = createFixture()
+  const hips = sourceScene.getObjectByName('hips')
+  const head = sourceScene.getObjectByName('head')
+  const skeletonRoot = new THREE.Bone()
+  skeletonRoot.name = 'rig-root'
+
+  // The live avatar binds in asset-local space, then detaches its root bone
+  // before the avatar scene receives its seat/world transform.
+  sourceScene.matrix.identity()
+  sourceScene.updateMatrixWorld(true)
+  sourceScene.remove(hips)
+  skeletonRoot.add(hips)
+  sourceScene.add(skeletonRoot)
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3))
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute([1, 0, 0, 0], 4))
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute([1, 0, 0, 0], 4))
+  const body = new THREE.SkinnedMesh(geometry, new THREE.MeshBasicMaterial())
+  body.name = 'skinned-body'
+  sourceScene.add(body)
+  sourceScene.updateMatrixWorld(true)
+  body.bind(new THREE.Skeleton([skeletonRoot, hips]))
+  body.bindMode = THREE.DetachedBindMode
+  body.bindMatrix.copy(body.matrixWorld)
+  body.bindMatrixInverse.copy(body.bindMatrix).invert()
+  skeletonRoot.removeFromParent()
+  skeletonRoot.updateMatrixWorld(true)
+  sourceScene.matrix.copy(anchor)
+  sourceScene.updateMatrixWorld(true)
+
+  player.avatar.factory.cloneScene = cloneAvatarScene
+  player.avatar.factory.getNormalizedPose = () => ({
+    hips: { rotation: hips.quaternion.toArray(), position: hips.position.toArray() },
+    head: { rotation: head.quaternion.toArray() },
+  })
+
+  assert.equal(editor.open(player), true)
+
+  const previewBody = editor.session.previewScene.getObjectByName('skinned-body')
+  const previewHips = editor.session.previewScene.getObjectByName('hips')
+  previewBody.updateMatrixWorld(true)
+  const skinnedPoint = new THREE.Vector3().fromBufferAttribute(previewBody.geometry.attributes.position, 0)
+  previewBody.applyBoneTransform(0, skinnedPoint)
+  previewBody.localToWorld(skinnedPoint)
+  const skeletonPoint = previewHips.getWorldPosition(new THREE.Vector3())
+
+  assert.ok(
+    skinnedPoint.distanceTo(skeletonPoint) < 1e-6,
+    `skinned vertex ${skinnedPoint.toArray()} should align with skeleton joint ${skeletonPoint.toArray()}`
+  )
+  editor.close()
+})
+
+test('keeps menu pointer events away from the joint gizmo without breaking viewport input', () => {
+  const { editor, engineWorld, player } = createFixture()
+
+  assert.equal(editor.open(player), true)
+  assert.notEqual(engineWorld.graphics.viewport.style.pointerEvents, 'none')
+  assert.equal(engineWorld.graphics.renderer.domElement.style.pointerEvents, 'none')
+  editor.gizmo.enabled = true
+
+  const previousDocument = globalThis.document
+  globalThis.document = { pointerLockElement: null }
+  try {
+    engineWorld.graphics.viewport.dispatchEvent({
+      type: 'pointerdown',
+      isCoreUI: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 50,
+      clientY: 50,
+    })
+    assert.deepEqual(engineWorld.graphics.viewport.capturedPointers, [])
+
+    engineWorld.graphics.viewport.dispatchEvent({
+      type: 'pointerdown',
+      pointerId: 2,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 50,
+      clientY: 50,
+    })
+    assert.deepEqual(engineWorld.graphics.viewport.capturedPointers, [2])
+  } finally {
+    if (previousDocument === undefined) delete globalThis.document
+    else globalThis.document = previousDocument
+    editor.close()
+  }
+})
+
+test('opens an avatar preview with VRM spring colliders without mutating the source avatar', t => {
+  t.mock.method(console, 'error', () => {})
+  const { editor, player, sourceScene } = createFixture()
+  const collider = new VRMSpringBoneCollider(
+    new VRMSpringBoneColliderShapeSphere({ offset: new THREE.Vector3(0.1, 0, 0), radius: 0.05 })
+  )
+  collider.name = 'vrm-spring-bone-collider'
+  sourceScene.add(collider)
+
+  assert.equal(editor.open(player), true)
+  assert.equal(editor.session.previewScene.getObjectByName(collider.name), undefined)
+  assert.equal(collider.parent, sourceScene)
+
+  editor.close()
+})
+
+test('explains when the seated avatar is not supported by the pose editor', () => {
+  const { editor, events, player } = createFixture()
+  player.avatar.factory.cloneScene = null
+
+  assert.equal(editor.open(player), false)
+  const error = 'Pose editing requires a VRM humanoid avatar.'
+  assert.deepEqual(editor.getViewState(), { active: false, error })
+  assert.deepEqual(events.at(-1), ['poseEditor', { active: false, error }])
+})
+
 test('only opens while the local player is attached to a seat anchor', () => {
-  const { editor, player, scene } = createFixture()
+  const { editor, events, player, scene } = createFixture()
   player.getAnchorMatrix = () => null
 
   assert.equal(editor.open(player), false)
   assert.equal(scene.children.length, 0)
   assert.equal(player.avatar.visible, true)
+  const error = 'The seat anchor is not available. Try sitting down again.'
+  assert.deepEqual(editor.getViewState(), { active: false, error })
+  assert.deepEqual(events.at(-1), ['poseEditor', { active: false, error }])
+})
+
+test('explains when the avatar preview cannot be created and allows dismissing the message', t => {
+  t.mock.method(console, 'error', () => {})
+  const { editor, events, player } = createFixture()
+  player.avatar.factory.cloneScene = () => {
+    throw new Error('test clone failure')
+  }
+
+  assert.equal(editor.open(player), false)
+  const error = 'Could not create the avatar preview: test clone failure'
+  assert.deepEqual(editor.getViewState(), { active: false, error })
+  assert.deepEqual(events.at(-1), ['poseEditor', { active: false, error }])
+  assert.equal(player.avatar.visible, true)
+
+  assert.equal(editor.clearOpenError(), true)
+  assert.deepEqual(editor.getViewState(), { active: false })
+  assert.deepEqual(events.at(-1), ['poseEditor', { active: false }])
 })
 
 test('orbits and zooms the preview, then Escape restores the original camera state', () => {
@@ -324,6 +498,46 @@ test('clicking a joint marker selects its normalized humanoid bone', () => {
 
   assert.equal(editor.session.selectedBone, 'head')
   assert.equal(editor.session.selectedMarker.userData.poseBoneName, 'head')
+  editor.close()
+})
+
+test('clicking an articulation marker still selects it when the gizmo also hits', () => {
+  const { control, editor, engineWorld, player } = createFixture()
+  assert.equal(editor.open(player), true)
+  editor.setMode('posture')
+  syncEditorCamera(engineWorld, control)
+
+  const headPosition = editor.getBone('head').getWorldPosition(new THREE.Vector3())
+  control.pointer.coords.copy(pointerCoordsAt(engineWorld, headPosition))
+  control.mouseLeft.down = true
+  control.mouseLeft.pressed = true
+
+  // TransformControls reports a handle hit before the editor processes this click.
+  editor.gizmo.axis = 'X'
+  editor.gizmo.dragging = true
+  editor.gizmo.dispatchEvent({ type: 'mouseDown' })
+  editor.update(1 / 60)
+
+  assert.equal(editor.session.selectedBone, 'head')
+  assert.equal(editor.gizmoActive, false)
+  editor.close()
+})
+
+test('keeps the rotation gizmo active when no articulation marker is hit', () => {
+  const { control, editor, engineWorld, player } = createFixture()
+  assert.equal(editor.open(player), true)
+  editor.setMode('posture')
+  syncEditorCamera(engineWorld, control)
+  control.pointer.coords.set(0.98, 0.02, 0)
+
+  editor.gizmo.axis = 'X'
+  editor.gizmo.dragging = true
+  editor.gizmo.dispatchEvent({ type: 'mouseDown' })
+
+  assert.equal(editor.gizmoActive, true)
+  assert.equal(editor.session.selectedBone, 'hips')
+  editor.gizmo.pointerUp(null)
+  assert.equal(editor.gizmoActive, false)
   editor.close()
 })
 

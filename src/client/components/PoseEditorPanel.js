@@ -65,9 +65,58 @@ export function PoseEditorPanel({ world }) {
     if (state.active && state.previewAvatarUrl) setPreviewUrl(state.previewAvatarUrl)
   }, [state.active, state.previewAvatarUrl])
 
-  if (!state.active) return null
-
   const editor = world.poseEditor
+  if (!state.active) {
+    if (!state.error) return null
+    return (
+      <section
+        aria-label='Sitting pose editor message'
+        role='alert'
+        css={css`
+          position: absolute;
+          right: 1.5rem;
+          bottom: 5.5rem;
+          z-index: 30;
+          display: flex;
+          align-items: flex-start;
+          gap: 0.75rem;
+          width: min(24rem, calc(100vw - 2rem));
+          box-sizing: border-box;
+          padding: 0.75rem;
+          border: 1px solid rgba(255, 120, 120, 0.45);
+          border-radius: 0.6rem;
+          color: #ffdede;
+          background: rgba(35, 20, 24, 0.96);
+          box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.35);
+          font-size: 0.875rem;
+          line-height: 1.4;
+          pointer-events: auto;
+          button {
+            flex: 0 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 0.35rem;
+            padding: 0.25rem 0.45rem;
+            color: inherit;
+            background: rgba(255, 255, 255, 0.08);
+            font: inherit;
+            cursor: pointer;
+          }
+          @media (max-width: 42rem) {
+            right: 0.75rem;
+            bottom: 4.5rem;
+            left: 0.75rem;
+            width: auto;
+          }
+        `}
+      >
+        <span>{state.error}</span>
+        <button type='button' onClick={() => editor.clearOpenError()}>
+          Dismiss
+        </button>
+      </section>
+    )
+  }
+
   const selectedRotation = state.selectedRotation || { x: 0, y: 0, z: 0 }
   const hipsPosition = state.hipsPosition || [0, 0, 0]
   const placement = state.placement || { position: [0, 0, 0], yaw: 0 }

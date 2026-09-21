@@ -1,6 +1,7 @@
 import * as THREE from '../extras/three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { ControlPriorities } from '../extras/ControlPriorities'
+import { getAvatarFocus } from '../extras/avatarFocus'
 import {
   clampBoneRotation,
   getBoneRotationEuler,
@@ -35,6 +36,41 @@ const MAX_DISTANCE = 10
 const MAX_PITCH = 1.2
 const HISTORY_LIMIT = 50
 const UP = new THREE.Vector3(0, 1, 0)
+
+function createCoreUIFilteredTarget(viewport) {
+  const listeners = new Map()
+  return {
+    style: viewport.style,
+    get ownerDocument() {
+      return viewport.ownerDocument
+    },
+    getBoundingClientRect: () => viewport.getBoundingClientRect(),
+    setPointerCapture: pointerId => viewport.setPointerCapture(pointerId),
+    releasePointerCapture: pointerId => viewport.releasePointerCapture(pointerId),
+    addEventListener(type, listener, options) {
+      let typeListeners = listeners.get(type)
+      if (!typeListeners) {
+        typeListeners = new Map()
+        listeners.set(type, typeListeners)
+      }
+      if (typeListeners.has(listener)) return
+
+      const filteredListener = event => {
+        if (!event.isCoreUI) listener.call(viewport, event)
+      }
+      typeListeners.set(listener, filteredListener)
+      viewport.addEventListener(type, filteredListener, options)
+    },
+    removeEventListener(type, listener, options) {
+      const typeListeners = listeners.get(type)
+      const filteredListener = typeListeners?.get(listener)
+      if (!filteredListener) return
+      viewport.removeEventListener(type, filteredListener, options)
+      typeListeners.delete(listener)
+      if (typeListeners.size === 0) listeners.delete(type)
+    },
+  }
+}
 
 const LIMBS = {
   leftHand: {
@@ -80,6 +116,20 @@ function copyJSON(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
+function removeSpringBoneColliders(scene) {
+  const colliders = []
+  scene.traverse(node => {
+    if (node.colliderMatrix?.isMatrix4 && !node.shape) colliders.push(node)
+  })
+  for (const collider of colliders) collider.removeFromParent()
+}
+
+function setPreviewSkinnedMeshesAttached(scene) {
+  scene.traverse(node => {
+    if (node.isSkinnedMesh) node.bindMode = THREE.AttachedBindMode
+  })
+}
+
 function vectorArray(value, maxAbs = 5) {
   const array = value?.isVector3 ? value.toArray() : value
   if (!Array.isArray(array) || array.length !== 3) return null
@@ -111,6 +161,7 @@ export class ClientPoseEditor extends System {
     super(world)
     this.control = null
     this.session = null
+    this.openError = null
     this.styles = []
     this.raycaster = new THREE.Raycaster()
     this.pointerNDC = new THREE.Vector2()
@@ -130,14 +181,35 @@ export class ClientPoseEditor extends System {
   }
 
   getViewState() {
-    return this.session ? this.makeViewState() : { active: false }
+    if (this.session) return this.makeViewState()
+    return this.openError ? { active: false, error: this.openError } : { active: false }
+  }
+
+  rejectOpen(message) {
+    this.openError = message
+    this.world.emit('poseEditor', { active: false, error: message })
+    return false
+  }
+
+  clearOpenError() {
+    if (!this.openError) return false
+    this.openError = null
+    this.world.emit('poseEditor', { active: false })
+    return true
   }
 
   open(player, options = {}) {
     if (this.session) return this.session.player === player
-    if (!this.control || !this.world.network?.isClient) return false
-    if (!player?.isLocal || this.world.entities.player !== player) return false
-    if (player.isXR || this.world.xr?.session) return false
+    this.openError = null
+    if (!this.control || !this.world.network?.isClient) {
+      return this.rejectOpen('The pose editor is not ready yet. Try again shortly.')
+    }
+    if (!player?.isLocal || this.world.entities.player !== player) {
+      return this.rejectOpen('Customize sitting is only available for your local avatar.')
+    }
+    if (player.isXR || this.world.xr?.session) {
+      return this.rejectOpen('Exit VR before customizing a sitting pose.')
+    }
 
     const anchor = player.getAnchorMatrix?.()
     const anchorId = player.data.effect?.anchorId
@@ -145,7 +217,15 @@ export class ClientPoseEditor extends System {
     const avatarNode = player.avatar
     const sourceScene = avatarNode?.instance?.raw?.scene
     const factory = avatarNode?.factory
-    if (!anchor || !sourceScene || !factory?.cloneScene || !factory?.getNormalizedPose) return false
+    if (!anchorId || !anchor) {
+      return this.rejectOpen('The seat anchor is not available. Try sitting down again.')
+    }
+    if (!sourceScene) {
+      return this.rejectOpen('Your seated avatar is still loading. Try again shortly.')
+    }
+    if (!factory?.cloneScene || !factory?.getNormalizedPose || !factory?.applyNormalizedPose) {
+      return this.rejectOpen('Pose editing requires a VRM humanoid avatar.')
+    }
 
     let preview
     let previewScene
@@ -162,13 +242,15 @@ export class ClientPoseEditor extends System {
 
       const cloned = factory.cloneScene(sourceScene)
       previewScene = cloned.scene
-      if (!previewScene) return false
+      if (!previewScene) throw new Error('The avatar preview scene is empty')
       previewScene.matrix.identity()
       previewScene.matrixAutoUpdate = false
       previewScene.matrixWorldAutoUpdate = true
       for (const root of cloned.detachedRoots || []) {
         if (!isWithin(root, previewScene)) previewScene.add(root)
       }
+      removeSpringBoneColliders(previewScene)
+      setPreviewSkinnedMeshesAttached(previewScene)
 
       preview = new THREE.Group()
       preview.name = 'avatar-pose-preview'
@@ -194,13 +276,9 @@ export class ClientPoseEditor extends System {
       preview.updateMatrixWorld(true)
       skeletonHelper.updateMatrixWorld(true)
 
-      const bounds = new THREE.Box3().setFromObject(preview)
+      const bounds = new THREE.Box3()
+      const focus = getAvatarFocus(preview, avatarNode.getHeight?.(), new THREE.Vector3(), bounds)
       const size = bounds.getSize(new THREE.Vector3())
-      const focus = bounds.getCenter(new THREE.Vector3())
-      if (bounds.isEmpty()) {
-        preview.getWorldPosition(focus)
-        focus.y += avatarNode.getHeight?.() / 2 || 0.85
-      }
       const focusAvatarLocal = focus.clone().applyMatrix4(preview.matrixWorld.clone().invert())
       const worldRotation = new THREE.Quaternion()
       preview.matrixWorld.decompose(new THREE.Vector3(), worldRotation, new THREE.Vector3())
@@ -308,7 +386,7 @@ export class ClientPoseEditor extends System {
           skeletonHelper.material.dispose()
         }
       }
-      return false
+      return this.rejectOpen(`Could not create the avatar preview: ${error?.message || 'unknown error'}`)
     }
   }
 
@@ -432,11 +510,13 @@ export class ClientPoseEditor extends System {
   selectJointAtPointer() {
     const session = this.session
     const ray = this.getPointerRay()
-    if (!session || session.applying || !ray) return
+    if (!session || session.applying || !ray) return false
     const markers = [...session.jointMarkers.values(), session.selectedMarker].filter(marker => marker.visible)
     const hit = this.raycaster.intersectObjects(markers, false)[0]
     const boneName = hit?.object?.userData?.poseBoneName
-    if (boneName) this.setSelectedBone(boneName)
+    if (!boneName) return false
+    this.setSelectedBone(boneName)
+    return true
   }
 
   lateUpdate() {
@@ -533,6 +613,8 @@ export class ClientPoseEditor extends System {
     for (const root of cloned.detachedRoots || []) {
       if (!isWithin(root, previewScene)) previewScene.add(root)
     }
+    removeSpringBoneColliders(previewScene)
+    setPreviewSkinnedMeshesAttached(previewScene)
     factory.applyNormalizedPose(previewScene, session.pose)
     previewScene.updateWorldMatrix(true, true)
 
@@ -570,13 +652,14 @@ export class ClientPoseEditor extends System {
     this.world.stage.scene.add(skeletonHelper)
 
     session.preview.updateMatrixWorld(true)
-    const bounds = new THREE.Box3().setFromObject(session.preview)
+    const bounds = new THREE.Box3()
+    const focus = getAvatarFocus(
+      session.preview,
+      session.avatarNode.getHeight?.(),
+      new THREE.Vector3(),
+      bounds
+    )
     const size = bounds.getSize(new THREE.Vector3())
-    const focus = bounds.getCenter(new THREE.Vector3())
-    if (bounds.isEmpty()) {
-      session.preview.getWorldPosition(focus)
-      focus.y += session.avatarNode.getHeight?.() / 2 || 0.85
-    }
     session.focusAvatarLocal.copy(focus).applyMatrix4(session.preview.matrixWorld.clone().invert())
     session.orbit.target.copy(focus)
     session.orbit.distance = THREE.MathUtils.clamp(Math.max(size.y * 1.45, size.length() * 0.8), 1.5, MAX_DISTANCE)
@@ -1120,11 +1203,15 @@ export class ClientPoseEditor extends System {
     const viewport = this.world.graphics?.viewport
     if (!session || !viewport) return
 
-    const gizmo = new TransformControls(this.world.camera, viewport)
+    const gizmo = new TransformControls(this.world.camera, createCoreUIFilteredTarget(viewport))
     gizmo.mode = 'rotate'
     gizmo.space = 'local'
     gizmo.setSize(0.7)
     gizmo.addEventListener('mouseDown', () => {
+      if (this.selectJointAtPointer()) {
+        gizmo.pointerUp(null)
+        return
+      }
       this.gizmoActive = true
       this.beginHistoryGroup()
     })
@@ -1444,8 +1531,12 @@ export class ClientPoseEditor extends System {
 
   close() {
     const session = this.session
-    if (!session) return false
+    if (!session) {
+      this.clearOpenError()
+      return false
+    }
     this.session = null
+    this.openError = null
     this.destroyJointGizmo()
 
     this.world.stage.scene.remove(session.preview)

@@ -12,6 +12,7 @@ import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
 import { getMatchingSeatPose } from '../extras/seatPose'
+import { getAvatarFocus } from '../extras/avatarFocus'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const DOWN = new THREE.Vector3(0, -1, 0)
@@ -166,6 +167,8 @@ export class PlayerLocal extends Entity {
     this.base.activate({ world: this.world, entity: this })
 
     this.camHeight = DEFAULT_CAM_HEIGHT
+    this.cameraFocus = new THREE.Vector3()
+    this.cameraFocusBounds = new THREE.Box3()
 
     this.cam = {}
     this.cam.position = new THREE.Vector3().copy(this.base.position)
@@ -1167,8 +1170,18 @@ export class PlayerLocal extends Entity {
     if (xr) {
       // ...
     } else {
-      // and vertically at our vrm model height
-      this.cam.position.y += this.camHeight
+      if (anchor && !this.firstPerson && this.avatar?.instance?.raw?.scene) {
+        getAvatarFocus(
+          this.avatar.instance.raw.scene,
+          this.avatar.getHeight(),
+          this.cameraFocus,
+          this.cameraFocusBounds
+        )
+        this.cam.position.copy(this.cameraFocus)
+      } else {
+        // Keep the default shoulder view while upright and preserve first-person framing.
+        this.cam.position.y += this.camHeight
+      }
       // and slightly to the right over the avatars shoulder, when not first person / xr
       if (!this.firstPerson) {
         const forward = v1.copy(FORWARD).applyQuaternion(this.cam.quaternion)
