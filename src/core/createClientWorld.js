@@ -23,6 +23,7 @@ import { Snaps } from './systems/Snaps'
 import { Wind } from './systems/Wind'
 import { XR } from './systems/XR'
 import { ClientAI } from './systems/ClientAI'
+import { ClientPoseEditor } from './systems/ClientPoseEditor'
 
 export function createClientWorld() {
   const world = new World()
@@ -42,6 +43,7 @@ export function createClientWorld() {
   world.register('actions', ClientActions)
   world.register('target', ClientTarget)
   world.register('ui', ClientUI)
+  world.register('poseEditor', ClientPoseEditor)
   world.register('lods', LODs)
   world.register('nametags', Nametags)
   world.register('particles', Particles)

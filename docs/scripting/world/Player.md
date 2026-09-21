@@ -63,6 +63,24 @@ const dir = FORWARD.clone().applyQuaternion(quat).normalize()
 world.getPlayer().push(dir.multiplyScalar(30)) // short forward burst
 ```
 
+### `.editSittingPose({ guides })`
+
+Opens the local sitting-pose editor while this client is occupying an anchor. Furniture apps can provide optional alignment guides in anchor-local coordinates. An anchor's optional `profileId` enables an explicit action to save the calibration for other compatible seat instances; the normal Apply action stays specific to the current anchor. It returns `false` when called for another player, outside a seat, or in VR.
+
+```js
+world.getPlayer().editSittingPose({
+  guides: {
+    seat: [0, 0.45, 0],
+    backrest: [0, 1.05, -0.2],
+    leftArmrest: [-0.35, 0.75, 0],
+    rightArmrest: [0.35, 0.75, 0],
+    floorY: 0,
+  },
+})
+```
+
+The editor preview is local until Apply. Applying saves a pose for the current player, avatar, and anchor and shares the resulting avatar placement and pose with everyone in the world.
+
 ### `.getBoneTransform(boneName)`: Matrix4
 
 Returns a matrix of the bone transform in world space.

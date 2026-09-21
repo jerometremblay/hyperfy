@@ -11,6 +11,7 @@ import { Emotes } from '../extras/playerEmotes'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
+import { getMatchingSeatPose } from '../extras/seatPose'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const DOWN = new THREE.Vector3(0, -1, 0)
@@ -199,9 +200,11 @@ export class PlayerLocal extends Entity {
     this.world.loader
       .load('avatar', avatarUrl)
       .then(src => {
+        if (this.getAvatarUrl() !== avatarUrl) return
         if (this.avatar) this.avatar.deactivate()
         this.avatar = src.toNodes().get('avatar')
         this.avatar.disableRateCheck() // max fps for local player
+        this.applySeatPose()
         this.base.add(this.avatar)
         this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
         this.bubble.position.y = this.avatar.getHeadToHeight() + 0.2
@@ -210,10 +213,19 @@ export class PlayerLocal extends Entity {
         }
         this.avatarUrl = avatarUrl
         this.camHeight = this.avatar.height * 0.9
+        this.world.emit('player', this)
       })
       .catch(err => {
         console.error(err)
       })
+  }
+
+  applySeatPose() {
+    if (!this.avatar) return
+    const seatPose = getMatchingSeatPose(this.data, this.getAvatarUrl())
+    this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
+    this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
+    this.avatar.setPoseOverride(seatPose?.pose || null)
   }
 
   initCapsule() {
@@ -432,6 +444,14 @@ export class PlayerLocal extends Entity {
     if (!anchor && this.capsuleDisabled) {
       this.capsule.setActorFlag(PHYSX.PxActorFlagEnum.eDISABLE_SIMULATION, false)
       this.capsuleDisabled = false
+    }
+
+    if (this.poseEditorActive) {
+      this.jumpDown = false
+      this.jumpPressed = false
+      this.moveDir.set(0, 0, 0)
+      this.moving = false
+      return
     }
 
     if (anchor) {
@@ -778,6 +798,22 @@ export class PlayerLocal extends Entity {
   }
 
   update(delta) {
+    if (this.poseEditorActive) {
+      this.moveDir.set(0, 0, 0)
+      this.axis.set(0, 0, 0)
+      this.moving = false
+      this.running = false
+      this.jumpDown = false
+      this.jumpPressed = false
+      this.mode = Modes.IDLE
+      const emote = this.data.effect?.emote || null
+      if (this.emote !== emote) this.emote = emote
+      this.avatar?.setEmote(this.emote)
+      this.avatar?.instance?.setLocomotion(this.mode, this.axis, this.gaze)
+      this.updateEffectDuration(delta)
+      return
+    }
+
     const xr = this.isXR
     const freeze = this.data.effect?.freeze
     const anchor = this.getAnchorMatrix()
@@ -1101,13 +1137,13 @@ export class PlayerLocal extends Entity {
       this.lastSendAt = 0
     }
 
-    // effect duration
-    if (this.data.effect?.duration) {
-      this.data.effect.duration -= delta
-      if (this.data.effect.duration <= 0) {
-        this.setEffect(null)
-      }
-    }
+    this.updateEffectDuration(delta)
+  }
+
+  updateEffectDuration(delta) {
+    if (!this.data.effect?.duration) return
+    this.data.effect.duration -= delta
+    if (this.data.effect.duration <= 0) this.setEffect(null)
   }
 
   lateUpdate(delta) {
@@ -1125,6 +1161,7 @@ export class PlayerLocal extends Entity {
       this.base.position.toPxTransform(pose)
       this.capsuleHandle.snap(pose)
     }
+    if (this.poseEditorActive) return
     // make camera follow our position horizontally
     this.cam.position.copy(this.base.position)
     if (xr) {
@@ -1186,6 +1223,8 @@ export class PlayerLocal extends Entity {
     }
     this.data.effect = effect
     this.onEffectEnd = onEnd
+    this.applySeatPose()
+    this.world.emit('player', this)
     // send network update
     this.world.network.send('entityModified', {
       id: this.data.id,
@@ -1262,6 +1301,7 @@ export class PlayerLocal extends Entity {
     if (data.hasOwnProperty('sessionAvatar')) {
       this.data.sessionAvatar = data.sessionAvatar
       avatarChanged = true
+      changed = true
     }
     if (data.hasOwnProperty('ef')) {
       if (this.data.effect) {
@@ -1270,6 +1310,11 @@ export class PlayerLocal extends Entity {
         this.onEffectEnd = null
       }
       this.data.effect = data.ef
+      changed = true
+    }
+    if (Object.hasOwn(data, 'seatPose')) {
+      this.data.seatPose = data.seatPose
+      changed = true
     }
     if (data.hasOwnProperty('rank')) {
       this.data.rank = data.rank
@@ -1278,6 +1323,9 @@ export class PlayerLocal extends Entity {
     }
     if (avatarChanged) {
       this.applyAvatar()
+    }
+    if (avatarChanged || Object.hasOwn(data, 'ef') || Object.hasOwn(data, 'seatPose')) {
+      this.applySeatPose()
     }
     if (changed) {
       this.world.emit('player', this)

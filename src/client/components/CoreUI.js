@@ -17,6 +17,7 @@ import { ControlPriorities } from '../../core/extras/ControlPriorities'
 // import { MenuApp } from './MenuApp'
 import { ChevronDoubleUpIcon, HandIcon } from './Icons'
 import { Sidebar } from './Sidebar'
+import { PoseEditorPanel, SittingPoseButton } from './PoseEditorPanel'
 
 export function CoreUI({ world }) {
   const ref = useRef()
@@ -54,6 +55,10 @@ export function CoreUI({ world }) {
       world.off('disconnect', setDisconnected)
     }
   }, [])
+
+  useEffect(() => {
+    if (ready) setPlayer(world.entities.player)
+  }, [ready, world])
 
   useEffect(() => {
     const elem = ref.current
@@ -95,6 +100,8 @@ export function CoreUI({ world }) {
       {!ui.reticleSuppressors && <Reticle world={world} />}
       {<Toast world={world} />}
       {ready && <ActionsBlock world={world} />}
+      {ready && <SittingPoseButton world={world} player={player} />}
+      {ready && <PoseEditorPanel world={world} />}
       {ready && <Sidebar world={world} ui={ui} />}
       {ready && <Chat world={world} />}
       {/* {ready && <Side world={world} player={player} menu={menu} />} */}

@@ -6,6 +6,7 @@ import { LerpVector3 } from '../extras/LerpVector3'
 import { hasRank, Ranks } from '../extras/ranks'
 import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
+import { getMatchingSeatPose } from '../extras/seatPose'
 
 let capsuleGeometry
 {
@@ -96,8 +97,10 @@ export class PlayerRemote extends Entity {
     const avatarUrl = this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm'
     if (this.avatarUrl === avatarUrl) return
     this.world.loader.load('avatar', avatarUrl).then(src => {
+      if ((this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm') !== avatarUrl) return
       if (this.avatar) this.avatar.deactivate()
       this.avatar = src.toNodes().get('avatar')
+      this.applySeatPose()
       this.base.add(this.avatar)
       this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
       this.bubble.position.y = this.avatar.getHeadToHeight() + 0.2
@@ -106,6 +109,15 @@ export class PlayerRemote extends Entity {
       }
       this.avatarUrl = avatarUrl
     })
+  }
+
+  applySeatPose() {
+    if (!this.avatar) return
+    const avatarUrl = this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm'
+    const seatPose = getMatchingSeatPose(this.data, avatarUrl)
+    this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
+    this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
+    this.avatar.setPoseOverride(seatPose?.pose || null)
   }
 
   getAnchorMatrix() {
@@ -229,12 +241,18 @@ export class PlayerRemote extends Entity {
       this.data.sessionAvatar = data.sessionAvatar
       avatarChanged = true
     }
+    if (Object.hasOwn(data, 'seatPose')) {
+      this.data.seatPose = data.seatPose
+    }
     if (data.hasOwnProperty('rank')) {
       this.data.rank = data.rank
       this.world.emit('rank', { playerId: this.data.id, rank: this.data.rank })
     }
     if (avatarChanged) {
       this.applyAvatar()
+    }
+    if (avatarChanged || Object.hasOwn(data, 'ef') || Object.hasOwn(data, 'seatPose')) {
+      this.applySeatPose()
     }
   }
 

@@ -1,6 +1,7 @@
 import { getRef } from '../nodes/Node'
 import { clamp, uuid } from '../utils'
 import * as THREE from './three'
+import { getStoredSeatPose } from './seatPose'
 
 const HEALTH_MAX = 100
 
@@ -72,6 +73,10 @@ export function createPlayerProxy(entity, player) {
     getBoneTransform(boneName) {
       return player.avatar?.getBoneTransform?.(boneName)
     },
+    editSittingPose(options = {}) {
+      if (!world.network.isClient || player.data.owner !== world.network.id) return false
+      return world.poseEditor?.open(player, options) || false
+    },
     setSessionAvatar(url) {
       const avatar = url
       if (player.data.owner === world.network.id) {
@@ -130,7 +135,9 @@ export function createPlayerProxy(entity, player) {
       activeEffectConfig = config
       player.setEffect(config.effect, config.onEnd)
       if (world.network.isServer) {
-        world.network.send('entityModified', { id: player.data.id, ef: config.effect })
+        const seatPose = getStoredSeatPose(world, player)
+        player.modify({ seatPose })
+        world.network.send('entityModified', { id: player.data.id, ef: config.effect, seatPose })
       }
       return {
         get active() {

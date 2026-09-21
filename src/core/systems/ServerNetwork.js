@@ -8,6 +8,18 @@ import { appHasBrowserSource } from '../utils/browser'
 import { cloneDeep, isNumber } from 'lodash-es'
 import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
+import {
+  getStoredSeatPose,
+  sanitizeNormalizedPose,
+  sanitizePoseStyleName,
+  sanitizePoseStyles,
+  sanitizeSeatProfileId,
+  sanitizeSeatPoseInput,
+  SEAT_POSE_VERSION,
+  seatPoseProfileStorageKey,
+  seatPoseStorageKey,
+  seatPoseStylesStorageKey,
+} from '../extras/seatPose'
 
 const SAVE_INTERVAL = parseInt(process.env.SAVE_INTERVAL || '60') // seconds
 const PING_RATE = 10 // seconds
@@ -468,8 +480,26 @@ export class ServerNetwork extends System {
   onEntityModified = async (socket, data) => {
     const entity = this.world.entities.get(data.id)
     if (!entity) return console.error('onEntityModified: no entity found', data)
+    if (entity.isPlayer && entity.data.owner !== socket.id) {
+      return console.error('player attempted to modify another player', { socketId: socket.id, playerId: data.id })
+    }
+    if (entity.isPlayer && Object.hasOwn(data, 'seatPose')) {
+      return console.error('player attempted to modify authoritative seat pose data', { playerId: data.id })
+    }
     entity.modify(data)
-    this.send('entityModified', data, socket.id)
+    let changes = data
+    const seatContextChanged =
+      entity.isPlayer &&
+      (Object.hasOwn(data, 'ef') || Object.hasOwn(data, 'avatar') || Object.hasOwn(data, 'sessionAvatar'))
+    if (seatContextChanged) {
+      const seatPose = getStoredSeatPose(this.world, entity)
+      entity.modify({ seatPose })
+      changes = { ...data, seatPose }
+    }
+    this.send('entityModified', changes, socket.id)
+    if (seatContextChanged) {
+      socket.send('entityModified', { id: entity.data.id, seatPose: changes.seatPose })
+    }
     if (entity.isApp) {
       // mark for saving
       this.dirtyApps.add(entity.data.id)
@@ -511,6 +541,84 @@ export class ServerNetwork extends System {
     this.browserCapture?.dispatchInput(entityId, url, input).catch(error => {
       console.error('[browser] input failed:', error.message)
     })
+  }
+
+  onPlayerSeatPose = (socket, data) => {
+    const player = socket.player
+    const reject = message => socket.send('playerSeatPoseResult', { ok: false, message })
+    if (!player?.isPlayer || player.data.owner !== socket.id || player.data.id !== socket.id) {
+      return reject('Only your own player can save a sitting pose')
+    }
+
+    const anchorId = player.data.effect?.anchorId
+    if (!anchorId || !this.world.anchors.get(anchorId)) {
+      return reject('You must be sitting in a seat to save its pose')
+    }
+    if (data?.anchorId !== anchorId) return reject('Your seat changed; reopen the pose editor')
+
+    const profileId = sanitizeSeatProfileId(this.world.anchors.getProfileId?.(anchorId))
+    if ((sanitizeSeatProfileId(data?.profileId) || null) !== profileId) {
+      return reject('Your furniture profile changed; reopen the pose editor')
+    }
+    if (Object.hasOwn(data, 'saveToProfile') && typeof data.saveToProfile !== 'boolean') {
+      return reject('The furniture profile option is invalid')
+    }
+    const saveToProfile = data.saveToProfile === true
+    if (saveToProfile && !profileId) return reject('This seat has no reusable furniture profile')
+
+    const avatarUrl = player.data.sessionAvatar || player.data.avatar || 'asset://avatar.vrm'
+    if (data?.avatarUrl !== avatarUrl) return reject('Your avatar changed; reopen the pose editor')
+    const pose = sanitizeSeatPoseInput(data)
+    if (!pose) return reject('The sitting pose data is invalid')
+    if (!this.world.storage?.set) return reject('Pose persistence is unavailable')
+
+    const record = { version: SEAT_POSE_VERSION, anchorId, ...(profileId ? { profileId } : {}), ...pose }
+    const userId = player.data.userId || player.data.id
+    this.world.storage.set(seatPoseStorageKey(userId, avatarUrl, anchorId), record)
+    if (saveToProfile) {
+      this.world.storage.set(seatPoseProfileStorageKey(userId, avatarUrl, profileId), {
+        version: SEAT_POSE_VERSION,
+        profileId,
+        ...pose,
+      })
+    }
+    player.modify({ seatPose: record })
+    this.send('entityModified', { id: player.data.id, seatPose: record })
+    socket.send('playerSeatPoseResult', { ok: true })
+  }
+
+  onPlayerSeatPoseStyles = (socket, data = {}) => {
+    const player = socket.player
+    const reply = (styles, error = null) => socket.send('playerSeatPoseStylesResult', { styles, error })
+    if (!player?.isPlayer || player.data.owner !== socket.id || player.data.id !== socket.id) {
+      return reply([], 'Only your own player can manage pose styles')
+    }
+
+    const userId = player.data.userId || player.data.id
+    const key = seatPoseStylesStorageKey(userId)
+    const styles = sanitizePoseStyles(this.world.storage?.get(key) || []) || []
+    if (data.action === 'list') return reply(styles)
+
+    if (data.action === 'save') {
+      const name = sanitizePoseStyleName(data.name)
+      const pose = sanitizeNormalizedPose(data.pose)
+      if (!name || !pose) return reply(styles, 'Pose style name or pose is invalid')
+      const index = styles.findIndex(style => style.name.toLocaleLowerCase('en') === name.toLocaleLowerCase('en'))
+      if (index === -1 && styles.length >= 20) return reply(styles, 'You can save at most 20 pose styles')
+      if (index === -1) styles.push({ name, pose })
+      else styles[index] = { name, pose }
+    } else if (data.action === 'delete') {
+      const name = sanitizePoseStyleName(data.name)
+      if (!name) return reply(styles, 'Pose style name is invalid')
+      const index = styles.findIndex(style => style.name.toLocaleLowerCase('en') === name.toLocaleLowerCase('en'))
+      if (index !== -1) styles.splice(index, 1)
+    } else {
+      return reply(styles, 'Unknown pose style action')
+    }
+
+    if (!this.world.storage?.set) return reply(styles, 'Pose persistence is unavailable')
+    this.world.storage.set(key, styles)
+    return reply(styles)
   }
 
   onEntityRemoved = (socket, id) => {

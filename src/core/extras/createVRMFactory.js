@@ -1,10 +1,12 @@
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js'
 
 import * as THREE from './three'
+import { cloneAvatarScene } from './cloneAvatarScene'
 import { DEG2RAD } from './general'
 import { getTrianglesFromGeometry } from './getTrianglesFromGeometry'
 import { getTextureBytesFromMaterial } from './getTextureBytesFromMaterial'
 import { Emotes } from './playerEmotes'
+import { applyNormalizedPose, createNormalizedPoseMapping, getNormalizedPose } from './normalizedPose'
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -52,6 +54,8 @@ const Modes = {
 }
 
 export function createVRMFactory(glb, setupMaterial) {
+  const normalizedPoseMapping = createNormalizedPoseMapping(glb.userData.vrm.humanoid, glb.scene)
+
   // we'll update matrix ourselves
   glb.scene.matrixAutoUpdate = false
   glb.scene.matrixWorldAutoUpdate = false
@@ -138,6 +142,21 @@ export function createVRMFactory(glb, setupMaterial) {
 
   return {
     create,
+    cloneScene(scene = glb.scene) {
+      return cloneAvatarScene(scene)
+    },
+    getNormalizedBoneNames() {
+      return Object.keys(normalizedPoseMapping.bones)
+    },
+    getRawBoneName(name) {
+      return normalizedPoseMapping.bones[name]?.rawName || null
+    },
+    getNormalizedPose(scene = glb.scene) {
+      return getNormalizedPose(scene, normalizedPoseMapping)
+    },
+    applyNormalizedPose(scene, pose) {
+      applyNormalizedPose(scene, normalizedPoseMapping, pose)
+    },
     applyStats(stats) {
       glb.scene.traverse(obj => {
         if (obj.geometry && !stats.geometries.has(obj.geometry.uuid)) {
@@ -288,6 +307,7 @@ export function createVRMFactory(glb, setupMaterial) {
     let rate = 0
     let rateCheck = true
     let distance
+    let poseOverride = null
 
     const updateRate = () => {
       const vrmPos = v1.setFromMatrixPosition(vrm.scene.matrix)
@@ -334,6 +354,10 @@ export function createVRMFactory(glb, setupMaterial) {
         elapsed = 0
       } else {
         skeleton.update = noop
+      }
+      if (poseOverride) {
+        skeleton.update = THREE.Skeleton.prototype.update
+        applyNormalizedPose(vrm.scene, normalizedPoseMapping, poseOverride)
       }
     }
 
@@ -621,6 +645,16 @@ export function createVRMFactory(glb, setupMaterial) {
       headToHeight,
       setEmote,
       setFirstPerson,
+      getNormalizedPose() {
+        return getNormalizedPose(vrm.scene, normalizedPoseMapping)
+      },
+      setPoseOverride(pose) {
+        poseOverride = pose ? JSON.parse(JSON.stringify(pose)) : null
+        if (poseOverride) {
+          skeleton.update = THREE.Skeleton.prototype.update
+          applyNormalizedPose(vrm.scene, normalizedPoseMapping, poseOverride)
+        }
+      },
       update,
       updateRate,
       getBoneTransform,

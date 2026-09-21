@@ -27,6 +27,10 @@ const names = [
   'ping',
   'pong',
   'browserInput',
+  'playerSeatPose',
+  'playerSeatPoseResult',
+  'playerSeatPoseStyles',
+  'playerSeatPoseStylesResult',
 ]
 
 const byName = {}

@@ -1,4 +1,5 @@
 import { System } from './System'
+import { sanitizeSeatProfileId } from '../extras/seatPose'
 
 /**
  * Anchor System
@@ -11,21 +12,31 @@ export class Anchors extends System {
   constructor(world) {
     super(world)
     this.matrices = new Map()
+    this.profileIds = new Map()
   }
 
   get(id) {
     return this.matrices.get(id)
   }
 
-  add(id, matrix) {
+  getProfileId(id) {
+    return this.profileIds.get(id) || null
+  }
+
+  add(id, matrix, profileId = null) {
     this.matrices.set(id, matrix)
+    const normalizedProfileId = sanitizeSeatProfileId(profileId)
+    if (normalizedProfileId) this.profileIds.set(id, normalizedProfileId)
+    else this.profileIds.delete(id)
   }
 
   remove(id) {
     this.matrices.delete(id)
+    this.profileIds.delete(id)
   }
 
   destroy() {
     this.matrices.clear()
+    this.profileIds.clear()
   }
 }

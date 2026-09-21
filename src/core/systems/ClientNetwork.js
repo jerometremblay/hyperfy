@@ -197,6 +197,14 @@ export class ClientNetwork extends System {
     this.world.entities.player?.setSessionAvatar(data.avatar)
   }
 
+  onPlayerSeatPoseResult = data => {
+    this.world.poseEditor?.onApplyResult(data)
+  }
+
+  onPlayerSeatPoseStylesResult = data => {
+    this.world.poseEditor?.setStyles(data.styles, data.error)
+  }
+
   onLiveKitLevel = data => {
     this.world.livekit.setLevel(data.playerId, data.level)
   }

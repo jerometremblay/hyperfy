@@ -21,6 +21,7 @@ export class Avatar extends Node {
 
     this.factory = data.factory
     this.hooks = data.hooks
+    this._poseOverride = data.poseOverride ? JSON.parse(JSON.stringify(data.poseOverride)) : null
     this.instance = null
     this.n = 0
   }
@@ -39,6 +40,7 @@ export class Avatar extends Node {
       this.instance = this.factory.create(this.matrixWorld, this.hooks, this)
       this.instance.setEmote(this._emote)
       this.instance.setVisible(this._visible)
+      this.instance.setPoseOverride?.(this._poseOverride)
       if (this._disableRateCheck) {
         this.instance.disableRateCheck()
         // this._disableRateCheck = null
@@ -133,6 +135,15 @@ export class Avatar extends Node {
     return this.instance?.getBoneTransform(boneName)
   }
 
+  getNormalizedPose() {
+    return this.instance?.getNormalizedPose?.() || null
+  }
+
+  setPoseOverride(pose) {
+    this._poseOverride = pose ? JSON.parse(JSON.stringify(pose)) : null
+    this.instance?.setPoseOverride?.(this._poseOverride)
+  }
+
   disableRateCheck() {
     if (this.instance) {
       this.instance.disableRateCheck()
@@ -161,6 +172,7 @@ export class Avatar extends Node {
     this._emote = source._emote
     this._visible = source._visible
     this._onLoad = source._onLoad
+    this._poseOverride = source._poseOverride ? JSON.parse(JSON.stringify(source._poseOverride)) : null
 
     this.factory = source.factory
     this.hooks = source.hooks
