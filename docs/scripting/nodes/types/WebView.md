@@ -22,7 +22,13 @@ The rendering space for the WebView. Defaults to `'world'`.
 
 A URL to load in the iframe. This can be any website that allows iframe embedding.
 
-Note: Some websites block embedding via `X-Frame-Options` headers.
+Some websites block direct embedding via `X-Frame-Options` or CSP headers. Set `.proxy` to `true` to load public HTTP/HTTPS pages through the Hyperfy server proxy when that happens.
+
+### `.proxy`: Boolean
+
+Whether to load the WebView through the Hyperfy server proxy. Defaults to `false`.
+
+The proxy removes frame-blocking response headers and rewrites common HTML/CSS resource URLs so pages such as Slashdot can run inside the WebView. Only public HTTP/HTTPS URLs are accepted; localhost and private-network targets are rejected. The proxy does not forward login cookies, so pages that require an existing session may not work.
 
 ### `.width`: Number
 
@@ -86,6 +92,19 @@ Inherits all [Node](/docs/scripting/nodes/Node.md) properties
 ```javascript
 const webview = app.create('webview', {
   src: 'https://example.com',
+  width: 2,
+  height: 1.5,
+  position: [0, 1.5, 0],
+})
+app.add(webview)
+```
+
+### Page that blocks direct iframe embedding
+
+```javascript
+const webview = app.create('webview', {
+  src: 'https://slashdot.org',
+  proxy: true,
   width: 2,
   height: 1.5,
   position: [0, 1.5, 0],

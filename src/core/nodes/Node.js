@@ -390,7 +390,7 @@ export class Node {
   }
 
   getProxy() {
-    if (!this.proxy) {
+    if (!this._nodeProxy) {
       const self = this
       const proxy = {
         get id() {
@@ -516,8 +516,8 @@ export class Node {
           self.cursor = value
         },
       }
-      this.proxy = proxy
+      this._nodeProxy = proxy
     }
-    return this.proxy
+    return this._nodeProxy
   }
 }

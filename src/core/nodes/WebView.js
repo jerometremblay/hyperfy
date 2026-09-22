@@ -12,6 +12,7 @@ const defaults = {
   doubleside: false,
   interactive: true,
   space: 'world',
+  proxy: false,
 }
 
 const v1 = new THREE.Vector3()
@@ -28,6 +29,7 @@ export class WebView extends Node {
     this.doubleside = data.doubleside
     this.interactive = data.interactive
     this.space = data.space
+    this.proxy = data.proxy
   }
 
   copy(source, recursive) {
@@ -39,6 +41,7 @@ export class WebView extends Node {
     this._doubleside = source._doubleside
     this._interactive = source._interactive
     this._space = source._space
+    this._proxy = source._proxy
     return this
   }
 
@@ -129,7 +132,7 @@ export class WebView extends Node {
       iframe.style.height = heightPx
       iframe.style.border = '0px'
       iframe.style.pointerEvents = 'none'
-      iframe.src = this._src
+      iframe.src = this.getIframeSource()
 
       container.appendChild(inner)
       inner.appendChild(iframe)
@@ -217,7 +220,7 @@ export class WebView extends Node {
     iframe.style.height = '100%'
     iframe.style.border = '0px'
     iframe.style.pointerEvents = this._interactive ? 'auto' : 'none'
-    iframe.src = this._src
+    iframe.src = this.getIframeSource()
 
     container.appendChild(iframe)
 
@@ -283,6 +286,27 @@ export class WebView extends Node {
     this._src = value
     this.needsRebuild = true
     this.setDirty()
+  }
+
+  get proxy() {
+    return this._proxy
+  }
+
+  set proxy(value = defaults.proxy) {
+    if (!isBoolean(value)) {
+      throw new Error('[webview] proxy not a boolean')
+    }
+    if (this._proxy === value) return
+    this._proxy = value
+    this.needsRebuild = true
+    this.setDirty()
+  }
+
+  getIframeSource() {
+    if (!this._proxy || !this._src) return this._src
+    const apiUrl = this.ctx.world.network.apiUrl
+    if (!apiUrl) return this._src
+    return `${apiUrl}/webview/proxy?url=${encodeURIComponent(this._src)}`
   }
 
   get width() {
@@ -370,7 +394,7 @@ export class WebView extends Node {
   }
 
   getProxy() {
-    if (!this.proxy) {
+    if (!this._scriptProxy) {
       const self = this
       let proxy = {
         get src() {
@@ -378,6 +402,12 @@ export class WebView extends Node {
         },
         set src(value) {
           self.src = value
+        },
+        get proxy() {
+          return self.proxy
+        },
+        set proxy(value) {
+          self.proxy = value
         },
         get width() {
           return self.width
@@ -417,8 +447,8 @@ export class WebView extends Node {
         },
       }
       proxy = Object.defineProperties(proxy, Object.getOwnPropertyDescriptors(super.getProxy()))
-      this.proxy = proxy
+      this._scriptProxy = proxy
     }
-    return this.proxy
+    return this._scriptProxy
   }
 }

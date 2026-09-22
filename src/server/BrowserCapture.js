@@ -3,6 +3,8 @@ import { mkdtemp, rm } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 
+import { normalizeWebURL } from './webURL.js'
+
 const DEFAULT_CDP_URL = 'http://127.0.0.1:9222'
 const CACHE_TIME = 500
 const START_TIMEOUT = 15000
@@ -26,7 +28,7 @@ export class BrowserCapture {
     if (entityId === undefined || entityId === null || String(entityId) === '') {
       throw new Error('Browser capture requires an app instance id')
     }
-    const normalizedUrl = normalizeURL(url)
+    const normalizedUrl = normalizeWebURL(url, 'Browser URL')
     const session = await this.getSession(String(entityId), normalizedUrl)
     if (session.cached && Date.now() - session.cachedAt < CACHE_TIME) return session.cached
     if (!session.capturePromise) {
@@ -40,7 +42,7 @@ export class BrowserCapture {
 
   async dispatchInput(entityId, url, input) {
     const command = browserInputCommand(input)
-    const normalizedUrl = normalizeURL(url)
+    const normalizedUrl = normalizeWebURL(url, 'Browser URL')
     const session = await this.getSession(String(entityId), normalizedUrl)
     const previous = session.inputQueue || Promise.resolve()
     const current = previous.catch(() => {}).then(async () => {
@@ -434,28 +436,6 @@ function browserInputCommand(input) {
   }
 
   throw invalid()
-}
-
-function normalizeURL(value) {
-  const input = typeof value === 'string' ? value.trim() : ''
-  if (!input) throw new Error('Browser URL must be absolute')
-
-  let candidate = input
-  if (input.startsWith('//')) {
-    candidate = `https:${input}`
-  } else if (!/^https?:\/\//i.test(input)) {
-    if (/^[a-z][a-z\d+.-]*:/i.test(input)) throw new Error('Browser URL must use http or https')
-    candidate = `https://${input}`
-  }
-
-  let url
-  try {
-    url = new URL(candidate).toString()
-  } catch {
-    throw new Error('Browser URL must be absolute')
-  }
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  throw new Error('Browser URL must use http or https')
 }
 
 function waitForOpen(socket, WebSocketImpl) {

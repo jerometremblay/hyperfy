@@ -20,6 +20,7 @@ import { assets } from './assets'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { BrowserCapture } from './BrowserCapture'
+import { proxyWebViewRequest } from './WebViewProxy'
 import { appHasBrowserSource } from '../core/utils/browser'
 
 const execAsync = promisify(exec)
@@ -288,6 +289,21 @@ fastify.get('/api/browser/screenshot', async (request, reply) => {
   } catch (error) {
     console.error('[browser] screenshot failed:', error.message)
     return reply.code(502).send({ error: 'Browser screenshot unavailable' })
+  }
+})
+
+fastify.get('/api/webview/proxy', async (request, reply) => {
+  try {
+    const result = await proxyWebViewRequest(request.query?.url)
+    reply.header('Cache-Control', 'no-store')
+    return reply.code(result.status).type(result.contentType).send(result.body)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    const invalidURL = message.startsWith('WebView URL')
+    console.error('[webview] proxy failed:', message)
+    return reply.code(invalidURL ? 400 : 502).send({
+      error: invalidURL ? message : 'WebView proxy unavailable',
+    })
   }
 })
 
