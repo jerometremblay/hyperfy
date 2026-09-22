@@ -68,6 +68,24 @@ test("routes viewers' browser input through one app-instance session in order", 
   assert.ok(socket.commands.every(command => command.sessionId === 'page-1'))
 })
 
+test('defaults bare browser hostnames to HTTPS', async () => {
+  const browser = new BrowserCapture()
+  const socket = new FakeWebSocket()
+  let openedUrl
+  browser.openSession = async url => {
+    openedUrl = url
+    return { url, socket, WebSocketImpl: FakeWebSocket, sessionId: 'page-1' }
+  }
+
+  await browser.dispatchInput('slashdot', 'slashdot.org', {
+    type: 'keyDown',
+    key: 'a',
+    code: 'KeyA',
+  })
+
+  assert.equal(openedUrl, 'https://slashdot.org/')
+})
+
 test('rejects malformed browser input before creating a browser session', async () => {
   const browser = new BrowserCapture()
   let opened = 0

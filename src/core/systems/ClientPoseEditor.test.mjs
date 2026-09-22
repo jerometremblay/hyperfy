@@ -429,6 +429,22 @@ test('orbits and zooms the preview, then Escape restores the original camera sta
   assert.equal(player.poseEditorActive, false)
 })
 
+test('retains the current camera transform when entering placement customization', () => {
+  const { control, editor, player } = createFixture()
+  control.camera.position.set(2.2, 1.5, 4.6)
+  control.camera.quaternion.setFromEuler(new THREE.Euler(-0.2, 0.4, 0.1, 'YXZ'))
+  control.camera.zoom = 1.25
+  const initialPosition = control.camera.position.clone()
+  const initialRotation = control.camera.quaternion.clone()
+  const initialZoom = control.camera.zoom
+
+  assert.equal(editor.open(player), true)
+  assert.ok(control.camera.position.distanceTo(initialPosition) < 1e-8)
+  assert.ok(control.camera.quaternion.angleTo(initialRotation) < 1e-8)
+  assert.equal(control.camera.zoom, initialZoom)
+  editor.close()
+})
+
 test('dragging the preview moves it in the seat-local ground plane', () => {
   const { control, editor, engineWorld, player } = createFixture()
   assert.equal(editor.open(player), true)
@@ -787,6 +803,7 @@ test('skeleton visibility, opacity, marker size, and camera presets update the p
   assert.equal(editor.open(player), true)
 
   assert.equal(editor.getViewState().skeletonVisible, true)
+  assert.equal(editor.getViewState().markerSize, 0.5)
   editor.setSkeletonVisible(false)
   editor.setSkeletonOpacity(0.35)
   editor.setMarkerSize(1.5)

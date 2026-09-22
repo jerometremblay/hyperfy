@@ -35,6 +35,16 @@ test('joint limits clamp normalized rotations while the limit switch can bypass 
   )
 })
 
+test('lower-leg limits allow downward knee flexion but prevent upward bending', () => {
+  const downward = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.8, 0, 0)).toArray()
+  const upward = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.8, 0, 0)).toArray()
+
+  for (const name of ['leftLowerLeg', 'rightLowerLeg']) {
+    assert.ok(Math.abs(getBoneRotationEuler(clampBoneRotation(name, downward)).x - (-0.8 * 180) / Math.PI) < 1e-6)
+    assert.ok(Math.abs(getBoneRotationEuler(clampBoneRotation(name, upward)).x) < 1e-6)
+  }
+})
+
 test('two-bone IK moves a limb endpoint to a reachable local-space target', () => {
   const scene = new THREE.Group()
   const upper = new THREE.Bone()

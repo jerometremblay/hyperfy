@@ -22,7 +22,7 @@ Keep the DevTools port bound to localhost. Set `BROWSER_CDP_URL` to the endpoint
 
 ### `.src`: String
 
-The absolute `http://` or `https://` URL captured by the server.
+The `http://` or `https://` URL captured by the server. A bare hostname such as `slashdot.org` is treated as an HTTPS URL.
 
 ### `.width`: Number
 

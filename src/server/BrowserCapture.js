@@ -437,9 +437,20 @@ function browserInputCommand(input) {
 }
 
 function normalizeURL(value) {
+  const input = typeof value === 'string' ? value.trim() : ''
+  if (!input) throw new Error('Browser URL must be absolute')
+
+  let candidate = input
+  if (input.startsWith('//')) {
+    candidate = `https:${input}`
+  } else if (!/^https?:\/\//i.test(input)) {
+    if (/^[a-z][a-z\d+.-]*:/i.test(input)) throw new Error('Browser URL must use http or https')
+    candidate = `https://${input}`
+  }
+
   let url
   try {
-    url = new URL(value).toString()
+    url = new URL(candidate).toString()
   } catch {
     throw new Error('Browser URL must be absolute')
   }

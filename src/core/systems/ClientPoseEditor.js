@@ -284,6 +284,28 @@ export class ClientPoseEditor extends System {
       preview.matrixWorld.decompose(new THREE.Vector3(), worldRotation, new THREE.Vector3())
       const front = new THREE.Vector3(0, 0, 1).applyQuaternion(worldRotation)
       const distance = THREE.MathUtils.clamp(Math.max(size.y * 1.45, size.length() * 0.8), 1.5, MAX_DISTANCE)
+      const actualCameraPosition = this.control.camera?.position?.clone?.()
+      const actualCameraQuaternion = this.control.camera?.quaternion?.clone?.()
+      const actualCameraOffset = actualCameraPosition?.clone().sub(focus)
+      const actualCameraDistance = actualCameraOffset?.length() || 0
+      const hasActualCamera =
+        !!actualCameraPosition &&
+        !!actualCameraQuaternion &&
+        Number.isFinite(actualCameraDistance) &&
+        actualCameraDistance > 1e-5
+      const initialCameraDistance = hasActualCamera
+        ? THREE.MathUtils.clamp(actualCameraDistance, MIN_DISTANCE, MAX_DISTANCE)
+        : distance
+      const initialCameraYaw = hasActualCamera
+        ? Math.atan2(actualCameraOffset.x, actualCameraOffset.z)
+        : Math.atan2(front.x, front.z)
+      const initialCameraPitch = hasActualCamera
+        ? THREE.MathUtils.clamp(
+            Math.atan2(actualCameraOffset.y, Math.hypot(actualCameraOffset.x, actualCameraOffset.z)),
+            -MAX_PITCH,
+            MAX_PITCH
+          )
+        : 0.12
       const factoryBoneNames = factory.getNormalizedBoneNames?.() || Object.keys(initialPose)
       if (!factoryBoneNames.length) throw new Error('Avatar does not expose a normalized humanoid skeleton')
       const avatarUrl =
@@ -320,11 +342,20 @@ export class ClientPoseEditor extends System {
         orbit: {
           target: focus.clone(),
           homeYaw: Math.atan2(front.x, front.z),
-          yaw: Math.atan2(front.x, front.z),
-          pitch: 0.12,
-          distance,
+          yaw: initialCameraYaw,
+          pitch: initialCameraPitch,
+          distance: initialCameraDistance,
           cameraOffset: 0,
-          cameraView: 'front',
+          cameraView: hasActualCamera ? 'orbit' : 'front',
+          preserveCamera: hasActualCamera,
+          initialCamera:
+            hasActualCamera && actualCameraPosition && actualCameraQuaternion
+              ? {
+                  position: actualCameraPosition,
+                  quaternion: actualCameraQuaternion,
+                  zoom: this.control.camera.zoom,
+                }
+              : null,
         },
         pose: initialPose,
         initialPose: copyJSON(initialPose),
@@ -344,7 +375,7 @@ export class ClientPoseEditor extends System {
         styleError: null,
         skeletonVisible: true,
         skeletonOpacity: 0.8,
-        markerSize: 1,
+        markerSize: 0.5,
         history: [],
         historyIndex: -1,
         historyGroup: false,
@@ -411,6 +442,7 @@ export class ClientPoseEditor extends System {
     }
 
     if (!session.applying && !this.gizmoActive && this.control.mouseRight.down) {
+      session.orbit.preserveCamera = false
       const delta = this.control.pointer.delta
       session.orbit.yaw -= delta.x * ORBIT_SPEED
       session.orbit.pitch = THREE.MathUtils.clamp(session.orbit.pitch + delta.y * ORBIT_SPEED, -MAX_PITCH, MAX_PITCH)
@@ -433,6 +465,7 @@ export class ClientPoseEditor extends System {
     }
 
     if (!session.applying && this.control.scrollDelta.value) {
+      session.orbit.preserveCamera = false
       session.orbit.distance = THREE.MathUtils.clamp(
         session.orbit.distance + this.control.scrollDelta.value * ZOOM_SPEED,
         MIN_DISTANCE,
@@ -831,6 +864,7 @@ export class ClientPoseEditor extends System {
     if (!session || session.applying) return
     const yawOffsets = { front: 0, back: Math.PI, left: Math.PI / 2, right: -Math.PI / 2, orbit: Math.PI / 4 }
     if (!Object.hasOwn(yawOffsets, view)) return
+    session.orbit.preserveCamera = false
     session.orbit.cameraView = view
     session.orbit.yaw = session.orbit.homeYaw + yawOffsets[view]
     session.orbit.pitch = view === 'orbit' ? 0.22 : 0.12
@@ -1349,6 +1383,14 @@ export class ClientPoseEditor extends System {
   updateOrbitCamera() {
     const session = this.session
     if (!session || !this.control) return
+    if (session.orbit.preserveCamera && session.orbit.initialCamera) {
+      const { position, quaternion, zoom } = session.orbit.initialCamera
+      this.control.camera.position.copy(position)
+      this.control.camera.quaternion.copy(quaternion)
+      if (Number.isFinite(zoom)) this.control.camera.zoom = zoom
+      this.control.camera.write = true
+      return
+    }
     const { yaw, pitch, distance, target, cameraOffset } = session.orbit
     const cosPitch = Math.cos(pitch)
     const cameraPosition = target
