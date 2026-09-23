@@ -11,7 +11,7 @@ import { Emotes } from '../extras/playerEmotes'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
-import { getMatchingSeatPose } from '../extras/seatPose'
+import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 import { getAvatarFocus } from '../extras/avatarFocus'
 
 const UP = new THREE.Vector3(0, 1, 0)
@@ -225,10 +225,12 @@ export class PlayerLocal extends Entity {
 
   applySeatPose() {
     if (!this.avatar) return
-    const seatPose = getMatchingSeatPose(this.data, this.getAvatarUrl())
+    const avatarUrl = this.getAvatarUrl()
+    const seatPose = getMatchingSeatPose(this.data, avatarUrl)
+    const defaultPose = !seatPose && this.data.effect?.anchorId ? getDefaultSittingPose() : null
     this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
     this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
-    this.avatar.setPoseOverride(seatPose?.pose || null)
+    this.avatar.setPoseOverride(seatPose?.pose || defaultPose)
   }
 
   initCapsule() {

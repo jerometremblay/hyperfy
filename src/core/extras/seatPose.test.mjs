@@ -12,6 +12,7 @@ const bundle = await build({
 })
 const {
   sanitizeNormalizedPose,
+  getDefaultSittingPose,
   getMatchingSeatPose,
   getStoredSeatPose,
   sanitizePoseStyleName,
@@ -41,6 +42,26 @@ test('rejects unknown bones, non-hips translation, and invalid numeric transform
   assert.equal(sanitizeNormalizedPose({ spine: { position: [0, 0, 0] } }), null)
   assert.equal(sanitizeNormalizedPose({ hips: { rotation: [0, 0, 0, 0] } }), null)
   assert.equal(sanitizeNormalizedPose({ hips: { position: [0, 3, 0] } }), null)
+})
+
+test('provides the saved default sitting pose for every avatar', () => {
+  const sittingPose = getDefaultSittingPose()
+
+  assert.deepEqual(sittingPose.hips.position, [0, -0.77, 0])
+  assert.deepEqual(
+    sittingPose.hips.rotation,
+    [-0.013890632255055371, 0.026158481901196722, -0.002337336235813372, 0.9995585630764714]
+  )
+  assert.deepEqual(
+    sittingPose.leftUpperArm.rotation,
+    [-0.14376360273130673, -0.3254843180887511, 0.45124316331828057, 0.8183957433702397]
+  )
+  assert.notDeepEqual(sittingPose.leftUpperLeg.rotation, [0, 0, 0, 1])
+  assert.notDeepEqual(sittingPose.rightUpperLeg.rotation, [0, 0, 0, 1])
+  assert.notDeepEqual(sittingPose.leftLowerLeg.rotation, [0, 0, 0, 1])
+  assert.notDeepEqual(sittingPose.rightLowerLeg.rotation, [0, 0, 0, 1])
+  assert.deepEqual(sittingPose.leftFoot.rotation, [0, 0, 0, 1])
+  assert.deepEqual(sittingPose.rightFoot.rotation, [0, 0, 0, 1])
 })
 
 test('validates complete seat configs and stable identity keys', () => {

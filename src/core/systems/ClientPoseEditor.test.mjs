@@ -217,7 +217,20 @@ function createFixture({ pointerLocked = false, profileId = null } = {}) {
   const editor = new ClientPoseEditor(engineWorld)
   editor.start()
 
-  return { anchor, canvas, control, editor, engineWorld, events, head, hips, networkMessages, player, scene, sourceScene }
+  return {
+    anchor,
+    canvas,
+    control,
+    editor,
+    engineWorld,
+    events,
+    head,
+    hips,
+    networkMessages,
+    player,
+    scene,
+    sourceScene,
+  }
 }
 
 function syncEditorCamera(world, control) {
@@ -256,6 +269,23 @@ test('opens a local duplicate of the seated avatar without submitting pose chang
     networkMessages.some(([type]) => type === 'playerSeatPose'),
     false
   )
+})
+
+test('highlights the seat anchor and avatar hips while editing', () => {
+  const { editor, player, scene } = createFixture()
+
+  assert.equal(editor.open(player), true)
+
+  const anchorMarker = scene.getObjectByName('avatar-pose-anchor-marker')
+  const hipsMarker = scene.getObjectByName('avatar-pose-hips-marker')
+  assert.ok(anchorMarker)
+  assert.ok(hipsMarker)
+  assert.ok(anchorMarker.position.distanceTo(new THREE.Vector3(4, 0, -3)) < 1e-6)
+  assert.ok(hipsMarker.position.distanceTo(editor.getBone('hips').getWorldPosition(new THREE.Vector3())) < 1e-6)
+
+  editor.close()
+  assert.equal(scene.getObjectByName('avatar-pose-anchor-marker'), undefined)
+  assert.equal(scene.getObjectByName('avatar-pose-hips-marker'), undefined)
 })
 
 test('keeps the skinned avatar aligned with its skeleton in the posture preview', () => {
@@ -898,6 +928,27 @@ test('applies a profile-scoped calibration only when explicitly requested', () =
   assert.equal(request.saveToProfile, true)
 
   editor.close()
+})
+
+test('requests a reset that removes the saved seat calibration', () => {
+  const profileId = 'modular-couch-v1:middle'
+  const { editor, networkMessages, player } = createFixture({ profileId })
+  assert.equal(editor.open(player), true)
+
+  assert.equal(editor.resetToDefault(), true)
+  const [type, request] = networkMessages.at(-1)
+  assert.equal(type, 'playerSeatPose')
+  assert.deepEqual(request, {
+    anchorId: 'seat-1',
+    profileId,
+    saveToProfile: false,
+    avatarUrl: 'asset://test.vrm',
+    reset: true,
+  })
+  assert.equal(editor.session.applying, true)
+
+  editor.onApplyResult({ ok: true })
+  assert.equal(editor.session, null)
 })
 
 test('automatically exits when the seat anchor disappears', () => {

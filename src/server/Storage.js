@@ -26,6 +26,15 @@ export class Storage {
     }
   }
 
+  delete(key) {
+    try {
+      delete this.data[key]
+      this.save()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   async persist() {
     // console.time('[storage] persist')
     try {

@@ -347,6 +347,7 @@ export function PoseEditorPanel({ world }) {
           Select a joint marker, drag its rotation gizmo, or use the numeric controls. Right-drag orbits the view.
         </p>
       )}
+      <p className='pose-help'>Reference points: red is the furniture anchor; green is the avatar hips.</p>
 
       {state.error && <p className='pose-error'>{state.error}</p>}
       {state.styleError && <p className='pose-error'>{state.styleError}</p>}
@@ -701,6 +702,15 @@ export function PoseEditorPanel({ world }) {
           </button>
           <button className='pose-editor-button' type='button' disabled={state.applying} onClick={() => editor.reset()}>
             Reset all
+          </button>
+          <button
+            className='pose-editor-button'
+            type='button'
+            title='Remove the saved seat offset and pose, then use the default sitting pose'
+            disabled={state.applying}
+            onClick={() => editor.resetToDefault()}
+          >
+            Reset to default
           </button>
         </div>
         <div className='pose-row'>

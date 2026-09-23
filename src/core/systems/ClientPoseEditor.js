@@ -327,6 +327,8 @@ export class ClientPoseEditor extends System {
         previewLoading: false,
         previewLoadId: 0,
         selectedMarker: this.createMarker(0xff625e, 0.035),
+        anchorMarker: this.createMarker(0xff625e, 0.08),
+        hipsMarker: this.createMarker(0x51e2a3, 0.06),
         guideMarkers: new Map(),
         floorGuide: null,
         boneNames: factoryBoneNames,
@@ -390,9 +392,16 @@ export class ClientPoseEditor extends System {
       skeletonHelper.material.transparent = true
       skeletonHelper.material.opacity = session.skeletonOpacity
       this.world.stage.scene.add(session.selectedMarker)
+      session.anchorMarker.name = 'avatar-pose-anchor-marker'
+      session.hipsMarker.name = 'avatar-pose-hips-marker'
+      session.anchorMarker.scale.setScalar(session.markerSize)
+      session.hipsMarker.scale.setScalar(session.markerSize)
+      this.world.stage.scene.add(session.anchorMarker)
+      this.world.stage.scene.add(session.hipsMarker)
       this.createJointGizmo()
       this.updateJointMarkers()
       this.updateGuideMarkers()
+      this.updateReferenceMarkers()
 
       player.poseEditorActive = true
       avatarNode.visible = false
@@ -686,12 +695,7 @@ export class ClientPoseEditor extends System {
 
     session.preview.updateMatrixWorld(true)
     const bounds = new THREE.Box3()
-    const focus = getAvatarFocus(
-      session.preview,
-      session.avatarNode.getHeight?.(),
-      new THREE.Vector3(),
-      bounds
-    )
+    const focus = getAvatarFocus(session.preview, session.avatarNode.getHeight?.(), new THREE.Vector3(), bounds)
     const size = bounds.getSize(new THREE.Vector3())
     session.focusAvatarLocal.copy(focus).applyMatrix4(session.preview.matrixWorld.clone().invert())
     session.orbit.target.copy(focus)
@@ -854,7 +858,13 @@ export class ClientPoseEditor extends System {
     const session = this.session
     if (!session || session.applying || !Number.isFinite(value)) return
     session.markerSize = THREE.MathUtils.clamp(value, 0.5, 2)
-    const markers = [session.selectedMarker, ...session.jointMarkers.values(), ...session.guideMarkers.values()]
+    const markers = [
+      session.selectedMarker,
+      session.anchorMarker,
+      session.hipsMarker,
+      ...session.jointMarkers.values(),
+      ...session.guideMarkers.values(),
+    ]
     for (const marker of markers) marker.scale.setScalar(session.markerSize)
     this.emitState()
   }
@@ -1183,6 +1193,7 @@ export class ClientPoseEditor extends System {
     session.skeletonHelper.geometry.computeBoundingSphere()
     this.updateJointMarkers()
     this.updateGuideMarkers()
+    this.updateReferenceMarkers()
   }
 
   createMarker(color, radius) {
@@ -1205,6 +1216,24 @@ export class ClientPoseEditor extends System {
       session.selectedMarker.position.copy(bone.getWorldPosition(new THREE.Vector3()))
       session.selectedMarker.updateMatrixWorld(true)
     }
+  }
+
+  updateReferenceMarkers() {
+    const session = this.session
+    if (!session) return
+    const anchor = session.player.getAnchorMatrix?.()
+    if (!anchor) {
+      session.anchorMarker.visible = false
+      session.hipsMarker.visible = false
+      return
+    }
+
+    session.anchorMarker.visible = true
+    session.anchorMarker.position.setFromMatrixPosition(anchor)
+
+    const hips = this.getBone('hips')
+    session.hipsMarker.visible = !!hips
+    if (hips) session.hipsMarker.position.copy(hips.getWorldPosition(new THREE.Vector3()))
   }
 
   updateJointMarkers() {
@@ -1457,7 +1486,7 @@ export class ClientPoseEditor extends System {
     if (this.session) this.world.emit('poseEditor', this.makeViewState())
   }
 
-  apply(saveToProfile = false) {
+  apply(saveToProfile = false, reset = false) {
     const session = this.session
     if (!session || session.applying) return false
     if (saveToProfile && !session.profileId) {
@@ -1479,15 +1508,20 @@ export class ClientPoseEditor extends System {
     this.setInputActive(true)
     this.emitState()
     try {
-      this.world.network.send('playerSeatPose', {
+      const request = {
         anchorId: session.anchorId,
         profileId: session.profileId,
         saveToProfile: !!saveToProfile,
         avatarUrl: session.avatarUrl,
-        offset: session.placementPosition.toArray(),
-        rotation: session.placementRotation.toArray(),
-        pose: session.pose,
-      })
+      }
+      if (reset) {
+        request.reset = true
+      } else {
+        request.offset = session.placementPosition.toArray()
+        request.rotation = session.placementRotation.toArray()
+        request.pose = session.pose
+      }
+      this.world.network.send('playerSeatPose', request)
     } catch (error) {
       session.applying = false
       session.error = error?.message || 'Could not send the sitting pose'
@@ -1495,6 +1529,10 @@ export class ClientPoseEditor extends System {
       return false
     }
     return true
+  }
+
+  resetToDefault() {
+    return this.apply(false, true)
   }
 
   onApplyResult(result) {
@@ -1584,6 +1622,8 @@ export class ClientPoseEditor extends System {
     this.world.stage.scene.remove(session.preview)
     this.world.stage.scene.remove(session.skeletonHelper)
     this.world.stage.scene.remove(session.selectedMarker)
+    this.world.stage.scene.remove(session.anchorMarker)
+    this.world.stage.scene.remove(session.hipsMarker)
     session.jointMarkers.forEach(marker => {
       this.world.stage.scene.remove(marker)
       marker.geometry.dispose()
@@ -1603,6 +1643,10 @@ export class ClientPoseEditor extends System {
     session.skeletonHelper.material.dispose()
     session.selectedMarker.geometry.dispose()
     session.selectedMarker.material.dispose()
+    session.anchorMarker.geometry.dispose()
+    session.anchorMarker.material.dispose()
+    session.hipsMarker.geometry.dispose()
+    session.hipsMarker.material.dispose()
 
     const { player, previous } = session
     player.poseEditorActive = previous.poseEditorActive

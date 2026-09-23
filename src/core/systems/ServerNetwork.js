@@ -568,13 +568,29 @@ export class ServerNetwork extends System {
 
     const avatarUrl = player.data.sessionAvatar || player.data.avatar || 'asset://avatar.vrm'
     if (data?.avatarUrl !== avatarUrl) return reject('Your avatar changed; reopen the pose editor')
+    const userId = player.data.userId || player.data.id
+    const reset = data.reset === true
+    if (Object.hasOwn(data, 'reset') && typeof data.reset !== 'boolean') {
+      return reject('The sitting pose reset option is invalid')
+    }
+    if (!this.world.storage?.set || (reset && !this.world.storage?.delete)) {
+      return reject('Pose persistence is unavailable')
+    }
+
+    const seatKey = seatPoseStorageKey(userId, avatarUrl, anchorId)
+    if (reset) {
+      this.world.storage.delete(seatKey)
+      if (profileId) this.world.storage.delete(seatPoseProfileStorageKey(userId, avatarUrl, profileId))
+      player.modify({ seatPose: null })
+      this.send('entityModified', { id: player.data.id, seatPose: null })
+      socket.send('playerSeatPoseResult', { ok: true })
+      return
+    }
+
     const pose = sanitizeSeatPoseInput(data)
     if (!pose) return reject('The sitting pose data is invalid')
-    if (!this.world.storage?.set) return reject('Pose persistence is unavailable')
-
     const record = { version: SEAT_POSE_VERSION, anchorId, ...(profileId ? { profileId } : {}), ...pose }
-    const userId = player.data.userId || player.data.id
-    this.world.storage.set(seatPoseStorageKey(userId, avatarUrl, anchorId), record)
+    this.world.storage.set(seatKey, record)
     if (saveToProfile) {
       this.world.storage.set(seatPoseProfileStorageKey(userId, avatarUrl, profileId), {
         version: SEAT_POSE_VERSION,

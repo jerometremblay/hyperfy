@@ -6,7 +6,7 @@ import { LerpVector3 } from '../extras/LerpVector3'
 import { hasRank, Ranks } from '../extras/ranks'
 import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
-import { getMatchingSeatPose } from '../extras/seatPose'
+import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 
 let capsuleGeometry
 {
@@ -115,9 +115,10 @@ export class PlayerRemote extends Entity {
     if (!this.avatar) return
     const avatarUrl = this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm'
     const seatPose = getMatchingSeatPose(this.data, avatarUrl)
+    const defaultPose = !seatPose && this.data.effect?.anchorId ? getDefaultSittingPose() : null
     this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
     this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
-    this.avatar.setPoseOverride(seatPose?.pose || null)
+    this.avatar.setPoseOverride(seatPose?.pose || defaultPose)
   }
 
   getAnchorMatrix() {

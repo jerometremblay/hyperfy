@@ -50,6 +50,7 @@ function createFixture({ occupied = true, profileId = null } = {}) {
     storage: {
       get: key => stored.get(key),
       set: (key, value) => stored.set(key, value),
+      delete: key => stored.delete(key),
     },
     entities: { get: id => (id === player.data.id ? player : null) },
   }
@@ -120,6 +121,33 @@ test('saves an explicit profile default and restores it on another compatible se
   assert.equal(player.data.seatPose.profileId, profileId)
   assert.deepEqual(player.data.seatPose.offset, request.offset)
   assert.deepEqual(broadcasts.at(-1)[1].seatPose, player.data.seatPose)
+})
+
+test('resets the saved seat and profile poses to the built-in default', () => {
+  const profileId = 'modular-couch-v1:middle'
+  const { broadcasts, network, player, replies, socket, stored } = createFixture({ profileId })
+  const seatKey = seatPoseStorageKey('user-1', avatarUrl, 'chair:seat')
+  const profileKey = seatPoseProfileStorageKey('user-1', avatarUrl, profileId)
+  const record = {
+    version: 1,
+    anchorId: 'chair:seat',
+    profileId,
+    avatarUrl,
+    offset: [0.1, 0, -0.2],
+    rotation: [0, 0, 0, 1],
+    pose,
+  }
+  stored.set(seatKey, record)
+  stored.set(profileKey, { version: 1, profileId, avatarUrl, offset: record.offset, rotation: record.rotation, pose })
+  player.data.seatPose = record
+
+  network.onPlayerSeatPose(socket, { anchorId: 'chair:seat', profileId, avatarUrl, reset: true })
+
+  assert.equal(stored.has(seatKey), false)
+  assert.equal(stored.has(profileKey), false)
+  assert.equal(player.data.seatPose, null)
+  assert.deepEqual(broadcasts, [['entityModified', { id: 'user-1', seatPose: null }]])
+  assert.deepEqual(replies, [['playerSeatPoseResult', { ok: true }]])
 })
 
 test('rejects a client-selected profile that differs from the occupied anchor profile', () => {
