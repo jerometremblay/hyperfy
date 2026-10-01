@@ -27,6 +27,7 @@ export class XR extends System {
     this.world.graphics.renderer.xr.setFoveation(1)
     const session = await navigator.xr?.requestSession('immersive-vr', {
       requiredFeatures: ['local-floor'],
+      optionalFeatures: ['hand-tracking'],
     })
     try {
       session.updateTargetFrameRate(72)

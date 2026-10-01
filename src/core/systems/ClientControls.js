@@ -1,6 +1,7 @@
 import { isTouch } from '../../client/utils'
 import { bindRotations } from '../extras/bindRotations'
 import { buttons, codeToProp } from '../extras/buttons'
+import { XR_HAND_JOINTS } from '../extras/handTracking'
 import * as THREE from '../extras/three'
 import { System } from './System'
 
@@ -85,6 +86,7 @@ export class ClientControls extends System {
       delta: 0,
     }
     this.xrSession = null
+    this.xrHands = { left: null, right: null }
   }
 
   start() {
@@ -124,6 +126,11 @@ export class ClientControls extends System {
     if (this.xrSession) {
       const referenceSpace = this.world.graphics.renderer.xr.getReferenceSpace()
       const frame = this.world.graphics.renderer.xr.getFrame()
+      for (const control of this.controls) {
+        if (control.entries.xrLeftGripPose) control.entries.xrLeftGripPose.valid = false
+        if (control.entries.xrRightGripPose) control.entries.xrRightGripPose.valid = false
+      }
+      this.updateXRHands(frame, referenceSpace)
       const player = this.world.entities.player
       this.xrSession.inputSources?.forEach(src => {
         // left
@@ -154,6 +161,7 @@ export class ClientControls extends System {
                   // todo: tremor smoothing?
                   pose.position.copy(grip.transform.position)
                   pose.quaternion.copy(grip.transform.orientation)
+                  pose.valid = true
                   // pose.matrix.fromArray(grip.transform.matrix)
                 }
               }
@@ -254,6 +262,7 @@ export class ClientControls extends System {
                   // todo: tremor smoothing?
                   pose.position.copy(grip.transform.position)
                   pose.quaternion.copy(grip.transform.orientation)
+                  pose.valid = true
                   // pose.matrix.fromArray(grip.transform.matrix)
                 }
               }
@@ -327,6 +336,33 @@ export class ClientControls extends System {
           }
         }
       })
+    }
+  }
+
+  updateXRHands(frame, referenceSpace) {
+    this.xrHands.left = null
+    this.xrHands.right = null
+    if (!frame || !referenceSpace) return
+
+    for (const source of this.xrSession.inputSources || []) {
+      if (!source.hand || (source.handedness !== 'left' && source.handedness !== 'right')) continue
+      const joints = {}
+      for (const jointName of XR_HAND_JOINTS) {
+        const jointSpace = source.hand.get(jointName)
+        if (!jointSpace) continue
+        const pose = frame.getJointPose(jointSpace, referenceSpace)
+        if (!pose) continue
+        joints[jointName] = {
+          p: [pose.transform.position.x, pose.transform.position.y, pose.transform.position.z],
+          q: [
+            pose.transform.orientation.x,
+            pose.transform.orientation.y,
+            pose.transform.orientation.z,
+            pose.transform.orientation.w,
+          ],
+        }
+      }
+      if (joints.wrist) this.xrHands[source.handedness] = { joints }
     }
   }
 
@@ -788,6 +824,11 @@ export class ClientControls extends System {
 
   onXRSession = session => {
     this.xrSession = session
+    if (!session) this.xrHands = { left: null, right: null }
+    for (const control of this.controls) {
+      if (control.entries.xrLeftGripPose) control.entries.xrLeftGripPose.valid = false
+      if (control.entries.xrRightGripPose) control.entries.xrRightGripPose.valid = false
+    }
   }
 
   isInputFocused() {
@@ -841,6 +882,7 @@ function createPose(controls, control, prop) {
     $pose: true,
     position: new THREE.Vector3(),
     quaternion: new THREE.Quaternion(),
+    valid: false,
     // matrix: new THREE.Matrix4(),
     // capture: false,
   }

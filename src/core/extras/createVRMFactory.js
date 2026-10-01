@@ -7,6 +7,8 @@ import { getTrianglesFromGeometry } from './getTrianglesFromGeometry'
 import { getTextureBytesFromMaterial } from './getTextureBytesFromMaterial'
 import { Emotes } from './playerEmotes'
 import { applyNormalizedPose, createNormalizedPoseMapping, getNormalizedPose } from './normalizedPose'
+import { XR_HAND_BONES } from './handTracking'
+import { createHandTrackingMapping } from './handRetargeting'
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -55,6 +57,8 @@ const Modes = {
 
 export function createVRMFactory(glb, setupMaterial) {
   const normalizedPoseMapping = createNormalizedPoseMapping(glb.userData.vrm.humanoid, glb.scene)
+
+  const handTrackingMapping = createHandTrackingMapping(glb.scene, normalizedPoseMapping)
 
   // we'll update matrix ourselves
   glb.scene.matrixAutoUpdate = false
@@ -308,6 +312,9 @@ export function createVRMFactory(glb, setupMaterial) {
     let rateCheck = true
     let distance
     let poseOverride = null
+    let handTrackingPose = null
+    let handTrackingCurrent = null
+    let handTrackingRest = null
 
     const updateRate = () => {
       const vrmPos = v1.setFromMatrixPosition(vrm.scene.matrix)
@@ -359,6 +366,7 @@ export function createVRMFactory(glb, setupMaterial) {
         skeleton.update = THREE.Skeleton.prototype.update
         applyNormalizedPose(vrm.scene, normalizedPoseMapping, poseOverride)
       }
+      applyHandTrackingPose(delta)
     }
 
     const aimBone = (() => {
@@ -486,6 +494,224 @@ export function createVRMFactory(glb, setupMaterial) {
       const boneWorldPos = v1.setFromMatrixPosition(boneWorldMatrix)
       aimBoneDir.subVectors(targetPos, boneWorldPos).normalize()
       aimBone(boneName, aimBoneDir, delta, options)
+    }
+
+    const handBoneMatrix = new THREE.Matrix4()
+    const handParentMatrix = new THREE.Matrix4()
+    const handRotationMatrix = new THREE.Matrix4()
+    const handSceneQuaternion = new THREE.Quaternion()
+    const handWorldQuaternion = new THREE.Quaternion()
+    const handParentQuaternion = new THREE.Quaternion()
+    const handLocalQuaternion = new THREE.Quaternion()
+    const handDeltaQuaternion = new THREE.Quaternion()
+    const handDirection = new THREE.Vector3()
+    const handPole = new THREE.Vector3()
+    const handElbow = new THREE.Vector3()
+    const handTarget = new THREE.Vector3()
+    const handShoulder = new THREE.Vector3()
+    const handElbowCurrent = new THREE.Vector3()
+    const handWristCurrent = new THREE.Vector3()
+    const handTargetPosition = new THREE.Vector3()
+    const handTargetDirection = new THREE.Vector3()
+    const handTargetRotation = new THREE.Quaternion()
+    const handWristQuaternion = new THREE.Quaternion()
+
+    function getHandBoneName(side, bone) {
+      return `${side}${bone}`
+    }
+
+    function getHandBoneWorldPosition(bone, target) {
+      bone.updateWorldMatrix(true, false)
+      handBoneMatrix.multiplyMatrices(vrm.scene.matrixWorld, bone.matrixWorld)
+      return target.setFromMatrixPosition(handBoneMatrix)
+    }
+
+    function getHandBoneWorldQuaternion(bone, target) {
+      bone.updateWorldMatrix(true, false)
+      handBoneMatrix.multiplyMatrices(vrm.scene.matrixWorld, bone.matrixWorld)
+      return target.setFromRotationMatrix(handRotationMatrix.extractRotation(handBoneMatrix))
+    }
+
+    function setHandBoneWorldQuaternion(bone, target) {
+      const parent = bone.parent
+      if (parent) {
+        parent.updateWorldMatrix(true, false)
+        handParentMatrix.multiplyMatrices(vrm.scene.matrixWorld, parent.matrixWorld)
+        handParentQuaternion.setFromRotationMatrix(handRotationMatrix.extractRotation(handParentMatrix))
+      } else {
+        vrm.scene.getWorldQuaternion(handParentQuaternion)
+      }
+      handLocalQuaternion.copy(handParentQuaternion).invert().multiply(target)
+      bone.quaternion.copy(handLocalQuaternion)
+      bone.updateMatrixWorld(true)
+    }
+
+    function aimHandBoneTowards(bone, target) {
+      const child = bone.children.find(child => child.isBone || child.type === 'Bone')
+      if (!child) return
+      const bonePosition = getHandBoneWorldPosition(bone, handShoulder)
+      const childPosition = getHandBoneWorldPosition(child, handElbowCurrent)
+      const currentDirection = handDirection.subVectors(childPosition, bonePosition)
+      const targetDirection = handTargetDirection.subVectors(target, bonePosition)
+      if (currentDirection.lengthSq() < 0.000001 || targetDirection.lengthSq() < 0.000001) return
+      handDeltaQuaternion.setFromUnitVectors(currentDirection.normalize(), targetDirection.normalize())
+      getHandBoneWorldQuaternion(bone, handWorldQuaternion)
+      handWorldQuaternion.premultiply(handDeltaQuaternion)
+      setHandBoneWorldQuaternion(bone, handWorldQuaternion)
+    }
+
+    function applyHandArmPose(side, target) {
+      const upperArm = findBone(getHandBoneName(side, 'UpperArm'))
+      const lowerArm = findBone(getHandBoneName(side, 'LowerArm'))
+      const hand = findBone(getHandBoneName(side, 'Hand'))
+      if (!upperArm || !lowerArm || !hand) return
+
+      getHandBoneWorldPosition(upperArm, handShoulder)
+      getHandBoneWorldPosition(lowerArm, handElbowCurrent)
+      getHandBoneWorldPosition(hand, handWristCurrent)
+      const upperLength = handShoulder.distanceTo(handElbowCurrent)
+      const lowerLength = handElbowCurrent.distanceTo(handWristCurrent)
+      if (upperLength < 0.001 || lowerLength < 0.001) return
+
+      handTarget.copy(target)
+      handDirection.subVectors(handTarget, handShoulder)
+      let distance = handDirection.length()
+      if (distance < 0.001) return
+      const maxDistance = upperLength + lowerLength - 0.001
+      const minDistance = Math.max(Math.abs(upperLength - lowerLength), 0.001)
+      distance = THREE.MathUtils.clamp(distance, minDistance, maxDistance)
+      handDirection.normalize()
+      handTarget.copy(handShoulder).addScaledVector(handDirection, distance)
+
+      vrm.scene.getWorldQuaternion(handSceneQuaternion)
+      handPole.set(0, 0, 1).applyQuaternion(handSceneQuaternion)
+      handPole.addScaledVector(handDirection, -handPole.dot(handDirection))
+      if (handPole.lengthSq() < 0.000001) {
+        handPole.set(0, 1, 0).applyQuaternion(handSceneQuaternion)
+        handPole.addScaledVector(handDirection, -handPole.dot(handDirection))
+      }
+      handPole.normalize()
+
+      const cosine = THREE.MathUtils.clamp(
+        (upperLength * upperLength + distance * distance - lowerLength * lowerLength) / (2 * upperLength * distance),
+        -1,
+        1
+      )
+      const along = upperLength * cosine
+      const height = upperLength * Math.sqrt(Math.max(1 - cosine * cosine, 0))
+      handElbow.copy(handShoulder).addScaledVector(handDirection, along).addScaledVector(handPole, height)
+
+      aimHandBoneTowards(upperArm, handElbow)
+      aimHandBoneTowards(lowerArm, handTarget)
+    }
+
+    function captureHandTrackingRest(side) {
+      const rest = {}
+      const names = ['UpperArm', 'LowerArm', 'Hand', ...XR_HAND_BONES.map(item => item.bone)]
+      for (const name of names) {
+        const bone = findBone(getHandBoneName(side, name))
+        if (bone) rest[name] = bone.quaternion.clone()
+      }
+      return rest
+    }
+
+    function restoreHandTrackingSide(side) {
+      const rest = handTrackingRest?.[side]
+      if (!rest) return
+      for (const [name, rotation] of Object.entries(rest)) {
+        const bone = findBone(getHandBoneName(side, name))
+        if (bone) bone.quaternion.copy(rotation)
+      }
+    }
+
+    function createHandTrackingCurrent(hand) {
+      return {
+        kind: hand.kind,
+        position: new THREE.Vector3().fromArray(hand.p),
+        wrist: new THREE.Quaternion().fromArray(hand.w).normalize(),
+        fingers: {},
+      }
+    }
+
+    function applyHandTrackingPose(delta) {
+      if (!handTrackingPose) return
+      const smoothing = 1 - Math.exp(-24 * delta)
+      const scene = vrm.scene
+      scene.updateMatrixWorld(true)
+      skeleton.update = THREE.Skeleton.prototype.update
+
+      for (const side of ['left', 'right']) {
+        const target = handTrackingPose[side]
+        const mapping = handTrackingMapping[side]
+        if (!target?.p || !mapping || !['hand', 'controller'].includes(target.kind)) {
+          restoreHandTrackingSide(side)
+          if (handTrackingRest) delete handTrackingRest[side]
+          if (handTrackingCurrent) delete handTrackingCurrent[side]
+          continue
+        }
+        if (!handTrackingRest) handTrackingRest = {}
+        if (!handTrackingRest[side]) handTrackingRest[side] = captureHandTrackingRest(side)
+        if (!handTrackingCurrent) handTrackingCurrent = {}
+        if (!handTrackingCurrent[side] || handTrackingCurrent[side].kind !== target.kind)
+          handTrackingCurrent[side] = createHandTrackingCurrent(target)
+        const current = handTrackingCurrent[side]
+        current.position.lerp(handTargetPosition.fromArray(target.p), smoothing)
+        current.wrist.slerp(handTargetRotation.fromArray(target.w).normalize(), smoothing)
+        // Drop segments that are absent in this frame instead of freezing their old pose.
+        for (const name of Object.keys(current.fingers)) {
+          if (!target.f?.[name]) delete current.fingers[name]
+        }
+        for (const [name, rotation] of Object.entries(target.f || {})) {
+          if (!current.fingers[name]) current.fingers[name] = new THREE.Quaternion().fromArray(rotation).normalize()
+          else current.fingers[name].slerp(handTargetRotation.fromArray(rotation).normalize(), smoothing)
+        }
+
+        handTarget.copy(current.position)
+        if (target.kind === 'controller') {
+          handTarget.add(handTargetPosition.set(0, mapping.palmLength, 0).applyQuaternion(current.wrist))
+        }
+        handTarget.applyMatrix4(scene.matrixWorld)
+        applyHandArmPose(side, handTarget)
+
+        scene.getWorldQuaternion(handSceneQuaternion)
+        const wrist = handWristQuaternion.copy(current.wrist)
+        if (target.kind === 'controller') wrist.multiply(mapping.gripToWrist)
+        const handBone = findBone(getHandBoneName(side, 'Hand'))
+        if (handBone) {
+          handTargetRotation.copy(handSceneQuaternion).multiply(wrist).multiply(mapping.wrist)
+          setHandBoneWorldQuaternion(handBone, handTargetRotation)
+        }
+        // Absolute anatomical orientations are converted through the CURRENT raw parent.
+        // This handles metacarpals missing from VRM and avoids applying wrist motion twice.
+        for (const item of XR_HAND_BONES) {
+          const bone = findBone(getHandBoneName(side, item.bone))
+          const correction = mapping.bones[item.bone]
+          if (!bone || !correction) continue
+          const rotation = current.fingers[item.bone]
+          if (target.kind === 'controller') {
+            // Generic holding pose. Index is less closed than the fingers around the handle.
+            const segment = item.bone.endsWith('Proximal') ? 1 : item.bone.endsWith('Intermediate') ? 2 : 2.5
+            const curl = item.bone.startsWith('Index') ? 0.55 : 0.7
+            if (item.bone.startsWith('Thumb')) {
+              handTargetRotation.setFromAxisAngle(UpAxis.Y, side === 'left' ? -0.65 : 0.65)
+              handLocalQuaternion.setFromAxisAngle(FORWARD, side === 'left' ? -Math.PI / 2 : Math.PI / 2)
+              handTargetRotation.multiply(handLocalQuaternion)
+            } else {
+              handTargetRotation.setFromAxisAngle(AimAxis.X, -curl * segment)
+            }
+            handTargetRotation.premultiply(wrist).premultiply(handSceneQuaternion).multiply(correction)
+            setHandBoneWorldQuaternion(bone, handTargetRotation)
+          } else if (rotation) {
+            handTargetRotation.copy(handSceneQuaternion).multiply(rotation).multiply(correction)
+            setHandBoneWorldQuaternion(bone, handTargetRotation)
+          } else {
+            const info = normalizedPoseMapping.bones[getHandBoneName(side, item.bone)]
+            if (info) bone.quaternion.fromArray(info.restRotation)
+            bone.updateMatrixWorld(true)
+          }
+        }
+      }
+      skeleton.update()
     }
 
     // hooks.loader.load('emote', 'asset://rifle-aim.glb').then(emo => {
@@ -635,8 +861,20 @@ export function createVRMFactory(glb, setupMaterial) {
     const setFirstPerson = active => {
       if (firstPersonActive === active) return
       const head = findBone('neck')
-      head.scale.setScalar(active ? 0 : 1)
+      head?.scale.setScalar(active ? 0 : 1)
       firstPersonActive = active
+    }
+
+    const setHandTrackingPose = pose => {
+      if (!pose) {
+        restoreHandTrackingSide('left')
+        restoreHandTrackingSide('right')
+        handTrackingPose = null
+        handTrackingCurrent = null
+        handTrackingRest = null
+        return
+      }
+      handTrackingPose = pose
     }
 
     return {
@@ -645,6 +883,7 @@ export function createVRMFactory(glb, setupMaterial) {
       headToHeight,
       setEmote,
       setFirstPerson,
+      setHandTrackingPose,
       getNormalizedPose() {
         return getNormalizedPose(vrm.scene, normalizedPoseMapping)
       },

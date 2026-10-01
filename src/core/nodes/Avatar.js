@@ -22,6 +22,7 @@ export class Avatar extends Node {
     this.factory = data.factory
     this.hooks = data.hooks
     this._poseOverride = data.poseOverride ? JSON.parse(JSON.stringify(data.poseOverride)) : null
+    this._handTrackingPose = null
     this.instance = null
     this.n = 0
   }
@@ -41,6 +42,7 @@ export class Avatar extends Node {
       this.instance.setEmote(this._emote)
       this.instance.setVisible(this._visible)
       this.instance.setPoseOverride?.(this._poseOverride)
+      this.instance.setHandTrackingPose?.(this._handTrackingPose)
       if (this._disableRateCheck) {
         this.instance.disableRateCheck()
         // this._disableRateCheck = null
@@ -144,6 +146,15 @@ export class Avatar extends Node {
     this.instance?.setPoseOverride?.(this._poseOverride)
   }
 
+  setFirstPerson(active) {
+    this.instance?.setFirstPerson?.(active)
+  }
+
+  setHandTrackingPose(pose) {
+    this._handTrackingPose = pose
+    this.instance?.setHandTrackingPose?.(pose)
+  }
+
   disableRateCheck() {
     if (this.instance) {
       this.instance.disableRateCheck()
@@ -173,6 +184,7 @@ export class Avatar extends Node {
     this._visible = source._visible
     this._onLoad = source._onLoad
     this._poseOverride = source._poseOverride ? JSON.parse(JSON.stringify(source._poseOverride)) : null
+    this._handTrackingPose = source._handTrackingPose
 
     this.factory = source.factory
     this.hooks = source.hooks
@@ -222,6 +234,12 @@ export class Avatar extends Node {
         setEmote(url) {
           // DEPRECATED: use .emote
           return self.setEmote(url)
+        },
+        setFirstPerson(active) {
+          self.setFirstPerson(active)
+        },
+        setHandTrackingPose(pose) {
+          self.setHandTrackingPose(pose)
         },
         get height() {
           // DEPRECATED: use .getHeight()

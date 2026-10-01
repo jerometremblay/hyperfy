@@ -1,7 +1,7 @@
 import { Entity } from './Entity'
 import { clamp } from '../utils'
 import * as THREE from '../extras/three'
-import { XRControllerModelFactory } from 'three/addons'
+import { XRControllerModelFactory, XRHandModelFactory } from 'three/addons'
 import { Layers } from '../extras/Layers'
 import { DEG2RAD, RAD2DEG } from '../extras/general'
 import { createNode } from '../extras/createNode'
@@ -13,6 +13,7 @@ import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 import { getAvatarCameraFocus } from '../extras/avatarFocus'
+import { XR_HAND_BONES } from '../extras/handTracking'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const DOWN = new THREE.Vector3(0, -1, 0)
@@ -40,6 +41,9 @@ const q1 = new THREE.Quaternion()
 const q2 = new THREE.Quaternion()
 const q3 = new THREE.Quaternion()
 const q4 = new THREE.Quaternion()
+const q5 = new THREE.Quaternion()
+const q6 = new THREE.Quaternion()
+const q7 = new THREE.Quaternion()
 const m1 = new THREE.Matrix4()
 const m2 = new THREE.Matrix4()
 const m3 = new THREE.Matrix4()
@@ -137,6 +141,7 @@ export class PlayerLocal extends Entity {
     this.xrHeadOffset = new THREE.Vector3()
     this.xrHeadCalibrationPending = false
     this.xrHeadRecenterPending = false
+    this.xrHandPose = null
 
     this.aura = createNode('group')
 
@@ -217,6 +222,8 @@ export class PlayerLocal extends Entity {
         this.avatar = src.toNodes().get('avatar')
         this.avatar.disableRateCheck() // max fps for local player
         this.applySeatPose()
+        this.avatar.setFirstPerson(this.firstPerson)
+        this.avatar.setHandTrackingPose(this.xrHandPose)
         this.base.add(this.avatar)
         this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
         this.bubble.position.y = this.avatar.getHeadToHeight() + 0.2
@@ -362,16 +369,31 @@ export class PlayerLocal extends Entity {
         this.xrControllerRight.add(this.xrControllerFactory.createControllerModel(this.xrControllerRight))
         this.xrRig.add(this.xrControllerRight)
       }
+      const debug = new URLSearchParams(window.location.search)
+      if (debug.get('xrHands') === '1' && !this.xrDebugHands) {
+        const factory = new XRHandModelFactory()
+        this.xrDebugHands = [0, 1].map(index => {
+          const hand = this.world.graphics.renderer.xr.getHand(index)
+          hand.add(factory.createHandModel(hand, 'spheres'))
+          this.xrRig.add(hand)
+          return hand
+        })
+      }
+      if (debug.get('xrRecord') === '1')
+        this.xrHandRecording = { version: 1, frames: [], startedAt: null, lastAt: -Infinity }
       this.world.stage.scene.add(this.xrRig)
       this.xrRig.add(this.world.camera)
       this.cam.zoom = 0
       this.control.camera.write = false
       this.isXR = true
+      this.xrHandPose = null
+      this.avatar?.setHandTrackingPose(null)
       this.xrHeadOffset.set(0, 0, 0)
       this.xrHeadCalibrationPending = true
       this.xrHeadRecenterPending = !!this.data.effect?.anchorId
       this.world.graphics.on('render', this.onXRRender)
     } else {
+      this.downloadXRHandRecording()
       this.world.graphics.off('render', this.onXRRender)
       this.world.stage.scene.remove(this.xrRig)
       this.world.rig.add(this.world.camera)
@@ -380,6 +402,8 @@ export class PlayerLocal extends Entity {
       this.cam.zoom = 1
       this.control.camera.write = true
       this.isXR = false
+      this.xrHandPose = null
+      this.avatar?.setHandTrackingPose(null)
       this.xrHeadOffset.set(0, 0, 0)
       this.xrHeadCalibrationPending = false
       this.xrHeadRecenterPending = false
@@ -461,6 +485,108 @@ export class PlayerLocal extends Entity {
     offset.applyQuaternion(parent.quaternion)
     parent.position.copy(pivotWorld).sub(offset)
     // console.log(child.getWorldPosition(new THREE.Vector3()))
+  }
+
+  updateXRHandPose() {
+    if (!this.isXR || !this.avatar?.instance?.raw?.scene) {
+      if (this.xrHandPose) {
+        this.xrHandPose = null
+        this.avatar?.setHandTrackingPose(null)
+      }
+      return null
+    }
+
+    const sources = this.world.controls?.xrHands || {}
+    const controllerPoses = {
+      left: this.control?.xrLeftGripPose,
+      right: this.control?.xrRightGripPose,
+    }
+    const hasControllerPose = side => controllerPoses[side]?.valid
+    if (!sources.left && !sources.right && !hasControllerPose('left') && !hasControllerPose('right')) {
+      if (this.xrHandPose) {
+        this.xrHandPose = null
+        this.avatar.setHandTrackingPose(null)
+      }
+      return null
+    }
+
+    const scene = this.avatar.instance.raw.scene
+    scene.updateMatrixWorld(true)
+    this.xrRig.updateMatrixWorld(true)
+    const avatarInverse = m3.copy(scene.matrixWorld).invert()
+    const avatarRotation = scene.getWorldQuaternion(q5)
+    const xrRotation = this.xrRig.getWorldQuaternion(q6)
+    const xrToAvatar = q7.copy(avatarRotation).invert().multiply(xrRotation)
+    const pose = {}
+
+    for (const side of ['left', 'right']) {
+      const source = sources[side]
+      const trackedHand = source?.joints?.wrist ? source : null
+      const controllerPose = !trackedHand && hasControllerPose(side) ? controllerPoses[side] : null
+      const wrist =
+        trackedHand?.joints?.wrist ||
+        (controllerPose && {
+          p: controllerPose.position.toArray(),
+          q: controllerPose.quaternion.toArray(),
+        })
+      if (!wrist) continue
+
+      const wristMatrix = m1.compose(v4.fromArray(wrist.p), q4.fromArray(wrist.q), SCALE_IDENTITY)
+      wristMatrix.premultiply(this.xrRig.matrixWorld).premultiply(avatarInverse)
+      const hand = {
+        kind: trackedHand ? 'hand' : 'controller',
+        p: v5.setFromMatrixPosition(wristMatrix).toArray(),
+        w: q1.copy(xrToAvatar).multiply(q4).normalize().toArray(),
+        f: {},
+      }
+      if (trackedHand) {
+        for (const item of XR_HAND_BONES) {
+          const joint = trackedHand.joints[item.joint]
+          if (joint) hand.f[item.bone] = q1.copy(xrToAvatar).multiply(q2.fromArray(joint.q)).normalize().toArray()
+        }
+      }
+      pose[side] = hand
+    }
+
+    this.xrHandPose = Object.keys(pose).length ? pose : null
+    this.avatar.setHandTrackingPose(this.xrHandPose)
+    if (this.xrHandRecording) this.recordXRHands(sources, scene)
+    return this.xrHandPose
+  }
+
+  recordXRHands(sources, scene) {
+    const recording = this.xrHandRecording
+    if (!recording) return
+    const now = performance.now()
+    if (recording.startedAt === null) recording.startedAt = now
+    const time = now - recording.startedAt
+    if (time > 10000 || now - recording.lastAt < 1000 / 30) return
+    recording.lastAt = now
+    recording.frames.push(
+      JSON.parse(
+        JSON.stringify({
+          time,
+          hands: sources,
+          pose: this.xrHandPose,
+          xrRig: this.xrRig.matrixWorld.toArray(),
+          avatar: scene.matrixWorld.toArray(),
+        })
+      )
+    )
+  }
+
+  downloadXRHandRecording() {
+    const recording = this.xrHandRecording
+    this.xrHandRecording = null
+    if (!recording?.frames.length) return
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify({ version: recording.version, frames: recording.frames })], { type: 'application/json' })
+    )
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'xr-hands.json'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   toggleFlying(value) {
@@ -883,6 +1009,7 @@ export class PlayerLocal extends Entity {
       const emote = this.data.effect?.emote || null
       if (this.emote !== emote) this.emote = emote
       this.avatar?.setEmote(this.emote)
+      this.updateXRHandPose()
       this.avatar?.instance?.setLocomotion(this.mode, this.axis, this.gaze)
       this.updateEffectDuration(delta)
       return
@@ -967,11 +1094,13 @@ export class PlayerLocal extends Entity {
     if (this.cam.zoom < 1 && !this.firstPerson) {
       this.cam.zoom = 0
       this.firstPerson = true
-      this.avatar.visible = false
+      if (this.avatar) this.avatar.visible = true
+      this.avatar?.setFirstPerson(true)
     } else if (this.cam.zoom > 0 && this.firstPerson) {
       this.cam.zoom = 1
       this.firstPerson = false
-      this.avatar.visible = true
+      this.avatar?.setFirstPerson(false)
+      if (this.avatar) this.avatar.visible = true
     }
 
     // stick movement threshold
@@ -1157,6 +1286,8 @@ export class PlayerLocal extends Entity {
       this.world.controls.applyXRRig(this.xrRig)
     }
 
+    this.updateXRHandPose()
+
     // apply locomotion
     this.avatar?.instance?.setLocomotion(this.mode, this.axis, this.gaze)
 
@@ -1172,6 +1303,7 @@ export class PlayerLocal extends Entity {
           a: this.axis.clone(),
           g: this.gaze.clone(),
           e: null,
+          h: null,
         }
       }
       const data = {
@@ -1206,6 +1338,12 @@ export class PlayerLocal extends Entity {
       if (this.lastState.e !== this.emote) {
         data.e = this.emote
         this.lastState.e = this.emote
+        hasChanges = true
+      }
+      const handPose = this.xrHandPose ? JSON.stringify(this.xrHandPose) : null
+      if (this.lastState.h !== handPose) {
+        data.h = this.xrHandPose
+        this.lastState.h = handPose
         hasChanges = true
       }
       if (hasChanges) {
@@ -1245,12 +1383,7 @@ export class PlayerLocal extends Entity {
       // ...
     } else {
       if (anchor && !this.firstPerson && this.avatar?.instance?.raw?.scene) {
-        getAvatarCameraFocus(
-          this.avatar,
-          this.avatar.getHeight(),
-          this.cameraFocus,
-          this.cameraFocusBounds
-        )
+        getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), this.cameraFocus, this.cameraFocusBounds)
         this.cam.position.copy(this.cameraFocus)
       } else {
         // Keep the default shoulder view while upright and preserve first-person framing.

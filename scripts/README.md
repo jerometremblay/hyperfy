@@ -17,3 +17,4 @@ Build and utility scripts for Hyperfy. All are invoked via `npm run <command>` â
 | Script | npm command | What it does |
 |---|---|---|
 | `backup-world.mjs` | `npm run world:backup` | Creates a `.tar.gz` snapshot of the world folder in `world/backups/`. Keeps the 7 most recent backups. Respects the `WORLD` env var. |
+| `replay-xr-hands.mjs` | `npm run xr:hands:replay -- /path/to/xr-hands.json [avatar.vrm]` | Replays a headset recording against the actual VRM skeleton. See [hand tracking checks](../docs/xr-hands.md). |

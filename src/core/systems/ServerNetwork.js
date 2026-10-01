@@ -8,6 +8,7 @@ import { appHasBrowserSource } from '../utils/browser'
 import { cloneDeep, isNumber } from 'lodash-es'
 import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
+import { cloneHandTrackingPose } from '../extras/handTracking'
 import {
   getStoredSeatPose,
   sanitizeNormalizedPose,
@@ -486,15 +487,15 @@ export class ServerNetwork extends System {
     if (entity.isPlayer && Object.hasOwn(data, 'seatPose')) {
       return console.error('player attempted to modify authoritative seat pose data', { playerId: data.id })
     }
-    entity.modify(data)
-    let changes = data
+    let changes = entity.isPlayer && Object.hasOwn(data, 'h') ? { ...data, h: cloneHandTrackingPose(data.h) } : data
+    entity.modify(changes)
     const seatContextChanged =
       entity.isPlayer &&
       (Object.hasOwn(data, 'ef') || Object.hasOwn(data, 'avatar') || Object.hasOwn(data, 'sessionAvatar'))
     if (seatContextChanged) {
       const seatPose = getStoredSeatPose(this.world, entity)
       entity.modify({ seatPose })
-      changes = { ...data, seatPose }
+      changes = { ...changes, seatPose }
     }
     this.send('entityModified', changes, socket.id)
     if (seatContextChanged) {

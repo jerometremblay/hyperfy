@@ -7,6 +7,7 @@ import { hasRank, Ranks } from '../extras/ranks'
 import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
+import { cloneHandTrackingPose } from '../extras/handTracking'
 
 let capsuleGeometry
 {
@@ -101,6 +102,8 @@ export class PlayerRemote extends Entity {
       if (this.avatar) this.avatar.deactivate()
       this.avatar = src.toNodes().get('avatar')
       this.applySeatPose()
+      this.data.h = cloneHandTrackingPose(this.data.h)
+      this.avatar.setHandTrackingPose(this.data.h)
       this.base.add(this.avatar)
       this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
       this.bubble.position.y = this.avatar.getHeadToHeight() + 0.2
@@ -154,6 +157,7 @@ export class PlayerRemote extends Entity {
       this.quaternion.update(delta)
     }
     this.avatar?.setEmote(this.data.emote)
+    this.avatar?.setHandTrackingPose(this.data.h || null)
     this.avatar?.instance?.setLocomotion(this.mode, this.axis, this.gaze)
   }
 
@@ -220,6 +224,10 @@ export class PlayerRemote extends Entity {
     }
     if (data.hasOwnProperty('e')) {
       this.data.emote = data.e
+    }
+    if (data.hasOwnProperty('h')) {
+      this.data.h = cloneHandTrackingPose(data.h)
+      this.avatar?.setHandTrackingPose(this.data.h)
     }
     if (data.hasOwnProperty('ef')) {
       this.setEffect(data.ef)

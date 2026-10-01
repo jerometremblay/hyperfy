@@ -65,6 +65,125 @@ test('re-centers XR yaw to the seated avatar head', () => {
   assert.ok(Math.abs(turnAngle + 90) < 1e-6)
 })
 
+test('sends the absolute XR wrist orientation without startup calibration', () => {
+  const scene = new THREE.Object3D()
+  scene.updateMatrixWorld(true)
+  const xrRig = new THREE.Object3D()
+  xrRig.updateMatrixWorld(true)
+  const initialWrist = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2)
+  const verticalFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI)
+  const currentWrist = verticalFlip.clone().multiply(initialWrist)
+  const source = { joints: { wrist: { p: [0, 0, 0], q: initialWrist.toArray() } } }
+  let appliedPose
+  const player = {
+    isXR: true,
+    avatar: {
+      instance: { raw: { scene } },
+      setHandTrackingPose(pose) {
+        appliedPose = pose
+      },
+    },
+    world: { controls: { xrHands: { left: source, right: null } } },
+    xrRig,
+    xrHandPose: null,
+  }
+
+  PlayerLocal.prototype.updateXRHandPose.call(player)
+  source.joints.wrist.q = currentWrist.toArray()
+  PlayerLocal.prototype.updateXRHandPose.call(player)
+
+  const mappedFlip = new THREE.Quaternion().fromArray(appliedPose.left.w)
+  assert.ok(mappedFlip.angleTo(currentWrist) < 1e-6)
+})
+
+test('sends absolute finger orientations on the first frame and includes metacarpal motion', () => {
+  const scene = new THREE.Object3D()
+  scene.updateMatrixWorld(true)
+  const xrRig = new THREE.Object3D()
+  xrRig.updateMatrixWorld(true)
+  const parentRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2)
+  const initialFinger = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 4)
+  const fingerCurl = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 3)
+  const source = {
+    joints: {
+      wrist: { p: [0, 0, 0], q: [0, 0, 0, 1] },
+      'index-finger-metacarpal': { p: [0, 0, 0], q: parentRotation.toArray() },
+      'index-finger-phalanx-proximal': {
+        p: [0, 0, -0.03],
+        q: parentRotation.clone().multiply(initialFinger).toArray(),
+      },
+      'index-finger-phalanx-intermediate': {
+        p: [0, 0, -0.06],
+        q: [0, 0, 0, 1],
+      },
+    },
+  }
+  let appliedPose
+  const player = {
+    isXR: true,
+    avatar: {
+      instance: { raw: { scene } },
+      setHandTrackingPose(pose) {
+        appliedPose = pose
+      },
+    },
+    world: { controls: { xrHands: { left: source, right: null } } },
+    xrRig,
+    xrHandPose: null,
+  }
+
+  PlayerLocal.prototype.updateXRHandPose.call(player)
+  source.joints['index-finger-phalanx-proximal'].q = parentRotation
+    .clone()
+    .multiply(fingerCurl)
+    .multiply(initialFinger)
+    .toArray()
+  PlayerLocal.prototype.updateXRHandPose.call(player)
+
+  const mappedFinger = new THREE.Quaternion().fromArray(appliedPose.left.f.IndexProximal)
+  const expectedFinger = parentRotation.clone().multiply(fingerCurl).multiply(initialFinger)
+  assert.ok(mappedFinger.angleTo(expectedFinger) < 1e-6)
+  assert.equal(appliedPose.left.kind, 'hand')
+  assert.equal(appliedPose.left.i, undefined)
+  assert.equal(appliedPose.left.pi, undefined)
+})
+
+test('uses controller grip poses when hand tracking is unavailable', () => {
+  const scene = new THREE.Object3D()
+  scene.updateMatrixWorld(true)
+  const xrRig = new THREE.Object3D()
+  xrRig.updateMatrixWorld(true)
+  const gripPosition = new THREE.Vector3(-0.25, 1.2, -0.4)
+  const gripQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.4)
+  let appliedPose
+  const player = {
+    isXR: true,
+    avatar: {
+      instance: { raw: { scene } },
+      setHandTrackingPose(pose) {
+        appliedPose = pose
+      },
+    },
+    world: { controls: { xrHands: { left: null, right: null } } },
+    control: {
+      xrLeftGripPose: { valid: true, position: gripPosition, quaternion: gripQuaternion },
+      xrRightGripPose: { valid: false },
+    },
+    xrRig,
+    xrHandPose: null,
+  }
+
+  PlayerLocal.prototype.updateXRHandPose.call(player)
+
+  assert.deepEqual(appliedPose.left.p, gripPosition.toArray())
+  assert.deepEqual(appliedPose.left.w, gripQuaternion.toArray())
+  assert.equal(appliedPose.left.kind, 'controller')
+  assert.equal(appliedPose.left.i, undefined)
+  assert.equal(appliedPose.left.d, undefined)
+  assert.equal(appliedPose.left.pi, undefined)
+  assert.deepEqual(appliedPose.left.f, {})
+})
+
 test('uses the posed head as the desktop seated camera pivot', () => {
   globalThis.PHYSX = { PxSphereGeometry: class {} }
 
