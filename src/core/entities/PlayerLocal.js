@@ -21,6 +21,7 @@ const BACKWARD = new THREE.Vector3(0, 0, 1)
 const SCALE_IDENTITY = new THREE.Vector3(1, 1, 1)
 const POINTER_LOOK_SPEED = 0.1
 const PAN_LOOK_SPEED = 0.4
+const XR_TURN_SPEED = 90 // degrees per second at full stick
 const ZOOM_SPEED = 2
 const MIN_ZOOM = 0
 const MAX_ZOOM = 8
@@ -45,6 +46,11 @@ const m3 = new THREE.Matrix4()
 
 const gazeTiltAngle = 10 * DEG2RAD
 const gazeTiltAxis = new THREE.Vector3(1, 0, 0) // X-axis for pitch
+
+export function getXRTurnAngle(stickX, delta) {
+  if (!stickX) return 0
+  return -stickX * XR_TURN_SPEED * delta
+}
 
 // TODO: de-dup createVRMFactory.js has a copy
 const Modes = {
@@ -903,17 +909,10 @@ export class PlayerLocal extends Entity {
       // in xr we only track turn here, which is added to the xr camera later on
       // this.cam.rotation.x = 0
       // this.cam.rotation.z = 0
-      if (this.control.xrRightStick.value.x === 0 && this.didSnapTurn) {
-        this.didSnapTurn = false
-      } else if (this.control.xrRightStick.value.x > 0 && !this.didSnapTurn) {
-        this.turnXRRigAtPlayer(-45)
-        this.didSnapTurn = true
-      } else if (this.control.xrRightStick.value.x < 0 && !this.didSnapTurn) {
-        this.turnXRRigAtPlayer(45)
-        this.didSnapTurn = true
-      }
-      // if we did snap turn, we need to refresh the hmd position to cancel it out
-      if (this.didSnapTurn) {
+      const turn = getXRTurnAngle(this.control.xrRightStick.value.x, delta)
+      if (turn) {
+        this.turnXRRigAtPlayer(turn)
+        // Refresh the HMD baseline to cancel out the rig rotation.
         this.world.camera.getWorldPosition(v1)
         v1.y = 0
         v2.copy(this.xrRig.position)
