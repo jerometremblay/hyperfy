@@ -1,7 +1,19 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import * as THREE from 'three'
-import { getAvatarFocus } from './avatarFocus.js'
+import { getAvatarCameraFocus, getAvatarFocus } from './avatarFocus.js'
+
+test('uses the posed avatar head as the seated camera focus', () => {
+  const headMatrix = new THREE.Matrix4().makeTranslation(4, 1.1, -3)
+  const avatar = {
+    getBoneTransform: boneName => (boneName === 'head' ? headMatrix : null),
+    instance: { raw: { scene: new THREE.Group() } },
+  }
+
+  const focus = getAvatarCameraFocus(avatar, 1.8)
+
+  assert.deepEqual(focus.toArray(), [4, 1.1, -3])
+})
 
 test('uses the world-space avatar bounds center as the camera focus', () => {
   const avatar = new THREE.Group()

@@ -12,7 +12,7 @@ import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
-import { getAvatarFocus } from '../extras/avatarFocus'
+import { getAvatarCameraFocus } from '../extras/avatarFocus'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const DOWN = new THREE.Vector3(0, -1, 0)
@@ -1245,8 +1245,8 @@ export class PlayerLocal extends Entity {
       // ...
     } else {
       if (anchor && !this.firstPerson && this.avatar?.instance?.raw?.scene) {
-        getAvatarFocus(
-          this.avatar.instance.raw.scene,
+        getAvatarCameraFocus(
+          this.avatar,
           this.avatar.getHeight(),
           this.cameraFocus,
           this.cameraFocusBounds
@@ -1257,7 +1257,7 @@ export class PlayerLocal extends Entity {
         this.cam.position.y += this.camHeight
       }
       // and slightly to the right over the avatars shoulder, when not first person / xr
-      if (!this.firstPerson) {
+      if (!this.firstPerson && !anchor) {
         const forward = v1.copy(FORWARD).applyQuaternion(this.cam.quaternion)
         const right = v2.crossVectors(forward, UP).normalize()
         this.cam.position.add(right.multiplyScalar(0.3))
