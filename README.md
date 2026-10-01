@@ -33,3 +33,24 @@ The in-world sitting-pose editor makes it possible to align an avatar to a seat,
 adjust joint rotations and hip placement, preview the result on another avatar,
 and save reusable pose styles. It also includes posture presets, joint markers,
 rotation gizmos, undo/redo, and seat-local placement controls.
+
+### VR avatar hands and movement
+
+On headsets with WebXR hand tracking, avatar hands follow tracked wrist
+orientations and finger movements, including fists and pinches. Tracking works
+from the first valid pose without requiring open hands for calibration, and hand
+poses are shared with other players. Controllers use their tracked grip poses
+with a generic closed holding pose.
+
+Shoulders and elbows respect the sitting-pose editor's joint limits. Elbows bend
+downward and outward, with continuity through positions that would otherwise
+cause flips. Joint limits can make the avatar stop short of a tracked hand
+position; wrist and finger orientations continue to follow tracking. The avatar
+body remains visible in first person while its head is hidden.
+
+VR also includes continuous right-stick turning and camera alignment with the
+avatar's head. Sitting recenters the view to the seated head position and facing
+direction, including after sitting-pose adjustments.
+
+See [avatar hand tracking validation](docs/xr-hands.md) for joint visualization,
+local pose recording, and replay instructions.
