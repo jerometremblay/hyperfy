@@ -136,6 +136,7 @@ export class PlayerLocal extends Entity {
     this.hmdLast = new THREE.Vector3()
     this.xrHeadOffset = new THREE.Vector3()
     this.xrHeadCalibrationPending = false
+    this.xrHeadRecenterPending = false
 
     this.aura = createNode('group')
 
@@ -224,7 +225,6 @@ export class PlayerLocal extends Entity {
         }
         this.avatarUrl = avatarUrl
         this.camHeight = this.avatar.getHeight() - this.avatar.getHeadToHeight()
-        if (this.isXR) this.xrHeadCalibrationPending = true
         this.world.emit('player', this)
       })
       .catch(err => {
@@ -240,6 +240,10 @@ export class PlayerLocal extends Entity {
     this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
     this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
     this.avatar.setPoseOverride(seatPose?.pose || defaultPose)
+    if (this.isXR) {
+      this.xrHeadCalibrationPending = true
+      if (this.data.effect?.anchorId) this.xrHeadRecenterPending = true
+    }
   }
 
   initCapsule() {
@@ -365,6 +369,7 @@ export class PlayerLocal extends Entity {
       this.isXR = true
       this.xrHeadOffset.set(0, 0, 0)
       this.xrHeadCalibrationPending = true
+      this.xrHeadRecenterPending = !!this.data.effect?.anchorId
       this.world.graphics.on('render', this.onXRRender)
     } else {
       this.world.graphics.off('render', this.onXRRender)
@@ -377,6 +382,7 @@ export class PlayerLocal extends Entity {
       this.isXR = false
       this.xrHeadOffset.set(0, 0, 0)
       this.xrHeadCalibrationPending = false
+      this.xrHeadRecenterPending = false
     }
   }
 
@@ -392,6 +398,20 @@ export class PlayerLocal extends Entity {
     // headset movement remains relative to that calibrated point.
     const target = v3.set(headPosition.x, headPosition.y - camera.position.y, headPosition.z)
     this.xrHeadOffset.subVectors(target, this.base.position)
+    if (this.xrHeadRecenterPending) {
+      // Recenter only yaw around the headset; pitch and roll remain user-controlled.
+      const headQuaternion = q2.setFromRotationMatrix(matrix)
+      const cameraQuaternion = q3
+      this.world.camera.getWorldQuaternion(cameraQuaternion)
+      e1.setFromQuaternion(cameraQuaternion).reorder('YXZ')
+      const cameraYaw = e1.y
+      e1.setFromQuaternion(headQuaternion).reorder('YXZ')
+      let turn = e1.y - cameraYaw
+      if (turn > Math.PI) turn -= Math.PI * 2
+      if (turn < -Math.PI) turn += Math.PI * 2
+      this.turnXRRigAtPlayer(turn * RAD2DEG)
+      this.xrHeadRecenterPending = false
+    }
     this.xrHeadCalibrationPending = false
     return true
   }

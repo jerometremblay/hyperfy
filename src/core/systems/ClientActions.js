@@ -51,13 +51,16 @@ export class ClientActions extends System {
   }
 
   update(delta) {
-    const cameraPos = this.world.rig.position
+    const cameraPos = this.world.xr?.session
+      ? this.world.camera.getWorldPosition(v5)
+      : this.world.rig.position
 
     this.btnDown =
       this.control.keyE.down ||
       this.control.touchB.down ||
       this.control.xrLeftTrigger.down ||
-      this.control.xrRightTrigger.down
+      this.control.xrRightTrigger.down ||
+      this.control.xrLeftBtn1.down
 
     // clear current action if its no longer in distance
     if (this.current.node) {
@@ -113,6 +116,7 @@ function createAction(world) {
   const draw = (label, ratio) => {
     // console.time('draw')
     const text = board.measureText(47, heightPx / 2, label, '#ffffff', 18, 400)
+    const prompt = getActionPrompt(world)
     const pillWidth = 6 + 4 + 24 + 4 + 6 + 9 + text.width + 13
     const left = (widthPx - pillWidth) / 2
     board.clear()
@@ -120,7 +124,10 @@ function createAction(world) {
     board.drawPie(left + 6, 6, 16, 100, '#5d6077') // grey
     board.drawPie(left + 6, 6, 16, ratio * 100, '#ffffff') // white
     board.drawCircle(left + 10, 10, 12, '#000000') // inner
-    if (!isTouch) board.drawText(left + 16, 14, 'E', '#ffffff', 18, 400) // E
+    if (prompt) {
+      const promptWidth = board.measureText(0, 0, prompt, '#ffffff', 18, 400).width
+      board.drawText(left + 22 - promptWidth / 2, 14, prompt, '#ffffff', 18, 400)
+    }
     board.drawText(left + 47, 14, label, '#ffffff', 18, 400) // label
     board.commit()
     // console.timeEnd('draw')
@@ -152,7 +159,7 @@ function createAction(world) {
         const qua = q1
         const sca = v2
         node.matrixWorld.decompose(pos, qua, sca)
-        const camPosition = v3.setFromMatrixPosition(world.xr.camera.matrixWorld)
+        const camPosition = world.camera.getWorldPosition(v3)
         distance = camPosition.distanceTo(pos)
         v4.subVectors(camPosition, pos).normalize()
         qua.setFromUnitVectors(FORWARD, v4)
@@ -218,6 +225,15 @@ function createAction(world) {
       }
     },
   }
+}
+
+export function getActionPrompt(world) {
+  if (!world.xr?.session) return isTouch ? null : 'E'
+
+  const sources = Array.from(world.xr.session.inputSources || [])
+  const hasLeftController = sources.some(source => source.handedness === 'left' && source.gamepad)
+  if (hasLeftController) return 'X'
+  return null
 }
 
 const sizes = [128, 256, 512, 2048, 4096]
