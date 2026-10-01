@@ -128,6 +128,8 @@ export class PlayerLocal extends Entity {
 
     this.hmdDelta = new THREE.Vector3()
     this.hmdLast = new THREE.Vector3()
+    this.xrHeadOffset = new THREE.Vector3()
+    this.xrHeadCalibrationPending = false
 
     this.aura = createNode('group')
 
@@ -215,7 +217,8 @@ export class PlayerLocal extends Entity {
           this.nametag.active = true
         }
         this.avatarUrl = avatarUrl
-        this.camHeight = this.avatar.height * 0.9
+        this.camHeight = this.avatar.getHeight() - this.avatar.getHeadToHeight()
+        if (this.isXR) this.xrHeadCalibrationPending = true
         this.world.emit('player', this)
       })
       .catch(err => {
@@ -354,7 +357,11 @@ export class PlayerLocal extends Entity {
       this.cam.zoom = 0
       this.control.camera.write = false
       this.isXR = true
+      this.xrHeadOffset.set(0, 0, 0)
+      this.xrHeadCalibrationPending = true
+      this.world.graphics.on('render', this.onXRRender)
     } else {
+      this.world.graphics.off('render', this.onXRRender)
       this.world.stage.scene.remove(this.xrRig)
       this.world.rig.add(this.world.camera)
       this.world.camera.position.set(0, 0, 0)
@@ -362,7 +369,42 @@ export class PlayerLocal extends Entity {
       this.cam.zoom = 1
       this.control.camera.write = true
       this.isXR = false
+      this.xrHeadOffset.set(0, 0, 0)
+      this.xrHeadCalibrationPending = false
     }
+  }
+
+  calibrateXRHead() {
+    if (!this.avatar) return false
+    const matrix = this.avatar.getBoneTransform('head')
+    const camera = this.world.camera
+    if (!matrix || camera.position.y <= 0) return false
+
+    const headPosition = v1.setFromMatrixPosition(matrix)
+    // setXRPlayerPosition targets the point directly below the camera. Subtract
+    // the current local HMD Y so this pose lands on the avatar's head; later
+    // headset movement remains relative to that calibrated point.
+    const target = v3.set(headPosition.x, headPosition.y - camera.position.y, headPosition.z)
+    this.xrHeadOffset.subVectors(target, this.base.position)
+    this.xrHeadCalibrationPending = false
+    return true
+  }
+
+  onXRRender = () => {
+    if (!this.isXR || !this.xrHeadCalibrationPending || !this.calibrateXRHead()) return
+
+    const camera = this.world.camera
+    this.setXRPlayerPosition(this.base.position)
+
+    // The calibration happens after the render, so refresh the transforms
+    // before resetting the physical-movement baseline for the next frame.
+    this.xrRig.updateMatrixWorld(true)
+    camera.updateMatrixWorld(true)
+    camera.getWorldPosition(v2)
+    v2.y = 0
+    v3.copy(this.xrRig.position)
+    v3.y = 0
+    this.hmdLast.copy(v2).sub(v3)
   }
 
   setXRPlayerPosition(position) {
@@ -370,7 +412,8 @@ export class PlayerLocal extends Entity {
     const child = this.world.camera
     const feetWorldPos = child.getWorldPosition(v2)
     feetWorldPos.y -= child.position.y
-    const offset = v1.subVectors(position, feetWorldPos)
+    const target = v3.copy(position).add(this.xrHeadOffset)
+    const offset = v1.subVectors(target, feetWorldPos)
     parent.position.add(offset)
 
     // const offset = v1.copy(position)
@@ -827,8 +870,18 @@ export class PlayerLocal extends Entity {
     // console.log('update')
 
     if (xr) {
+      // If the first render happened before the avatar pose was available,
+      // calibrate on the next update once WebXR has populated the local pose.
+      const calibrated = this.xrHeadCalibrationPending && this.calibrateXRHead()
       // move the rig so that the ground underneath the camera aligns with the base player
       this.setXRPlayerPosition(this.base.position)
+      if (calibrated) {
+        this.world.camera.getWorldPosition(v1)
+        v1.y = 0
+        v2.copy(this.xrRig.position)
+        v2.y = 0
+        this.hmdLast.copy(v1).sub(v2)
+      }
       // fetch any physical movement delta
       this.world.camera.getWorldPosition(v1)
       v1.y = 0
