@@ -16,6 +16,13 @@ Controller grips use the standard grip-space axes, with the wrist behind the gri
 centroid by the avatar's palm length, and a generic closed holding pose. This is an
 approximation; exact fit to each controller model has not been verified.
 
+VR shoulders and elbows use the posture editor's `clampBoneRotation` limits in
+the same normalized rest frame. The arm solver starts from rest each frame to
+avoid accumulated twist. Elbows prefer a downward, outward bend and retain their
+bend side when the wrist crosses the pole direction. Joint limits take priority
+over wrist position, so a constrained reach can stop short of the tracked hand.
+Absolute wrist and finger orientations still follow tracking.
+
 ## Validation
 
 On October 1, 2026, the user confirmed in the headset that hand orientations are

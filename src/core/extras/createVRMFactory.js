@@ -9,6 +9,7 @@ import { Emotes } from './playerEmotes'
 import { applyNormalizedPose, createNormalizedPoseMapping, getNormalizedPose } from './normalizedPose'
 import { XR_HAND_BONES } from './handTracking'
 import { createHandTrackingMapping } from './handRetargeting'
+import { clampBoneRotation } from './poseEditorMath'
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -506,6 +507,7 @@ export function createVRMFactory(glb, setupMaterial) {
     const handDeltaQuaternion = new THREE.Quaternion()
     const handDirection = new THREE.Vector3()
     const handPole = new THREE.Vector3()
+    const handPreviousPole = new THREE.Vector3()
     const handElbow = new THREE.Vector3()
     const handTarget = new THREE.Vector3()
     const handShoulder = new THREE.Vector3()
@@ -515,6 +517,33 @@ export function createVRMFactory(glb, setupMaterial) {
     const handTargetDirection = new THREE.Vector3()
     const handTargetRotation = new THREE.Quaternion()
     const handWristQuaternion = new THREE.Quaternion()
+    const handRestParentQuaternion = new THREE.Quaternion()
+    const handInverseRestParentQuaternion = new THREE.Quaternion()
+    const handRestQuaternion = new THREE.Quaternion()
+    const handInverseRestQuaternion = new THREE.Quaternion()
+    const handNormalizedQuaternion = new THREE.Quaternion()
+
+    function limitHandArmBone(side, name, bone) {
+      const boneName = getHandBoneName(side, name)
+      const mapping = normalizedPoseMapping.bones[boneName]
+      handRestParentQuaternion.fromArray(mapping.parentWorldRotation)
+      handRestQuaternion.fromArray(mapping.restRotation)
+      handInverseRestParentQuaternion.copy(handRestParentQuaternion).invert()
+      handInverseRestQuaternion.copy(handRestQuaternion).invert()
+      // Use the same normalized rest frame as the posture editor, rather than raw VRM axes.
+      handNormalizedQuaternion
+        .copy(handRestParentQuaternion)
+        .multiply(bone.quaternion)
+        .multiply(handInverseRestQuaternion)
+        .multiply(handInverseRestParentQuaternion)
+      handNormalizedQuaternion.fromArray(clampBoneRotation(boneName, handNormalizedQuaternion.toArray()))
+      bone.quaternion
+        .copy(handInverseRestParentQuaternion)
+        .multiply(handNormalizedQuaternion)
+        .multiply(handRestParentQuaternion)
+        .multiply(handRestQuaternion)
+      bone.updateMatrixWorld(true)
+    }
 
     function getHandBoneName(side, bone) {
       return `${side}${bone}`
@@ -560,7 +589,7 @@ export function createVRMFactory(glb, setupMaterial) {
       setHandBoneWorldQuaternion(bone, handWorldQuaternion)
     }
 
-    function applyHandArmPose(side, target) {
+    function applyHandArmPose(side, target, current) {
       const upperArm = findBone(getHandBoneName(side, 'UpperArm'))
       const lowerArm = findBone(getHandBoneName(side, 'LowerArm'))
       const hand = findBone(getHandBoneName(side, 'Hand'))
@@ -576,7 +605,11 @@ export function createVRMFactory(glb, setupMaterial) {
       handTarget.copy(target)
       handDirection.subVectors(handTarget, handShoulder)
       let distance = handDirection.length()
-      if (distance < 0.001) return
+      if (distance < 0.001) {
+        limitHandArmBone(side, 'UpperArm', upperArm)
+        limitHandArmBone(side, 'LowerArm', lowerArm)
+        return
+      }
       const maxDistance = upperLength + lowerLength - 0.001
       const minDistance = Math.max(Math.abs(upperLength - lowerLength), 0.001)
       distance = THREE.MathUtils.clamp(distance, minDistance, maxDistance)
@@ -584,13 +617,22 @@ export function createVRMFactory(glb, setupMaterial) {
       handTarget.copy(handShoulder).addScaledVector(handDirection, distance)
 
       vrm.scene.getWorldQuaternion(handSceneQuaternion)
-      handPole.set(0, 0, 1).applyQuaternion(handSceneQuaternion)
+      handPole.set(side === 'left' ? -0.5 : 0.5, -1, 0).applyQuaternion(handSceneQuaternion)
       handPole.addScaledVector(handDirection, -handPole.dot(handDirection))
+      handPreviousPole.copy(current.elbowPole).applyQuaternion(handSceneQuaternion)
+      handPreviousPole.addScaledVector(handDirection, -handPreviousPole.dot(handDirection))
       if (handPole.lengthSq() < 0.000001) {
-        handPole.set(0, 1, 0).applyQuaternion(handSceneQuaternion)
-        handPole.addScaledVector(handDirection, -handPole.dot(handDirection))
+        handPole.copy(handPreviousPole)
+        if (handPole.lengthSq() < 0.000001) {
+          handPole.set(0, 0, 1).applyQuaternion(handSceneQuaternion)
+          handPole.addScaledVector(handDirection, -handPole.dot(handDirection))
+        }
       }
       handPole.normalize()
+      // Keep the previous bend side through the pole singularity instead of flipping the elbow.
+      if (handPole.dot(handPreviousPole) < 0) handPole.negate()
+      handInverseRestParentQuaternion.copy(handSceneQuaternion).invert()
+      current.elbowPole.copy(handPole).applyQuaternion(handInverseRestParentQuaternion)
 
       const cosine = THREE.MathUtils.clamp(
         (upperLength * upperLength + distance * distance - lowerLength * lowerLength) / (2 * upperLength * distance),
@@ -601,8 +643,14 @@ export function createVRMFactory(glb, setupMaterial) {
       const height = upperLength * Math.sqrt(Math.max(1 - cosine * cosine, 0))
       handElbow.copy(handShoulder).addScaledVector(handDirection, along).addScaledVector(handPole, height)
 
+      // Solve from rest each frame so successive direction changes cannot accumulate arm twist.
+      upperArm.quaternion.fromArray(normalizedPoseMapping.bones[side + 'UpperArm'].restRotation)
+      lowerArm.quaternion.fromArray(normalizedPoseMapping.bones[side + 'LowerArm'].restRotation)
+      upperArm.updateMatrixWorld(true)
       aimHandBoneTowards(upperArm, handElbow)
+      limitHandArmBone(side, 'UpperArm', upperArm)
       aimHandBoneTowards(lowerArm, handTarget)
+      limitHandArmBone(side, 'LowerArm', lowerArm)
     }
 
     function captureHandTrackingRest(side) {
@@ -624,12 +672,13 @@ export function createVRMFactory(glb, setupMaterial) {
       }
     }
 
-    function createHandTrackingCurrent(hand) {
+    function createHandTrackingCurrent(side, hand) {
       return {
         kind: hand.kind,
         position: new THREE.Vector3().fromArray(hand.p),
         wrist: new THREE.Quaternion().fromArray(hand.w).normalize(),
         fingers: {},
+        elbowPole: new THREE.Vector3(side === 'left' ? -0.5 : 0.5, -1, 0).normalize(),
       }
     }
 
@@ -653,7 +702,7 @@ export function createVRMFactory(glb, setupMaterial) {
         if (!handTrackingRest[side]) handTrackingRest[side] = captureHandTrackingRest(side)
         if (!handTrackingCurrent) handTrackingCurrent = {}
         if (!handTrackingCurrent[side] || handTrackingCurrent[side].kind !== target.kind)
-          handTrackingCurrent[side] = createHandTrackingCurrent(target)
+          handTrackingCurrent[side] = createHandTrackingCurrent(side, target)
         const current = handTrackingCurrent[side]
         current.position.lerp(handTargetPosition.fromArray(target.p), smoothing)
         current.wrist.slerp(handTargetRotation.fromArray(target.w).normalize(), smoothing)
@@ -671,7 +720,7 @@ export function createVRMFactory(glb, setupMaterial) {
           handTarget.add(handTargetPosition.set(0, mapping.palmLength, 0).applyQuaternion(current.wrist))
         }
         handTarget.applyMatrix4(scene.matrixWorld)
-        applyHandArmPose(side, handTarget)
+        applyHandArmPose(side, handTarget, current)
 
         scene.getWorldQuaternion(handSceneQuaternion)
         const wrist = handWristQuaternion.copy(current.wrist)

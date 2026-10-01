@@ -16,13 +16,17 @@ globalThis.createImageBitmap = async () => ({
 })
 
 const bundle = await build({
-  entryPoints: [fileURLToPath(new URL('./createVRMFactory.js', import.meta.url))],
+  stdin: {
+    contents: `export { createVRMFactory } from './createVRMFactory.js'
+      export { clampBoneRotation } from './poseEditorMath.js'`,
+    resolveDir: fileURLToPath(new URL('.', import.meta.url)),
+  },
   bundle: true,
   format: 'esm',
   platform: 'node',
   write: false,
 })
-const { createVRMFactory } = await import(
+const { createVRMFactory, clampBoneRotation } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`
 )
 
@@ -96,7 +100,7 @@ async function createInstance(matrix = new THREE.Matrix4(), changeRestAxes = fal
   if (changeRestAxes) {
     const humanoid = glb.userData.vrm.humanoid
     for (const [name, { node }] of Object.entries(humanoid.humanBones)) {
-      if (!/Hand|Index|Middle|Ring|Little|Thumb/.test(name)) continue
+      if (!/UpperArm|LowerArm|Hand|Index|Middle|Ring|Little|Thumb/.test(name)) continue
       const rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.35, -0.6, 0.25))
       const inverse = rotation.clone().invert()
       node.quaternion.multiply(rotation)
@@ -154,6 +158,84 @@ function bonePosition(instance, name) {
   return new THREE.Vector3().setFromMatrixPosition(instance.getBoneTransform(name))
 }
 
+test('VR arms respect posture-editor limits for close, crossed, overhead and distant reaches', async () => {
+  const avatarMatrix = new THREE.Matrix4().makeRotationY(0.7).setPosition(3, 0.2, -2)
+  const instance = await createInstance(avatarMatrix)
+  const inverse = avatarMatrix.clone().invert()
+  const shoulders = {}
+  for (const side of ['left', 'right'])
+    shoulders[side] = bonePosition(instance, side + 'UpperArm').applyMatrix4(inverse)
+  for (const kind of ['hand', 'controller']) {
+    for (const offset of [
+      [0, 0, -0.02],
+      [0, 0.4, -0.1],
+      [0.4, -0.1, -0.2],
+      [0, -0.7, 0.01],
+      [0, 0, -2],
+    ]) {
+      const pose = {}
+      for (const side of ['left', 'right']) {
+        const direction = new THREE.Vector3(...offset)
+        if (side === 'right') direction.x *= -1
+        pose[side] = { ...trackedHand(side, Math.PI / 3), kind, p: shoulders[side].clone().add(direction).toArray() }
+      }
+      settle(instance, pose)
+      const normalized = instance.getNormalizedPose()
+      for (const side of ['left', 'right']) {
+        for (const segment of ['UpperArm', 'LowerArm']) {
+          const name = side + segment
+          const actual = new THREE.Quaternion().fromArray(normalized[name].rotation)
+          const limited = new THREE.Quaternion().fromArray(clampBoneRotation(name, actual.toArray()))
+          assert.ok(actual.angleTo(limited) < 1e-6, `${kind} ${name} exceeds posture-editor limits at ${offset}`)
+        }
+      }
+    }
+  }
+})
+
+test('elbows stay below the shoulders without flipping as wrists cross shoulder height', async () => {
+  const instance = await createInstance()
+  for (const side of ['left', 'right']) {
+    const shoulder = bonePosition(instance, side + 'UpperArm')
+    let previous
+    for (const height of [0.01, 0, -0.01]) {
+      const hand = trackedHand(side, 0)
+      hand.p = shoulder
+        .clone()
+        .add(new THREE.Vector3(0, height, -0.3))
+        .toArray()
+      settle(instance, { [side]: hand })
+      const elbow = bonePosition(instance, side + 'LowerArm')
+      assert.ok(elbow.y < shoulder.y, `${side} elbow points upward with wrist at shoulder height`)
+      if (previous) assert.ok(elbow.distanceTo(previous) < 0.03, `${side} elbow flipped across shoulder height`)
+      previous = elbow
+    }
+  }
+})
+
+test('elbows remain continuous when wrists cross the downward elbow pole', async () => {
+  for (const avatarMatrix of [new THREE.Matrix4(), new THREE.Matrix4().makeRotationY(1.2).setPosition(-2, 0.3, 4)]) {
+    const instance = await createInstance(avatarMatrix)
+    for (const side of ['left', 'right']) {
+      const shoulder = bonePosition(instance, side + 'UpperArm').applyMatrix4(avatarMatrix.clone().invert())
+      const direction = new THREE.Vector3(side === 'left' ? -0.5 : 0.5, -1, 0).normalize().multiplyScalar(0.3)
+      let previous
+      for (const depth of [-0.02, -0.01, 0, 0.01, 0.02]) {
+        const hand = trackedHand(side, 0)
+        hand.p = shoulder
+          .clone()
+          .add(direction)
+          .add(new THREE.Vector3(0, 0, depth))
+          .toArray()
+        settle(instance, { [side]: hand })
+        const elbow = bonePosition(instance, side + 'LowerArm')
+        if (previous) assert.ok(elbow.distanceTo(previous) < 0.03, `${side} elbow flipped across its pole at ${depth}`)
+        previous = elbow
+      }
+    }
+  }
+})
+
 test('a fist on the first tracked frame curls both index fingers toward the palm', async () => {
   const instance = await createInstance()
   settle(instance, { left: trackedHand('left', Math.PI / 3), right: trackedHand('right', Math.PI / 3) })
@@ -174,6 +256,35 @@ test('absolute wrist orientation stays fixed as the arm target moves', async () 
   settle(instance, { left: { ...hand, p: [-0.4, 1.1, -0.2] } })
   const after = new THREE.Quaternion().setFromRotationMatrix(instance.getBoneTransform('leftHand'))
   assert.ok(before.angleTo(after) < 0.01, 'moving the wrist position changed its measured orientation')
+})
+
+test('constrained reaches preserve absolute wrist and finger orientations', async () => {
+  const instance = await createInstance(new THREE.Matrix4(), true)
+  const wrist = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.7, -0.4, 1.2))
+  const hand = trackedHand('left', Math.PI / 3, wrist)
+  settle(instance, { left: hand })
+  const names = ['leftHand', 'leftIndexProximal', 'leftIndexIntermediate', 'leftIndexDistal']
+  const rotations = names.map(name => new THREE.Quaternion().setFromRotationMatrix(instance.getBoneTransform(name)))
+  const shoulder = bonePosition(instance, 'leftUpperArm')
+  for (const offset of [
+    [0, 0, -0.02],
+    [0, 0.6, -0.1],
+    [0.4, 0, 0],
+  ]) {
+    settle(instance, {
+      left: {
+        ...hand,
+        p: shoulder
+          .clone()
+          .add(new THREE.Vector3(...offset))
+          .toArray(),
+      },
+    })
+    for (let i = 0; i < names.length; i++) {
+      const rotation = new THREE.Quaternion().setFromRotationMatrix(instance.getBoneTransform(names[i]))
+      assert.ok(rotation.angleTo(rotations[i]) < 1e-6, `${names[i]} changed orientation when an arm limit was reached`)
+    }
+  }
 })
 
 test('wrist flips preserve curl and work under a translated, rotated avatar root', async () => {
