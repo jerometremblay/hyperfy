@@ -1,6 +1,10 @@
-# hyperfy-hyp-app-authoring 2.4.1
+# hyperfy-hyp-app-authoring 2.4.2
 
 Generic ChatGPT → Hyperfy primitive JavaScript → `.hyp` → exact-package preview workflow.
+
+## 2.4.2 pre-save validation
+
+Run `python3 tools/validate_result.py` on the generated `.js`, rebuilt `.hyp`, and final `.zip` before saving or returning them. The validator checks syntax, primitive property types, packaged asset hashes, byte boundaries, and prompt-box target metadata when a manifest is present.
 
 ## 2.4.1 extrusion-primitive documentation update
 
@@ -45,6 +49,7 @@ The package retains the orientation discipline introduced in 2.2.0: define struc
 - `tools/make_embedded_preview.py`
 - `tools/validate_app.py`
 - `tools/smoke_test.js`
+- `tools/validate_result.py`
 - `tests/self_test.py`
 - `viewer/hyp_primitive_viewer.html`
 - `viewer/hyp_primitive_viewer_template.html`

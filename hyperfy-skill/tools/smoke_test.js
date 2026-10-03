@@ -61,7 +61,83 @@ function quat(v=[0,0,0,1]) {
     toArray(){return[this.x,this.y,this.z,this.w]},
   }
 }
+
+const primitiveTypes = new Set(['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane', 'extrude'])
+const isFiniteNumber = value => typeof value === 'number' && Number.isFinite(value)
+const isNumberBetween = (value, min, max) => isFiniteNumber(value) && value >= min && value <= max
+
+function validatePrimConfig(cfg={}) {
+  if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+    throw new Error('[prim] config must be an object')
+  }
+
+  if (cfg.type !== undefined && !primitiveTypes.has(cfg.type)) {
+    throw new Error('[prim] type invalid')
+  }
+  if (cfg.size !== undefined && (!Array.isArray(cfg.size) || cfg.size.some(value => !isFiniteNumber(value)))) {
+    throw new Error('[prim] size must be an array of finite numbers')
+  }
+  if (cfg.profile !== undefined && (!Array.isArray(cfg.profile) || cfg.profile.some(point => !Array.isArray(point) || point.length !== 2 || point.some(value => !isFiniteNumber(value))))) {
+    throw new Error('[prim] profile must be an array of [x, y] points')
+  }
+  if (cfg.depth !== undefined && (!isFiniteNumber(cfg.depth) || cfg.depth <= 0)) {
+    throw new Error('[prim] depth must be a positive number')
+  }
+  for (const name of ['bevelEnabled', 'smooth', 'castShadow', 'receiveShadow', 'doubleside', 'trigger']) {
+    if (cfg[name] !== undefined && typeof cfg[name] !== 'boolean') {
+      throw new Error(`[prim] ${name} must be boolean`)
+    }
+  }
+  for (const name of ['bevelThickness', 'bevelSize']) {
+    if (cfg[name] !== undefined && (!isFiniteNumber(cfg[name]) || cfg[name] < 0)) {
+      throw new Error(`[prim] ${name} must be a non-negative number`)
+    }
+  }
+  for (const name of ['bevelSegments', 'curveSegments']) {
+    const minimum = name === 'curveSegments' ? 1 : 0
+    if (cfg[name] !== undefined && (!Number.isInteger(cfg[name]) || cfg[name] < minimum)) {
+      throw new Error(`[prim] ${name} must be a valid integer`)
+    }
+  }
+  if (cfg.creaseAngle !== undefined && !isNumberBetween(cfg.creaseAngle, 0, Math.PI)) {
+    throw new Error('[prim] creaseAngle must be a number between 0 and PI')
+  }
+  if (cfg.color !== undefined && typeof cfg.color !== 'string') {
+    throw new Error('[prim] color must be string')
+  }
+  if (cfg.emissive !== undefined && cfg.emissive !== null && typeof cfg.emissive !== 'string') {
+    throw new Error('[prim] emissive must be string or null')
+  }
+  if (cfg.texture !== undefined && cfg.texture !== null && typeof cfg.texture !== 'string') {
+    throw new Error('[prim] texture must be string or null')
+  }
+  if (cfg.emissiveIntensity !== undefined && (!isFiniteNumber(cfg.emissiveIntensity) || cfg.emissiveIntensity < 0)) {
+    throw new Error('[prim] emissiveIntensity must be a non-negative number')
+  }
+  for (const name of ['metalness', 'roughness', 'opacity', 'staticFriction', 'dynamicFriction', 'restitution']) {
+    if (cfg[name] !== undefined && !isNumberBetween(cfg[name], 0, 1)) {
+      throw new Error(`[prim] ${name} must be a number between 0 and 1`)
+    }
+  }
+  if (cfg.physics !== undefined && cfg.physics !== null && !['static', 'kinematic', 'dynamic'].includes(cfg.physics)) {
+    throw new Error('[prim] physics must be null, "static", "kinematic", or "dynamic"')
+  }
+  for (const name of ['mass', 'linearDamping', 'angularDamping']) {
+    if (cfg[name] !== undefined && (!isFiniteNumber(cfg[name]) || (name === 'mass' ? cfg[name] <= 0 : cfg[name] < 0))) {
+      throw new Error(`[prim] ${name} must be a valid non-negative number`)
+    }
+  }
+  if (cfg.layer !== undefined && typeof cfg.layer !== 'string') throw new Error('[prim] layer must be string')
+  if (cfg.tag !== undefined && cfg.tag !== null && typeof cfg.tag !== 'string') throw new Error('[prim] tag must be string or null')
+  for (const name of ['onContactStart', 'onContactEnd', 'onTriggerEnter', 'onTriggerLeave']) {
+    if (cfg[name] !== undefined && cfg[name] !== null && typeof cfg[name] !== 'function') {
+      throw new Error(`[prim] ${name} must be function or null`)
+    }
+  }
+}
+
 function node(kind, cfg={}) {
+  if (kind === 'prim') validatePrimConfig(cfg)
   const n={kind,children:[],parent:null,...cfg}
   n.position=vec3(cfg.position)
   n.rotation=vec3(cfg.rotation)

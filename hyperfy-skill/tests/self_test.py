@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import base64, json, re, shutil, struct, subprocess, sys, tempfile
+import base64, json, re, shutil, struct, subprocess, sys, tempfile, zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,6 +45,12 @@ def test_pack_preview_roundtrip(tmp):
     extract = tmp/'extract'
     run(PYTHON, str(ROOT/'tools/hyp_pack.py'), str(app), str(hyp), '--name', 'Self Test')
     run(PYTHON, str(ROOT/'tools/validate_app.py'), str(hyp))
+    run(PYTHON, str(ROOT/'tools/validate_result.py'), str(app))
+    run(PYTHON, str(ROOT/'tools/validate_result.py'), str(hyp))
+    result_zip = tmp/'result.zip'
+    with zipfile.ZipFile(result_zip, 'w') as archive:
+        archive.write(hyp, 'generated.hyp')
+    run(PYTHON, str(ROOT/'tools/validate_result.py'), str(result_zip))
     run(PYTHON, str(ROOT/'tools/hyp_extract.py'), str(hyp), str(extract))
     run(PYTHON, str(ROOT/'tools/make_embedded_preview.py'), str(hyp), str(preview))
     run(NODE, '--check', str(app))
@@ -70,12 +76,40 @@ def test_pack_preview_roundtrip(tmp):
     assert "opacity??1" in text
 
 
+def test_smoke_rejects_invalid_prim_properties(tmp):
+    app = tmp/'invalid_prim.js'
+    app.write_text("app.add(app.create('prim', { type: 'box', color: ['#fff'] }))\n")
+    result = subprocess.run(
+        [NODE, str(ROOT/'tools/smoke_test.js'), str(app)],
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode == 0 or '[prim] color must be string' not in result.stderr:
+        raise RuntimeError(
+            'smoke test accepted an invalid primitive color\n'
+            f'STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}'
+        )
+    hyp = tmp/'invalid_prim.hyp'
+    run(PYTHON, str(ROOT/'tools/hyp_pack.py'), str(app), str(hyp), '--name', 'Invalid Primitive')
+    packaged = subprocess.run(
+        [PYTHON, str(ROOT/'tools/validate_result.py'), str(hyp)],
+        text=True,
+        capture_output=True,
+    )
+    if packaged.returncode == 0 or '[prim] color must be string' not in packaged.stderr:
+        raise RuntimeError(
+            'package validator accepted an invalid primitive color\n'
+            f'STDOUT:\n{packaged.stdout}\nSTDERR:\n{packaged.stderr}'
+        )
+
+
 def main():
     with tempfile.TemporaryDirectory() as d:
         tmp = Path(d)
         test_orientation_helpers(tmp)
+        test_smoke_rejects_invalid_prim_properties(tmp)
         test_pack_preview_roundtrip(tmp)
-    print('hyperfy-hyp-app-authoring 2.4.0 self-test: PASS')
+    print('hyperfy-hyp-app-authoring 2.4.2 self-test: PASS')
 
 
 if __name__ == '__main__':

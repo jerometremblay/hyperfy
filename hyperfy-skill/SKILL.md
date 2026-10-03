@@ -10,14 +10,14 @@ Use this skill when the user asks to create, edit, diagnose, package, or preview
 ## Required delivery workflow
 
 1. **Resolve the target Hyperfy runtime before packaging.** Prefer the version/commit shown in the user's logs, `package.json`, or repository. When diagnosing a failure, audit loader/import behavior against that exact tag rather than `main`.
-2. Translate the requested object into a small geometric plan before writing primitives.
+2. Translate the requested object into a small geometric plan before writing primitives. For standalone objects intended to sit on surfaces, follow **Surface placement and selectable bounds** below and define the root at the physical contact plane.
 3. Declare the coordinate convention at the top of the app source. Unless the user explicitly requests another convention, use **Y up, +X right, -Z forward**.
 4. Author the app as Hyperfy primitive nodes with reusable helpers for repeated geometry.
 5. For custom extrusions, follow [docs/extrusion.md](docs/extrusion.md): use a simple local-XY profile, keep the first point un-repeated, and treat `depth` as local-Z thickness.
 6. Keep the first working version **visual-only by default** unless the user explicitly needs collision or interaction. Dense primitive scenes must not get one detached collider and one per-frame synchronization callback per visual primitive.
 7. If physics is required, add the smallest practical collision representation and follow the **Physics discipline** below. Prefer a few structural colliders over per-detail colliders.
 8. For structural members whose orientation matters, follow the **Orientation discipline** below. Do not hand-guess angle signs from a visual sketch.
-9. Syntax-check the source and execute it in the mock Hyperfy runtime.
+9. Before packaging, run `python3 tools/validate_result.py app.js`. This preflight syntax-checks the source and executes it in a harness that validates primitive property types. When the target source is available, also execute the generated source through the actual `createNode`/`Prim` constructors.
 10. Package according to the **actual target runtime's loader contract**. Do not assume that either `model: null` or a bootstrap model is universally correct. For Hyperfy **v0.16.0**, `App.build()` dereferences `blueprint.model.endsWith(...)` before executing the script, so `model: null` is invalid; use a tiny valid geometry-free GLB scene as a compatibility bootstrap. The GLB must contain no visible cabin/object geometry.
 11. Package JavaScript assets using Hyperfy's canonical script convention for the target runtime. For v0.16.0, create the `.js` file with MIME `text/plain`, hash the exact bytes with SHA-256, and use `asset://<sha256>.js`.
 12. Extract the just-created `.hyp` and verify every asset byte-for-byte. Recompute SHA-256 and assert that each `asset://<hash>.<ext>` URL matches the packaged bytes.
@@ -42,6 +42,39 @@ Use one coordinate system consistently across source, preview, calculations, and
 - Rotations are radians, represented as `[rx, ry, rz]`.
 
 Do not switch between “front means +Z” and “front means -Z” within one model. Put a short coordinate comment at the top of every generated source file.
+
+## Runtime property/type validation
+
+Hyperfy validates primitive properties while `app.create('prim', ...)` constructs the node, before the object is rendered or imported successfully. JavaScript syntax checks, package hashes, and a permissive node-count mock do not establish that the app can run in Hyperfy.
+
+Before packaging, execute the complete generated source once through the target runtime's primitive constructors, or through a compatibility harness that mirrors their property setters. Treat the first constructor exception as a failed build. In particular:
+
+- scalar material properties stay scalar: `color`, `emissive`, and `texture` are strings or `null` where supported;
+- numeric material properties such as `opacity`, `metalness`, `roughness`, and `emissiveIntensity` are numbers;
+- booleans such as `castShadow`, `receiveShadow`, `doubleside`, and `trigger` are not arrays;
+- arrays are reserved for array-valued properties such as `size`, `profile`, `position`, `rotation`, and `scale`.
+
+Do not wrap a scalar conditional in array brackets. This fails in the target runtime:
+
+```js
+box(size, position, [condition ? '#ffffff' : '#000000'], rotation)
+```
+
+Use the scalar expression directly:
+
+```js
+box(size, position, condition ? '#ffffff' : '#000000', rotation)
+```
+
+Run `python3 tools/validate_result.py app.js`; its primitive preflight must reject invalid property types. After creating the `.hyp`, run `python3 tools/validate_result.py app.hyp`. Before saving or returning a final ZIP, run `python3 tools/validate_result.py result.zip`. If the target runtime source is available, prefer the real `src/core/extras/createNode.js` and `src/core/nodes/Prim.js` path as the regression check. After any source change, rebuild the package and recompute every affected script asset URL and size from the final bytes.
+
+## Surface placement and selectable bounds
+
+For standalone Hyperfy objects that are intended to sit on surfaces, author the object so that the app/root origin corresponds to the object's physical contact plane—normally the bottom of the object. In Hyperfy grab mode, the app root is positioned directly at the raycast hit point, so placing the root at the object's center will cause the object to intersect the surface.
+
+Keep decorative geometry that extends above or below the object—such as steam, smoke, glow, particles, or interaction markers—from distorting the object's selectable/raycast bounds. Prefer Hyperfy particle emitters or other non-raycast visual effects when possible. If the placement system uses bounds-centered positioning, balance or explicitly control those bounds so their placement reference still corresponds to the object's bottom contact plane.
+
+Rule of thumb: **for an object meant to stand on a surface, local Y=0 should be the bottom/contact plane, not the visual or collider center.**
 
 ## Orientation discipline
 
@@ -292,14 +325,17 @@ Run:
 python3 tests/self_test.py
 ```
 
-For an authored app, also syntax-check JavaScript and smoke-test it:
+For an authored app, run the pre-save validator on the source, rebuilt `.hyp`, and final ZIP:
 
 ```bash
-node --check app.js
-node tools/smoke_test.js app.js
+python3 tools/validate_result.py app.js
+python3 tools/validate_result.py app.hyp
+python3 tools/validate_result.py result.zip
 ```
 
 Do not claim the package is validated unless those checks actually ran successfully.
+
+A smoke test that only counts nodes is insufficient. A package is not ready if the runtime harness reports a primitive setter error, even when the `.hyp` header, asset hashes, and local parser are valid.
 
 ### Import/upload validation
 

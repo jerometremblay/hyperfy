@@ -172,6 +172,7 @@ test('ZIP carries exact world placement, physical dimensions, prompt and a porta
   )
   assert.match(strFromU8(files['prompt.md']), /Follow the bundled Hyperfy skill/)
   assert.match(strFromU8(files['authoring.md']), /contracts take\nprecedence/)
+  assert.match(strFromU8(files['authoring.md']), /validate_result\.py result\.zip/)
   const request = JSON.parse(strFromU8(files['manifest.json']))
   assert.deepEqual(request.box.position, [3, 2, -7])
   assert.deepEqual(request.box.quaternion, app.data.quaternion)

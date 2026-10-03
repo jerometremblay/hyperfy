@@ -159,6 +159,17 @@ Groups: app.create('group', {position,rotation,scale}); group.add(child); app.ad
 Create nodes once, never repeatedly in an update loop. The packaged prompt-box
 script is a working example of the API. Keep every referenced asset in the .hyp.
 
+## Pre-save validator (required)
+Before saving or returning any result, run the bundled validator in the chat:
+python3 hyperfy-skill/tools/validate_result.py generated.js
+python3 hyperfy-skill/tools/validate_result.py generated.hyp
+After assembling result.zip, run:
+python3 hyperfy-skill/tools/validate_result.py result.zip
+The validator checks JavaScript syntax, Hyperfy primitive property types, packaged
+asset hashes and byte boundaries, and prompt-box target metadata. Do not save or
+return the ZIP if any command fails; fix the source, rebuild the .hyp hashes, and
+run the validator again.
+
 ## Binary .hyp format
 [4-byte little-endian JSON header byte length][UTF-8 header][concatenated asset bytes]
 Header: {blueprint: {name, model, script, props, unique: true, scene: false},

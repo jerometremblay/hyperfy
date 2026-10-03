@@ -78,7 +78,9 @@ For every revision, rebuild the `.hyp` after editing asset bytes. A changed scri
 needs its final SHA-256 URL in **both** `blueprint.script` and the matching
 `assets[].url` entry. Recalculate asset byte sizes and the UTF-8 header length, and
 validate references, hashes, byte boundaries, and request/target IDs in the final
-ZIP. The exported authoring guide includes these required preflight checks.
+ZIP. The exported authoring guide includes these required preflight checks and
+runs hyperfy-skill/tools/validate_result.py on each source script, rebuilt .hyp,
+and final result.zip so primitive setter errors are caught before delivery.
 Updating only the blueprint reference leaves a missing asset and is rejected.
 
 Choose **Import result** in the original box inspector. The confirmation names the
