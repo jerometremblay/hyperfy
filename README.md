@@ -6,11 +6,13 @@ below.
 
 ## Additional features
 
-### Prompt-box object creation
+### Prompt-box creation and construction edits
 
 Create a translucent prompt-box, resize it with face handles, and describe a new
-object. Export one ZIP for ChatGPT, then import the generated `.hyp` to replace
-the box at its saved position and orientation. See the
+object. Export one ZIP with intersected apps and their coordinates for ChatGPT,
+then import returned `.hyp` files to edit the existing construction or create a
+standalone object. Construction edits keep their original placement; the box marks
+the intended region. See the
 [prompt-box workflow](docs/prompt-box.md) for the return format and undo behavior.
 
 ### Gaussian splats

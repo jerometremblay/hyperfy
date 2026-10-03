@@ -5,6 +5,7 @@ import { FieldBtn, FieldNumber, FieldTextarea } from './Fields'
 import { downloadFile } from '../../core/extras/downloadFile'
 import { isPromptBox, MIN_PROMPT_BOX_SIZE } from '../../core/extras/promptBoxTools'
 import { resizePromptBoxFace } from '../../core/extras/PromptBoxResizeControls'
+import { getPromptBoxIntersections } from '../../core/extras/promptBoxIntersections'
 
 export function PromptBoxPanel({ world, app, blueprint }) {
   const fileInput = useRef()
@@ -12,6 +13,12 @@ export function PromptBoxPanel({ world, app, blueprint }) {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const [dimensions, setDimensions] = useState(() => app.root.scale.toArray())
+  const readIntersections = () =>
+    getPromptBoxIntersections(world, app).map(other => ({
+      id: other.data.id,
+      name: other.blueprint.name || 'App',
+    }))
+  const [intersections, setIntersections] = useState(readIntersections)
   useEffect(() => {
     const timer = setInterval(() => {
       if (app.destroyed || app.data.blueprint !== blueprint.id || !isPromptBox(app.blueprint)) {
@@ -20,7 +27,16 @@ export function PromptBoxPanel({ world, app, blueprint }) {
       }
       const size = app.root.scale.toArray()
       setDimensions(prev => (size.some((n, i) => n !== prev[i]) ? size : prev))
-    }, 100)
+      const apps = getPromptBoxIntersections(world, app).map(other => ({
+        id: other.data.id,
+        name: other.blueprint.name || 'App',
+      }))
+      setIntersections(prev =>
+        apps.length === prev.length && apps.every((other, i) => other.id === prev[i].id && other.name === prev[i].name)
+          ? prev
+          : apps
+      )
+    }, 250)
     return () => clearInterval(timer)
   }, [app, blueprint.id, world])
   const run = async action => {
@@ -81,7 +97,7 @@ export function PromptBoxPanel({ world, app, blueprint }) {
     >
       <FieldTextarea
         label='Prompt'
-        hint='Describe the new object to create inside this box.'
+        hint='Describe a new object or an edit to the intersected construction. The box marks the intended area.'
         placeholder='Create a coffee mug'
         value={blueprint.props.prompt}
         onChange={changePrompt}
@@ -114,7 +130,7 @@ export function PromptBoxPanel({ world, app, blueprint }) {
       />
       <FieldBtn
         label={busy ? 'Working…' : 'Export prompt ZIP'}
-        hint='Download the prompt, exact box placement, and .hyp reference for ChatGPT.'
+        hint='Download the prompt, exact placement, and intersected .hyp apps for ChatGPT.'
         onClick={() =>
           run(async () => {
             downloadFile(await world.builder.promptBoxes.export(app))
@@ -122,9 +138,35 @@ export function PromptBoxPanel({ world, app, blueprint }) {
           })
         }
       />
+      <div
+        css={css`
+          padding: 0.5rem 1rem;
+          font-size: 0.875rem;
+          line-height: 1.4;
+        `}
+      >
+        <div>
+          {intersections.length} intersected {intersections.length === 1 ? 'app' : 'apps'} included in ZIP
+        </div>
+        {intersections.length > 0 && (
+          <ul
+            css={css`
+              margin: 0.5rem 0;
+              padding-left: 1rem;
+            `}
+          >
+            {intersections.map(other => (
+              <li key={other.id}>
+                {other.name} ({other.id})
+              </li>
+            ))}
+          </ul>
+        )}
+        <small>Construction edits align to the existing app. The box is a placement hint.</small>
+      </div>
       <FieldBtn
         label='Import result'
-        hint='Replace this prompt-box with the generated object.'
+        hint='Apply the returned construction edits or create the generated object.'
         onClick={() => {
           if (!busy && !blueprint.frozen) fileInput.current.click()
         }}
@@ -149,7 +191,7 @@ export function PromptBoxPanel({ world, app, blueprint }) {
           line-height: 1.4;
         `}
       >
-        {status || 'The object fits this volume. Its base aligns with the bottom face.'}
+        {status || 'Use the box to mark an edit area, or define the size of a new standalone object.'}
       </p>
     </fieldset>
   )
@@ -163,12 +205,12 @@ export function UndoPromptBox({ world, app }) {
     world.on('prompt-box-replaced', update)
     return () => world.off('prompt-box-replaced', update)
   }, [world])
-  if (!replacement || (app && app.data.id !== replacement.entityId)) return null
+  if (!replacement || (app && !replacement.changes.some(entry => entry.entityId === app.data.id))) return null
   return (
     <>
       <FieldBtn
-        label='Undo prompt-box replacement'
-        hint='Restore the original box, dimensions, and prompt.'
+        label='Undo prompt result'
+        hint='Restore the prompt-box and all edited constructions together.'
         onClick={() => {
           try {
             world.builder.promptBoxes.undo()

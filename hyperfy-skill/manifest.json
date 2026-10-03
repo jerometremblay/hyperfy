@@ -1,0 +1,6 @@
+{
+  "name": "hyperfy-hyp-app-authoring",
+  "version": "2.4.1",
+  "description": "Author, validate, package, and preview Hyperfy .hyp apps from JavaScript primitives, including the native extrusion primitive, with target-runtime compatibility checks, orientation-safe geometry, and crash-safe defaults.",
+  "entrypoint": "SKILL.md"
+}
