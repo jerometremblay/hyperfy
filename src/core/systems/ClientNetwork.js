@@ -53,6 +53,7 @@ export class ClientNetwork extends System {
       const filename = `${hash}.${ext}`
       const url = `${this.apiUrl}/upload-check?filename=${filename}`
       const resp = await fetch(url)
+      if (!resp.ok) throw new Error(`Asset upload check failed (${resp.status}).`)
       const data = await resp.json()
       if (data.exists) return // console.log('already uploaded:', filename)
     }
@@ -60,10 +61,11 @@ export class ClientNetwork extends System {
     const form = new FormData()
     form.append('file', file)
     const url = `${this.apiUrl}/upload`
-    await fetch(url, {
+    const resp = await fetch(url, {
       method: 'POST',
       body: form,
     })
+    if (!resp.ok) throw new Error(`Asset upload failed (${resp.status}).`)
   }
 
   enqueue(method, data) {

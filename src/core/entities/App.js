@@ -376,12 +376,12 @@ export class App extends Entity {
       }
     }
     if (rebuild) {
-      this.build()
+      return this.build()
     }
   }
 
   crash() {
-    this.build(true)
+    return this.build(true)
   }
 
   destroy(local) {

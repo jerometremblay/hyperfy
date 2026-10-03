@@ -65,6 +65,8 @@ import { isTouch } from '../utils'
 import { uuid } from '../../core/utils'
 import { useRank } from './useRank'
 import { Ranks } from '../../core/extras/ranks'
+import { PromptBoxPanel, UndoPromptBox } from './PromptBoxPanel'
+import { isPromptBox } from '../../core/extras/promptBoxTools'
 
 const mainSectionPanes = ['prefs']
 const worldSectionPanes = ['world', 'docs', 'apps', 'add']
@@ -914,6 +916,8 @@ function Apps({ world, hidden }) {
 function Add({ world, hidden }) {
   // The default collection provides built-ins; installed world blueprints are added too.
   const blueprints = getAddableBlueprints(world)
+  const [creatingPromptBox, setCreatingPromptBox] = useState(false)
+  const [promptBoxError, setPromptBoxError] = useState('')
   const span = 4
   const gap = '0.5rem'
   const add = blueprint => {
@@ -998,7 +1002,22 @@ function Add({ world, hidden }) {
           <div className='add-title'>Add</div>
         </div>
         <div className='add-content noscrollbar'>
+          <UndoPromptBox world={world} />
+          {promptBoxError && <p role='alert'>{promptBoxError}</p>}
           <div className='add-items'>
+            <div className='add-item' onClick={async () => {
+              if (creatingPromptBox) return
+              setCreatingPromptBox(true)
+              setPromptBoxError('')
+              try { await world.builder.promptBoxes.create() }
+              catch (err) { setPromptBoxError(err.message) }
+              finally { setCreatingPromptBox(false) }
+            }}>
+              <div className='add-item-image' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6ac4dc' }}>
+                <BoxIcon size='3rem' />
+              </div>
+              <div className='add-item-name'>{creatingPromptBox ? 'Creating…' : 'Prompt Box'}</div>
+            </div>
             {blueprints.map((blueprint, index) => (
               <div className='add-item' key={blueprint.id || `collection-${index}`} onClick={() => add(blueprint)}>
                 <div
@@ -1250,17 +1269,20 @@ function App({ world, hidden }) {
               >
                 <ChevronsUpDownIcon size='1rem' />
               </div>
-              {transforms && <AppTransformFields app={app} />}
+              {transforms && <AppTransformFields app={app} hideScale={isPromptBox(blueprint)} />}
             </div>
           )}
-          <AppFields world={world} app={app} blueprint={blueprint} />
+          {isPromptBox(blueprint)
+            ? <PromptBoxPanel world={world} app={app} blueprint={blueprint} />
+            : <AppFields world={world} app={app} blueprint={blueprint} />}
+          <UndoPromptBox world={world} app={app} />
         </div>
       </div>
     </Pane>
   )
 }
 
-function AppTransformFields({ app }) {
+function AppTransformFields({ app, hideScale }) {
   const [position, setPosition] = useState(app.root.position.toArray())
   const [rotation, setRotation] = useState(app.root.rotation.toArray().map(n => n * RAD2DEG))
   const [scale, setScale] = useState(app.root.scale.toArray())
@@ -1302,7 +1324,7 @@ function AppTransformFields({ app }) {
           })
         }}
       />
-      <FieldVec3
+      {!hideScale && <FieldVec3
         label='Scale'
         hint='Scale multiplier (X, Y, Z)'
         dp={2}
@@ -1318,7 +1340,7 @@ function AppTransformFields({ app }) {
             scale: value,
           })
         }}
-      />
+      />}
     </>
   )
 }

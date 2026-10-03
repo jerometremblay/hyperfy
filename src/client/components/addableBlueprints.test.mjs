@@ -21,6 +21,7 @@ test('includes installed world blueprints in the add catalog', () => {
           spiralClimb,
           { id: '$scene', scene: true },
           { id: 'disabled-app', disabled: true },
+          { id: 'old-prompt-box', props: { promptBox: true } },
         ]
       },
     },

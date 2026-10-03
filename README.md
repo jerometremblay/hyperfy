@@ -6,6 +6,13 @@ below.
 
 ## Additional features
 
+### Prompt-box object creation
+
+Create a translucent prompt-box, resize it with face handles, and describe a new
+object. Export one ZIP for ChatGPT, then import the generated `.hyp` to replace
+the box at its saved position and orientation. See the
+[prompt-box workflow](docs/prompt-box.md) for the return format and undo behavior.
+
 ### Gaussian splats
 
 Gaussian splats can be loaded, rendered, selected, and transformed in-world.

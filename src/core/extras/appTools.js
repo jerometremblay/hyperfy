@@ -5,7 +5,7 @@ export async function exportApp(blueprint, resolveFile) {
 
   // get all asset urls
   const assets = []
-  if (blueprint.model) {
+  if (blueprint.model && blueprint.model !== 'script-only') {
     assets.push({
       type: blueprint.model.endsWith('.vrm') ? 'avatar' : 'model',
       url: blueprint.model,

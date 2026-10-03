@@ -14,6 +14,9 @@ import { importApp } from '../extras/appTools'
 import { DEG2RAD, RAD2DEG } from '../extras/general'
 import { createNode } from '../extras/createNode'
 import { detectBuilderFileType, detectSplatFormat } from '../utils/splatFormats'
+import { PromptBoxWorkflow } from '../extras/PromptBoxWorkflow'
+import { PromptBoxResizeControls } from '../extras/PromptBoxResizeControls'
+import { isPromptBox, MIN_PROMPT_BOX_SIZE } from '../extras/promptBoxTools'
 
 const FORWARD = new THREE.Vector3(0, 0, -1)
 const SNAP_DISTANCE = 1
@@ -60,6 +63,7 @@ export class ClientBuilder extends System {
     this.xrMenuTimer = 0
 
     this.undos = []
+    this.promptBoxes = new PromptBoxWorkflow(world)
 
     this.dropTarget = null
     this.file = null
@@ -147,7 +151,7 @@ export class ClientBuilder extends System {
       actions.push({ type: 'mouseLeft', label: 'Select / Transform' })
       actions.push({ type: 'mouseRight', label: 'Inspect' })
       actions.push({ type: 'custom', btn: '1234', label: 'Grab / Translate / Rotate / Scale' })
-      actions.push({ type: 'keyT', label: this.localSpace ? 'World Space' : 'Local Space' })
+      if (!this.promptBoxResize) actions.push({ type: 'keyT', label: this.localSpace ? 'World Space' : 'Local Space' })
       actions.push({ type: 'keyX', label: 'Destroy' })
       actions.push({ type: 'controlLeft', label: 'No Snap (Hold)' })
       actions.push({ type: 'space', label: 'Jump / Fly (Double-Tap)' })
@@ -168,6 +172,8 @@ export class ClientBuilder extends System {
     if (this.selected?.destroyed) {
       this.select(null)
     }
+    this.promptBoxResize?.update()
+    if (this.promptBoxResize && this.control.escape.pressed) this.select(null)
     // deselect if stolen
     if (this.selected && this.selected?.data.mover !== this.world.network.id) {
       this.select(null)
@@ -306,7 +312,7 @@ export class ClientBuilder extends System {
       }
     }
     // gizmo local/world toggle
-    if (this.control.keyT.pressed & (this.mode === 'translate' || this.mode === 'rotate' || this.mode === 'scale')) {
+    if (this.gizmo && this.control.keyT.pressed && (this.mode === 'translate' || this.mode === 'rotate' || this.mode === 'scale')) {
       this.localSpace = !this.localSpace
       this.gizmo.space = this.localSpace ? 'local' : 'world'
       this.updateActions()
@@ -400,7 +406,7 @@ export class ClientBuilder extends System {
       }
     }
     // deselect on pointer unlock
-    if (this.selected && !this.beam.active) {
+    if (this.selected && !this.beam.active && !this.promptBoxResize) {
       this.select(null)
     }
     // duplicate
@@ -425,7 +431,7 @@ export class ClientBuilder extends System {
         // splat apps get their own blueprint too: the apps list groups instances
         // by blueprint, so this gives every duplicate its own entry that can be
         // inspected/deleted independently (the splat asset itself stays shared)
-        if (entity.blueprint.unique || isSplatApp(entity.blueprint)) {
+        if (entity.blueprint.unique || isSplatApp(entity.blueprint) || isPromptBox(entity.blueprint)) {
           const blueprint = {
             id: uuid(),
             version: 0,
@@ -575,6 +581,7 @@ export class ClientBuilder extends System {
       if (scale) {
         const scaleFactor = 1 + scale * delta
         this.target.scale.multiplyScalar(scaleFactor)
+        if (isPromptBox(app.blueprint)) this.target.scale.clampScalar(MIN_PROMPT_BOX_SIZE, Infinity)
       }
       // rotate (!shift + mouse wheel OR xr !grip stick left/right)
       let rotate = 0
@@ -647,6 +654,10 @@ export class ClientBuilder extends System {
     const undo = this.undos.pop()
     if (!undo) return
     if (this.selected) this.select(null)
+    if (undo.name === 'replace-prompt-box') {
+      this.promptBoxes.undo(undo)
+      return
+    }
     if (undo.name === 'add-entity') {
       this.world.entities.add(undo.data, true)
       return
@@ -656,6 +667,7 @@ export class ClientBuilder extends System {
       if (!entity) return
       entity.data.position = undo.position
       entity.data.quaternion = undo.quaternion
+      entity.data.scale = undo.scale
       this.world.network.send('entityModified', {
         id: undo.entityId,
         position: entity.data.position,
@@ -928,7 +940,11 @@ export class ClientBuilder extends System {
   }
 
   attachGizmo(app, mode) {
-    if (this.gizmo) this.detachGizmo()
+    this.detachGizmo()
+    if (isPromptBox(app.blueprint) && mode === 'scale') {
+      this.promptBoxResize = new PromptBoxResizeControls(this.world, app, this.viewport)
+      return
+    }
     // create gizmo
     this.gizmo = new TransformControls(this.world.camera, this.viewport)
     this.gizmo.setSize(0.7)
@@ -956,6 +972,9 @@ export class ClientBuilder extends System {
   }
 
   detachGizmo() {
+    this.gizmoActive = false
+    this.promptBoxResize?.dispose()
+    this.promptBoxResize = null
     if (!this.gizmo) return
     this.world.stage.scene.remove(this.gizmoTarget)
     this.world.stage.scene.remove(this.gizmoHelper)
@@ -1729,6 +1748,7 @@ app.on('update', () => {
   }
 
   destroy() {
+    this.detachGizmo()
     this.viewport.removeEventListener('dragover', this.onDragOver)
     this.viewport.removeEventListener('dragenter', this.onDragEnter)
     this.viewport.removeEventListener('dragleave', this.onDragLeave)
