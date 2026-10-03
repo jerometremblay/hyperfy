@@ -37,6 +37,7 @@ The package retains the orientation discipline introduced in 2.2.0: define struc
 - `docs/extrusion.md`
 - `docs/orientation.md`
 - `docs/physics.md`
+- `docs/sitting.md`
 - `templates/minimal_primitive_app.js`
 - `templates/orientation_helpers.js`
 - `tools/hyp_pack.py`

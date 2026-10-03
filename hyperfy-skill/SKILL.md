@@ -25,6 +25,8 @@ Use this skill when the user asks to create, edit, diagnose, package, or preview
 14. Run the validation/self-test suite. For dense primitive scenes, also assert that there are no unintended `update`/`fixedUpdate` handlers, detached world nodes, or physics rebuild loops.
 15. Deliver the `.hyp`, source `.js`, and exact-package preview. Include the validation report when useful.
 
+When sitting interaction is requested, read [docs/sitting.md](docs/sitting.md) before defining furniture anchors, actions, occupancy, or cleanup. Apply the sitting validation pass below in the target runtime.
+
 ## Coordinate and primitive contract
 
 Use one coordinate system consistently across source, preview, calculations, and comments:
@@ -226,6 +228,25 @@ For script-only apps, treat emissive objects primarily as visible luminous surfa
 Bloom/post-processing, when enabled, can make these surfaces appear to cast light visually even without actual punctual lights. Do not describe an emissive halo as a physically real point light unless the target runtime actually provides one.
 
 For flicker or moving sparks, create the geometry once and animate existing nodes with a shared update handler. Change `emissiveIntensity` directly for brightness animation; do not recreate primitives every frame.
+
+## Sitting positions, action markers, and seat behavior
+
+For sittable furniture, follow [docs/sitting.md](docs/sitting.md). Use normal Hyperfy **Press E — Sit** action markers and explicit seat anchors. Each physical sitting place needs a stable deterministic ID, its own anchor and facing direction, action marker, server-authoritative occupancy, and safe exit position outside the furniture's collision volume.
+
+Derive seat positions and spacing from the visible sitting surfaces. Keep interaction-marker positions separate from seated-avatar anchors, and use a consistent seated animation within the construction. Correct anchor placement, height, and rotation before changing the pose.
+
+Only enter the seated state after the server accepts the seat claim. While the local player is seated, hide **all Sit markers on that furniture**. Also hide or disable occupied, pending, and destroyed seats. Update marker availability without rebuilding the furniture.
+
+Movement and jumping must end sitting. Use the seated effect's `onEnd`/cleanup lifecycle to release occupancy, move the player to the safe exit, clear local seated state, and restore only available markers. Cleanup must be idempotent and associated with the exact current sitting entry, so obsolete callbacks cannot release a newer claim, restore stale markers, or teleport the player after switching seats.
+
+### Sitting validation pass
+
+Validate sitting behavior in the target Hyperfy runtime; the bundled primitive preview alone does not establish interaction or multiplayer correctness:
+
+1. Every cushion/chair has its own reachable action, correctly oriented anchor, natural seated height, and safe exit point.
+2. Sitting hides all of that furniture's Sit markers locally; movement and jumping end the effect and restore only free seats.
+3. Concurrent claims cannot seat two players in the same place. Pending or occupied seats have no actionable Sit prompt; rejected claims restore appropriate availability.
+4. Effect cancellation/replacement, seat switching, disconnect, seat loss, and app destruction/rebuild release claims and leave no stale markers. Old callbacks cannot alter a newer sitting entry.
 
 ## Packaging rules
 
