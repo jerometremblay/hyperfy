@@ -19,6 +19,7 @@ import {
   OctagonXIcon,
   PinIcon,
   RocketIcon,
+  ReplaceIcon,
   SaveIcon,
   SearchIcon,
   SparkleIcon,
@@ -51,7 +52,7 @@ import {
 import { HintContext, HintProvider } from './Hint'
 import { useFullscreen } from './useFullscreen'
 import { downloadFile } from '../../core/extras/downloadFile'
-import { exportApp } from '../../core/extras/appTools'
+import { exportApp, replaceApp } from '../../core/extras/appTools'
 import { hashFile } from '../../core/utils-client'
 import { cloneDeep, isArray, isBoolean, sortBy } from 'lodash-es'
 import { storage } from '../../core/storage'
@@ -1049,6 +1050,8 @@ function App({ world, hidden }) {
   const [pinned, setPinned] = useState(app.data.pinned)
   const [transforms, setTransforms] = useState(showTransforms)
   const [blueprint, setBlueprint] = useState(app.blueprint)
+  const [replacing, setReplacing] = useState(false)
+  const [replaceError, setReplaceError] = useState('')
   useEffect(() => {
     showTransforms = transforms
   }, [transforms])
@@ -1069,6 +1072,18 @@ function App({ world, hidden }) {
       downloadFile(file)
     } catch (err) {
       console.error(err)
+    }
+  }
+  const replace = async file => {
+    if (!file || replacing) return
+    setReplacing(true)
+    setReplaceError('')
+    try {
+      await replaceApp(world, app, file)
+    } catch (err) {
+      setReplaceError(err.message)
+    } finally {
+      setReplacing(false)
     }
   }
   const changeModel = async file => {
@@ -1196,6 +1211,18 @@ function App({ world, hidden }) {
           >
             <DownloadIcon size='1.125rem' />
           </div>
+          {!blueprint.scene && (
+            <AppModelBtn accept='.hyp' disabled={replacing} onChange={replace}>
+              <div
+                className='app-btn'
+                title={replacing ? 'Replacing…' : 'Replace from .hyp'}
+                onPointerEnter={() => setHint('Replace this instance from a .hyp file, keeping its placement')}
+                onPointerLeave={() => setHint(null)}
+              >
+                {replacing ? <LoaderPinwheelIcon size='1.125rem' /> : <ReplaceIcon size='1.125rem' />}
+              </div>
+            </AppModelBtn>
+          )}
           {!frozen && (
             <AppModelBtn value={blueprint.model} onChange={changeModel}>
               <div
@@ -1259,6 +1286,11 @@ function App({ world, hidden }) {
           </div>
         )}
         <div className='app-content noscrollbar'>
+          {replaceError && (
+            <p role='alert' style={{ padding: '0.5rem 1rem' }}>
+              {replaceError}
+            </p>
+          )}
           {!blueprint.scene && (
             <div className='app-transforms'>
               <div
@@ -1348,10 +1380,10 @@ function AppTransformFields({ app, hideScale }) {
 // todo: blueprint models need migrating to file object format so
 // we can replace needing this and instead use MenuItemFile, but
 // that will also somehow need to support both model and avatar kinds.
-function AppModelBtn({ value, onChange, children }) {
+function AppModelBtn({ value, accept = '.glb,.vrm', disabled = false, onChange, children }) {
   const [key, setKey] = useState(0)
   const handleDownload = e => {
-    if (e.shiftKey) {
+    if (e.shiftKey && value) {
       e.preventDefault()
       const file = world.loader.getFile(value)
       if (!file) return
@@ -1374,7 +1406,14 @@ function AppModelBtn({ value, onChange, children }) {
       `}
       onClick={handleDownload}
     >
-      <input key={key} type='file' accept='.glb,.vrm' onChange={handleChange} />
+      <input
+        key={key}
+        type='file'
+        aria-label={accept === '.hyp' ? 'Replace from .hyp' : 'Change model'}
+        accept={accept}
+        disabled={disabled}
+        onChange={handleChange}
+      />
       {children}
     </label>
   )

@@ -678,11 +678,11 @@ export function MenuItemCurve({ label, hint, x, xRange, y, yMin, yMax, value, on
 // todo: blueprint models need migrating to file object format so
 // we can replace needing this and instead use MenuItemFile, but
 // that will also somehow need to support both model and avatar kinds.
-export function MenuItemFileBtn({ label, hint, accept, value, onChange }) {
+export function MenuItemFileBtn({ label, hint, accept, value, disabled = false, onChange }) {
   const setHint = useContext(MenuContext)
   const [key, setKey] = useState(0)
   const handleDownload = e => {
-    if (e.shiftKey) {
+    if (e.shiftKey && value) {
       e.preventDefault()
       const file = world.loader.getFile(value)
       if (!file) return
@@ -720,7 +720,7 @@ export function MenuItemFileBtn({ label, hint, accept, value, onChange }) {
       onClick={handleDownload}
     >
       <div className='menuitemfilebtn-label'>{label}</div>
-      <input key={key} type='file' accept={accept} onChange={handleChange} />
+      <input key={key} type='file' accept={accept} disabled={disabled} onChange={handleChange} />
     </label>
   )
 }

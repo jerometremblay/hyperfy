@@ -658,6 +658,16 @@ export class ClientBuilder extends System {
       this.promptBoxes.undo(undo)
       return
     }
+    if (undo.name === 'replace-app') {
+      if (!this.canBuild()) return
+      const app = this.world.entities.get(undo.entityId)
+      if (!app || app.destroyed || app.data.blueprint !== undo.replacementBlueprintId) return
+      const change = { id: undo.entityId, ...cloneDeep(undo.previous) }
+      app.modify(change)
+      this.world.network.send('entityModified', change)
+      this.world.ui.setApp(null)
+      return
+    }
     if (undo.name === 'add-entity') {
       this.world.entities.add(undo.data, true)
       return

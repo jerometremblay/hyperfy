@@ -15,7 +15,7 @@ import {
   MenuLine,
   MenuSection,
 } from './Menu'
-import { exportApp } from '../../core/extras/appTools'
+import { exportApp, replaceApp } from '../../core/extras/appTools'
 import { downloadFile } from '../../core/extras/downloadFile'
 import { hashFile } from '../../core/utils-client'
 import { isArray, isBoolean } from 'lodash-es'
@@ -63,6 +63,8 @@ const extToType = {
 const allowedModels = ['glb', 'vrm']
 
 function MenuAppIndex({ world, app, blueprint, pop, push }) {
+  const [replacing, setReplacing] = useState(false)
+  const [replaceError, setReplaceError] = useState('')
   const player = world.entities.player
   const frozen = blueprint.frozen // TODO: disable code editor, model change, metadata editing, flag editing etc
   const changeModel = async file => {
@@ -94,6 +96,18 @@ function MenuAppIndex({ world, app, blueprint, pop, push }) {
       console.error(err)
     }
   }
+  const replace = async file => {
+    if (!file || replacing) return
+    setReplacing(true)
+    setReplaceError('')
+    try {
+      if (await replaceApp(world, app, file)) world.ui.setMenu?.(null)
+    } catch (err) {
+      setReplaceError(err.message)
+    } finally {
+      setReplacing(false)
+    }
+  }
   return (
     <>
       <MenuItemFields world={world} app={app} blueprint={blueprint} />
@@ -111,6 +125,16 @@ function MenuAppIndex({ world, app, blueprint, pop, push }) {
       {!frozen && <MenuItemBtn label='Flags' hint='View/edit flags for this app' onClick={() => push('flags')} nav />}
       <MenuItemBtn label='Metadata' hint='View/edit metadata for this app' onClick={() => push('metadata')} nav />
       <MenuItemBtn label='Download' hint='Download this app as a .hyp file' onClick={download} />
+      {!blueprint.scene && (
+        <MenuItemFileBtn
+          label={replacing ? 'Replacing…' : 'Replace from .hyp'}
+          hint='Replace this instance from a .hyp file, keeping its placement'
+          accept='.hyp'
+          disabled={replacing}
+          onChange={replace}
+        />
+      )}
+      {replaceError && <p role='alert'>{replaceError}</p>}
       <MenuItemBtn
         label='Delete'
         hint='Delete this app instance'
