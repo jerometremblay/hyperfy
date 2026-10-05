@@ -214,8 +214,7 @@ test('uses the posed head as the desktop seated camera pivot', () => {
       position: basePosition,
       quaternion: new THREE.Quaternion(),
     },
-    capsule: { getGlobalPose: () => ({}) },
-    capsuleHandle: { snap() {} },
+    controller: { teleport() {} },
     getAnchorMatrix: () => anchor,
     avatar: {
       instance: { raw: { scene: bodyScene } },

@@ -231,11 +231,11 @@ export class Controller extends Node {
   }
 
   get isGrounded() {
-    return this.moveFlags.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_DOWN)
+    return this.moveFlags?.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_DOWN) || false
   }
 
   get isCeiling() {
-    return this.moveFlags.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_UP)
+    return this.moveFlags?.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_UP) || false
   }
 
   teleport(vec3) {
@@ -246,12 +246,12 @@ export class Controller extends Node {
     this.controller.setFootPosition(vec3.toPxExtVec3())
   }
 
-  move(vec3) {
+  move(vec3, delta = 1 / 60) {
     if (!vec3?.isVector3) {
       throw new Error('[controller] move expected Vector3')
     }
     if (!this.controller) return
-    this.moveFlags = this.controller.move(vec3.toPxVec3(), 0, 1 / 60, this.ctx.world.physics.controllerFilters)
+    this.moveFlags = this.controller.move(vec3.toPxVec3(), 0, delta, this.ctx.world.physics.controllerFilters)
     // this.isGrounded = moveFlags.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_DOWN) // prettier-ignore
     const pos = this.controller.getFootPosition()
     this.position.copy(pos)

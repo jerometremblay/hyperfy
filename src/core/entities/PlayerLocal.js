@@ -18,7 +18,6 @@ import { XR_HAND_BONES } from '../extras/handTracking'
 const UP = new THREE.Vector3(0, 1, 0)
 const DOWN = new THREE.Vector3(0, -1, 0)
 const FORWARD = new THREE.Vector3(0, 0, -1)
-const BACKWARD = new THREE.Vector3(0, 0, 1)
 const SCALE_IDENTITY = new THREE.Vector3(1, 1, 1)
 const POINTER_LOOK_SPEED = 0.1
 const PAN_LOOK_SPEED = 0.4
@@ -103,6 +102,7 @@ export class PlayerLocal extends Entity {
     this.falling = false
 
     this.moveDir = new THREE.Vector3()
+    this.velocity = new THREE.Vector3()
     this.moving = false
 
     this.firstPerson = false
@@ -254,76 +254,17 @@ export class PlayerLocal extends Entity {
   }
 
   initCapsule() {
-    const radius = this.capsuleRadius
-    const height = this.capsuleHeight
-    const halfHeight = (height - radius - radius) / 2
-    const geometry = new PHYSX.PxCapsuleGeometry(radius, halfHeight)
-    // frictionless material (the combine mode ensures we always use out min=0 instead of avging)
-    // we use eMIN when in the air so that we don't stick to walls etc
-    // and eMAX on the ground so that we don't constantly slip off physics objects we're pushing
-    this.material = this.world.physics.physics.createMaterial(0, 0, 0)
-    // material.setFrictionCombineMode(PHYSX.PxCombineModeEnum.eMIN)
-    // material.setRestitutionCombineMode(PHYSX.PxCombineModeEnum.eMIN)
-    const flags = new PHYSX.PxShapeFlags(PHYSX.PxShapeFlagEnum.eSCENE_QUERY_SHAPE | PHYSX.PxShapeFlagEnum.eSIMULATION_SHAPE) // prettier-ignore
-    const shape = this.world.physics.physics.createShape(geometry, this.material, true, flags)
-    const localPose = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
-    // rotate to stand up
-    q1.set(0, 0, 0).setFromAxisAngle(BACKWARD, Math.PI / 2)
-    q1.toPxTransform(localPose)
-    // move capsule up so its base is at 0,0,0
-    v1.set(0, halfHeight + radius, 0)
-    v1.toPxTransform(localPose)
-    shape.setLocalPose(localPose)
-    const filterData = new PHYSX.PxFilterData(
-      Layers.player.group,
-      Layers.player.mask,
-      PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND |
-        PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST |
-        PHYSX.PxPairFlagEnum.eNOTIFY_CONTACT_POINTS |
-        PHYSX.PxPairFlagEnum.eDETECT_CCD_CONTACT |
-        PHYSX.PxPairFlagEnum.eSOLVE_CONTACT |
-        PHYSX.PxPairFlagEnum.eDETECT_DISCRETE_CONTACT,
-      0
-    )
-    shape.setContactOffset(0.08) // just enough to fire contacts (because we muck with velocity sometimes standing on a thing doesn't contact)
-    // shape.setFlag(PHYSX.PxShapeFlagEnum.eUSE_SWEPT_BOUNDS, true)
-    shape.setQueryFilterData(filterData)
-    shape.setSimulationFilterData(filterData)
-    const transform = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
-    v1.copy(this.base.position).toPxTransform(transform)
-    q1.set(0, 0, 0, 1).toPxTransform(transform)
-    this.capsule = this.world.physics.physics.createRigidDynamic(transform)
-    this.capsule.setMass(this.mass)
-    // this.capsule.setRigidBodyFlag(PHYSX.PxRigidBodyFlagEnum.eKINEMATIC, false)
-    this.capsule.setRigidBodyFlag(PHYSX.PxRigidBodyFlagEnum.eENABLE_CCD, true)
-    this.capsule.setRigidDynamicLockFlag(PHYSX.PxRigidDynamicLockFlagEnum.eLOCK_ANGULAR_X, true)
-    // this.capsule.setRigidDynamicLockFlag(PHYSX.PxRigidDynamicLockFlagEnum.eLOCK_ANGULAR_Y, true)
-    this.capsule.setRigidDynamicLockFlag(PHYSX.PxRigidDynamicLockFlagEnum.eLOCK_ANGULAR_Z, true)
-    // disable gravity we'll add it ourselves
-    this.capsule.setActorFlag(PHYSX.PxActorFlagEnum.eDISABLE_GRAVITY, true)
-    this.capsule.attachShape(shape)
-    // There's a weird issue where running directly at a wall the capsule won't generate contacts and instead
-    // go straight through it. It has to be almost perfectly head on, a slight angle and everything works fine.
-    // I spent days trying to figure out why, it's not CCD, it's not contact offsets, its just straight up bugged.
-    // For now the best solution is to just add a sphere right in the center of our capsule to keep that problem at bay.
-    let shape2
-    {
-      // const geometry = new PHYSX.PxSphereGeometry(radius)
-      // shape2 = this.world.physics.physics.createShape(geometry, this.material, true, flags)
-      // shape2.setQueryFilterData(filterData)
-      // shape2.setSimulationFilterData(filterData)
-      // const pose = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
-      // v1.set(0, halfHeight + radius, 0).toPxTransform(pose)
-      // shape2.setLocalPose(pose)
-      // this.capsule.attachShape(shape2)
-    }
-    this.capsuleHandle = this.world.physics.addActor(this.capsule, {
-      tag: null,
-      playerId: this.data.id,
-      onInterpolate: position => {
-        this.base.position.copy(position)
-      },
+    // PxCapsuleControllerDesc.height is the cylindrical section, not the
+    // complete capsule height. Keep the same 1.6m total height as the old
+    // dynamic capsule: 1.0m cylinder + two 0.3m hemispheres.
+    const height = this.capsuleHeight - this.capsuleRadius * 2
+    this.controller = createNode('controller', {
+      radius: this.capsuleRadius,
+      height,
+      layer: 'player',
     })
+    this.controller.position.copy(this.base.position)
+    this.controller.activate({ world: this.world, entity: this })
   }
 
   initControl() {
@@ -595,9 +536,7 @@ export class PlayerLocal extends Entity {
     this.flying = value
     if (this.flying) {
       // zero out vertical velocity when entering fly mode
-      const velocity = this.capsule.getLinearVelocity()
-      velocity.y = 0
-      this.capsule.setLinearVelocity(velocity)
+      this.velocity.y = 0
     } else {
       // ...
     }
@@ -631,20 +570,31 @@ export class PlayerLocal extends Entity {
     return this.world.livekit.isMuted(this.data.id)
   }
 
+  destroy(local) {
+    if (this.destroyed) return
+    this.destroyed = true
+
+    this.control?.release()
+    this.control = null
+    this.world.off('xrSession', this.onXRSession)
+    if (this.isXR) this.onXRSession(null)
+    this.controller?.deactivate()
+    this.controller = null
+    this.base.deactivate()
+    this.avatar = null
+    this.world.setHot(this, false)
+    this.world.events.emit('leave', { playerId: this.data.id })
+    this.aura.deactivate()
+    this.aura = null
+
+    if (local) {
+      this.world.network.send('entityRemoved', this.data.id)
+    }
+  }
+
   fixedUpdate(delta) {
-    const xr = this.isXR
-    const freeze = this.data.effect?.freeze
     const anchor = this.getAnchorMatrix()
     const snare = this.data.effect?.snare || 0
-
-    if (anchor && !this.capsuleDisabled) {
-      this.capsule.setActorFlag(PHYSX.PxActorFlagEnum.eDISABLE_SIMULATION, true)
-      this.capsuleDisabled = true
-    }
-    if (!anchor && this.capsuleDisabled) {
-      this.capsule.setActorFlag(PHYSX.PxActorFlagEnum.eDISABLE_SIMULATION, false)
-      this.capsuleDisabled = false
-    }
 
     if (this.poseEditorActive) {
       this.jumpDown = false
@@ -667,15 +617,16 @@ export class PlayerLocal extends Entity {
        *
        */
 
-      // if grounded last update, check for moving platforms and move with them
+      // CCTs do not receive the old rigid-body platform impulse, so carry the
+      // platform's transform delta into the next controller move instead.
+      const platformDelta = v5.set(0, 0, 0)
       if (this.grounded) {
         // find any potentially moving platform
-        const pose = this.capsule.getGlobalPose()
-        const origin = v1.copy(pose.p)
+        const origin = v1.copy(this.controller.position)
         origin.y += 0.2
         const hitMask = Layers.environment.group | Layers.prop.group
         const hit = this.world.physics.raycast(origin, DOWN, 2, hitMask)
-        let actor = hit?.handle?.actor || null
+        const actor = hit?.handle?.actor || null
         // if we found a new platform, set it up for tracking
         if (this.platform.actor !== actor) {
           this.platform.actor = actor
@@ -701,20 +652,15 @@ export class PlayerLocal extends Entity {
           const deltaQuaternion = q2
           const deltaScale = v3
           deltaTransform.decompose(deltaPosition, deltaQuaternion, deltaScale)
-          // apply delta to player
-          const playerPose = this.capsule.getGlobalPose()
-          v4.copy(playerPose.p)
-          q3.copy(playerPose.q)
+          // Apply the delta to the CCT's foot position. The controller itself
+          // does not rotate, but the visual player should follow platform yaw.
+          v4.copy(this.controller.position)
+          q3.set(0, 0, 0, 1)
           const playerTransform = m3
           playerTransform.compose(v4, q3, SCALE_IDENTITY)
           playerTransform.premultiply(deltaTransform)
-          const newPosition = v5
-          const newQuaternion = q4
-          playerTransform.decompose(newPosition, newQuaternion, v6)
-          const newPose = this.capsule.getGlobalPose()
-          newPosition.toPxTransform(newPose)
-          // newQuaternion.toPxTransform(newPose) // capsule doesn't rotate
-          this.capsule.setGlobalPose(newPose)
+          playerTransform.decompose(platformDelta, q4, v6)
+          platformDelta.sub(v4)
           // rotate ghost by Y only
           e1.setFromQuaternion(deltaQuaternion).reorder('YXZ')
           e1.x = 0
@@ -733,8 +679,7 @@ export class PlayerLocal extends Entity {
       let sweepHit
       {
         const geometry = this.groundSweepGeometry
-        const pose = this.capsule.getGlobalPose()
-        const origin = v1.copy(pose.p /*this.ghost.position*/)
+        const origin = v1.copy(this.controller.position)
         origin.y += this.groundSweepRadius + 0.12 // move up inside player + a bit
         const direction = DOWN
         const maxDistance = 0.12 + 0.1 // outside player + a bit more
@@ -743,10 +688,10 @@ export class PlayerLocal extends Entity {
       }
 
       // update grounded info
-      if (sweepHit) {
+      if (sweepHit || this.controller.isGrounded) {
         this.justLeftGround = false
         this.grounded = true
-        this.groundNormal.copy(sweepHit.normal)
+        this.groundNormal.copy(sweepHit?.normal || UP)
         this.groundAngle = UP.angleTo(this.groundNormal) * RAD2DEG
       } else {
         this.justLeftGround = !!this.grounded
@@ -766,20 +711,22 @@ export class PlayerLocal extends Entity {
         this.slipping = false
       }
 
-      // our capsule material has 0 friction
-      // we use eMIN when in the air so that we don't stick to walls etc (zero friction)
-      // and eMAX on the ground so that we don't constantly slip off physics objects we're pushing (absorb objects friction)
-      if (this.grounded) {
-        if (this.materialMax !== true) {
-          this.material.setFrictionCombineMode(PHYSX.PxCombineModeEnum.eMAX)
-          this.material.setRestitutionCombineMode(PHYSX.PxCombineModeEnum.eMAX)
-          this.materialMax = true
-        }
-      } else {
-        if (this.materialMax !== false) {
-          this.material.setFrictionCombineMode(PHYSX.PxCombineModeEnum.eMIN)
-          this.material.setRestitutionCombineMode(PHYSX.PxCombineModeEnum.eMIN)
-          this.materialMax = false
+      // A CCT has no mass to load a dynamic platform. Preserve the old
+      // downward compensation so seesaws and other dynamic platforms still
+      // respond while the player is standing on them.
+      if (this.grounded && this.platform.actor) {
+        const isStatic = this.platform.actor instanceof PHYSX.PxRigidStatic
+        const rigidBodyFlags = this.platform.actor.getRigidBodyFlags?.()
+        const isKinematic = rigidBodyFlags?.isSet(PHYSX.PxRigidBodyFlagEnum.eKINEMATIC)
+        if (!isKinematic && !isStatic) {
+          const force = v1.set(0, -9.81 * 0.2, 0)
+          PHYSX.PxRigidBodyExt.prototype.addForceAtPos(
+            this.platform.actor,
+            force.toPxVec3(),
+            this.controller.position.toPxVec3(),
+            PHYSX.PxForceModeEnum.eFORCE,
+            true
+          )
         }
       }
 
@@ -790,7 +737,7 @@ export class PlayerLocal extends Entity {
       }
 
       // if not grounded and our velocity is downward, start timing our falling
-      if (!this.grounded && this.capsule.getLinearVelocity().y < 0) {
+      if (!this.grounded && this.velocity.y < 0) {
         this.fallTimer += delta
       } else {
         this.fallTimer = 0
@@ -825,41 +772,14 @@ export class PlayerLocal extends Entity {
         this.airJumping = false
       }
 
-      // if we're grounded we don't need gravity.
-      // more importantly we disable it so that we don't slowly slide down ramps while standing still.
-      // even more importantly, if the platform we are on is dynamic we apply a force to it to compensate for our gravity being off.
-      // this allows things like see-saws to move down when we stand on them etc.
-      if (this.grounded) {
-        // gravity is disabled but we need to check our platform
-        if (this.platform.actor) {
-          const isStatic = this.platform.actor instanceof PHYSX.PxRigidStatic
-          const isKinematic = this.platform.actor.getRigidBodyFlags?.().isSet(PHYSX.PxRigidBodyFlagEnum.eKINEMATIC)
-          // if its dynamic apply downward force!
-          if (!isKinematic && !isStatic) {
-            // this feels like the right amount of force but no idea why 0.2
-            const amount = -9.81 * 0.2
-            const force = v1.set(0, amount, 0)
-            PHYSX.PxRigidBodyExt.prototype.addForceAtPos(
-              this.platform.actor,
-              force.toPxVec3(),
-              this.capsule.getGlobalPose().p,
-              PHYSX.PxForceModeEnum.eFORCE,
-              true
-            )
-          }
-        }
-      } else {
-        const force = v1.set(0, -this.effectiveGravity, 0)
-        this.capsule.addForce(force.toPxVec3(), PHYSX.PxForceModeEnum.eFORCE, true)
-      }
-
-      // update velocity
-      const velocity = v1.copy(this.capsule.getLinearVelocity())
+      // CCT movement is explicit, so keep only the vertical and push velocity
+      // here. Horizontal input is supplied directly to the controller below.
+      const velocity = this.velocity
       // apply drag, orientated to ground normal
       // this prevents ice-skating & yeeting us upward when going up ramps
-      const dragCoeff = 10 * delta
-      let perpComponent = v2.copy(this.groundNormal).multiplyScalar(velocity.dot(this.groundNormal))
-      let parallelComponent = v3.copy(velocity).sub(perpComponent)
+      const dragCoeff = Math.min(1, 10 * delta)
+      const perpComponent = v2.copy(this.groundNormal).multiplyScalar(velocity.dot(this.groundNormal))
+      const parallelComponent = v3.copy(velocity).sub(perpComponent)
       parallelComponent.multiplyScalar(1 - dragCoeff)
       velocity.copy(parallelComponent.add(perpComponent))
       // cancel out velocity in ground normal direction (up oriented to ground normal)
@@ -877,6 +797,10 @@ export class PlayerLocal extends Entity {
       if (this.slipping) {
         // increase downward velocity to prevent sliding upward when walking at a slope
         velocity.y -= 0.5
+      }
+
+      if (!this.grounded) {
+        velocity.y -= this.effectiveGravity * delta
       }
 
       // apply additional push force
@@ -907,20 +831,22 @@ export class PlayerLocal extends Entity {
         }
       }
 
-      this.capsule.setLinearVelocity(velocity.toPxVec3())
-
-      // apply move force, projected onto ground normal
+      // Apply movement directly. PhysX CCT handles the collision resolution,
+      // including its configured step offset, instead of a force emergently
+      // overcoming the obstacle.
+      const displacement = v4.set(0, 0, 0)
       if (this.moving) {
         let moveSpeed = (this.running ? 6 : 3) * this.mass // run
         moveSpeed *= 1 - snare
         const slopeRotation = q1.setFromUnitVectors(UP, this.groundNormal)
-        const moveForce = v1.copy(this.moveDir).multiplyScalar(moveSpeed * 10).applyQuaternion(slopeRotation) // prettier-ignore
-        this.capsule.addForce(moveForce.toPxVec3(), PHYSX.PxForceModeEnum.eFORCE, true)
-        // alternative (slightly different projection)
-        // let moveSpeed = 10
-        // const slopeMoveDir = v1.copy(this.moveDir).projectOnPlane(this.groundNormal).normalize()
-        // const moveForce = v2.copy(slopeMoveDir).multiplyScalar(moveSpeed * 10)
-        // this.capsule.addForce(moveForce.toPxVec3(), PHYSX.PxForceModeEnum.eFORCE, true)
+        displacement.copy(this.moveDir).multiplyScalar(moveSpeed * delta).applyQuaternion(slopeRotation) // prettier-ignore
+      }
+
+      // A grounded CCT needs a small downward component for PhysX's
+      // constrained climbing path to enforce stepOffset. Do not retain this
+      // as velocity; it is only the per-move grounding probe.
+      if (this.grounded && !this.jumping && !this.jumped) {
+        displacement.y -= delta
       }
 
       // ground/air jump
@@ -933,9 +859,7 @@ export class PlayerLocal extends Entity {
         let jumpVelocity = Math.sqrt(2 * this.effectiveGravity * this.jumpHeight)
         jumpVelocity = jumpVelocity * (1 / Math.sqrt(this.mass))
         // update velocity
-        const velocity = this.capsule.getLinearVelocity()
         velocity.y = jumpVelocity
-        this.capsule.setLinearVelocity(velocity)
         // ground jump init (we haven't left the ground yet)
         if (shouldJump) {
           this.jumped = true
@@ -948,6 +872,13 @@ export class PlayerLocal extends Entity {
           this.airJumped = true
           this.airJumping = true
         }
+      }
+
+      displacement.addScaledVector(velocity, delta).add(platformDelta)
+      this.controller.move(displacement, delta)
+      this.base.position.copy(this.controller.position)
+      if (this.controller.isGrounded && velocity.y < 0) {
+        velocity.y = 0
       }
     } else {
       /**
@@ -966,17 +897,15 @@ export class PlayerLocal extends Entity {
         } else if (this.control.keyC.down) {
           force.y = -flySpeed
         }
-        this.capsule.addForce(force.toPxVec3(), PHYSX.PxForceModeEnum.eFORCE, true)
+        this.velocity.addScaledVector(force, delta)
       }
 
-      // add drag to prevent excessive speeds
-      const velocity = v2.copy(this.capsule.getLinearVelocity())
-      const dragForce = v3.copy(velocity).multiplyScalar(-this.flyDrag * delta)
-      this.capsule.addForce(dragForce.toPxVec3(), PHYSX.PxForceModeEnum.eFORCE, true)
-
-      // zero out any rotational velocity
-      const zeroAngular = v4.set(0, 0, 0)
-      this.capsule.setAngularVelocity(zeroAngular.toPxVec3())
+      // Match the old force-based damping while keeping the CCT displacement
+      // explicit: the old drag force was integrated for another `delta`.
+      const dragFactor = Math.max(0, 1 - this.flyDrag * delta * delta)
+      this.velocity.multiplyScalar(dragFactor)
+      this.controller.move(v1.copy(this.velocity).multiplyScalar(delta), delta)
+      this.base.position.copy(this.controller.position)
 
       // if non-xr and not in build mode, cancel flying
       if (!this.world.builder?.enabled && !this.isXR) {
@@ -1043,11 +972,10 @@ export class PlayerLocal extends Entity {
       v3.copy(v1).sub(v2)
       this.hmdDelta.copy(v3).sub(this.hmdLast)
       this.hmdLast.copy(v3)
-      // apply physical movement delta to capsule so physics stays with us if we wander
-      const pose = this.capsule.getGlobalPose()
-      v2.copy(pose.p).add(this.hmdDelta)
-      v2.toPxVec3(pose.p)
-      this.capsule.setGlobalPose(pose)
+      // Physical XR movement is an intentional relocation, not locomotion.
+      v2.copy(this.controller.position).add(this.hmdDelta)
+      this.controller.teleport(v2)
+      this.base.position.copy(this.controller.position)
     }
 
     // update cam look direction
@@ -1372,9 +1300,7 @@ export class PlayerLocal extends Entity {
     if (anchor) {
       this.base.position.setFromMatrixPosition(anchor)
       this.base.quaternion.setFromRotationMatrix(anchor)
-      const pose = this.capsule.getGlobalPose()
-      this.base.position.toPxTransform(pose)
-      this.capsuleHandle.snap(pose)
+      this.controller.teleport(this.base.position)
     }
     if (this.poseEditorActive) return
     // make camera follow our position horizontally
@@ -1414,10 +1340,10 @@ export class PlayerLocal extends Entity {
     position = position.isVector3 ? position : new THREE.Vector3().fromArray(position)
     const hasRotation = isNumber(rotationY)
     // snap to position
-    const pose = this.capsule.getGlobalPose()
-    position.toPxTransform(pose)
-    this.capsuleHandle.snap(pose)
-    this.base.position.copy(position)
+    this.controller.teleport(position)
+    this.velocity.set(0, 0, 0)
+    this.platform.actor = null
+    this.base.position.copy(this.controller.position)
     if (hasRotation) this.base.rotation.y = rotationY
     // send network update
     this.world.network.send('entityModified', {
