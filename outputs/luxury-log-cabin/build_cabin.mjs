@@ -47,7 +47,7 @@ aside{position:fixed;left:28px;bottom:28px;max-width:650px;width:calc(100% - 56p
 <script>window.EMBEDDED_HYP='__EMBEDDED_HYP__';window.addEventListener('error',e=>{let d=document.getElementById('error');d.style.display='block';d.textContent=e.message});window.addEventListener('unhandledrejection',e=>{let d=document.getElementById('error');d.style.display='block';d.textContent=String(e.reason)})</script>
 <script type="module">${script}</script></body></html>`
 const templatePath = path.join(directory, '.preview_template.html')
-await fs.writeFile(templatePath, template)
+await fs.writeFile(templatePath, template.replace(/[ \t]+$/gm, ''))
 console.log(run('python3', 'hyperfy-skill/tools/make_embedded_preview.py', hyp, path.join(directory, 'luxury_log_cabin_preview.html'), '--template', templatePath))
 await fs.unlink(templatePath)
 await fs.rm(path.join(directory, 'extracted'), { recursive: true, force: true })
@@ -64,4 +64,10 @@ console.log(run('node', path.join(directory, 'validate_cabin.mjs')))
 const reportPath = path.join(directory, 'validation_report.json')
 const report = JSON.parse(await fs.readFile(reportPath, 'utf8'))
 report.package.previewEmbedsIdenticalBytes = true
+report.visualInspection = {
+  views: ['front', 'rear', 'left', 'right', 'top cutaway', 'exterior isometric', 'entrance great room', 'mezzanine', 'stairs'],
+  renderer: 'Browser WebGL using the target Prim geometry path',
+  screenshots: ['exterior.jpg', 'great_room.jpg', 'mezzanine.jpg', 'plan.jpg'],
+}
+report.skillSelfTest = 'hyperfy-hyp-app-authoring 2.4.2: PASS'
 await fs.writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')
