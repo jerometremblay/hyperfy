@@ -180,7 +180,9 @@ export class ClientControls extends System {
             }
             if (control.entries.xrLeftTrigger) {
               const button = control.entries.xrLeftTrigger
-              const down = src.gamepad.buttons[0].value > 0.9
+              const value = captured.has('xrLeftTrigger') ? 0 : src.gamepad.buttons[0].value
+              if (button.capture) captured.add('xrLeftTrigger')
+              const down = value > 0.9
               if (down && !button.down) {
                 button.pressed = true
                 button.onPress?.()
@@ -190,7 +192,7 @@ export class ClientControls extends System {
                 button.onRelease?.()
               }
               button.down = down
-              button.value = src.gamepad.buttons[0].value
+              button.value = value
             }
             if (control.entries.xrLeftGrip) {
               const button = control.entries.xrLeftGrip
@@ -281,7 +283,9 @@ export class ClientControls extends System {
             }
             if (control.entries.xrRightTrigger) {
               const button = control.entries.xrRightTrigger
-              const down = src.gamepad.buttons[0].value > 0.9
+              const value = captured.has('xrRightTrigger') ? 0 : src.gamepad.buttons[0].value
+              if (button.capture) captured.add('xrRightTrigger')
+              const down = value > 0.9
               if (down && !button.down) {
                 button.pressed = true
                 button.onPress?.()
@@ -291,7 +295,7 @@ export class ClientControls extends System {
                 button.onRelease?.()
               }
               button.down = down
-              button.value = src.gamepad.buttons[0].value
+              button.value = value
             }
             if (control.entries.xrRightGrip) {
               const button = control.entries.xrRightGrip

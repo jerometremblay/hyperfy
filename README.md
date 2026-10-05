@@ -63,3 +63,8 @@ direction, including after sitting-pose adjustments.
 
 See [avatar hand tracking validation](docs/xr-hands.md) for joint visualization,
 local pose recording, and replay instructions.
+
+The [in-world sidebar](docs/xr-sidebar.md) opens within arm's reach with the left
+Menu button (Y if reserved), or by touching the Menu button beside your left
+wrist. Point with a tracked hand and pinch, or use controller triggers, to interact
+with the existing sidebar, with Recenter and scrolling controls on the panel.

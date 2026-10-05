@@ -304,7 +304,7 @@ export function FieldRange({ label, hint, min = 0, max = 1, step = 0.05, instant
       const newValue = calculateValueFromPointer(e, e.currentTarget)
       setLocal(newValue)
       if (instant) onChange(newValue)
-      e.currentTarget.setPointerCapture(e.pointerId)
+      if (!e.isXRUI) e.currentTarget.setPointerCapture(e.pointerId)
     }
     function onPointerMove(e) {
       if (!sliding) return
@@ -319,7 +319,7 @@ export function FieldRange({ label, hint, min = 0, max = 1, step = 0.05, instant
       const finalValue = calculateValueFromPointer(e, e.currentTarget)
       setLocal(finalValue)
       onChange(finalValue)
-      e.currentTarget.releasePointerCapture(e.pointerId)
+      if (!e.isXRUI) e.currentTarget.releasePointerCapture(e.pointerId)
     }
     track.addEventListener('pointerdown', onPointerDown)
     track.addEventListener('pointermove', onPointerMove)

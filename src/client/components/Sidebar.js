@@ -85,7 +85,7 @@ backdrop-filter: blur(5px);
  *
  */
 
-export function Sidebar({ world, ui }) {
+export function Sidebar({ world, ui, xr = false }) {
   const player = world.entities.player
   const { isAdmin, isBuilder } = useRank(world, player)
   const [livekit, setLiveKit] = useState(() => world.livekit.status)
@@ -145,7 +145,7 @@ export function Sidebar({ world, ui }) {
             >
               <UsersIcon size='1.25rem' />
             </Btn>
-            {isTouch && (
+            {isTouch && !xr && (
               <Btn
                 onClick={() => {
                   world.emit('sidebar-chat-toggle')
@@ -175,7 +175,7 @@ export function Sidebar({ world, ui }) {
                 )}
               </Btn>
             )}
-            {world.xr.supportsVR && (
+            {world.xr.supportsVR && !xr && (
               <Btn
                 onClick={() => {
                   world.xr.enter()

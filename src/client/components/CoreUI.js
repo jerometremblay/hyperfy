@@ -17,6 +17,7 @@ import { ControlPriorities } from '../../core/extras/ControlPriorities'
 // import { MenuApp } from './MenuApp'
 import { ChevronDoubleUpIcon, HandIcon } from './Icons'
 import { Sidebar } from './Sidebar'
+import { XRSidebar } from './XRSidebar'
 import { PoseEditorPanel, SittingPoseButton } from './PoseEditorPanel'
 
 export function CoreUI({ world }) {
@@ -24,6 +25,7 @@ export function CoreUI({ world }) {
   const [ready, setReady] = useState(false)
   const [player, setPlayer] = useState(() => world.entities.player)
   const [ui, setUI] = useState(world.ui.state)
+  const [xr, setXR] = useState(() => !!world.xr.session)
   const [menu, setMenu] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [code, setCode] = useState(false)
@@ -31,6 +33,11 @@ export function CoreUI({ world }) {
   const [disconnected, setDisconnected] = useState(false)
   const [apps, setApps] = useState(false)
   const [kicked, setKicked] = useState(null)
+  useEffect(() => {
+    const onSession = session => setXR(!!session)
+    world.on('xrSession', onSession)
+    return () => world.off('xrSession', onSession)
+  }, [world])
   useEffect(() => {
     world.on('ready', setReady)
     world.on('player', setPlayer)
@@ -102,7 +109,12 @@ export function CoreUI({ world }) {
       {ready && <ActionsBlock world={world} />}
       {ready && <SittingPoseButton world={world} player={player} />}
       {ready && <PoseEditorPanel world={world} />}
-      {ready && <Sidebar world={world} ui={ui} />}
+      {ready && !xr && <Sidebar world={world} ui={ui} />}
+      {ready && xr && (
+        <XRSidebar world={world} ui={ui}>
+          {confirm && <Confirm options={confirm} />}
+        </XRSidebar>
+      )}
       {ready && <Chat world={world} />}
       {/* {ready && <Side world={world} player={player} menu={menu} />} */}
       {avatar && <AvatarPane key={avatar.hash} world={world} info={avatar} />}
@@ -111,8 +123,8 @@ export function CoreUI({ world }) {
       {kicked && <KickedOverlay code={kicked} />}
       {ready && isTouch && <TouchBtns world={world} />}
       {ready && isTouch && <TouchStick world={world} />}
-      {confirm && <Confirm options={confirm} />}
-      <div id='core-ui-portal' />
+      {confirm && !xr && <Confirm options={confirm} />}
+      {!xr && <div id='core-ui-portal' />}
     </div>
   )
 }

@@ -30,6 +30,10 @@ export class ClientPointer extends System {
   }
 
   update(delta) {
+    if (this.world.xrUI?.visible) {
+      this.pointerState.update(null, [], ['left', 'right'])
+      return
+    }
     let hit
     const pressed = []
     const released = []

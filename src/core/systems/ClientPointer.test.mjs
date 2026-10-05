@@ -112,3 +112,37 @@ test('pointer mouse capture controls whether clicks reach lower-priority binding
   pointer.setMouseCapture(false, 'right')
   assert.equal(pointer.control.mouseRight.capture, false)
 })
+
+test('an open XR sidebar blocks clicks on objects behind it and releases existing presses', () => {
+  const events = []
+  const hit = {
+    node: {
+      onPointerDown: () => events.push('down'),
+      onPointerUp: () => events.push('up'),
+    },
+  }
+  let raycasts = 0
+  const world = {
+    xrUI: { visible: false },
+    stage: {
+      raycastPointer: () => {
+        raycasts++
+        return [hit]
+      },
+    },
+  }
+  const pointer = new ClientPointer(world)
+  pointer.control = {
+    xrLeftTrigger: { value: 0 },
+    xrRightTrigger: { value: 0 },
+    pointer: { locked: false, position: { x: 120, y: 80 } },
+    mouseLeft: { pressed: true, released: false },
+    mouseRight: { pressed: false, released: false },
+  }
+  pointer.update(0)
+  world.xrUI.visible = true
+  pointer.update(0)
+  pointer.update(0)
+  assert.equal(raycasts, 1)
+  assert.deepEqual(events, ['down', 'up'])
+})

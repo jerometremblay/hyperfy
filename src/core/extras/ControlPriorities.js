@@ -16,4 +16,5 @@ export const ControlPriorities = {
   ACTION: 4,
   CORE_UI: 5,
   POINTER: 6,
+  XR_UI: 7,
 }
