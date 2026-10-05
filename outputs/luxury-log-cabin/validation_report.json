@@ -1,0 +1,78 @@
+{
+  "valid": true,
+  "runtime": "local Hyperfy 0.16.0 with native extrude",
+  "constructorsAndGeometry": "Actual Prim constructor, proxy, mount and geometry code",
+  "primitiveCount": 1584,
+  "primitiveTypes": [
+    "box",
+    "cylinder",
+    "extrude"
+  ],
+  "callbacks": 0,
+  "detachedNodes": 0,
+  "physicsNodes": 0,
+  "externalTexturesOrGeometry": 0,
+  "bounds": {
+    "min": [
+      -9.959999999999999,
+      0,
+      -8.49
+    ],
+    "max": [
+      9.959999999999999,
+      11.264999999999999,
+      8.49
+    ]
+  },
+  "enclosedBedrooms": 3,
+  "bedroomClearHeadroomMetres": 2.61,
+  "checkedWallOpenings": 18,
+  "mainEntranceSightline": "clear to recessed fireplace",
+  "fireOpening": "open arch with recessed fireback",
+  "stairs": {
+    "risers": 18,
+    "riserMetres": 0.17666666666666667,
+    "goingMetres": 0.32,
+    "treadWidthMetres": 1.35,
+    "clearBetweenNewelsMetres": 1.205,
+    "minimumOverheadClearanceMetres": 2.9542223996976444,
+    "endpointAndDirectionChecks": "pass"
+  },
+  "roof": {
+    "ridgeMetres": 9.8,
+    "wallEaveMetres": 6,
+    "pitchDegrees": 22.890551656248327,
+    "chimneyPenetration": "open"
+  },
+  "package": {
+    "bytes": 25981,
+    "sha256": "c60bee871514c865d628497e06f791de5954935725e7eaf836087489d41029c6",
+    "assets": 2,
+    "exactSourceBytes": true,
+    "geometryFreeBootstrap": true,
+    "canonicalScriptMime": true,
+    "previewEmbedsIdenticalBytes": true
+  },
+  "liveWorldImport": "Not performed; artifact creation does not alter the running world",
+  "visualInspection": {
+    "views": [
+      "front",
+      "rear",
+      "left",
+      "right",
+      "top cutaway",
+      "exterior isometric",
+      "entrance great room",
+      "mezzanine",
+      "stairs"
+    ],
+    "renderer": "Browser WebGL using the target Prim geometry path",
+    "screenshots": [
+      "exterior.jpg",
+      "great_room.jpg",
+      "mezzanine.jpg",
+      "plan.jpg"
+    ]
+  },
+  "skillSelfTest": "hyperfy-hyp-app-authoring 2.4.2: PASS"
+}
