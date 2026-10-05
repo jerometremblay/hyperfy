@@ -1168,7 +1168,7 @@ export class ClientBuilder extends System {
     }
     // check file size
     const maxSize = this.world.network.maxUploadSize * 1024 * 1024
-    if (file.size > maxSize) {
+    if (maxSize > 0 && file.size > maxSize) {
       this.world.chat.add({
         id: uuid(),
         from: null,
@@ -1732,16 +1732,7 @@ app.on('update', () => {
   }
 
   validateSplatFileSize(sizeMB) {
-    if (sizeMB > 500) {
-      console.error(`❌ Splat file too large: ${sizeMB.toFixed(1)}MB (max: 500MB)`)
-      this.world.chat.add({
-        id: uuid(),
-        from: null,
-        fromId: null,
-        body: `Splat file too large (${sizeMB.toFixed(1)}MB). Maximum: 500MB. Browser may crash!`,
-        createdAt: moment().toISOString(),
-      })
-    } else if (sizeMB > 100) {
+    if (sizeMB > 100) {
       console.warn(`⚠️ Large splat file: ${sizeMB.toFixed(1)}MB. Recommended < 50MB for stability.`)
     }
   }

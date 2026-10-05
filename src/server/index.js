@@ -49,6 +49,10 @@ if (!process.env.SAVE_INTERVAL) {
 if (!process.env.PUBLIC_MAX_UPLOAD_SIZE) {
   throw new Error('[envs] PUBLIC_MAX_UPLOAD_SIZE not set')
 }
+const maxUploadSize = Number(process.env.PUBLIC_MAX_UPLOAD_SIZE)
+if (!Number.isFinite(maxUploadSize) || maxUploadSize < 0) {
+  throw new Error('[envs] PUBLIC_MAX_UPLOAD_SIZE must be a non-negative number (0 for unlimited)')
+}
 if (!process.env.PUBLIC_WS_URL) {
   throw new Error('[envs] PUBLIC_WS_URL not set')
 }
@@ -192,7 +196,7 @@ if (world.assetsDir) {
 }
 fastify.register(multipart, {
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB, matches client-side splat size validation
+    fileSize: maxUploadSize > 0 ? maxUploadSize * 1024 * 1024 : Infinity,
   },
   // Ensure binary files are handled correctly
   attachFieldsToBody: false,
@@ -237,6 +241,9 @@ fastify.post('/api/upload', async (req, reply) => {
   const chunks = []
   for await (const chunk of mp.file) {
     chunks.push(chunk)
+  }
+  if (mp.file.truncated) {
+    throw new fastify.multipartErrors.RequestFileTooLargeError()
   }
   const buffer = Buffer.concat(chunks)
   
