@@ -34,7 +34,13 @@ for child transforms and instance scale. It includes a box entirely inside a
 wall's bounds. Separate parts are tested individually, so empty gaps between them
 do not select the whole app. Bounds are conservative: empty space inside a curved
 or hollow part can still count as an intersection. Invisible parts, scene apps,
-players, disabled apps, and other prompt-boxes are excluded. Meshes, primitives,
+players, and disabled apps are excluded. Other prompt-boxes are included like
+ordinary apps when their geometry overlaps the selected box. Every included box
+must have a prompt. `manifest.boxes` contains the selected box and each overlapping
+prompt-box, with its own prompt, dimensions, position, and quaternion. The bundled
+instructions tell the model to process every box and return separate objects at
+their corresponding boxes. Multiple prompts editing the same construction are
+combined into one returned app for that target. Meshes, primitives,
 world-space UI, animated meshes, and Gaussian splats supply geometry bounds.
 
 Each manifest intersection records its entity ID, blueprint ID/version, filename,
@@ -63,14 +69,15 @@ Submit the ZIP to ChatGPT. The bundled instructions distinguish two cases:
 A returned blueprint carries `props.promptBoxRequestId` matching the manifest and
 `props.promptBoxTargetEntityId` identifying the instance to replace. Intersected
 `.hyp` references already include these tags. Use the intersected entity ID for a
-construction edit; use `manifest.box.entityId` for a standalone object. This
+construction edit; use the corresponding `manifest.boxes` entry's entity ID for
+each standalone object. This
 explicit result targeting prevents importing an edited house at the box's origin.
 ChatGPT chooses the edit target and authors the alignment from the supplied prompt
 and geometry; the importer does not infer architecture or cut meshes on its own.
 
 Return one modified `.hyp` directly, or `result.zip` containing the unchanged
 `manifest.json` and one `.hyp` for each changed target. Several construction edits
-and an optional standalone object may be returned together. Include only changed
+and several standalone objects may be returned together. Include only changed
 apps. Unknown targets, duplicate targets, scene apps, placeholders, and missing
 assets are rejected. Locked/frozen constructions cannot be edited.
 
@@ -92,8 +99,9 @@ leaving other instances sharing the old blueprint unaffected.
 
 Construction edits preserve their instance ID, position, quaternion, scale, and
 state. Returned scripts must keep the root transform intact and change geometry
-in the original frame. If no result targets the box, import removes the completed
-prompt-box. If a standalone object also targets the box, it replaces it instead.
+in the original frame. For each included prompt-box, a standalone result replaces
+it using its own position/quaternion and unit scale. Import removes completed boxes without a
+standalone result. One undo restores all included boxes and edited constructions.
 
 **Undo prompt result** appears in Add App and each edited app's inspector. One undo
 restores every edited construction and the original prompt-box together; the

@@ -503,7 +503,7 @@ test('intersection detects containment, touching and transformed child parts; ex
   part(f, f.app)
   assert.deepEqual(
     getPromptBoxIntersections(f.world, f.app).map(app => app.data.id),
-    ['offset', 'touching', 'wall']
+    ['offset', 'other-box', 'touching', 'wall']
   )
 })
 
@@ -856,4 +856,120 @@ test('returned scripts cannot change construction root placement, and undo valid
   f.house.data.blueprint = replacement
   f.workflow.undo()
   assert.equal(f.world.entities.get(f.app.data.id).blueprint.props.promptBox, true)
+})
+
+function multipleBoxFixture() {
+  const f = houseFixture()
+  const second = contextApp(f, 'second-box', { scale: [0.2, 0.6, 0.3] })
+  second.blueprint.props = { promptBox: true, prompt: 'Create a streetlight' }
+  second.blueprint.name = 'Prompt Box'
+  second.root.quaternion.setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 8)
+  second.data.quaternion = second.root.quaternion.toArray()
+  second.root.position.x += 0.05
+  second.data.position = second.root.position.toArray()
+  second.data.state = { placeholder: true }
+  part(f, second)
+  f.app.blueprint.props.prompt = 'Create a coffee mug'
+  return { ...f, second }
+}
+
+test('overlapping prompt-boxes export every prompt and create objects in their own frames with one undo', async () => {
+  const f = multipleBoxFixture()
+  const zip = unzipSync(new Uint8Array(await (await f.workflow.export(f.app)).arrayBuffer()))
+  const request = f.app.blueprint.props.promptBoxRequest
+  assert.equal(request.boxes.length, 2)
+  assert.deepEqual(request.boxes[1], getIntersectionSnapshot(f.second, f.app).promptBox)
+  assert.match(strFromU8(zip['prompt.md']), /Process all 2 prompt-boxes/)
+  assert.match(strFromU8(zip['prompt.md']), /Create a streetlight/)
+  assert.match(strFromU8(zip['authoring.md']), /Process EVERY entry/)
+  assert.match(strFromU8(zip['authoring.md']), /combine those edits in one/)
+  const reference = await importApp(new File([zip['apps/second-box.hyp']], 'second-box.hyp'))
+  assert.equal(reference.blueprint.props.prompt, 'Create a streetlight')
+  const originals = [f.app, f.second].map(app => structuredClone(app.data))
+  await f.workflow.import(
+    f.app,
+    await resultZip(request, [await generated(request), await modified(request, f.second.data.id, 'Streetlight')])
+  )
+  for (const [i, app] of [f.app, f.second].entries()) {
+    assert.deepEqual(app.data.position, originals[i].position)
+    assert.deepEqual(app.data.quaternion, originals[i].quaternion)
+    assert.deepEqual(app.data.scale, [1, 1, 1])
+    assert.deepEqual(app.data.state, {})
+  }
+  assert.equal(f.second.blueprint.name, 'Streetlight')
+  assert.equal(f.undo.length, 1)
+  f.workflow.undo()
+  assert.deepEqual(f.app.data, originals[0])
+  assert.deepEqual(f.second.data, originals[1])
+})
+
+test('combined construction prompts consume all untargeted boxes and undo restores them together', async () => {
+  for (const replacePrimary of [false, true]) {
+    const f = multipleBoxFixture()
+    await f.workflow.export(f.app)
+    const request = f.app.blueprint.props.promptBoxRequest
+    const originals = [f.app, f.second, f.house].map(app => structuredClone(app.data))
+    const files = [await modified(request, 'house')]
+    if (replacePrimary) files.push(await generated(request))
+    await f.workflow.import(f.app, await resultZip(request, files))
+    assert.equal(f.world.entities.get(f.second.data.id), undefined)
+    assert.equal(!!f.world.entities.get(f.app.data.id), replacePrimary)
+    f.workflow.undo()
+    for (const data of originals) assert.deepEqual(f.world.entities.get(data.id).data, data)
+  }
+})
+
+test('secondary prompt changes invalidate the whole request even if the result only edits a construction', async () => {
+  for (const timing of ['before', 'upload']) {
+    for (const mutation of ['prompt', 'move', 'resize', 'version', 'remove']) {
+      const f = multipleBoxFixture()
+      await f.workflow.export(f.app)
+      const request = f.app.blueprint.props.promptBoxRequest
+      const result = await modified(request, 'house')
+      const mutate = () => {
+        if (mutation === 'prompt') f.second.blueprint.props.prompt = 'Changed request'
+        if (mutation === 'move') f.second.root.position.x++
+        if (mutation === 'resize') f.second.root.scale.y++
+        if (mutation === 'version') f.second.blueprint.version++
+        if (mutation === 'remove') f.world.entities.remove(f.second.data.id)
+      }
+      if (timing === 'before') mutate()
+      else f.world.network.upload = async () => mutate()
+      await assert.rejects(f.workflow.import(f.app, result), /changed since export|no longer available/)
+      assert.equal(f.workflow.lastReplacement, null)
+      assert.equal(f.house.blueprint.name, 'Wall')
+    }
+  }
+})
+
+test('failed primary result restores a previously built secondary object without publishing the batch', async () => {
+  const f = multipleBoxFixture()
+  await f.workflow.export(f.app)
+  const request = f.app.blueprint.props.promptBoxRequest
+  const originals = [f.app, f.second].map(app => structuredClone(app.data))
+  const modify = f.app.modify.bind(f.app)
+  f.app.modify = change => {
+    modify(change)
+    if (!f.app.blueprint.props.promptBox) f.app.scriptError = new Error('bad')
+  }
+  await assert.rejects(
+    f.workflow.import(
+      f.app,
+      await resultZip(request, [await generated(request), await modified(request, f.second.data.id, 'Streetlight')])
+    ),
+    /script failed/
+  )
+  assert.deepEqual(f.app.data, originals[0])
+  assert.deepEqual(f.second.data, originals[1])
+  assert.equal(
+    f.sent.some(([name]) => name === 'entityModified' || name === 'entityRemoved' || name === 'blueprintAdded'),
+    false
+  )
+})
+
+test('each included prompt-box needs a prompt before export', async () => {
+  const f = multipleBoxFixture()
+  f.second.blueprint.props.prompt = '   '
+  await assert.rejects(f.workflow.export(f.app), /every intersected prompt-box/)
+  assert.equal(f.app.blueprint.props.promptBoxRequest, undefined)
 })

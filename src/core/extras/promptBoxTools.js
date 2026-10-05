@@ -71,11 +71,21 @@ Return the modified .hyp apps in result.zip alongside the unchanged manifest.jso
 A single .hyp can also be imported directly.
 Use props.promptBoxRequestId from manifest.json.requestId to identify this request.
 Every returned app must set props.promptBoxTargetEntityId to the instance it replaces.
-Use an intersected entityId to modify that construction, or box.entityId to create a new object.
+Use an intersected construction entityId to modify it, or a manifest.boxes entityId
+to create an object in that prompt-box. Older manifests have only manifest.box.
 Only return changed apps; do not return unchanged references or prompt-box.hyp.
 Do not keep props.promptBox or props.promptBoxRequest on the generated blueprint.
 
 ## Decide what the request means
+Process EVERY entry in manifest.boxes, using each box's own prompt, dimensions,
+position and quaternion. Overlapping prompt-boxes are separate requests, not
+construction references. Several standalone objects can be created in one result.
+Return one .hyp per box that creates an object, tagged with that box's entityId.
+If several prompts edit the same construction, combine those edits in one .hyp
+for that construction. Do not return duplicate target IDs or placeholder scripts.
+All included prompt-boxes are completed together; boxes without a returned object
+are removed, and one undo restores all boxes and construction edits.
+
 The prompt-box identifies intent and an approximate edit region; it is not an
 absolute placement or clipping constraint for edits to an existing construction.
 When the prompt clearly refers to an intersected construction, modify that app.
@@ -100,6 +110,10 @@ boxInAppMatrix is column-major and maps the centered UNIT cube (+/-0.5 on each
 axis) into the original app-local frame, including box dimensions and inverse app
 scale. Its translation gives the approximate edit center. boxLocalMatrix maps
 app-local coordinates into the box-centered frame in meters.
+These intersection matrices refer to manifest.box, the selected box. For a prompt
+from another manifest.boxes entry, compute inverse(target world transform) times
+that box's world transform (position, quaternion, dimensions) to obtain its unit
+cube in target-local coordinates. Do not reuse the selected box's edit region.
 Read the actual wall geometry, including child transforms, to determine its plane,
 normal, thickness, vertical direction, usable boundaries and timber bay spacing.
 Project the hinted center onto the chosen wall plane, align the window with that
@@ -115,7 +129,8 @@ The box's bottom face and axes are hints only for construction edits.
 
 ## Coordinates for a new standalone object
 Meters, right-handed axes: +X right, +Y up, -Z forward.
-The generated app origin is the CENTER of the prompt-box. Build all geometry in its
+The generated app origin is the CENTER of its target prompt-box. Use that box's
+dimensions from manifest.boxes (manifest.box for older requests). Build all geometry in its
 local coordinates: X within +/- width/2, Y within +/- height/2, Z within +/- depth/2.
 The base is Y = -height/2. Fit the complete object (including handles) in the box.
 Do not bake the world position/rotation into geometry. Import applies those once,
@@ -131,13 +146,15 @@ prompt-box frame in meters. Apply it once when reasoning about the surrounding
 geometry; the box dimensions are not a scale factor for this matrix.
 Selection uses transformed bounds of individual geometry parts, including boxes
 wholly inside solid bounds. Curved or hollow parts can include empty space inside
-their bounds. Scene apps, other prompt-boxes, and invisible parts are excluded.
+their bounds. Scene apps and invisible parts are excluded. Entries containing
+promptBox describe another overlapping prompt-box and its complete prompt and
+placement; process it as a request using its own frame, not as a construction.
 state records the exported instance state; keep it compatible with the edited app.
 Only edit entries marked editable. Return each changed construction at its
 manifest filename, with its target entityId tag. Each instance is replaced with a
 fresh blueprint, so other instances sharing its original blueprint are unaffected.
-If no file targets box.entityId, importing the edits removes the consumed
-prompt-box. Undo restores the box and all edited apps together.
+For each manifest.boxes entry, importing removes the consumed prompt-box if no
+file targets its entityId. Undo restores all boxes and edited apps together.
 
 ## Script-only apps (recommended)
 blueprint.model = "script-only"; blueprint.script = "asset://<sha256>.js".
@@ -209,11 +226,16 @@ export async function exportPromptBox(app, request, resolveFile, intersections =
   const hyp = await exportApp(app.blueprint, resolveFile)
   const prompt =
     `# Hyperfy construction request\n\n${request.box.prompt}\n\n` +
+    (request.boxes?.length > 1
+      ? `Process all ${request.boxes.length} prompt-boxes below. Use each box's own dimensions and placement in manifest.boxes. Return a separate targeted .hyp for each standalone object; combine edits to the same construction into one file.\n\n` +
+        request.boxes.map(box => `## Prompt-box ${box.entityId}\n\n${box.prompt}\n`).join('\n') +
+        '\n'
+      : '') +
     `Read manifest.json, authoring.md, and hyperfy-skill/SKILL.md before choosing which apps to change.\nFollow the bundled Hyperfy skill and its relevant references/tools; use authoring.md for request-specific overrides.\n` +
     `Use manifest.intersections and apps/ as spatial context (${intersections.length} intersected apps).\n` +
     `If this request refers to an intersected construction, edit that app in its original local frame.\n` +
     `Use the prompt-box as a region hint; align placement and openings to the actual construction.\n` +
-    `For a standalone object, return generated.hyp targeting the prompt-box instead.\n` +
+    `For standalone objects, return one .hyp targeting each corresponding prompt-box instead.\n` +
     `Set blueprint.props.promptBoxRequestId to ${request.requestId}.\n` +
     `Set blueprint.props.promptBoxTargetEntityId to each modified instance's entityId.\n` +
     `For every edited asset, update BOTH its blueprint reference and assets[].url to the same final SHA-256 URL.\n` +

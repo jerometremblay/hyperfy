@@ -2,6 +2,8 @@ import * as THREE from '../extras/three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { getAvatarFocus } from '../extras/avatarFocus'
+import { exportPose } from '../extras/exportPose'
+import { downloadFile } from '../extras/downloadFile'
 import {
   clampBoneRotation,
   getBoneRotationEuler,
@@ -1477,6 +1479,7 @@ export class ClientPoseEditor extends System {
       canUndo: session.historyIndex > 0,
       canRedo: session.historyIndex < session.history.length - 1,
       applying: session.applying,
+      downloading: !!session.downloading,
       error: session.error,
       styleError: session.styleError,
     }
@@ -1533,6 +1536,24 @@ export class ClientPoseEditor extends System {
 
   resetToDefault() {
     return this.apply(false, true)
+  }
+
+  async download() {
+    const session = this.session
+    if (!session || session.applying || session.previewLoading || session.downloading) return false
+    session.downloading = true
+    session.error = null
+    this.emitState()
+    try {
+      downloadFile(await exportPose(session.factory, session.previewScene))
+      return true
+    } catch (error) {
+      session.error = error?.message || 'Could not download the sitting pose'
+      return false
+    } finally {
+      session.downloading = false
+      if (this.session === session) this.emitState()
+    }
   }
 
   onApplyResult(result) {

@@ -130,7 +130,7 @@ export function PromptBoxPanel({ world, app, blueprint }) {
       />
       <FieldBtn
         label={busy ? 'Working…' : 'Export prompt ZIP'}
-        hint='Download the prompt, exact placement, and intersected .hyp apps for ChatGPT.'
+        hint='Download all overlapping prompt-box requests, their placements, and intersected .hyp apps for ChatGPT.'
         onClick={() =>
           run(async () => {
             downloadFile(await world.builder.promptBoxes.export(app))
@@ -162,11 +162,11 @@ export function PromptBoxPanel({ world, app, blueprint }) {
             ))}
           </ul>
         )}
-        <small>Construction edits align to the existing app. The box is a placement hint.</small>
+        <small>Overlapping prompt-boxes are processed together. Construction edits align to the existing app.</small>
       </div>
       <FieldBtn
         label='Import result'
-        hint='Apply the returned construction edits or create the generated object.'
+        hint='Apply the returned construction edits and generated objects together.'
         onClick={() => {
           if (!busy && !blueprint.frozen) fileInput.current.click()
         }}

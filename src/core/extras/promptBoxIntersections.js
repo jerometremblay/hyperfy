@@ -1,5 +1,5 @@
 import * as THREE from './three'
-import { isPromptBox } from './promptBoxTools'
+import { isPromptBox, getPromptBoxSnapshot } from './promptBoxTools'
 
 const unitScale = new THREE.Vector3(1, 1, 1)
 const boxAxes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)]
@@ -38,12 +38,7 @@ export function getPromptBoxIntersections(world, box) {
   const halfSize = box.root.scale.clone().multiplyScalar(0.5)
   const found = new Map()
   const eligible = app =>
-    app?.isApp &&
-    app !== box &&
-    !app.destroyed &&
-    !app.blueprint?.scene &&
-    !app.blueprint?.disabled &&
-    !isPromptBox(app.blueprint)
+    app?.isApp && app !== box && !app.destroyed && !app.blueprint?.scene && !app.blueprint?.disabled
   const check = (app, bounds, matrix) => {
     if (!eligible(app) || found.has(app.data.id)) return
     if (intersectsBounds(bounds, new THREE.Matrix4().multiplyMatrices(inverse, matrix), halfSize)) {
@@ -101,6 +96,7 @@ export function getIntersectionSnapshot(app, box) {
     entityId: app.data.id,
     blueprintId: app.data.blueprint,
     blueprintVersion: app.blueprint.version,
+    ...(isPromptBox(app.blueprint) ? { promptBox: getPromptBoxSnapshot(app) } : {}),
     name: app.blueprint.name || 'App',
     file: `apps/${encodeURIComponent(app.data.id)}.hyp`,
     position: position.toArray(),

@@ -93,6 +93,9 @@ export class PromptBoxWorkflow {
       blueprint: cloneDeep(other.blueprint),
       snapshot: getIntersectionSnapshot(other, app),
     }))
+    const boxes = [box, ...context.filter(item => item.snapshot.promptBox).map(item => item.snapshot.promptBox)]
+    if (boxes.some(box => !box.prompt.trim()))
+      throw new Error('Write a prompt in every intersected prompt-box before exporting.')
     const request = {
       format: 'hyperfy-prompt-box',
       version: 2,
@@ -101,6 +104,7 @@ export class PromptBoxWorkflow {
       blueprintVersion: bp.version + 1,
       coordinates: { units: 'meters', handedness: 'right', up: '+Y', forward: '-Z', origin: 'box-center' },
       box,
+      boxes,
       intersectionMethod: 'transformed-geometry-bounds',
       intersections: context.map(item => item.snapshot),
       result: {
@@ -149,7 +153,14 @@ export class PromptBoxWorkflow {
       throw new Error('This construction is locked and cannot be edited.')
     if (!snapshot.editable)
       throw new Error('This construction was exported as reference only. Export a new editable request.')
-    if (!isEqual(getIntersectionSnapshot(target, app), snapshot)) {
+    const boxFrame = {
+      root: {
+        position: new THREE.Vector3().fromArray(request.box.position),
+        quaternion: new THREE.Quaternion().fromArray(request.box.quaternion),
+        scale: new THREE.Vector3().fromArray(request.box.dimensions),
+      },
+    }
+    if (!isEqual(getIntersectionSnapshot(target, boxFrame), snapshot)) {
       throw new Error('An edited construction changed since export. Export a new request before importing its result.')
     }
     return target
@@ -165,23 +176,31 @@ export class PromptBoxWorkflow {
       assertPromptBoxUnchanged(app, request)
       if (request.world !== this.world.network.apiUrl) throw new Error('This request belongs to another world.')
       const results = await readPromptBoxResult(file, request)
+      const boxes = request.boxes || [request.box]
+      const boxIds = new Set(boxes.map(box => box.entityId))
       // Replace the placeholder last, keeping its request available while other apps build.
       results.sort((a, b) => Number(a.targetEntityId === app.data.id) - Number(b.targetEntityId === app.data.id))
       const check = () => {
         this.requireBuilder()
         this.settle(app)
         assertPromptBoxUnchanged(app, request)
+        for (const box of boxes) {
+          if (box.entityId !== app.data.id) this.checkTarget(app, request, { targetEntityId: box.entityId })
+        }
         for (const info of results) this.checkTarget(app, request, info)
       }
       check()
-      const edits = results.filter(info => info.targetEntityId !== app.data.id)
-      const creates = results.length !== edits.length
+      const edits = results.filter(info => !boxIds.has(info.targetEntityId))
+      const creates = results.some(info => info.targetEntityId === app.data.id)
       const names = edits.map(info => this.world.entities.get(info.targetEntityId).blueprint.name || 'App')
       const confirmed = await this.world.ui.confirm({
         title: edits.length ? 'Apply construction edits' : 'Import generated object',
-        message: edits.length
-          ? `Update ${names.map(name => `“${name}”`).join(', ')}? ${creates ? 'Replace the prompt-box with the generated object.' : 'Remove the completed prompt-box.'} The constructions keep their placement. Undo restores the full change.`
-          : `Replace this prompt-box with “${results[0].blueprint.name || 'Generated Object'}”?`,
+        message:
+          boxes.length > 1
+            ? `Apply ${results.length} returned apps and complete ${boxes.length} prompt-boxes? ${names.length ? `Update ${names.map(name => `“${name}”`).join(', ')}. ` : ''}Generated objects replace their own boxes. Construction edits keep their placement. Boxes without a replacement are removed. Undo restores the full change.`
+            : edits.length
+              ? `Update ${names.map(name => `“${name}”`).join(', ')}? ${creates ? 'Replace the prompt-box with the generated object.' : 'Remove the completed prompt-box.'} The constructions keep their placement. Undo restores the full change.`
+              : `Replace this prompt-box with “${results[0].blueprint.name || 'Generated Object'}”?`,
         confirmText: edits.length ? 'Apply edits' : 'Replace',
         cancelText: 'Cancel',
       })
@@ -194,9 +213,12 @@ export class PromptBoxWorkflow {
       await Promise.all(assets.map(asset => this.world.loader.load(asset.type, asset.url)))
       check()
       const removedBox = creates ? null : structuredClone(app.data)
+      const removedBoxes = boxes
+        .filter(box => !results.some(info => info.targetEntityId === box.entityId))
+        .map(box => structuredClone(this.world.entities.get(box.entityId).data))
       const changes = results.map(info => {
         const target = this.checkTarget(app, request, info)
-        const isBox = target === app
+        const isBox = boxIds.has(target.data.id)
         const blueprint = { ...info.blueprint, id: uuid(), version: 0, unique: true, scene: false }
         const original = {
           blueprint: target.data.blueprint,
@@ -249,6 +271,7 @@ export class PromptBoxWorkflow {
         }
         this.requireBuilder()
         if (!creates) assertPromptBoxUnchanged(app, request)
+        for (const box of removedBoxes) this.checkTarget(app, request, { targetEntityId: box.id })
         for (const entry of changes) {
           const target = this.world.entities.get(entry.entityId)
           if (!target || target.destroyed || target.data.blueprint !== entry.replacementBlueprintId) {
@@ -267,15 +290,16 @@ export class PromptBoxWorkflow {
         this.world.network.send('blueprintAdded', entry.blueprint)
         this.world.network.send('entityModified', entry.change)
       }
-      if (removedBox) {
-        this.world.entities.remove(app.data.id)
-        this.world.network.send('entityRemoved', app.data.id)
+      for (const box of removedBoxes) {
+        this.world.entities.remove(box.id)
+        this.world.network.send('entityRemoved', box.id)
       }
       this.lastReplacement = {
         entityId: app.data.id,
         replacementBlueprintId: changes.at(-1).replacementBlueprintId,
         changes,
         removedBox,
+        removedBoxes,
       }
       this.world.builder.addUndo({ name: 'replace-prompt-box', ...this.lastReplacement })
       this.world.ui.setApp(null)
@@ -298,15 +322,16 @@ export class PromptBoxWorkflow {
       }
       this.settle(target)
     }
-    if (replacement.removedBox && this.world.entities.get(replacement.entityId)) {
-      throw new Error('The original prompt-box ID is already in use.')
+    const removedBoxes = replacement.removedBoxes || (replacement.removedBox ? [replacement.removedBox] : [])
+    for (const box of removedBoxes) {
+      if (this.world.entities.get(box.id)) throw new Error('The original prompt-box ID is already in use.')
     }
     for (const entry of changes) {
       const change = { id: entry.entityId, ...structuredClone(entry.data) }
       this.world.entities.get(entry.entityId).modify(change)
       this.world.network.send('entityModified', change)
     }
-    if (replacement.removedBox) this.world.entities.add(structuredClone(replacement.removedBox), true)
+    for (const box of removedBoxes) this.world.entities.add(structuredClone(box), true)
     this.lastReplacement = null
     if (this.world.builder.undos) {
       this.world.builder.undos = this.world.builder.undos.filter(

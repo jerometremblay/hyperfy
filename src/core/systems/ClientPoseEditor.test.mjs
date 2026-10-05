@@ -239,6 +239,38 @@ function syncEditorCamera(world, control) {
   world.camera.updateMatrixWorld(true)
 }
 
+test('download reports export errors locally and keeps the editor available without applying', async () => {
+  const { editor, player, networkMessages } = createFixture()
+  assert.equal(await editor.download(), false)
+  editor.open(player)
+  const session = editor.session
+  session.factory.cloneScene = () => {
+    throw new Error('Export failed')
+  }
+  const before = networkMessages.length
+  assert.equal(await editor.download(), false)
+  assert.equal(editor.getViewState().error, 'Export failed')
+  assert.equal(editor.getViewState().downloading, false)
+  assert.equal(editor.session, session)
+  assert.equal(networkMessages.length, before)
+  editor.close()
+})
+
+test('download is unavailable during apply, preview loading, or another download', async () => {
+  const { editor, player } = createFixture()
+  editor.open(player)
+  editor.session.factory.cloneScene = () => {
+    throw new Error('Should not export')
+  }
+  for (const flag of ['applying', 'previewLoading', 'downloading']) {
+    editor.session[flag] = true
+    assert.equal(await editor.download(), false)
+    assert.equal(editor.session.error, null)
+    editor.session[flag] = false
+  }
+  editor.close()
+})
+
 function pointerCoordsAt(world, point) {
   const projected = point.clone().project(world.camera)
   return new THREE.Vector2((projected.x + 1) / 2, (1 - projected.y) / 2)

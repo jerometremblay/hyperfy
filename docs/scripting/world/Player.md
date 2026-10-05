@@ -81,6 +81,10 @@ world.getPlayer().editSittingPose({
 
 The editor preview is local until Apply. Applying saves a pose for the current player, avatar, and anchor and shares the resulting avatar placement and pose with everyone in the world.
 
+**Download** saves `sitting-pose.glb`, a standard glTF 2.0 binary model containing the currently previewed avatar, its skeleton, and a one-second constant animation named `SittingPose`. It includes posture edits and hips translation in avatar-local coordinates; seat placement and editor guides are excluded. Download also works with an alternate preview avatar and does not require applying or saving the pose.
+
+Import the GLB into Blender using **File → Import → glTF 2.0**, then include the posed avatar in your model or reuse the `SittingPose` action on a matching armature. A different skeleton needs retargeting. Export the combined model as GLB to include its animation. The download is a regular model, not a VRM avatar or a Hyperfy emote: VRM metadata is omitted and toon materials are approximated with standard materials.
+
 ### `.getBoneTransform(boneName)`: Matrix4
 
 Returns a matrix of the bone transform in world space.

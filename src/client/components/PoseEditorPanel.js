@@ -714,6 +714,15 @@ export function PoseEditorPanel({ world }) {
           </button>
         </div>
         <div className='pose-row'>
+          <button
+            className='pose-editor-button'
+            type='button'
+            title='Download the posed avatar and SittingPose animation as a GLB model for Blender or other 3D tools'
+            disabled={state.applying || state.previewLoading || state.downloading}
+            onClick={() => editor.download()}
+          >
+            {state.downloading ? 'Downloading…' : 'Download'}
+          </button>
           <button className='pose-editor-button' type='button' disabled={state.applying} onClick={() => editor.close()}>
             Cancel
           </button>
