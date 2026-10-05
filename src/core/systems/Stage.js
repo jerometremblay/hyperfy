@@ -86,6 +86,7 @@ export class Stage extends System {
     this.scene = new THREE.Scene()
     this.models = new Map() // id -> Model
     this.splatMeshes = new Map() // id -> SplatMesh instances
+    this.raycastObjects = new Set()
     this.octree = new LooseOctree({
       scene: this.scene,
       center: new THREE.Vector3(0, 0, 0),
@@ -95,6 +96,7 @@ export class Stage extends System {
     this.raycaster = new THREE.Raycaster()
     this.raycaster.firstHitOnly = true
     this.raycastHits = []
+    this.raycastObjectHits = []
     this.maskNone = new THREE.Layers()
     this.maskNone.enableAll()
     this.dirtyNodes = new Set()
@@ -136,6 +138,20 @@ export class Stage extends System {
       return this.insertLinked(options)
     } else {
       return this.insertSingle(options)
+    }
+  }
+
+  insertRaycastObject({ object, node }) {
+    const item = {
+      object,
+      node,
+      getEntity: () => node.ctx?.entity,
+    }
+    this.raycastObjects.add(item)
+    return {
+      destroy: () => {
+        this.raycastObjects.delete(item)
+      },
     }
   }
 
@@ -292,6 +308,7 @@ export class Stage extends System {
     this.raycaster.far = max
     this.raycastHits.length = 0
     this.octree.raycast(this.raycaster, this.raycastHits)
+    this._raycastObjects(this.raycaster, this.raycastHits)
 
     // Also raycast against SplatMeshes using Three.js standard raycasting
     this._raycastSplatMeshes(this.raycaster, this.raycastHits)
@@ -309,6 +326,7 @@ export class Stage extends System {
     this.raycaster.far = max
     this.raycastHits.length = 0
     this.octree.raycast(this.raycaster, this.raycastHits)
+    this._raycastObjects(this.raycaster, this.raycastHits)
 
     // Also raycast against SplatMeshes using Three.js standard raycasting
     this._raycastSplatMeshes(this.raycaster, this.raycastHits)
@@ -321,6 +339,24 @@ export class Stage extends System {
     // Disabled for continuous use - too expensive every frame
     // Use raycastSplatsOnDemand() for on-click selection instead
     return
+  }
+
+  _raycastObjects(raycaster, hits) {
+    const objectHits = this.raycastObjectHits
+    for (const item of this.raycastObjects) {
+      const { object } = item
+      if (!object.parent) continue
+      object.updateMatrixWorld(true)
+      objectHits.length = 0
+      object.raycast(raycaster, objectHits)
+      for (const hit of objectHits) {
+        hit.getEntity = item.getEntity
+        hit.node = item.node
+        hit.direction = raycaster.ray.direction
+        hits.push(hit)
+      }
+    }
+    hits.sort((a, b) => a.distance - b.distance)
   }
 
   // On-demand splat raycasting - call this only on click/selection, not every frame!
@@ -538,6 +574,7 @@ export class Stage extends System {
     this.raycaster.far = max
     this.raycastHits.length = 0
     this.octree.raycast(this.raycaster, this.raycastHits)
+    this._raycastObjects(this.raycaster, this.raycastHits)
 
     // Also raycast against SplatMeshes using Three.js standard raycasting
     this._raycastSplatMeshes(this.raycaster, this.raycastHits)
@@ -573,6 +610,8 @@ export class Stage extends System {
 
   destroy() {
     this.models.clear()
+    this.raycastObjects.clear()
+    this.raycastObjectHits.length = 0
     // Clean up splat meshes
     for (const [_id, splatMesh] of this.splatMeshes) {
       this.scene.remove(splatMesh)

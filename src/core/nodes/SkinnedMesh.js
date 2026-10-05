@@ -30,6 +30,7 @@ export class SkinnedMesh extends Node {
     this.actions = {}
     this.bones = null
     this.animNames = []
+    this.raycastHandles = []
     this.boneHandles = {}
   }
 
@@ -38,6 +39,7 @@ export class SkinnedMesh extends Node {
     this.actions = {}
     this.bones = null
     this.animNames = []
+    this.raycastHandles = []
 
     this.obj = SkeletonUtils.clone(this._object3d)
     this.obj.matrixWorld.copy(this.matrixWorld)
@@ -47,9 +49,16 @@ export class SkinnedMesh extends Node {
       if (n.isMesh) {
         n.castShadow = this._castShadow
         n.receiveShadow = this._receiveShadow
+        this.raycastHandles.push(
+          this.ctx.world.stage.insertRaycastObject({
+            object: n,
+            node: this,
+          })
+        )
       }
     })
     this.ctx.world.stage.scene.add(this.obj)
+    this.obj.updateMatrixWorld(true)
     for (const clip of this._animations) {
       this.clips[clip.name] = clip
       this.animNames.push(clip.name)
@@ -65,11 +74,16 @@ export class SkinnedMesh extends Node {
     if (didMove) {
       if (this.obj) {
         this.obj.matrixWorld.copy(this.matrixWorld)
+        this.obj.updateMatrixWorld(true)
       }
     }
   }
 
   unmount() {
+    for (const handle of this.raycastHandles || []) {
+      handle.destroy()
+    }
+    this.raycastHandles = []
     if (this.obj) {
       if (this.mixer) {
         this.mixer.stopAllAction()
