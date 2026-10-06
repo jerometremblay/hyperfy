@@ -507,6 +507,28 @@ test('retains the current camera transform when entering placement customization
   editor.close()
 })
 
+test('keeps the current camera distance when switching to posture before zooming', () => {
+  const { control, editor, player } = createFixture()
+  control.camera.position.set(4, 0.9, -1.5)
+  control.camera.quaternion.identity()
+  control.camera.zoom = 2.4
+
+  assert.equal(editor.open(player), true)
+  const target = editor.session.orbit.target.clone()
+  const initialViewPosition = control.camera.position
+    .clone()
+    .add(new THREE.Vector3(0, 0, control.camera.zoom).applyQuaternion(control.camera.quaternion))
+  const initialDistance = initialViewPosition.distanceTo(target)
+
+  editor.setMode('posture')
+  control.scrollDelta.value = 10
+  editor.update(1 / 60)
+
+  assert.ok(Math.abs(editor.session.orbit.distance - (initialDistance + 0.05)) < 1e-8)
+  assert.ok(editor.session.orbit.distance > 2)
+  editor.close()
+})
+
 test('dragging the preview moves it in the seat-local ground plane', () => {
   const { control, editor, engineWorld, player } = createFixture()
   assert.equal(editor.open(player), true)

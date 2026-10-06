@@ -286,13 +286,18 @@ export class ClientPoseEditor extends System {
       preview.matrixWorld.decompose(new THREE.Vector3(), worldRotation, new THREE.Vector3())
       const front = new THREE.Vector3(0, 0, 1).applyQuaternion(worldRotation)
       const distance = THREE.MathUtils.clamp(Math.max(size.y * 1.45, size.length() * 0.8), 1.5, MAX_DISTANCE)
-      const actualCameraPosition = this.control.camera?.position?.clone?.()
-      const actualCameraQuaternion = this.control.camera?.quaternion?.clone?.()
-      const actualCameraOffset = actualCameraPosition?.clone().sub(focus)
+      const cameraPosition = this.control.camera?.position?.clone?.()
+      const cameraQuaternion = this.control.camera?.quaternion?.clone?.()
+      const cameraZoom = this.control.camera?.zoom
+      const actualCameraOffset = cameraPosition?.clone()
+      if (actualCameraOffset && cameraQuaternion && Number.isFinite(cameraZoom)) {
+        actualCameraOffset.add(new THREE.Vector3(0, 0, cameraZoom).applyQuaternion(cameraQuaternion))
+      }
+      actualCameraOffset?.sub(focus)
       const actualCameraDistance = actualCameraOffset?.length() || 0
       const hasActualCamera =
-        !!actualCameraPosition &&
-        !!actualCameraQuaternion &&
+        !!actualCameraOffset &&
+        !!cameraQuaternion &&
         Number.isFinite(actualCameraDistance) &&
         actualCameraDistance > 1e-5
       const initialCameraDistance = hasActualCamera
@@ -353,11 +358,11 @@ export class ClientPoseEditor extends System {
           cameraView: hasActualCamera ? 'orbit' : 'front',
           preserveCamera: hasActualCamera,
           initialCamera:
-            hasActualCamera && actualCameraPosition && actualCameraQuaternion
+            hasActualCamera && cameraPosition && cameraQuaternion
               ? {
-                  position: actualCameraPosition,
-                  quaternion: actualCameraQuaternion,
-                  zoom: this.control.camera.zoom,
+                  position: cameraPosition,
+                  quaternion: cameraQuaternion,
+                  zoom: cameraZoom,
                 }
               : null,
         },
