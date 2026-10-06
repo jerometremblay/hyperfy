@@ -283,6 +283,27 @@ fastify.get('/api/upload-check', async (req, reply) => {
   return { exists }
 })
 
+fastify.get('/api/avatars', async () => {
+  const users = await db('users').select('name', 'avatar')
+  const assetFiles = await assets.list()
+  const avatars = new Map()
+  const addAvatar = (url, name) => {
+    if (typeof url !== 'string' || !url.startsWith('asset://')) return
+    const filename = url.slice('asset://'.length)
+    if (filename !== 'avatar.vrm' && !/^[a-f0-9]{64}\.vrm$/i.test(filename)) return
+    if (filename !== 'avatar.vrm' && !assetFiles.has(filename)) return
+    if (!avatars.has(url)) avatars.set(url, { url, name })
+  }
+
+  addAvatar('asset://avatar.vrm', 'World default')
+  addAvatar(world.settings.avatar?.url, 'World default')
+  for (const user of users) {
+    addAvatar(user.avatar, user.name ? `${user.name}'s avatar` : 'Server avatar')
+  }
+
+  return [...avatars.values()]
+})
+
 fastify.get('/api/browser/screenshot', async (request, reply) => {
   const { entityId, url } = request.query
   const entity = world.entities.get(entityId)

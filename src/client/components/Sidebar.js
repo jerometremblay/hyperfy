@@ -458,6 +458,8 @@ function Prefs({ world, hidden }) {
   const player = world.entities.player
   const { isAdmin, isBuilder } = useRank(world, player)
   const [name, setName] = useState(() => player.data.name)
+  const [serverAvatars, setServerAvatars] = useState([])
+  const [loadingServerAvatars, setLoadingServerAvatars] = useState(false)
   const [dpr, setDPR] = useState(world.prefs.dpr)
   const [shadows, setShadows] = useState(world.prefs.shadows)
   const [postprocessing, setPostprocessing] = useState(world.prefs.postprocessing)
@@ -473,6 +475,39 @@ function Prefs({ world, hidden }) {
   const changeName = name => {
     if (!name) return setName(player.data.name)
     player.setName(name)
+  }
+  useEffect(() => {
+    let cancelled = false
+    const loadServerAvatars = async () => {
+      if (!world.network.apiUrl) return
+      setLoadingServerAvatars(true)
+      try {
+        const response = await fetch(`${world.network.apiUrl}/avatars`, { cache: 'no-store' })
+        if (!response.ok) throw new Error(`Avatar list failed (${response.status})`)
+        const avatars = await response.json()
+        if (!cancelled) setServerAvatars(Array.isArray(avatars) ? avatars : [])
+      } catch (error) {
+        if (!cancelled) {
+          console.error('[avatars] failed to load server avatars:', error)
+          setServerAvatars([])
+        }
+      } finally {
+        if (!cancelled) setLoadingServerAvatars(false)
+      }
+    }
+    loadServerAvatars()
+    return () => {
+      cancelled = true
+    }
+  }, [world])
+  const equipServerAvatar = url => {
+    if (!url || player.getAvatarUrl() === url) return
+    player.modify({ avatar: url, sessionAvatar: null })
+    world.network.send('entityModified', {
+      id: player.data.id,
+      avatar: url,
+      sessionAvatar: null,
+    })
   }
   const dprOptions = useMemo(() => {
     const width = world.graphics.width
@@ -524,6 +559,26 @@ function Prefs({ world, hidden }) {
         `}
       >
         <FieldText label='Name' hint='Change your name' value={name} onChange={changeName} />
+        <Group label='Avatars' />
+        {loadingServerAvatars && (
+          <div css={css`padding: 0.75rem 1rem; color: rgba(255, 255, 255, 0.5);`}>
+            Loading server avatars…
+          </div>
+        )}
+        {!loadingServerAvatars && serverAvatars.length === 0 && (
+          <div css={css`padding: 0.75rem 1rem; color: rgba(255, 255, 255, 0.5);`}>
+            No server avatars available
+          </div>
+        )}
+        {serverAvatars.map(avatar => (
+          <FieldBtn
+            key={avatar.url}
+            label={avatar.name || 'Server avatar'}
+            note={player.getAvatarUrl() === avatar.url ? 'Current' : 'Use'}
+            hint='Use this avatar on this device'
+            onClick={() => equipServerAvatar(avatar.url)}
+          />
+        ))}
         <Group label='Interface' />
         <FieldRange
           label='Scale'
@@ -1066,6 +1121,7 @@ function App({ world, hidden }) {
     }
   }, [])
   const frozen = blueprint.frozen // TODO: disable code editor, model change, metadata editing, flag editing etc
+  const isAvatar = typeof blueprint.model === 'string' && blueprint.model.endsWith('vrm')
   const download = async () => {
     try {
       const file = await exportApp(app.blueprint, world.loader.loadFile)
@@ -1113,6 +1169,17 @@ function App({ world, hidden }) {
     const version = blueprint.version + 1
     world.blueprints.modify({ id: blueprint.id, version, [key]: value })
     world.network.send('blueprintModified', { id: blueprint.id, version, [key]: value })
+  }
+  const wear = () => {
+    const player = world.entities.player
+    if (!isAvatar || !player) return
+    if (player.data.avatar === blueprint.model && !player.data.sessionAvatar) return
+    player.modify({ avatar: blueprint.model, sessionAvatar: null })
+    world.network.send('entityModified', {
+      id: player.data.id,
+      avatar: blueprint.model,
+      sessionAvatar: null,
+    })
   }
   const togglePinned = () => {
     const pinned = !app.data.pinned
@@ -1290,6 +1357,14 @@ function App({ world, hidden }) {
             <p role='alert' style={{ padding: '0.5rem 1rem' }}>
               {replaceError}
             </p>
+          )}
+          {isAvatar && (
+            <FieldBtn
+              label='Wear avatar'
+              note={world.entities.player?.getAvatarUrl() === blueprint.model ? 'Current' : 'Use'}
+              hint='Wear this VRM as your avatar'
+              onClick={wear}
+            />
           )}
           {!blueprint.scene && (
             <div className='app-transforms'>

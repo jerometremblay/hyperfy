@@ -1705,6 +1705,7 @@ app.on('update', () => {
         this.world.network.send('entityModified', {
           id: player.data.id,
           avatar: url,
+          sessionAvatar: null,
         })
       },
     })
