@@ -286,8 +286,10 @@ export async function readPromptBoxResult(file, request) {
       throw new Error('Result manifest does not match this exported request.')
     }
     const apps = Object.keys(files).filter(name => name.endsWith('.hyp'))
-    if (!apps.length || apps.length > (request.intersections?.length || 0) + 1) {
-      throw new Error('Return at least one .hyp and at most one file for each target.')
+    // A prompt-box may expand into several independent app instances. Construction
+    // targets are still one-result-per-target, but prompt-box targets may repeat.
+    if (!apps.length || apps.length > 256) {
+      throw new Error('Return between 1 and 256 .hyp files.')
     }
     inputFiles = apps.map(name => new File([files[name]], name))
   } else if (!file.name.toLowerCase().endsWith('.hyp')) {
@@ -295,6 +297,7 @@ export async function readPromptBoxResult(file, request) {
   }
   const results = []
   const targets = new Set()
+  const boxIds = new Set((request.boxes || [request.box]).map(box => box.entityId))
   for (const input of inputFiles || [file]) {
     const info = await readResultApp(input, request)
     const targetId = info.blueprint.props.promptBoxTargetEntityId ?? (request.version < 2 ? request.box.entityId : null)
@@ -306,9 +309,9 @@ export async function readPromptBoxResult(file, request) {
         'Each result must identify a prompt-box or intersected target using props.promptBoxTargetEntityId.'
       )
     }
-    if (targets.has(targetId))
-      throw new Error('Return exactly one .hyp for each changed target; duplicate target found.')
-    targets.add(targetId)
+    if (targets.has(targetId) && !boxIds.has(targetId))
+      throw new Error('Return exactly one .hyp for each changed construction target; duplicate target found.')
+    if (!boxIds.has(targetId)) targets.add(targetId)
     results.push({ ...info, targetEntityId: targetId })
   }
   return results

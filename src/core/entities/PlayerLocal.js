@@ -50,6 +50,12 @@ const m3 = new THREE.Matrix4()
 const gazeTiltAngle = 10 * DEG2RAD
 const gazeTiltAxis = new THREE.Vector3(1, 0, 0) // X-axis for pitch
 
+export function getPlatformActor(hit) {
+  const entity = hit?.handle?.node?.ctx?.entity
+  if (entity?.data?.mover) return null
+  return hit?.handle?.actor || null
+}
+
 export function getXRTurnAngle(stickX, delta) {
   if (!stickX) return 0
   return -stickX * XR_TURN_SPEED * delta
@@ -626,7 +632,7 @@ export class PlayerLocal extends Entity {
         origin.y += 0.2
         const hitMask = Layers.environment.group | Layers.prop.group
         const hit = this.world.physics.raycast(origin, DOWN, 2, hitMask)
-        const actor = hit?.handle?.actor || null
+        const actor = getPlatformActor(hit)
         // if we found a new platform, set it up for tracking
         if (this.platform.actor !== actor) {
           this.platform.actor = actor

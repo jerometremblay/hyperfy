@@ -11,9 +11,20 @@ const bundle = await build({
   platform: 'node',
   write: false,
 })
-const { PlayerLocal } = await import(
+const { PlayerLocal, getPlatformActor } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`
 )
+
+test('does not carry the player with an app that is being moved', () => {
+  const actor = {}
+  const movingApp = { data: { mover: 'builder-1' } }
+  const stationaryApp = { data: { mover: null } }
+  const movingHit = { handle: { actor, node: { ctx: { entity: movingApp } } } }
+  const stationaryHit = { handle: { actor, node: { ctx: { entity: stationaryApp } } } }
+
+  assert.equal(getPlatformActor(movingHit), null)
+  assert.equal(getPlatformActor(stationaryHit), actor)
+})
 
 test('marks XR head calibration pending when applying a seated pose', () => {
   let appliedPose
