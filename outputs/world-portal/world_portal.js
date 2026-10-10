@@ -33,81 +33,23 @@ const width = 1.6
 const height = 2.4
 const surfacePosition = [0, height / 2, 0]
 
-function setURLParam(url, key, value) {
-  const hashIndex = url.indexOf('#')
-  const hash = hashIndex === -1 ? '' : url.slice(hashIndex)
-  const withoutHash = hashIndex === -1 ? url : url.slice(0, hashIndex)
-  const queryIndex = withoutHash.indexOf('?')
-  const path = queryIndex === -1 ? withoutHash : withoutHash.slice(0, queryIndex)
-  const query = queryIndex === -1 ? '' : withoutHash.slice(queryIndex + 1)
-  const params = query
-    .split('&')
-    .filter(Boolean)
-    .filter(param => {
-      const keyPart = param.split('=')[0].replace(/\+/g, ' ')
-      try {
-        return decodeURIComponent(keyPart) !== key
-      } catch {
-        return true
-      }
-    })
+const surface = app.create('prim', {
+  type: 'plane',
+  size: [width, height],
+  position: surfacePosition,
+  color: '#46a9b8',
+  emissive: '#1b6974',
+  emissiveIntensity: 0.25,
+  opacity: 0.78,
+  roughness: 0.35,
+  doubleside: true,
+  castShadow: false,
+  receiveShadow: false,
+  physics: null,
+})
+app.add(surface)
 
-  if (value !== null && value !== undefined) {
-    params.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-  }
-
-  return `${path}${params.length ? `?${params.join('&')}` : ''}${hash}`
-}
-
-function getPortalViewURL() {
-  if (!world.isClient || world.getQueryParam('portalView') === '1') return null
-
-  const destination = typeof props.destination === 'string' ? props.destination.trim() : ''
-  const destinationPortalId =
-    typeof props.destinationPortalId === 'string' ? props.destinationPortalId.trim() : ''
-  let url = destination
-
-  if (!url && destinationPortalId) {
-    url = world.getWorldURL()
-  }
-  if (!url || !/^https?:\/\//i.test(url)) return null
-
-  if (destinationPortalId) url = setURLParam(url, 'portalId', destinationPortalId)
-  return setURLParam(url, 'portalView', '1')
-}
-
-const portalViewURL = getPortalViewURL()
-
-if (portalViewURL) {
-  const view = app.create('webview', {
-    src: portalViewURL,
-    width,
-    height,
-    factor: 160,
-    position: surfacePosition,
-    doubleside: true,
-    interactive: false,
-  })
-  app.add(view)
-} else {
-  const surface = app.create('prim', {
-    type: 'plane',
-    size: [width, height],
-    position: surfacePosition,
-    color: '#46a9b8',
-    emissive: '#1b6974',
-    emissiveIntensity: 0.25,
-    opacity: 0.78,
-    roughness: 0.35,
-    doubleside: true,
-    castShadow: false,
-    receiveShadow: false,
-    physics: null,
-  })
-  app.add(surface)
-}
-
-const localPosition = new Vector3(...surfacePosition)
+const localPosition = surface.position.clone()
 
 function getTriggerTransform() {
   const position = localPosition
@@ -147,7 +89,25 @@ function arriveAtPortal() {
 }
 
 function appendPortalId(url, portalId) {
-  return setURLParam(url, 'portalId', portalId)
+  const hashIndex = url.indexOf('#')
+  const hash = hashIndex === -1 ? '' : url.slice(hashIndex)
+  const withoutHash = hashIndex === -1 ? url : url.slice(0, hashIndex)
+  const queryIndex = withoutHash.indexOf('?')
+  const path = queryIndex === -1 ? withoutHash : withoutHash.slice(0, queryIndex)
+  const query = queryIndex === -1 ? '' : withoutHash.slice(queryIndex + 1)
+  const params = query
+    .split('&')
+    .filter(Boolean)
+    .filter(param => {
+      const key = param.split('=')[0].replace(/\+/g, ' ')
+      try {
+        return decodeURIComponent(key) !== 'portalId'
+      } catch {
+        return true
+      }
+    })
+  params.push(`portalId=${encodeURIComponent(portalId)}`)
+  return `${path}?${params.join('&')}${hash}`
 }
 
 world.on('world-portal:travel', request => {

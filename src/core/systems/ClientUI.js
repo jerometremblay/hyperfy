@@ -8,11 +8,8 @@ const appPanes = ['app', 'script', 'nodes', 'meta']
 export class ClientUI extends System {
   constructor(world) {
     super(world)
-    const portalView =
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).get('portalView') === '1'
     this.state = {
-      visible: !portalView,
+      visible: true,
       active: false,
       app: null,
       pane: null,

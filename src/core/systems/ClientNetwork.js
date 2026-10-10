@@ -28,16 +28,10 @@ export class ClientNetwork extends System {
   }
 
   init({ wsUrl, name, avatar }) {
-    this.portalView =
-      typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('portalView') === '1'
-    const params = new URLSearchParams()
-    if (!this.portalView) {
-      params.set('authToken', storage.get('authToken'))
-      if (name) params.set('name', name)
-      if (avatar) params.set('avatar', avatar)
-    }
-    const query = params.toString()
-    const url = query ? `${wsUrl}${wsUrl.includes('?') ? '&' : '?'}${query}` : wsUrl
+    const authToken = storage.get('authToken')
+    let url = `${wsUrl}?authToken=${authToken}`
+    if (name) url += `&name=${encodeURIComponent(name)}`
+    if (avatar) url += `&avatar=${encodeURIComponent(avatar)}`
     this.ws = new WebSocket(url)
     this.ws.binaryType = 'arraybuffer'
     this.ws.addEventListener('message', this.onPacket)
@@ -168,7 +162,7 @@ export class ClientNetwork extends System {
     this.world.blueprints.deserialize(data.blueprints)
     this.world.entities.deserialize(data.entities)
     this.world.livekit?.deserialize(data.livekit)
-    if (!this.portalView) storage.set('authToken', data.authToken)
+    storage.set('authToken', data.authToken)
   }
 
   onSettingsModified = data => {

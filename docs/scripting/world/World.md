@@ -97,10 +97,6 @@ Gets a query parameter value from the browsers url
 
 Sets a query parameter in the browsers url
 
-### `.getWorldURL()`
-
-Returns the current world URL without query parameters, or `null` outside the browser.
-
 ### `.open(url: string, newTab: ?Boolean)`
 
 Opens a link, defaults to new tab.
