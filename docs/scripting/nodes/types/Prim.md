@@ -96,7 +96,7 @@ The emissive (glow) color of the primitive. Defaults to `null` (no glow).
 
 ### `.emissiveIntensity`: Number
 
-The intensity of the emissive glow. Defaults to `1`.
+The intensity of the emissive glow. Defaults to `0`; set it above zero to enable glow.
 
 ### `.metalness`: Number
 

@@ -6,6 +6,22 @@ below.
 
 ## Additional features
 
+### Real-time day–night cycle and lighting
+
+The sun and moon follow their real positions at the latitude and longitude set in
+**World Settings**. The cycle includes seasonal sunlight, a light-blue daytime sky,
+twilight, moon phases, and moonlight. Nighttime ambient lighting keeps unlit surfaces
+visible. The default location is `45.75689615017221, -74.01942099403277`.
+
+Builders can use `/time set 13h23` to smoothly fast-forward to the next 13:23 over
+up to five seconds, then continue at normal speed. The shared time offset is saved with
+the world. `/time reset` returns to real time. Disabling the cycle restores the app sky.
+
+Scripts can read the configured coordinates with `world.getLocation()` and create
+point, spot, and directional lights with `app.create('light')`, including shadows.
+See the [day–night cycle guide](docs/day-night-cycle.md) and
+[lighting reference and examples](docs/scripting/nodes/types/Light.md).
+
 ### Prompt-box creation and construction edits
 
 Create a translucent prompt-box, resize it with face handles, and describe a new

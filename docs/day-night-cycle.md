@@ -20,24 +20,61 @@ Use `/time reset` to return to real time. Both commands enable the day–night c
 World north is **−Z**, east is **+X**, and up is **+Y**. Latitude accepts −90 to 90,
 and longitude accepts −180 to 180 (negative longitude is west).
 
+## Reading the location in scripts
+
+`world.getLocation()` is available in both client and server scripts:
+
+```js
+const { latitude, longitude } = world.getLocation()
+console.log('World location:', latitude, longitude)
+```
+
+It returns a fresh snapshot of the configured coordinates. Changing the returned object
+does not update World Settings; call it again to read later changes. Geographic coordinates
+are separate from a player's 3D position, available through `world.getPlayer().position`
+on the client. `world.settings` is not exposed to scripts.
+
+## Moon visibility
+
 The moon's illuminated portion and tilt follow its real phase, from crescent through
 quarter, gibbous, and full moon. Its angular size changes with lunar distance. It is hidden
 below the horizon and can appear during daylight when above it. Moonlight lights surfaces,
 stronger near full moon, and fades at dawn and moonset; it does not cast additional shadows.
 The moon is a shaded disc, without a photographic surface texture. It uses its real angular
 size (roughly half a degree), so it is small on screen. Near new moon, the illuminated part
-can be effectively invisible; changing the hour does not change the lunar phase.
+can be effectively invisible. The phase follows the resulting date and time; `/time set`
+does not offer a phase or date selector.
+
+## How lighting is handled
 
 While enabled, Three.js's procedural sky replaces the background supplied by sky apps.
 Direct sunlight fades at the horizon, and the existing HDR ambient lighting dims through
 twilight to 20% brightness at night, so unlit surfaces remain visible. The procedural sky
-and sun disc are scaled to avoid excessive bloom. The HDR reflection image remains the world's existing
-image. App lights and emissive materials keep their own brightness.
+and sun disc are scaled to avoid excessive bloom. The HDR reflection image remains the
+world's existing image. App lights and emissive materials keep their own brightness.
 The sky smoothly brightens to light blue as the sun rises above the horizon, reaching
 full daytime color at one degree of elevation and retaining its twilight colors below it.
 
 Switching the cycle off restores the sky app's background, sun direction, sunlight color
 and intensity, and full HDR lighting.
+
+Sky apps can still supply the HDR environment, its rotation, fog, sunlight color, and
+the base sunlight intensity. With the cycle enabled, astronomical calculations control
+the sunlight direction, and the base intensity is multiplied by the daylight strength.
+The sky app's background and fixed sun direction take effect when the cycle is disabled.
+
+For lamps and other local illumination, use a [Light node](scripting/nodes/types/Light.md).
+Its `intensity` does not automatically fade or switch off with the cycle. Emissive geometry
+can glow and produce bloom, but does not illuminate nearby surfaces; pair it with a light
+node when both effects are needed. The linked reference includes complete lamp, spotlight,
+and directional-light examples.
+
+Scripts do not currently expose the cycle's date, sun position, moon phase, or a nighttime
+flag. `world.getTime()` is the network clock and `world.getTimestamp()` uses the real
+clock of the client or server running the script; neither includes the `/time set` offset.
+Use the chat commands to change cycle time.
+
+## Validation
 
 Run `node scripts/test-day-night-lighting.mjs` and open the printed URL for WebGL regression
 checks of sun glare, moonless ambient light, and moonlight with shadows enabled and disabled.

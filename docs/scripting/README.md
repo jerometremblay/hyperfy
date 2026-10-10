@@ -26,6 +26,17 @@ Certain node [types](./nodes/types/) can also be created and used on the fly usi
 
 The [World](./world/World.md) API access methods and properties outside of the Apps, like players, networking or managing nodes outside of the local hierarchy. 
 
+## Lighting and day–night cycle
+
+The [day–night cycle](../day-night-cycle.md) controls the real sun, moon, sky, and ambient
+lighting at the world's configured geographic location. Scripts can read that location
+with [`world.getLocation()`](./world/World.md#getlocation-latitude-number-longitude-number).
+
+Use the [Light node reference and examples](./nodes/types/Light.md) to add point lights,
+spotlights, or directional lights, control brightness, and enable shadows. Emissive
+[primitives](./nodes/types/Prim.md) can make a bulb appear bright; a light node illuminates
+the surfaces around it.
+
 ## Utils 
 
 The [Utils](./utils.md) documentation provides a set of miscellaneous globals available in the scripting environment, like a random number generator and access to some `three.js` methods.
