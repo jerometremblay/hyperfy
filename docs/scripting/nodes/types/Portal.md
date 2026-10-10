@@ -24,7 +24,7 @@ app.add(portal)
 | `target` | `''` | ID of another mounted portal in this world. |
 | `width` | `1.6` | Positive aperture width in local units. |
 | `height` | `2.4` | Positive aperture height in local units. |
-| `resolution` | `256` | Maximum texture dimension: 256, 512, or 1024 pixels. |
+| `resolution` | `256` | Maximum texture dimension: 256, 512, or 1024 pixels; `'max'` uses the viewer's current render resolution. |
 | `updateRate` | `15` | Preview updates per second: 15, 30, or 0 for every frame. |
 
 Inherits [Node](../Node.md) transforms, activation, and parenting. The aperture
@@ -49,7 +49,11 @@ Save and reapply destination settings when replacing an existing app; Import
 uses the new package's default properties.
 
 The World Portal properties expose **Preview resolution** and **Preview update
-rate**, defaulting to Low (256 px) and Low (15 FPS). Preview textures and their
+rate**, defaulting to Low (256 px) and Low (15 FPS).
+**Max** uses the renderer's actual pixel dimensions, including pixel ratio,
+and follows viewport resizing. In XR it matches each eye's viewport resolution.
+The update rate remains independently configurable.
+Preview textures and their
 camera projections are cached between updates, so motion can look less smooth
 at lower rates. Each eye has its own cache. Linking a different destination,
 crossing to the other side, resizing the texture, or changing the update rate

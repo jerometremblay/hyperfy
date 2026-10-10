@@ -28,6 +28,7 @@ app.configure([
       { label: 'Low (256 px)', value: '256' },
       { label: 'Medium (512 px)', value: '512' },
       { label: 'High (1024 px)', value: '1024' },
+      { label: 'Max (current render resolution)', value: 'max' },
     ],
     initial: '256',
   },
@@ -63,7 +64,12 @@ const surface = world.isClient
       target: destination ? '' : destinationPortalId,
       width,
       height,
-      resolution: [256, 512, 1024].includes(Number(props.resolution)) ? Number(props.resolution) : 256,
+      resolution:
+        props.resolution === 'max'
+          ? 'max'
+          : [256, 512, 1024].includes(Number(props.resolution))
+            ? Number(props.resolution)
+            : 256,
       updateRate: [0, 15, 30].includes(Number(props.updateRate ?? 15)) ? Number(props.updateRate ?? 15) : 15,
       position: surfacePosition,
     })

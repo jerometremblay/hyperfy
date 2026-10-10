@@ -168,11 +168,14 @@ export class ClientGraphics extends System {
     uniforms.preview.value = view.target.texture
     uniforms.textureMatrix.value = view.textureMatrix
     const size = renderer.getDrawingBufferSize(new THREE.Vector2())
-    const aspect = eye.projectionMatrix.elements[5] / eye.projectionMatrix.elements[0]
     const requestedWidth = eye.viewport?.z || size.x
-    const factor = Math.min(1, portal.resolution / requestedWidth, portal.resolution / (requestedWidth / aspect))
+    const requestedHeight = eye.viewport?.w || size.y
+    const factor =
+      portal.resolution === 'max'
+        ? 1
+        : Math.min(1, portal.resolution / requestedWidth, portal.resolution / requestedHeight)
     const width = Math.max(1, Math.round(requestedWidth * factor))
-    const height = Math.max(1, Math.round(width / aspect))
+    const height = Math.max(1, Math.round(requestedHeight * factor))
     const resized = view.target.width !== width || view.target.height !== height
     const now = performance.now()
     portalInverse.copy(portal.matrixWorld).invert()

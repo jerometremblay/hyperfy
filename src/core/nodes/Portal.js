@@ -164,7 +164,7 @@ export class Portal extends Node {
     return this._resolution
   }
   set resolution(value) {
-    if (![256, 512, 1024].includes(value)) throw new Error('[portal] resolution must be 256, 512, or 1024')
+    if (![256, 512, 1024, 'max'].includes(value)) throw new Error('[portal] resolution must be 256, 512, 1024, or max')
     this._resolution = value
   }
 
