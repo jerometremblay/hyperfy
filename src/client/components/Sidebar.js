@@ -718,6 +718,9 @@ function World({ world, hidden }) {
   const [voice, setVoice] = useState(world.settings.voice)
   const [playerLimit, setPlayerLimit] = useState(world.settings.playerLimit)
   const [ao, setAO] = useState(world.settings.ao)
+  const [dayNightCycle, setDayNightCycle] = useState(world.settings.dayNightCycle)
+  const [latitude, setLatitude] = useState(world.settings.latitude)
+  const [longitude, setLongitude] = useState(world.settings.longitude)
   const [rank, setRank] = useState(world.settings.rank)
   useEffect(() => {
     const onChange = changes => {
@@ -729,6 +732,9 @@ function World({ world, hidden }) {
       if (changes.voice) setVoice(changes.voice.value)
       if (changes.playerLimit) setPlayerLimit(changes.playerLimit.value)
       if (changes.ao) setAO(changes.ao.value)
+      if (changes.dayNightCycle) setDayNightCycle(changes.dayNightCycle.value)
+      if (changes.latitude) setLatitude(changes.latitude.value)
+      if (changes.longitude) setLongitude(changes.longitude.value)
       if (changes.rank) setRank(changes.rank.value)
     }
     world.settings.on('change', onChange)
@@ -829,6 +835,34 @@ function World({ world, hidden }) {
             falseLabel='Off'
             value={ao}
             onChange={value => world.settings.set('ao', value, true)}
+          />
+          <FieldToggle
+            label='Day–Night Cycle'
+            hint='Follow the real sun at the latitude and longitude below using the current date and time. Replaces the app sky while enabled.'
+            trueLabel='On'
+            falseLabel='Off'
+            value={dayNightCycle}
+            onChange={value => world.settings.set('dayNightCycle', value, true)}
+          />
+          <FieldNumber
+            label='Latitude'
+            hint='Real-world latitude in degrees: −90 to 90. North is the world’s −Z direction.'
+            dp={8}
+            min={-90}
+            max={90}
+            step={0.01}
+            value={latitude}
+            onChange={value => world.settings.set('latitude', value, true)}
+          />
+          <FieldNumber
+            label='Longitude'
+            hint='Real-world longitude in degrees: −180 to 180. East is the world’s +X direction. No timezone setting is needed.'
+            dp={8}
+            min={-180}
+            max={180}
+            step={0.01}
+            value={longitude}
+            onChange={value => world.settings.set('longitude', value, true)}
           />
           {isAdmin && world.settings.hasAdminCode && (
             <FieldToggle

@@ -53,6 +53,20 @@ Returns a player. If no `playerId` is provided it returns the local player.
 
 Returns an array of all players.
 
+### `.getLocation()`: { latitude: Number, longitude: Number }
+
+Returns the world's configured geographic coordinates in degrees, on both the server
+and client. These are the coordinates from World Settings used by the sun and moon cycle.
+North is −Z and east is +X in world space.
+
+```js
+const { latitude, longitude } = world.getLocation()
+console.log(latitude, longitude)
+```
+
+Each call returns a fresh snapshot of the current settings. Changing the returned object
+does not change the world's location. Call it again to read updated coordinates.
+
 ### `.getQueryParam(key)`
 
 Gets a query parameter value from the browsers url

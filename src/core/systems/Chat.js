@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { uuid } from '../utils'
 import { System } from './System'
+import { getTimeOffset, getWorldTime } from '../extras/dayNight'
 
 /**
  * Chat System
@@ -62,7 +63,13 @@ export class Chat extends System {
     if (cmd !== 'admin') {
       this.world.events.emit('command', { playerId, cmd, value, args })
     }
-    this.world.network.send('command', { cmd, value, args })
+    const data = { cmd, value, args }
+    if (cmd === 'time' && args[1] === 'set') {
+      const now = getWorldTime(this.world.settings)
+      const delta = getTimeOffset(args[2], new Date(now))
+      data.timeTarget = delta === null ? null : now + delta
+    }
+    this.world.network.send('command', data)
   }
 
   clear(broadcast) {

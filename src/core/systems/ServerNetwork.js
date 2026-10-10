@@ -8,6 +8,7 @@ import { appHasBrowserSource } from '../utils/browser'
 import { cloneDeep, isNumber } from 'lodash-es'
 import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
+import { isValidDayNightSetting, getWorldTime, TIME_PATTERN, TIME_TRANSITION_DURATION } from '../extras/dayNight'
 import { cloneHandTrackingPose } from '../extras/handTracking'
 import {
   getStoredSeatPose,
@@ -378,6 +379,9 @@ export class ServerNetwork extends System {
       const op = arg1
       this.onSpawnModified(socket, op)
     }
+    if (cmd === 'time') {
+      this.onTimeCommand(socket, data)
+    }
     if (cmd === 'chat') {
       const op = arg1
       if (op === 'clear' && socket.player.isBuilder()) {
@@ -649,8 +653,56 @@ export class ServerNetwork extends System {
   onSettingsModified = (socket, data) => {
     if (!socket.player.isBuilder())
       return console.error('player attempted to modify settings without builder permission')
-    this.world.settings.set(data.key, data.value)
+    if (this.world.settings.set(data.key, data.value) === false) return
     this.send('settingsModified', data, socket.id)
+  }
+
+  onTimeCommand = (socket, data) => {
+    const reply = body =>
+      socket.send('chatAdded', {
+        id: uuid(),
+        from: null,
+        fromId: null,
+        body,
+        createdAt: moment().toISOString(),
+      })
+    if (!socket.player.isBuilder()) return reply('Changing world time requires builder permission.')
+    const [, op, time] = data.args
+    const now = Date.now()
+    const currentTime = getWorldTime(this.world.settings, now)
+    let offset
+    let transition = null
+    if (op === 'reset' && data.args.length === 2) {
+      offset = 0
+    } else if (
+      op === 'set' &&
+      data.args.length === 3 &&
+      typeof time === 'string' &&
+      TIME_PATTERN.test(time) &&
+      Number.isFinite(data.timeTarget) &&
+      Math.abs(data.timeTarget - currentTime) <= 25 * 60 * 60 * 1000
+    ) {
+      const delta = Math.max(0, data.timeTarget - currentTime)
+      const duration = Math.min(TIME_TRANSITION_DURATION, delta)
+      offset = currentTime + delta - (now + duration)
+      if (duration > 0) transition = { startedAt: now, endsAt: now + duration, fromOffset: currentTime - now }
+    } else {
+      return reply('Usage: /time set 13h23 (00h00–23h59), or /time reset.')
+    }
+    // Include the sender: commands do not apply an optimistic settings change on the client.
+    this.world.settings.set('timeOffset', offset)
+    this.send('settingsModified', { key: 'timeOffset', value: offset })
+    this.world.settings.set('timeTransition', transition)
+    this.send('settingsModified', { key: 'timeTransition', value: transition })
+    if (!this.world.settings.dayNightCycle) {
+      this.world.settings.set('dayNightCycle', true)
+      this.send('settingsModified', { key: 'dayNightCycle', value: true })
+    }
+    reply(
+      op === 'reset'
+        ? 'World time reset to real time.'
+        : `Fast-forwarding world time to ${time}; then continuing at normal speed.`
+    )
   }
 
   onSpawnModified = async (socket, op) => {

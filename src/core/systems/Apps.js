@@ -105,6 +105,9 @@ export class Apps extends System {
       getTime(entity) {
         return world.network.getTime()
       },
+      getLocation() {
+        return { latitude: world.settings.latitude, longitude: world.settings.longitude }
+      },
       getTimestamp(entity, format) {
         if (!format) return moment().toISOString()
         return moment().format(format)

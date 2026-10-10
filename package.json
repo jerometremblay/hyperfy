@@ -78,6 +78,7 @@
     "react-dom": "^19.3.0",
     "ses": "^2.3.0",
     "source-map-support": "^0.5.21",
+    "suncalc": "^2.1.1",
     "three": "^0.186.1",
     "three-mesh-bvh": "^0.9.16",
     "yoga-layout": "^3.2.1"

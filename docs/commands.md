@@ -20,6 +20,19 @@ Resets the spawn point back to origin. Requires builder rank.
 
 Sets your player name.
 
+### `/time set 13h23`
+
+Smoothly fast-forwards the day–night cycle to the next 13:23 in your device's local
+timezone over up to five seconds, then continues at normal speed. An earlier time moves
+forward through midnight. Accepts `00h00` through `23h59`. Requires builder rank.
+Enables the day–night cycle and applies to everyone, including visitors who join later.
+The shared transition and offset persist across server restarts. Another time command
+starts from the current animated time without a jump.
+
+### `/time reset`
+
+Returns the day–night cycle to the current real time. Requires builder rank.
+
 ### `/chat clear`
 
-Clears all chat messages. Requires builder rank. 
+Clears all chat messages. Requires builder rank.

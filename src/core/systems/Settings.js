@@ -1,6 +1,6 @@
-import { isBoolean } from 'lodash-es'
 import { System } from './System'
 import { Ranks } from '../extras/ranks'
+import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, isValidDayNightSetting } from '../extras/dayNight'
 
 export class Settings extends System {
   constructor(world) {
@@ -15,6 +15,11 @@ export class Settings extends System {
     this.rank = null
     this.playerLimit = null
     this.ao = null
+    this.dayNightCycle = true
+    this.latitude = DEFAULT_LATITUDE
+    this.longitude = DEFAULT_LONGITUDE
+    this.timeOffset = 0
+    this.timeTransition = null
 
     this.changes = null
   }
@@ -37,6 +42,11 @@ export class Settings extends System {
     this.rank = data.rank
     this.playerLimit = data.playerLimit
     this.ao = data.ao
+    this.dayNightCycle = typeof data.dayNightCycle === 'boolean' ? data.dayNightCycle : true
+    this.latitude = isValidDayNightSetting('latitude', data.latitude) ? data.latitude : DEFAULT_LATITUDE
+    this.longitude = isValidDayNightSetting('longitude', data.longitude) ? data.longitude : DEFAULT_LONGITUDE
+    this.timeOffset = isValidDayNightSetting('timeOffset', data.timeOffset) ? data.timeOffset : 0
+    this.timeTransition = isValidDayNightSetting('timeTransition', data.timeTransition) ? data.timeTransition : null
     this.emit('change', {
       title: { value: this.title },
       desc: { value: this.desc },
@@ -47,6 +57,11 @@ export class Settings extends System {
       rank: { value: this.rank },
       playerLimit: { value: this.playerLimit },
       ao: { value: this.ao },
+      dayNightCycle: { value: this.dayNightCycle },
+      latitude: { value: this.latitude },
+      longitude: { value: this.longitude },
+      timeOffset: { value: this.timeOffset },
+      timeTransition: { value: this.timeTransition },
     })
   }
 
@@ -61,6 +76,11 @@ export class Settings extends System {
       rank: this.rank,
       playerLimit: this.playerLimit,
       ao: this.ao,
+      dayNightCycle: this.dayNightCycle,
+      latitude: this.latitude,
+      longitude: this.longitude,
+      timeOffset: this.timeOffset,
+      timeTransition: this.timeTransition,
     }
   }
 
@@ -71,6 +91,7 @@ export class Settings extends System {
   }
 
   modify(key, value) {
+    if (!isValidDayNightSetting(key, value)) return false
     if (this[key] === value) return
     const prev = this[key]
     this[key] = value
@@ -80,9 +101,10 @@ export class Settings extends System {
   }
 
   set(key, value, broadcast) {
-    this.modify(key, value)
+    if (this.modify(key, value) === false) return false
     if (broadcast) {
       this.world.network.send('settingsModified', { key, value })
     }
+    return true
   }
 }

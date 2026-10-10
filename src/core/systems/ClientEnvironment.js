@@ -4,6 +4,12 @@ import { System } from './System'
 
 import { CSM } from '../libs/csm/CSM'
 import { isNumber, isString } from 'lodash-es'
+import { Sky as SolarSky } from 'three/addons/objects/Sky.js'
+import { getDayNightState, getWorldTime } from '../extras/dayNight'
+import { createMoon } from '../extras/createMoon'
+
+const sunsetColor = new THREE.Color('#ffb16b')
+const moonDistance = 900
 
 const csmLevels = {
   none: {
@@ -78,6 +84,12 @@ export class ClientEnvironment extends System {
     this.skyN = 0
     this.bgUrl = null
     this.hdrUrl = null
+    this.solarSky = null
+    this.solarDirection = new THREE.Vector3()
+    this.solarUpdatedAt = -Infinity
+    this.moon = null
+    this.moonDirection = new THREE.Vector3()
+    this.moonLight = null
   }
 
   init({ baseEnvironment }) {
@@ -89,6 +101,7 @@ export class ClientEnvironment extends System {
     this.updateSky()
 
     this.world.prefs.on('change', this.onPrefsChange)
+    this.world.settings.on('change', this.onSettingsChange)
     this.world.graphics.on('resize', this.onViewportResize)
   }
 
@@ -124,6 +137,28 @@ export class ClientEnvironment extends System {
       this.sky.matrixWorldAutoUpdate = false
       this.sky.visible = false
       this.world.stage.scene.add(this.sky)
+
+      this.solarSky = new SolarSky()
+      this.solarSky.scale.setScalar(1000)
+      this.solarSky.material.uniforms.rayleigh.value = 2
+      this.solarSky.material.uniforms.cloudCoverage.value = 0
+      // The physical sky radiance overwhelms the world's bloom at normal exposure.
+      // Scale only the sky, keeping sunlight and other emissive objects unchanged.
+      this.solarSky.material.uniforms.showSunDisc.value = 0.001
+      this.solarSky.material.uniforms.daylight = { value: 0 }
+      this.solarSky.material.fragmentShader = 'uniform float daylight;\n' + this.solarSky.material.fragmentShader
+      this.solarSky.material.fragmentShader = this.solarSky.material.fragmentShader.replace(
+        '#include <tonemapping_fragment>',
+        'gl_FragColor.rgb = mix(gl_FragColor.rgb * 0.05, vec3(0.18, 0.6, 1.2), daylight * 0.8);\n#include <tonemapping_fragment>'
+      )
+      this.solarSky.visible = false
+      this.solarSky.frustumCulled = false
+      this.world.stage.scene.add(this.solarSky)
+
+      this.moon = createMoon()
+      this.world.stage.scene.add(this.moon)
+      this.moonLight = new THREE.DirectionalLight('#b9caff', 0)
+      this.world.stage.scene.add(this.moonLight, this.moonLight.target)
     }
 
     const base = this.base
@@ -194,16 +229,66 @@ export class ClientEnvironment extends System {
       fogFar,
       fogColor,
     }
+    this.updateDayNight()
   }
 
   update(delta) {
+    const now = Date.now()
+    // Use wall time rather than accumulated frame deltas, including after a tab resumes.
+    const transition = this.world.settings.timeTransition
+    const transitioning = transition && this.solarUpdatedAt < transition.endsAt
+    if (this.world.settings.dayNightCycle && (transitioning || Math.abs(now - this.solarUpdatedAt) >= 1000)) {
+      this.updateDayNight(now)
+    }
     this.csm.update()
+  }
+
+  updateDayNight(now = Date.now()) {
+    if (!this.skyInfo) return
+    const scene = this.world.stage.scene
+    const { dayNightCycle, latitude, longitude } = this.world.settings
+    this.solarSky.visible = dayNightCycle
+    this.sky.visible = !dayNightCycle && !!this.skyInfo.bgUrl
+    if (!dayNightCycle) {
+      this.moon.visible = false
+      this.moonLight.intensity = 0
+      scene.environmentIntensity = 1
+      this.csm.lightDirection = this.skyInfo.sunDirection
+      for (const light of this.csm.lights) {
+        light.intensity = this.skyInfo.sunIntensity
+        light.color.set(this.skyInfo.sunColor)
+      }
+      return
+    }
+
+    const state = getDayNightState(new Date(getWorldTime(this.world.settings, now)), latitude, longitude)
+    this.solarUpdatedAt = now
+    this.solarDirection.fromArray(state.sunPosition)
+    this.solarSky.material.uniforms.sunPosition.value.copy(this.solarDirection).multiplyScalar(450000)
+    this.solarSky.material.uniforms.daylight.value = state.skyDaylight
+    this.csm.lightDirection = this.solarDirection.clone().negate()
+    for (const light of this.csm.lights) {
+      light.intensity = this.skyInfo.sunIntensity * state.sunIntensity
+      light.color.set(this.skyInfo.sunColor).lerp(sunsetColor, state.warmth)
+    }
+    scene.environmentIntensity = state.environmentIntensity
+    this.moonDirection.fromArray(state.moon.position)
+    this.moon.visible = state.moon.altitude > 0
+    this.moon.scale.setScalar(moonDistance * Math.tan(state.moon.angularRadius))
+    this.moon.material.uniforms.lightDirection.value.fromArray(state.moon.lightDirection)
+    this.moon.material.uniforms.opacity.value = state.moon.opacity
+    this.moonLight.intensity = state.moon.lightIntensity
   }
 
   lateUpdate(delta) {
     this.sky.position.x = this.world.rig.position.x
     this.sky.position.z = this.world.rig.position.z
     this.sky.matrixWorld.setPosition(this.sky.position)
+    this.solarSky.position.copy(this.world.rig.position)
+    this.moon.position.copy(this.moonDirection).multiplyScalar(moonDistance).add(this.world.rig.position)
+    this.moon.lookAt(this.world.rig.position)
+    this.moonLight.position.copy(this.moon.position)
+    this.moonLight.target.position.copy(this.world.rig.position)
     // this.sky.matrixWorld.copyPosition(this.world.rig.matrixWorld)
   }
 
@@ -256,6 +341,7 @@ export class ClientEnvironment extends System {
         }
       }
     }
+    this.updateDayNight()
   }
 
   onPrefsChange = changes => {
@@ -267,5 +353,33 @@ export class ClientEnvironment extends System {
 
   onViewportResize = () => {
     this.csm.updateFrustums()
+  }
+
+  onSettingsChange = changes => {
+    if (
+      changes.dayNightCycle ||
+      changes.latitude ||
+      changes.longitude ||
+      changes.timeOffset ||
+      changes.timeTransition
+    ) {
+      this.updateDayNight()
+    }
+  }
+
+  destroy() {
+    this.world.prefs.off('change', this.onPrefsChange)
+    this.world.settings.off('change', this.onSettingsChange)
+    this.world.graphics.off('resize', this.onViewportResize)
+    for (const sky of [this.sky, this.solarSky, this.moon]) {
+      if (!sky) continue
+      sky.removeFromParent()
+      sky.geometry.dispose()
+      sky.material.dispose()
+    }
+    this.csm?.dispose()
+    this.moonLight?.removeFromParent()
+    this.moonLight?.target.removeFromParent()
+    this.moonLight?.dispose()
   }
 }
