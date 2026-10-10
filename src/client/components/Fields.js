@@ -13,6 +13,62 @@ import { isArray } from 'lodash-es'
 import { downloadFile } from '../../core/extras/downloadFile'
 import { HexColorPicker } from 'react-colorful'
 
+export function FieldSelect({ label, hint, options, value, onChange }) {
+  const { setHint } = useContext(HintContext)
+  return (
+    <label
+      className='fieldselect'
+      css={css`
+        display: flex;
+        align-items: center;
+        min-height: 2.5rem;
+        padding: 0 1rem;
+        gap: 1rem;
+        font-size: 0.9375rem;
+        .fieldselect-label {
+          flex-shrink: 0;
+          color: rgba(255, 255, 255, 0.6);
+        }
+        select {
+          flex: 1;
+          min-width: 0;
+          padding: 0.25rem;
+          color: white;
+          background: #191b1f;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 0.25rem;
+          font: inherit;
+          cursor: pointer;
+        }
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.03);
+        }
+      `}
+      onPointerEnter={() => setHint(hint)}
+      onPointerLeave={() => setHint(null)}
+    >
+      <span className='fieldselect-label'>{label}</span>
+      <select value={value} onChange={e => onChange(e.target.value)}>
+        {options.map(option =>
+          option.options ? (
+            <optgroup key={option.label} label={option.label}>
+              {option.options.map(item => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </optgroup>
+          ) : (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          )
+        )}
+      </select>
+    </label>
+  )
+}
+
 export function FieldText({ label, hint, placeholder, value, onChange }) {
   const { setHint } = useContext(HintContext)
   const [localValue, setLocalValue] = useState(value)

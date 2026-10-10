@@ -42,6 +42,7 @@ import {
   FieldFile,
   FieldNumber,
   FieldRange,
+  FieldSelect,
   FieldSwitch,
   FieldText,
   FieldTextarea,
@@ -722,6 +723,19 @@ function World({ world, hidden }) {
   const [latitude, setLatitude] = useState(world.settings.latitude)
   const [longitude, setLongitude] = useState(world.settings.longitude)
   const [timeZone, setTimeZone] = useState(world.settings.timeZone)
+  const timeZoneOptions = useMemo(() => {
+    // Include UTC and saved aliases, which Intl's canonical list may omit.
+    const zones = new Set([...Intl.supportedValuesOf('timeZone'), 'UTC', timeZone])
+    const groups = new Map()
+    for (const value of [...zones].sort()) {
+      const separator = value.indexOf('/')
+      const region = separator === -1 ? 'Other' : value.slice(0, separator)
+      const label = (separator === -1 ? value : value.slice(separator + 1)).replaceAll('_', ' ')
+      if (!groups.has(region)) groups.set(region, [])
+      groups.get(region).push({ label, value })
+    }
+    return [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([label, options]) => ({ label, options }))
+  }, [timeZone])
   const [rank, setRank] = useState(world.settings.rank)
   useEffect(() => {
     const onChange = changes => {
@@ -866,9 +880,10 @@ function World({ world, hidden }) {
             value={longitude}
             onChange={value => world.settings.set('longitude', value, true)}
           />
-          <FieldText
+          <FieldSelect
             label='World Time Zone'
-            hint='Shared timezone for /time commands, such as America/Toronto, Europe/Paris, or UTC.'
+            hint='Select the shared timezone used by /time commands.'
+            options={timeZoneOptions}
             value={timeZone}
             onChange={value => world.settings.set('timeZone', value, true)}
           />
