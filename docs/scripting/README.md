@@ -31,6 +31,8 @@ The [World](./world/World.md) API access methods and properties outside of the A
 The [day–night cycle](../day-night-cycle.md) controls the real sun, moon, sky, and ambient
 lighting at the world's configured geographic location. Scripts can read that location
 with [`world.getLocation()`](./world/World.md#getlocation-latitude-number-longitude-number).
+The server owns the shared cycle clock, accessible as `world.time` (Unix milliseconds),
+and `/time` commands use the shared `world.timeZone` setting.
 
 Use the [Light node reference and examples](./nodes/types/Light.md) to add point lights,
 spotlights, or directional lights, control brightness, and enable shadows. Emissive

@@ -2,16 +2,43 @@ import { getPosition, getMoonPosition, getMoonIllumination } from 'suncalc'
 
 export const DEFAULT_LATITUDE = 45.75689615017221
 export const DEFAULT_LONGITUDE = -74.01942099403277
+export const DEFAULT_TIME_ZONE = 'America/Toronto'
 export const TIME_PATTERN = /^([01]?\d|2[0-3])h([0-5]\d)$/
 export const TIME_TRANSITION_DURATION = 5000
 
-export function getTimeOffset(time, now = new Date()) {
+export function getTimeOffset(time, now = new Date(), timeZone = DEFAULT_TIME_ZONE) {
   const match = typeof time === 'string' && time.match(TIME_PATTERN)
   if (!match) return null
-  const target = new Date(now.getTime())
-  target.setHours(Number(match[1]), Number(match[2]), 0, 0)
-  if (target < now) target.setDate(target.getDate() + 1)
-  return target.getTime() - now.getTime()
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  })
+  const wallTime = timestamp => {
+    const parts = Object.fromEntries(formatter.formatToParts(timestamp).map(part => [part.type, part.value]))
+    return Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second)
+  }
+  const local = new Date(wallTime(now))
+  // Try the surrounding timezone offsets: DST can repeat or skip a requested time.
+  for (let day = 0; day < 3; day++) {
+    const target = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + day, +match[1], +match[2])
+    const offsets = new Set(
+      [-36, 0, 36].map(hours => {
+        const sample = target + hours * 3600000
+        return wallTime(sample) - sample
+      })
+    )
+    const candidates = [...offsets]
+      .map(offset => target - offset)
+      .filter(candidate => candidate >= now.getTime() && wallTime(candidate) === target)
+    if (candidates.length) return Math.min(...candidates) - now.getTime()
+  }
+  return null
 }
 
 export function getWorldTime(settings, now = Date.now()) {
@@ -23,6 +50,15 @@ export function getWorldTime(settings, now = Date.now()) {
 
 export function isValidDayNightSetting(key, value) {
   if (key === 'dayNightCycle') return typeof value === 'boolean'
+  if (key === 'timeZone') {
+    if (typeof value !== 'string' || !value) return false
+    try {
+      new Intl.DateTimeFormat('en', { timeZone: value })
+      return true
+    } catch {
+      return false
+    }
+  }
   if (key === 'latitude') return Number.isFinite(value) && value >= -90 && value <= 90
   if (key === 'longitude') return Number.isFinite(value) && value >= -180 && value <= 180
   if (key === 'timeOffset') return Number.isFinite(value) && Number.isFinite(new Date(Date.now() + value).getTime())

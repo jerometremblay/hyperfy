@@ -8,7 +8,7 @@ import { appHasBrowserSource } from '../utils/browser'
 import { cloneDeep, isNumber } from 'lodash-es'
 import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
-import { isValidDayNightSetting, getWorldTime, TIME_PATTERN, TIME_TRANSITION_DURATION } from '../extras/dayNight'
+import { isValidDayNightSetting, getWorldTime, getTimeOffset, TIME_TRANSITION_DURATION } from '../extras/dayNight'
 import { cloneHandTrackingPose } from '../extras/handTracking'
 import {
   getStoredSeatPose,
@@ -137,6 +137,10 @@ export class ServerNetwork extends System {
 
   getTime() {
     return performance.now() / 1000 // seconds
+  }
+
+  getServerTime() {
+    return Date.now()
   }
 
   save = async () => {
@@ -297,6 +301,7 @@ export class ServerNetwork extends System {
       socket.send('snapshot', {
         id: socket.id,
         serverTime: performance.now(),
+        serverTimestamp: this.getServerTime(),
         assetsUrl: process.env.ASSETS_BASE_URL,
         apiUrl: process.env.PUBLIC_API_URL,
         maxUploadSize: process.env.PUBLIC_MAX_UPLOAD_SIZE,
@@ -658,31 +663,27 @@ export class ServerNetwork extends System {
   }
 
   onTimeCommand = (socket, data) => {
-    const reply = body =>
-      socket.send('chatAdded', {
+    const reply = (body, broadcast = false) => {
+      const msg = {
         id: uuid(),
         from: null,
         fromId: null,
         body,
         createdAt: moment().toISOString(),
-      })
+      }
+      if (broadcast) this.world.chat.add(msg, true)
+      else socket.send('chatAdded', msg)
+    }
     if (!socket.player.isBuilder()) return reply('Changing world time requires builder permission.')
     const [, op, time] = data.args
-    const now = Date.now()
+    const now = this.getServerTime()
     const currentTime = getWorldTime(this.world.settings, now)
+    const delta = getTimeOffset(time, new Date(currentTime), this.world.settings.timeZone)
     let offset
     let transition = null
     if (op === 'reset' && data.args.length === 2) {
       offset = 0
-    } else if (
-      op === 'set' &&
-      data.args.length === 3 &&
-      typeof time === 'string' &&
-      TIME_PATTERN.test(time) &&
-      Number.isFinite(data.timeTarget) &&
-      Math.abs(data.timeTarget - currentTime) <= 25 * 60 * 60 * 1000
-    ) {
-      const delta = Math.max(0, data.timeTarget - currentTime)
+    } else if (op === 'set' && data.args.length === 3 && delta !== null) {
       const duration = Math.min(TIME_TRANSITION_DURATION, delta)
       offset = currentTime + delta - (now + duration)
       if (duration > 0) transition = { startedAt: now, endsAt: now + duration, fromOffset: currentTime - now }
@@ -701,7 +702,8 @@ export class ServerNetwork extends System {
     reply(
       op === 'reset'
         ? 'World time reset to real time.'
-        : `Fast-forwarding world time to ${time}; then continuing at normal speed.`
+        : `Fast-forwarding world time to ${time} (${this.world.settings.timeZone}); then continuing at normal speed.`,
+      true
     )
   }
 
@@ -756,7 +758,12 @@ export class ServerNetwork extends System {
   }
 
   onPing = (socket, time) => {
-    socket.send('pong', time)
+    socket.send(
+      'pong',
+      time && typeof time === 'object'
+        ? { clientTime: time.clientTime, serverTime: this.getServerTime() }
+        : time
+    )
   }
 
   onDisconnect = (socket, code) => {

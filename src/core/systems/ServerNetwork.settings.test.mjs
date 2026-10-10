@@ -37,15 +37,22 @@ test('server rejects malformed location settings instead of relaying them to oth
     { key: 'latitude', value: 100 },
     { key: 'longitude', value: '-74' },
     { key: 'dayNightCycle', value: 'false' },
+    { key: 'timeZone', value: 'not/a-zone' },
   ])
     network.onSettingsModified(socket, data)
   assert.deepEqual(world.settings.serialize(), before)
-  assert.deepEqual(broadcasts, [])
+  assert.deepEqual(
+    broadcasts.filter(([event]) => event === 'settingsModified'),
+    []
+  )
 
   const data = { key: 'longitude', value: 0 }
   network.onSettingsModified(socket, data)
   assert.equal(world.settings.longitude, 0)
-  assert.deepEqual(broadcasts, [['settingsModified', data, 'builder']])
+  assert.deepEqual(
+    broadcasts.filter(([event]) => event === 'settingsModified'),
+    [['settingsModified', data, 'builder']]
+  )
 })
 
 function createTimeFixture(builder = true) {
@@ -55,6 +62,8 @@ function createTimeFixture(builder = true) {
   world.settings = new Settings(world)
   const network = new ServerNetwork(world)
   clearInterval(network.socketIntervalId)
+  world.network = network
+  world.chat = new Chat(world)
   network.send = (...args) => broadcasts.push(args)
   const socket = {
     id: 'caller',
@@ -64,8 +73,8 @@ function createTimeFixture(builder = true) {
   return { broadcasts, replies, world, network, socket }
 }
 
-test('chat sends the next local time; server shares a continuous transition with all visitors', async t => {
-  const now = new Date(2026, 9, 9, 20, 0, 0)
+test('server interprets chat in the world timezone and shares the transition and confirmation with everyone', async t => {
+  const now = new Date('2026-10-10T00:00:00Z')
   t.mock.timers.enable({ apis: ['Date'], now: now.getTime() })
   const { broadcasts, replies, world, network, socket } = createTimeFixture()
   const sent = []
@@ -77,19 +86,24 @@ test('chat sends the next local time; server shares a continuous transition with
   chat.command('/time set 13h23')
   assert.equal(sent[0][0], 'command')
   const target = now.getTime() + getTimeOffset('13h23', now)
-  assert.equal(sent[0][1].timeTarget, target)
+  assert.equal(sent[0][1].timeTarget, undefined)
   world.settings.set('dayNightCycle', false)
   await network.onCommand(socket, sent[0][1])
   const offset = getTimeOffset('13h23', now) - 5000
   const transition = { startedAt: now.getTime(), endsAt: now.getTime() + 5000, fromOffset: 0 }
   assert.equal(world.settings.timeOffset, offset)
   assert.equal(world.settings.dayNightCycle, true)
-  assert.deepEqual(broadcasts, [
-    ['settingsModified', { key: 'timeOffset', value: offset }],
-    ['settingsModified', { key: 'timeTransition', value: transition }],
-    ['settingsModified', { key: 'dayNightCycle', value: true }],
-  ])
-  assert.match(replies.at(-1)[1].body, /then continuing at normal speed/)
+  assert.deepEqual(
+    broadcasts.filter(([event]) => event === 'settingsModified'),
+    [
+      ['settingsModified', { key: 'timeOffset', value: offset }],
+      ['settingsModified', { key: 'timeTransition', value: transition }],
+      ['settingsModified', { key: 'dayNightCycle', value: true }],
+    ]
+  )
+  assert.equal(replies.length, 0)
+  assert.match(world.chat.msgs.at(-1).body, /13h23 \(America\/Toronto\); then continuing at normal speed/)
+  assert.equal(broadcasts.at(-1)[0], 'chatAdded')
   assert.equal(getWorldTime(world.settings), now.getTime())
   const joinedSettings = new Settings({})
   joinedSettings.deserialize(world.settings.serialize())
@@ -98,11 +112,10 @@ test('chat sends the next local time; server shares a continuous transition with
   t.mock.timers.tick(2500)
   assert.equal(getWorldTime(joinedSettings), target)
   t.mock.timers.tick(60000)
-  assert.equal(new Date(getWorldTime(joinedSettings)).getHours(), 13)
-  assert.equal(new Date(getWorldTime(joinedSettings)).getMinutes(), 24)
+  assert.equal(getWorldTime(joinedSettings), target + 60000)
 })
 
-test('time commands reject visitors, malformed times, and forged offsets without changing the world', async () => {
+test('time commands reject visitors and malformed times without changing the world', async () => {
   const visitor = createTimeFixture(false)
   await visitor.network.onCommand(visitor.socket, { args: ['time', 'set', '13h23'], timeTarget: Date.now() + 1000 })
   assert.deepEqual(visitor.broadcasts, [])
@@ -110,15 +123,18 @@ test('time commands reject visitors, malformed times, and forged offsets without
   const { broadcasts, replies, network, socket, world } = createTimeFixture()
   for (const data of [
     { args: ['time', 'set', '24h00'], timeTarget: Date.now() + 1000 },
-    { args: ['time', 'set', '13h23'], timeTarget: NaN },
-    { args: ['time', 'set', '13h23'], timeTarget: 1e20 },
-    { args: ['time', 'set', '13h23'] },
+    { args: ['time', 'set', '13h60'] },
+    { args: ['time', 'set'] },
+    { args: ['time', 'reset', 'extra'] },
     { args: ['time', 'set', '13h23', 'extra'], timeTarget: Date.now() + 1000 },
     { args: ['time'] },
   ])
     await network.onCommand(socket, data)
   assert.equal(world.settings.timeOffset, 0)
-  assert.deepEqual(broadcasts, [])
+  assert.deepEqual(
+    broadcasts.filter(([event]) => event === 'settingsModified'),
+    []
+  )
   assert.equal(replies.length, 6)
   assert.ok(replies.every(([, msg]) => msg.body.startsWith('Usage:')))
 })
@@ -132,16 +148,21 @@ test('/time reset removes the saved offset and enables the real-time cycle', asy
   assert.equal(world.settings.timeOffset, 0)
   assert.equal(world.settings.dayNightCycle, true)
   assert.equal(world.settings.timeTransition, null)
-  assert.deepEqual(broadcasts, [
-    ['settingsModified', { key: 'timeOffset', value: 0 }],
-    ['settingsModified', { key: 'timeTransition', value: null }],
-    ['settingsModified', { key: 'dayNightCycle', value: true }],
-  ])
-  assert.equal(replies.at(-1)[1].body, 'World time reset to real time.')
+  assert.deepEqual(
+    broadcasts.filter(([event]) => event === 'settingsModified'),
+    [
+      ['settingsModified', { key: 'timeOffset', value: 0 }],
+      ['settingsModified', { key: 'timeTransition', value: null }],
+      ['settingsModified', { key: 'dayNightCycle', value: true }],
+    ]
+  )
+  assert.equal(replies.length, 0)
+  assert.equal(world.chat.msgs.at(-1).body, 'World time reset to real time.')
+  assert.equal(broadcasts.at(-1)[0], 'chatAdded')
 })
 
 test('a second command starts at the current animated time without a jump', async t => {
-  const start = new Date(2026, 9, 9, 10, 0, 0).getTime()
+  const start = Date.parse('2026-10-09T14:00:00Z')
   t.mock.timers.enable({ apis: ['Date'], now: start })
   const { world, network, socket } = createTimeFixture()
   await network.onCommand(socket, { args: ['time', 'set', '18h00'], timeTarget: start + 8 * 60 * 60000 })
@@ -151,4 +172,14 @@ test('a second command starts at the current animated time without a jump', asyn
   assert.equal(getWorldTime(world.settings), before)
   t.mock.timers.tick(5000)
   assert.equal(getWorldTime(world.settings), start + 10 * 60 * 60000)
+})
+
+test('server ignores client-selected timestamps and uses the shared timezone', async t => {
+  const now = Date.parse('2026-10-09T12:00:00Z')
+  t.mock.timers.enable({ apis: ['Date'], now })
+  const { world, network, socket } = createTimeFixture()
+  world.settings.set('timeZone', 'Asia/Tokyo')
+  await network.onCommand(socket, { args: ['time', 'set', '13h23'], timeTarget: 1e20 })
+  t.mock.timers.tick(5000)
+  assert.equal(world.settings.getTime(), Date.parse('2026-10-10T04:23:00Z'))
 })

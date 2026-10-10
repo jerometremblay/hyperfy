@@ -23,6 +23,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace
 const errors = []
 renderer.debug.onShaderError = (gl, p, v, f) => errors.push(gl.getShaderInfoLog(v) + gl.getShaderInfoLog(f))
 const world = {
+  network: { getServerTime: () => Date.now() },
   stage: { scene: new THREE.Scene() },
   camera: new THREE.PerspectiveCamera(55, 440 / 270, 0.2, 1200),
   rig: new THREE.Object3D(),

@@ -14,6 +14,28 @@ Whether the script is currently executing on the server.
 
 Whether the script is currently executing on the client.
 
+### `.time`: Number
+
+Read-only shared world timestamp in Unix milliseconds. It follows the server clock,
+including the day–night cycle's saved offset and smooth `/time set` transitions.
+Available on clients and the server, independent of each player's device clock/timezone.
+The value keeps advancing even when the visual cycle is disabled.
+
+```js
+const date = new Date(world.time)
+console.log(date.toISOString())
+```
+
+Read it again to get the current value. Use builder chat commands to change world time.
+This differs from `world.getTime()` (network time in seconds) and `world.getTimestamp()`
+(real time on the machine running the script), which do not include the cycle's offset.
+
+### `.timeZone`: String
+
+Read-only shared timezone configured in World Settings, default `America/Toronto`.
+The server interprets `/time set 13h23` in this timezone for all players.
+See the [day–night cycle guide](../../day-night-cycle.md).
+
 ### `.add(node)`
 
 Adds a node into world-space, outside of the apps local hierarchy.

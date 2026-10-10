@@ -2,14 +2,27 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, getDayNightState, getTimeOffset, getWorldTime } from './dayNight.js'
 
-test('time commands target the next local occurrence, crossing midnight when needed', () => {
-  const now = new Date(2026, 9, 9, 20, 0, 10)
+test('time commands target the next world-local occurrence, crossing midnight when needed', () => {
+  const now = new Date('2026-10-10T00:00:10Z')
   assert.equal(getTimeOffset('13h23', now), (17 * 60 + 23) * 60000 - 10000)
   assert.equal(getTimeOffset('0h00', now), 4 * 60 * 60000 - 10000)
   assert.equal(getTimeOffset('23h59', now), (3 * 60 + 59) * 60000 - 10000)
   for (const value of ['24h00', '13h60', '-1h23', '13h2', '13:23', '13h23junk', '', null]) {
     assert.equal(getTimeOffset(value, now), null)
   }
+})
+
+test('world timezone determines the target independently of the caller timezone', () => {
+  const now = new Date('2026-10-09T12:00:00Z')
+  assert.equal(now.getTime() + getTimeOffset('13h23', now, 'America/Toronto'), Date.parse('2026-10-09T17:23:00Z'))
+  assert.equal(now.getTime() + getTimeOffset('13h23', now, 'Asia/Tokyo'), Date.parse('2026-10-10T04:23:00Z'))
+})
+
+test('world time handles skipped and repeated daylight-saving times', () => {
+  const spring = new Date('2026-03-08T06:00:00Z')
+  assert.equal(spring.getTime() + getTimeOffset('2h30', spring), Date.parse('2026-03-09T06:30:00Z'))
+  const fall = new Date('2026-11-01T05:45:00Z')
+  assert.equal(fall.getTime() + getTimeOffset('1h30', fall), Date.parse('2026-11-01T06:30:00Z'))
 })
 
 test('world time advances continuously to the target, then runs at normal speed', () => {

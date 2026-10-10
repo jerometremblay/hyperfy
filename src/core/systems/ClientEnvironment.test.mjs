@@ -28,7 +28,7 @@ async function createEnvironment() {
     rig: new THREE.Object3D(),
     prefs: Object.assign(new EventEmitter(), { shadows: 'high' }),
     graphics: new EventEmitter(),
-    network: { send: (...args) => messages.push(args) },
+    network: { getServerTime: () => Date.now(), send: (...args) => messages.push(args) },
     loader: { load: async () => new THREE.Texture() },
   }
   world.settings = new Settings(world)
@@ -54,17 +54,20 @@ test('old worlds get defaults; coordinates and enabled state survive serializati
   assert.equal(settings.dayNightCycle, true)
   assert.equal(settings.latitude, DEFAULT_LATITUDE)
   assert.equal(settings.longitude, DEFAULT_LONGITUDE)
+  assert.equal(settings.timeZone, 'America/Toronto')
   assert.equal(settings.timeOffset, 0)
   settings.set('latitude', 0)
   settings.set('longitude', 180)
   settings.set('dayNightCycle', false)
   settings.set('timeOffset', -123400)
+  settings.set('timeZone', 'Asia/Tokyo')
   const restored = new Settings({})
   restored.deserialize(settings.serialize())
   assert.equal(restored.latitude, 0)
   assert.equal(restored.longitude, 180)
   assert.equal(restored.dayNightCycle, false)
   assert.equal(restored.timeOffset, -123400)
+  assert.equal(restored.timeZone, 'Asia/Tokyo')
 })
 
 test('invalid coordinates and cycle values cannot be stored or broadcast', () => {
@@ -74,6 +77,7 @@ test('invalid coordinates and cycle values cannot be stored or broadcast', () =>
     ['latitude', [-91, 91, NaN, Infinity, '45', null]],
     ['longitude', [-181, 181, NaN, -Infinity, '-74', null]],
     ['dayNightCycle', [1, 'true', null]],
+    ['timeZone', ['not/a-zone', '', 0, null]],
     ['timeOffset', [Infinity, NaN, '1000', null, 1e20]],
     [
       'timeTransition',
@@ -215,5 +219,19 @@ test('settings changes and shadow quality rebuilds refresh the real sun, and sky
   world.rig.position.set(1234, 400, -3000)
   environment.lateUpdate()
   assert.ok(environment.solarSky.position.equals(world.rig.position))
+  environment.destroy()
+})
+
+test('sun and moon use server time even when the device clock is hours wrong', async t => {
+  const { environment, world } = await createEnvironment()
+  const serverTime = Date.parse('2026-10-26T01:00:00Z')
+  world.network.getServerTime = () => serverTime
+  t.mock.timers.enable({ apis: ['Date'], now: serverTime + 12 * 3600000 })
+  environment.update()
+  const state = getDayNightState(new Date(serverTime), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+  assert.equal(environment.solarUpdatedAt, serverTime)
+  assert.ok(environment.solarDirection.distanceTo(new THREE.Vector3().fromArray(state.sunPosition)) < 1e-10)
+  assert.ok(environment.moonDirection.distanceTo(new THREE.Vector3().fromArray(state.moon.position)) < 1e-10)
+  assert.ok(environment.moonLight.intensity > 0.4)
   environment.destroy()
 })

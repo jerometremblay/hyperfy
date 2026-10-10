@@ -233,18 +233,22 @@ export class ClientEnvironment extends System {
   }
 
   update(delta) {
-    const now = Date.now()
-    // Use wall time rather than accumulated frame deltas, including after a tab resumes.
+    const now = this.world.network.getServerTime()
+    // Use the synchronized server clock, including after a tab resumes.
     const transition = this.world.settings.timeTransition
     const transitioning = transition && this.solarUpdatedAt < transition.endsAt
-    if (this.world.settings.dayNightCycle && (transitioning || Math.abs(now - this.solarUpdatedAt) >= 1000)) {
+    if (
+      Number.isFinite(now) &&
+      this.world.settings.dayNightCycle &&
+      (transitioning || Math.abs(now - this.solarUpdatedAt) >= 1000)
+    ) {
       this.updateDayNight(now)
     }
     this.csm.update()
   }
 
-  updateDayNight(now = Date.now()) {
-    if (!this.skyInfo) return
+  updateDayNight(now = this.world.network.getServerTime()) {
+    if (!this.skyInfo || !Number.isFinite(now)) return
     const scene = this.world.stage.scene
     const { dayNightCycle, latitude, longitude } = this.world.settings
     this.solarSky.visible = dayNightCycle

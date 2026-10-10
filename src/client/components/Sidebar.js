@@ -721,6 +721,7 @@ function World({ world, hidden }) {
   const [dayNightCycle, setDayNightCycle] = useState(world.settings.dayNightCycle)
   const [latitude, setLatitude] = useState(world.settings.latitude)
   const [longitude, setLongitude] = useState(world.settings.longitude)
+  const [timeZone, setTimeZone] = useState(world.settings.timeZone)
   const [rank, setRank] = useState(world.settings.rank)
   useEffect(() => {
     const onChange = changes => {
@@ -735,6 +736,7 @@ function World({ world, hidden }) {
       if (changes.dayNightCycle) setDayNightCycle(changes.dayNightCycle.value)
       if (changes.latitude) setLatitude(changes.latitude.value)
       if (changes.longitude) setLongitude(changes.longitude.value)
+      if (changes.timeZone) setTimeZone(changes.timeZone.value)
       if (changes.rank) setRank(changes.rank.value)
     }
     world.settings.on('change', onChange)
@@ -856,13 +858,19 @@ function World({ world, hidden }) {
           />
           <FieldNumber
             label='Longitude'
-            hint='Real-world longitude in degrees: −180 to 180. East is the world’s +X direction. No timezone setting is needed.'
+            hint='Real-world longitude in degrees: −180 to 180. East is the world’s +X direction.'
             dp={8}
             min={-180}
             max={180}
             step={0.01}
             value={longitude}
             onChange={value => world.settings.set('longitude', value, true)}
+          />
+          <FieldText
+            label='World Time Zone'
+            hint='Shared timezone for /time commands, such as America/Toronto, Europe/Paris, or UTC.'
+            value={timeZone}
+            onChange={value => world.settings.set('timeZone', value, true)}
           />
           {isAdmin && world.settings.hasAdminCode && (
             <FieldToggle

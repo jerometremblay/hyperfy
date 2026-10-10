@@ -22,6 +22,9 @@ export class ClientNetwork extends System {
     this.id = null
     this.isClient = true
     this.queue = []
+    this.serverTimestamp = null
+    this.clientTimestamp = 0
+    this.nextTimeSync = 0
   }
 
   init({ wsUrl, name, avatar }) {
@@ -33,10 +36,16 @@ export class ClientNetwork extends System {
     this.ws.binaryType = 'arraybuffer'
     this.ws.addEventListener('message', this.onPacket)
     this.ws.addEventListener('close', this.onClose)
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.onVisibilityChange)
   }
 
   preFixedUpdate() {
     this.flush()
+    const now = performance.now()
+    if (this.ws?.readyState === 1 && now >= this.nextTimeSync) {
+      this.nextTimeSync = now + 10000
+      this.send('ping', { clientTime: now })
+    }
   }
 
   send(name, data) {
@@ -87,8 +96,15 @@ export class ClientNetwork extends System {
     return (performance.now() + this.serverTimeOffset) / 1000 // seconds
   }
 
+  getServerTime() {
+    if (this.serverTimestamp === null) return null
+    return this.serverTimestamp + performance.now() - this.clientTimestamp
+  }
+
   onPacket = e => {
     const [method, data] = readPacket(e.data)
+    // Measure clock replies on arrival, before any rendering/frame queue delay.
+    if (method === 'onPong' && data && typeof data === 'object') return this.onPong(data)
     this.enqueue(method, data)
     // console.log('<-', method, data)
   }
@@ -96,6 +112,8 @@ export class ClientNetwork extends System {
   onSnapshot(data) {
     this.id = data.id
     this.serverTimeOffset = data.serverTime - performance.now()
+    this.serverTimestamp = Number.isFinite(data.serverTimestamp) ? data.serverTimestamp : null
+    this.clientTimestamp = performance.now()
     this.apiUrl = data.apiUrl
     this.maxUploadSize = data.maxUploadSize
     this.world.assetsUrl = data.assetsUrl
@@ -216,7 +234,20 @@ export class ClientNetwork extends System {
   }
 
   onPong = time => {
+    if (time && typeof time === 'object') {
+      const now = performance.now()
+      if (!Number.isFinite(time.clientTime) || !Number.isFinite(time.serverTime) || time.clientTime > now) return
+      const roundTrip = now - time.clientTime
+      if (roundTrip > 5000) return // Discard replies delayed by suspension or a stalled connection.
+      this.serverTimestamp = time.serverTime + roundTrip / 2
+      this.clientTimestamp = now
+      return
+    }
     this.world.stats?.onPong(time)
+  }
+
+  onVisibilityChange = () => {
+    this.nextTimeSync = 0
   }
 
   onKick = code => {
@@ -236,6 +267,7 @@ export class ClientNetwork extends System {
   }
 
   destroy() {
+    if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.onVisibilityChange)
     if (this.ws) {
       this.ws.removeEventListener('message', this.onPacket)
       this.ws.removeEventListener('close', this.onClose)

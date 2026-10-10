@@ -50,6 +50,12 @@ export class Apps extends System {
       isClient(entity) {
         return world.network.isClient
       },
+      time() {
+        return world.settings.getTime()
+      },
+      timeZone() {
+        return world.settings.timeZone
+      },
     }
     this.worldSetters = {
       // ...

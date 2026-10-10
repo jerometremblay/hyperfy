@@ -1,26 +1,48 @@
 # Real-time day–night cycle
 
-Open **World Settings** to configure **Day–Night Cycle**, **Latitude**, and **Longitude**.
+Open **World Settings** to configure **Day–Night Cycle**, **Latitude**, **Longitude**,
+and **World Time Zone** (default `America/Toronto`). Use a valid IANA timezone, such as
+`Europe/Paris` or `Asia/Tokyo`, or `UTC`. This timezone controls how `/time` commands
+interpret hours; it does not change the geographic coordinates.
 The cycle is enabled by default, at latitude `45.75689615017221` and longitude
 `-74.01942099403277`. These settings are saved with the world and shared with all visitors.
 
 The visible sun, moon, and directional sunlight shadows follow the current date and time
 at that location, including seasonal changes. SunCalc calculates their positions locally;
-no location permission, weather service, or timezone setting is required. Each client uses
-its device clock and refreshes the position once per second, including when returning to
-a suspended tab. Devices should have automatic clock synchronization enabled.
+no location permission or weather service is required. The server owns the world clock.
+Clients synchronize with it when joining, every ten seconds, and when returning to a tab,
+estimating network delay,
+and advance it using a monotonic clock rather than their device's date/time. The sun and
+moon normally refresh once per second, including when returning to a suspended tab.
+Players share the same cycle regardless of their device timezone or clock accuracy.
 
 Builders can enter `/time set 13h23` in chat to smoothly fast-forward to the next 13:23
-in their device's local timezone over up to five seconds. The sun, moon and lighting update
+in the world timezone over up to five seconds. The sun, moon and lighting update
 every frame during the transition. Earlier times advance through midnight. The world
 then continues at normal speed using a saved, shared offset. A new command during a
 transition starts from its current animated time. Late arrivals share the same transition.
 Use `/time reset` to return to real time. Both commands enable the day–night cycle.
+The server calculates the target and broadcasts the transition and a shared chat confirmation
+to everyone. During daylight-saving changes, repeated times use the next matching occurrence;
+if a requested time is skipped, the command targets its next valid occurrence.
 
 World north is **−Z**, east is **+X**, and up is **+Y**. Latitude accepts −90 to 90,
 and longitude accepts −180 to 180 (negative longitude is west).
 
-## Reading the location in scripts
+## Reading world time and location in scripts
+
+`world.time` is the shared cycle timestamp in Unix milliseconds, including any active
+fast-forward and the saved offset. It is read-only and available on clients and the server.
+`world.timeZone` is the shared timezone used by commands.
+
+```js
+const date = new Date(world.time)
+console.log('World time:', date.toISOString())
+console.log('World timezone:', world.timeZone)
+```
+
+Read the property again when you need a new time; a saved `Date` is only a snapshot.
+The property remains available when the visual day–night cycle is disabled.
 
 `world.getLocation()` is available in both client and server scripts:
 
@@ -69,10 +91,10 @@ can glow and produce bloom, but does not illuminate nearby surfaces; pair it wit
 node when both effects are needed. The linked reference includes complete lamp, spotlight,
 and directional-light examples.
 
-Scripts do not currently expose the cycle's date, sun position, moon phase, or a nighttime
-flag. `world.getTime()` is the network clock and `world.getTimestamp()` uses the real
-clock of the client or server running the script; neither includes the `/time set` offset.
-Use the chat commands to change cycle time.
+Use `world.time` for the cycle's adjusted date/time. Scripts do not currently expose sun
+position, moon phase, or a nighttime flag. `world.getTime()` remains the network clock in
+seconds and `world.getTimestamp()` uses the real clock of the client or server running
+the script; neither includes the `/time set` offset. Use the chat commands to change cycle time.
 
 ## Validation
 

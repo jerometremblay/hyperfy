@@ -135,6 +135,7 @@ not change app-light intensity or emissive brightness. A lamp therefore continue
 lighting surfaces while the ambient lighting dims at dusk.
 
 `world.getLocation()` reads the configured latitude and longitude. It does not return
-sun position, moon phase, or whether it is night. Those values and the cycle's adjusted
-date/time are not currently exposed to scripts. Do not use `world.getTime()` or
-`world.getTimestamp()` to infer the cycle time after `/time set`.
+sun position, moon phase, or whether it is night. Use `world.time` for the shared cycle's
+adjusted timestamp in Unix milliseconds and `world.timeZone` for its timezone. Sun
+position, phase, and a nighttime flag are not currently exposed to scripts. Do not use
+`world.getTime()` or `world.getTimestamp()` to infer the cycle time after `/time set`.

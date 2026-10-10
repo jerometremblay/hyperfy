@@ -22,12 +22,14 @@ Sets your player name.
 
 ### `/time set 13h23`
 
-Smoothly fast-forwards the day–night cycle to the next 13:23 in your device's local
-timezone over up to five seconds, then continues at normal speed. An earlier time moves
+Smoothly fast-forwards the day–night cycle to the next 13:23 in the shared **World Time
+Zone** (default `America/Toronto`) over up to five seconds, then continues at normal speed. An earlier time moves
 forward through midnight. Accepts `00h00` through `23h59`. Requires builder rank.
 Enables the day–night cycle and applies to everyone, including visitors who join later.
 The shared transition and offset persist across server restarts. Another time command
 starts from the current animated time without a jump.
+The server interprets the command and synchronizes the clock for every player. The success
+message is shared in chat. A player's device clock or timezone does not change the result.
 
 ### `/time reset`
 

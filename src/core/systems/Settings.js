@@ -1,6 +1,12 @@
 import { System } from './System'
 import { Ranks } from '../extras/ranks'
-import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, isValidDayNightSetting } from '../extras/dayNight'
+import {
+  DEFAULT_LATITUDE,
+  DEFAULT_LONGITUDE,
+  DEFAULT_TIME_ZONE,
+  isValidDayNightSetting,
+  getWorldTime,
+} from '../extras/dayNight'
 
 export class Settings extends System {
   constructor(world) {
@@ -18,6 +24,7 @@ export class Settings extends System {
     this.dayNightCycle = true
     this.latitude = DEFAULT_LATITUDE
     this.longitude = DEFAULT_LONGITUDE
+    this.timeZone = DEFAULT_TIME_ZONE
     this.timeOffset = 0
     this.timeTransition = null
 
@@ -45,6 +52,7 @@ export class Settings extends System {
     this.dayNightCycle = typeof data.dayNightCycle === 'boolean' ? data.dayNightCycle : true
     this.latitude = isValidDayNightSetting('latitude', data.latitude) ? data.latitude : DEFAULT_LATITUDE
     this.longitude = isValidDayNightSetting('longitude', data.longitude) ? data.longitude : DEFAULT_LONGITUDE
+    this.timeZone = isValidDayNightSetting('timeZone', data.timeZone) ? data.timeZone : DEFAULT_TIME_ZONE
     this.timeOffset = isValidDayNightSetting('timeOffset', data.timeOffset) ? data.timeOffset : 0
     this.timeTransition = isValidDayNightSetting('timeTransition', data.timeTransition) ? data.timeTransition : null
     this.emit('change', {
@@ -60,6 +68,7 @@ export class Settings extends System {
       dayNightCycle: { value: this.dayNightCycle },
       latitude: { value: this.latitude },
       longitude: { value: this.longitude },
+      timeZone: { value: this.timeZone },
       timeOffset: { value: this.timeOffset },
       timeTransition: { value: this.timeTransition },
     })
@@ -79,6 +88,7 @@ export class Settings extends System {
       dayNightCycle: this.dayNightCycle,
       latitude: this.latitude,
       longitude: this.longitude,
+      timeZone: this.timeZone,
       timeOffset: this.timeOffset,
       timeTransition: this.timeTransition,
     }
@@ -88,6 +98,11 @@ export class Settings extends System {
     if (!this.changes) return
     this.emit('change', this.changes)
     this.changes = null
+  }
+
+  getTime() {
+    const now = this.world.network.getServerTime()
+    return Number.isFinite(now) ? getWorldTime(this, now) : null
   }
 
   modify(key, value) {
