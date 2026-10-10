@@ -58,7 +58,7 @@ export class ClientGraphics extends System {
     this.renderer.setClearColor(0xffffff, 0)
     this.renderer.setPixelRatio(this.world.prefs.dpr)
     this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.renderer.shadowMap.type = THREE.PCFShadowMap
     // Tone mapping happens in the composer (ToneMappingEffect). The direct-render
     // fallback (XR or postprocessing off) applies it on the renderer per-frame in render().
     this.renderer.toneMapping = THREE.NoToneMapping

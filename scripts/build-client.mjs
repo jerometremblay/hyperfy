@@ -48,6 +48,6 @@ const buildDirectory = path.join(rootDir, 'build')
     await clientCtx.watch()
   } else {
     await clientCtx.rebuild()
-    process.exit(0)
+    await clientCtx.dispose()
   }
 }

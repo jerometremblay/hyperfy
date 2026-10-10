@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 import path from 'path'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
 // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { GLTFLoader } from '../libs/gltfloader/GLTFLoader.js'
 // import { VRMLoaderPlugin } from '@pixiv/three-vrm'
@@ -23,7 +23,7 @@ export class ServerLoader extends System {
     super(world)
     this.promises = new Map()
     this.results = new Map()
-    this.rgbeLoader = new RGBELoader()
+    this.rgbeLoader = new HDRLoader()
     this.gltfLoader = new GLTFLoader()
     this.preloadItems = []
     // this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))

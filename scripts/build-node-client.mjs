@@ -55,8 +55,6 @@ let spawn
               // (re)start server
               spawn?.kill('SIGTERM')
               spawn = fork(path.join(rootDir, 'build/world-node-client.js'))
-            } else {
-              process.exit(0)
             }
           })
         },
@@ -67,5 +65,6 @@ let spawn
     await nodeClientCtx.watch()
   } else {
     await nodeClientCtx.rebuild()
+    await nodeClientCtx.dispose()
   }
 }

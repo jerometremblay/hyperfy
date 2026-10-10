@@ -162,10 +162,10 @@ fastify.register(statics, {
   root: path.join(__dirname, 'public'),
   prefix: '/',
   decorateReply: false,
-  setHeaders: res => {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-    res.setHeader('Pragma', 'no-cache')
-    res.setHeader('Expires', '0')
+  setHeaders: reply => {
+    reply.header('Cache-Control', 'no-cache, no-store, must-revalidate')
+    reply.header('Pragma', 'no-cache')
+    reply.header('Expires', '0')
   },
 })
 if (world.assetsDir) {
@@ -178,18 +178,18 @@ if (world.assetsDir) {
     cacheControl: true,
     lastModified: true,
     etag: true,
-    setHeaders: (res, path) => {
+    setHeaders: (reply, path) => {
       // all assets are hashed & immutable so we can use aggressive caching
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable') // 1 year
-      res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString()) // older browsers
+      reply.header('Cache-Control', 'public, max-age=31536000, immutable') // 1 year
+      reply.header('Expires', new Date(Date.now() + 31536000000).toUTCString()) // older browsers
       
       // Serve Gaussian Splat files as raw binary. SPZ is gzip data by spec but must
       // NOT get a Content-Encoding header — Spark decompresses it itself.
       const ext = path.split('.').pop()?.toLowerCase()
 
       if (ext === 'ply' || ext === 'splat' || ext === 'ksplat' || ext === 'spz') {
-        res.setHeader('Content-Type', 'application/octet-stream')
-        res.setHeader('Accept-Ranges', 'bytes')
+        reply.header('Content-Type', 'application/octet-stream')
+        reply.header('Accept-Ranges', 'bytes')
       }
     },
   })

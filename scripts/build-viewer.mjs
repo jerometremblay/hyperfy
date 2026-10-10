@@ -49,6 +49,6 @@ const viewerBuildDir = path.join(rootDir, 'build/viewer')
     await clientCtx.watch()
   } else {
     await clientCtx.rebuild()
-    process.exit(0)
+    await clientCtx.dispose()
   }
 }

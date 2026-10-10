@@ -32,7 +32,7 @@ export class Light extends Node {
 
   mount() {
     this.needsRebuild = false
-    if (this.world?.network?.isServer) return
+    if (this.ctx.world.network.isServer) return
 
     const color = new THREE.Color(this._color)
 
@@ -56,7 +56,7 @@ export class Light extends Node {
     this.light.castShadow = this._castShadow
 
     if (this._type === 'directional' || this._type === 'spot') {
-      this.add(this.light.target)
+      this.ctx.world.stage.scene.add(this.light.target)
     }
 
     this.ctx.world.stage.scene.add(this.light)
@@ -96,6 +96,7 @@ export class Light extends Node {
   unmount() {
     if (this.light) {
       this.ctx.world.stage.scene.remove(this.light)
+      if (this.light.target) this.ctx.world.stage.scene.remove(this.light.target)
       this.light.dispose()
       this.light = null
     }

@@ -82,11 +82,12 @@ const clientHtmlDest = path.join(rootDir, 'build/public/index.html')
   })
   if (dev) {
     await clientCtx.watch()
-  } else {
-    await clientCtx.rebuild()
   }
   const buildResult = await clientCtx.rebuild()
   fs.writeFileSync(path.join(buildDir, 'meta.json'), JSON.stringify(buildResult.metafile, null, 2))
+  if (!dev) {
+    await clientCtx.dispose()
+  }
 }
 
 /**
@@ -129,8 +130,6 @@ let spawn
               // (re)start server
               spawn?.kill('SIGTERM')
               spawn = fork(path.join(rootDir, 'build/index.js'))
-            } else {
-              process.exit(0)
             }
           })
         },
@@ -142,5 +141,6 @@ let spawn
     await serverCtx.watch()
   } else {
     await serverCtx.rebuild()
+    await serverCtx.dispose()
   }
 }

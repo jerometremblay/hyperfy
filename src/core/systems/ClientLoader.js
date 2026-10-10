@@ -1,5 +1,5 @@
 import * as THREE from '../extras/three'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin } from '@pixiv/three-vrm'
 
@@ -31,7 +31,7 @@ export class ClientLoader extends System {
     this.files = new Map()
     this.promises = new Map()
     this.results = new Map()
-    this.rgbeLoader = new RGBELoader()
+    this.rgbeLoader = new HDRLoader()
     this.texLoader = new TextureLoader()
     this.gltfLoader = new GLTFLoader()
     this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))
