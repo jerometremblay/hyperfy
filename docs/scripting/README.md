@@ -22,6 +22,9 @@ The gltf model that each app is based on is automatically converted into nodes a
 
 Certain node [types](./nodes/types/) can also be created and used on the fly using `app.create(nodeName)`. See the [Prim node](./nodes/types/Prim.md) reference for the built-in shapes, including the `extrude` primitive.
 
+The [Portal node](./nodes/types/Portal.md) shows a live 3D view through a linked
+doorway in the same world, using the existing scene and a camera for each eye.
+
 ## World
 
 The [World](./world/World.md) API access methods and properties outside of the Apps, like players, networking or managing nodes outside of the local hierarchy. 

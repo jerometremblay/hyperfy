@@ -583,6 +583,10 @@ export class Stage extends System {
   }
 
   // Spark 2.0: Global LOD control methods
+  getSparkRenderer() {
+    return sparkRendererInstance
+  }
+
   setLodSplatScale(scale) {
     if (sparkRendererInstance) {
       sparkRendererInstance.lodSplatScale = Math.max(0.1, scale)
