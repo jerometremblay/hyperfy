@@ -72,8 +72,9 @@ with a generic closed holding pose.
 Shoulders and elbows respect the sitting-pose editor's joint limits. Elbows bend
 downward and outward, with continuity through positions that would otherwise
 cause flips. Joint limits can make the avatar stop short of a tracked hand
-position; wrist and finger orientations continue to follow tracking. The avatar
-body remains visible in first person while its head is hidden.
+position; wrist and finger orientations continue to follow tracking. In first
+person, the local view shows only the avatar's hands and feet; other players
+continue to see the full avatar.
 
 VR also includes continuous right-stick turning and camera alignment with the
 avatar's head. Sitting recenters the view to the seated head position and facing

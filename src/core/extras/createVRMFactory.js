@@ -114,6 +114,40 @@ export function createVRMFactory(glb, setupMaterial) {
   // rootBone.updateMatrixWorld(true)
 
   const skeleton = skinnedMeshes[0].skeleton // should be same across all skinnedMeshes
+  const firstPersonBoneNamesByPart = {
+    leftHand: new Set(['leftHand', ...XR_HAND_BONES.map(({ bone }) => `left${bone}`)]),
+    rightHand: new Set(['rightHand', ...XR_HAND_BONES.map(({ bone }) => `right${bone}`)]),
+    leftFoot: new Set(['leftFoot', 'leftToes']),
+    rightFoot: new Set(['rightFoot', 'rightToes']),
+  }
+  const firstPersonBoneNames = new Set(Object.values(firstPersonBoneNamesByPart).flatMap(names => [...names]))
+  for (const names of Object.values(firstPersonBoneNamesByPart)) {
+    for (const name of [...names]) {
+      const bone = glb.userData.vrm.humanoid.getRawBoneNode(name)
+      if (bone) {
+        names.add(bone.name)
+        firstPersonBoneNames.add(bone.name)
+      }
+    }
+  }
+  // Do not switch away from the head-hidden fallback for a fragment that only
+  // contains a few triangles or is missing one of the four extremities.
+  const minFirstPersonTrianglesPerPart = 16
+  const firstPersonGeometryResults = skinnedMeshes.map(mesh =>
+    createFirstPersonGeometry(mesh.geometry, mesh.skeleton, firstPersonBoneNames, firstPersonBoneNamesByPart)
+  )
+  const firstPersonTriangleCounts = Object.fromEntries(
+    Object.keys(firstPersonBoneNamesByPart).map(part => [
+      part,
+      firstPersonGeometryResults.reduce((count, result) => count + (result?.partTriangleCounts[part] || 0), 0),
+    ])
+  )
+  const hasUsableFirstPersonGeometry = Object.values(firstPersonTriangleCounts).every(
+    count => count >= minFirstPersonTrianglesPerPart
+  )
+  const firstPersonGeometries = hasUsableFirstPersonGeometry
+    ? firstPersonGeometryResults.map(result => result?.geometry || null)
+    : []
 
   // pose arms down
   const normBones = glb.userData.vrm.humanoid._normalizedHumanBones.humanBones
@@ -187,6 +221,16 @@ export function createVRMFactory(glb, setupMaterial) {
     vrm.scene.matrix = matrix // synced!
     vrm.scene.matrixWorld = matrix // synced!
     hooks.scene.add(vrm.scene)
+
+    const bodyMeshes = []
+    vrm.scene.traverse(object => {
+      if (object.isMesh) bodyMeshes.push(object)
+    })
+    const bodyMeshGeometries = new Map(bodyMeshes.map(mesh => [mesh, mesh.geometry]))
+    const firstPersonMeshGeometries = new Map()
+    for (let i = 0; i < skinnedMeshes.length; i++) {
+      if (firstPersonGeometries[i]) firstPersonMeshGeometries.set(skinnedMeshes[i], firstPersonGeometries[i])
+    }
 
     const getEntity = () => node?.ctx.entity
 
@@ -907,11 +951,28 @@ export function createVRMFactory(glb, setupMaterial) {
     // console.log('skeleton', skeleton)
 
     let firstPersonActive = false
+    let avatarVisible = true
+    const hasFirstPersonMeshes = firstPersonMeshGeometries.size > 0
+    const updateFirstPersonVisibility = () => {
+      for (const mesh of bodyMeshes) {
+        const firstPersonGeometry = firstPersonMeshGeometries.get(mesh)
+        if (firstPersonActive && hasFirstPersonMeshes) {
+          mesh.geometry = firstPersonGeometry || bodyMeshGeometries.get(mesh)
+          mesh.visible = avatarVisible && !!firstPersonGeometry
+        } else {
+          mesh.geometry = bodyMeshGeometries.get(mesh)
+          mesh.visible = avatarVisible
+        }
+      }
+    }
     const setFirstPerson = active => {
       if (firstPersonActive === active) return
-      const head = findBone('neck')
-      head?.scale.setScalar(active ? 0 : 1)
+      if (!hasFirstPersonMeshes) {
+        const head = findBone('neck')
+        head?.scale.setScalar(active ? 0 : 1)
+      }
       firstPersonActive = active
+      updateFirstPersonVisibility()
     }
 
     const setHandTrackingPose = pose => {
@@ -948,9 +1009,11 @@ export function createVRMFactory(glb, setupMaterial) {
       getBoneTransform,
       setLocomotion,
       setVisible(visible) {
+        avatarVisible = visible
         vrm.scene.traverse(o => {
           o.visible = visible
         })
+        updateFirstPersonVisibility()
       },
       move(_matrix) {
         matrix.copy(_matrix)
@@ -982,6 +1045,83 @@ function getSkinnedMeshes(scene) {
     }
   })
   return meshes
+}
+
+function createFirstPersonGeometry(source, skeleton, boneNames, boneNamesByPart) {
+  const skinIndex = source.getAttribute('skinIndex')
+  const skinWeight = source.getAttribute('skinWeight')
+  const position = source.getAttribute('position')
+  if (!skinIndex || !skinWeight || !position) return null
+
+  const boneIndices = new Set()
+  const boneIndicesByPart = Object.fromEntries(Object.keys(boneNamesByPart).map(part => [part, new Set()]))
+  for (let i = 0; i < skeleton.bones.length; i++) {
+    const name = skeleton.bones[i].name
+    if (boneNames.has(name)) boneIndices.add(i)
+    for (const [part, names] of Object.entries(boneNamesByPart)) {
+      if (names.has(name)) boneIndicesByPart[part].add(i)
+    }
+  }
+  if (!boneIndices.size) return null
+
+  const appendageVertices = new Uint8Array(position.count)
+  const partVertices = Object.fromEntries(
+    Object.keys(boneIndicesByPart).map(part => [part, new Uint8Array(position.count)])
+  )
+  for (let vertex = 0; vertex < position.count; vertex++) {
+    let appendageWeight = 0
+    let bodyWeight = 0
+    const partWeights = Object.fromEntries(Object.keys(boneIndicesByPart).map(part => [part, 0]))
+    for (let i = 0; i < Math.min(skinIndex.itemSize, skinWeight.itemSize); i++) {
+      const weight = skinWeight.getComponent(vertex, i)
+      const boneIndex = skinIndex.getComponent(vertex, i)
+      if (boneIndices.has(boneIndex)) appendageWeight += weight
+      else bodyWeight += weight
+      for (const [part, partBoneIndices] of Object.entries(boneIndicesByPart)) {
+        if (partBoneIndices.has(boneIndex)) partWeights[part] += weight
+      }
+    }
+    // The majority-weight boundary keeps the cut at the wrists and ankles.
+    appendageVertices[vertex] = appendageWeight > 0 && appendageWeight >= bodyWeight ? 1 : 0
+    for (const part of Object.keys(partVertices)) {
+      partVertices[part][vertex] = partWeights[part] > 0 && partWeights[part] >= bodyWeight ? 1 : 0
+    }
+  }
+
+  const index = source.getIndex()
+  const elementCount = index ? index.count : position.count
+  const groups = source.groups.length ? source.groups : [{ start: 0, count: elementCount, materialIndex: 0 }]
+  const outputIndices = []
+  const outputGroups = []
+  const partTriangleCounts = Object.fromEntries(Object.keys(partVertices).map(part => [part, 0]))
+  const drawStart = source.drawRange.start
+  const drawEnd = Math.min(elementCount, drawStart + source.drawRange.count)
+  for (const group of groups) {
+    const groupStart = outputIndices.length
+    const start = Math.max(group.start, drawStart)
+    const end = Math.min(group.start + group.count, drawEnd)
+    for (let i = start; i + 2 < end; i += 3) {
+      const a = index ? index.getX(i) : i
+      const b = index ? index.getX(i + 1) : i + 1
+      const c = index ? index.getX(i + 2) : i + 2
+      for (const part of Object.keys(partVertices)) {
+        if (partVertices[part][a] && partVertices[part][b] && partVertices[part][c]) partTriangleCounts[part]++
+      }
+      if (!appendageVertices[a] || !appendageVertices[b] || !appendageVertices[c]) continue
+      outputIndices.push(a, b, c)
+    }
+    const groupCount = outputIndices.length - groupStart
+    if (groupCount) outputGroups.push({ start: groupStart, count: groupCount, materialIndex: group.materialIndex })
+  }
+
+  if (!outputIndices.length) return null
+
+  const geometry = source.clone()
+  geometry.setIndex(outputIndices)
+  geometry.clearGroups()
+  for (const group of outputGroups) geometry.addGroup(group.start, group.count, group.materialIndex)
+  geometry.setDrawRange(0, outputIndices.length)
+  return { geometry, partTriangleCounts }
 }
 
 function createCapsule(radius, height) {

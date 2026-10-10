@@ -23,6 +23,7 @@ export class Avatar extends Node {
     this.hooks = data.hooks
     this._poseOverride = data.poseOverride ? JSON.parse(JSON.stringify(data.poseOverride)) : null
     this._handTrackingPose = null
+    this._firstPerson = false
     this.instance = null
     this.n = 0
   }
@@ -41,6 +42,7 @@ export class Avatar extends Node {
       this.instance = this.factory.create(this.matrixWorld, this.hooks, this)
       this.instance.setEmote(this._emote)
       this.instance.setVisible(this._visible)
+      this.instance.setFirstPerson?.(this._firstPerson)
       this.instance.setPoseOverride?.(this._poseOverride)
       this.instance.setHandTrackingPose?.(this._handTrackingPose)
       if (this._disableRateCheck) {
@@ -147,6 +149,10 @@ export class Avatar extends Node {
   }
 
   setFirstPerson(active) {
+    if (!isBoolean(active)) {
+      throw new Error('[avatar] firstPerson not a boolean')
+    }
+    this._firstPerson = active
     this.instance?.setFirstPerson?.(active)
   }
 
@@ -185,6 +191,7 @@ export class Avatar extends Node {
     this._onLoad = source._onLoad
     this._poseOverride = source._poseOverride ? JSON.parse(JSON.stringify(source._poseOverride)) : null
     this._handTrackingPose = source._handTrackingPose
+    this._firstPerson = source._firstPerson
 
     this.factory = source.factory
     this.hooks = source.hooks
