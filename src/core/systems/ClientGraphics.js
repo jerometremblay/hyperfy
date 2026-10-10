@@ -21,6 +21,7 @@ import { updatePortalCamera } from '../extras/portalCamera'
 // single-target RenderPass, which Spark renders into like any forward pass.
 
 const v1 = new THREE.Vector3()
+const portalInverse = new THREE.Matrix4()
 
 let renderer
 function getRenderer() {
@@ -163,15 +164,30 @@ export class ClientGraphics extends System {
     if (!uniforms.linked.value) return
 
     const renderer = this.renderer
-    const view = portal.view
-    updatePortalCamera(view, portal.matrixWorld, destination.matrixWorld, eye)
+    const view = portal.getView(eye)
+    uniforms.preview.value = view.target.texture
+    uniforms.textureMatrix.value = view.textureMatrix
     const size = renderer.getDrawingBufferSize(new THREE.Vector2())
     const aspect = eye.projectionMatrix.elements[5] / eye.projectionMatrix.elements[0]
     const requestedWidth = eye.viewport?.z || size.x
-    const factor = Math.min(1, 1024 / requestedWidth, 1024 / (requestedWidth / aspect))
+    const factor = Math.min(1, portal.resolution / requestedWidth, portal.resolution / (requestedWidth / aspect))
     const width = Math.max(1, Math.round(requestedWidth * factor))
     const height = Math.max(1, Math.round(width / aspect))
-    if (view.target.width !== width || view.target.height !== height) view.target.setSize(width, height)
+    const resized = view.target.width !== width || view.target.height !== height
+    const now = performance.now()
+    portalInverse.copy(portal.matrixWorld).invert()
+    const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
+    if (
+      !resized &&
+      view.destination === destination &&
+      view.side === side &&
+      view.updateRate === portal.updateRate &&
+      portal.updateRate > 0 &&
+      now - view.lastRender < 1000 / portal.updateRate
+    )
+      return
+    if (resized) view.target.setSize(width, height)
+    updatePortalCamera(view, portal.matrixWorld, destination.matrixWorld, eye)
 
     const target = renderer.getRenderTarget()
     const cubeFace = renderer.getActiveCubeFace()
@@ -225,6 +241,10 @@ export class ClientGraphics extends System {
       renderer.state.viewport(eye.viewport || viewport)
       this.renderingPortal = false
     }
+    view.lastRender = now
+    view.destination = destination
+    view.side = side
+    view.updateRate = portal.updateRate
   }
 
   commit() {

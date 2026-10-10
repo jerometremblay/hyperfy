@@ -11,6 +11,8 @@ const portal = app.create('portal', {
   target: props.destinationPortalId || '',
   width: 1.6,
   height: 2.4,
+  resolution: 256,
+  updateRate: 15,
   position: [0, 1.2, 0],
 })
 app.add(portal)
@@ -22,6 +24,8 @@ app.add(portal)
 | `target` | `''` | ID of another mounted portal in this world. |
 | `width` | `1.6` | Positive aperture width in local units. |
 | `height` | `2.4` | Positive aperture height in local units. |
+| `resolution` | `256` | Maximum texture dimension: 256, 512, or 1024 pixels. |
+| `updateRate` | `15` | Preview updates per second: 15, 30, or 0 for every frame. |
 
 Inherits [Node](../Node.md) transforms, activation, and parenting. The aperture
 is centered on the node and faces local +Z. Both sides can show a preview.
@@ -44,8 +48,16 @@ an app preserves its instance ID and placement.
 Save and reapply destination settings when replacing an existing app; Import
 uses the new package's default properties.
 
-Each visible portal renders an extra scene pass per eye, capped at 1024 pixels
-on its longest side. Nested portal surfaces are omitted from that pass to prevent
+The World Portal properties expose **Preview resolution** and **Preview update
+rate**, defaulting to Low (256 px) and Low (15 FPS). Preview textures and their
+camera projections are cached between updates, so motion can look less smooth
+at lower rates. Each eye has its own cache. Linking a different destination,
+crossing to the other side, resizing the texture, or changing the update rate
+refreshes the preview immediately.
+
+Each visible portal renders an extra scene pass per eye at its configured rate,
+capped at its configured resolution on the longest side. Nested portal surfaces
+are omitted from that pass to prevent
 recursion. The primary composer's AO/bloom are not rerun for the destination;
 lighting and existing shadow maps are shared with the active view. CSS3D WebViews
 are not WebGL content and cannot appear in this preview. Remote-world previews

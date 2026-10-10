@@ -1,6 +1,16 @@
 import * as THREE from '../extras/three'
 import { Node } from './Node'
 
+function createView() {
+  return {
+    camera: new THREE.PerspectiveCamera(),
+    textureMatrix: new THREE.Matrix4(),
+    target: new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }),
+    lastRender: -Infinity,
+    disposed: false,
+  }
+}
+
 /** A same-world doorway. The graphics system renders its destination per eye. */
 export class Portal extends Node {
   constructor(data = {}) {
@@ -10,6 +20,8 @@ export class Portal extends Node {
     this.target = data.target || ''
     this.width = data.width ?? 1.6
     this.height = data.height ?? 2.4
+    this.resolution = data.resolution ?? 256
+    this.updateRate = data.updateRate ?? 15
   }
 
   mount() {
@@ -17,12 +29,8 @@ export class Portal extends Node {
     const world = this.ctx.world
     if (!world.graphics) return
     const geometry = new THREE.PlaneGeometry(this.width, this.height)
-    this.view = {
-      camera: new THREE.PerspectiveCamera(),
-      textureMatrix: new THREE.Matrix4(),
-      target: new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }),
-      disposed: false,
-    }
+    this.view = createView()
+    this.views = new Map()
     const material = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
       uniforms: {
@@ -69,6 +77,11 @@ export class Portal extends Node {
     world.stage.octree.insert(this.sItem)
   }
 
+  getView(eye) {
+    if (!this.views.has(eye)) this.views.set(eye, this.views.size ? createView() : this.view)
+    return this.views.get(eye)
+  }
+
   commit(didMove) {
     if (this.needsRebuild) {
       this.unmount()
@@ -87,9 +100,12 @@ export class Portal extends Node {
     world.stage.octree.remove(this.sItem)
     this.mesh.geometry.dispose()
     this.mesh.material.dispose()
-    this.view.target.dispose()
-    this.view.disposed = true
-    if (!this.view.sparkUpdating) this.view.spark?.dispose()
+    for (const view of new Set([this.view, ...this.views.values()])) {
+      view.target.dispose()
+      view.disposed = true
+      if (!view.sparkUpdating) view.spark?.dispose()
+    }
+    this.views.clear()
     this.mesh = null
     this.view = null
     this.sItem = null
@@ -101,6 +117,8 @@ export class Portal extends Node {
     this.target = source.target
     this.width = source.width
     this.height = source.height
+    this.resolution = source.resolution
+    this.updateRate = source.updateRate
     return this
   }
 
@@ -142,11 +160,27 @@ export class Portal extends Node {
     this.setDirty()
   }
 
+  get resolution() {
+    return this._resolution
+  }
+  set resolution(value) {
+    if (![256, 512, 1024].includes(value)) throw new Error('[portal] resolution must be 256, 512, or 1024')
+    this._resolution = value
+  }
+
+  get updateRate() {
+    return this._updateRate
+  }
+  set updateRate(value) {
+    if (![0, 15, 30].includes(value)) throw new Error('[portal] updateRate must be 0 (every frame), 15, or 30')
+    this._updateRate = value
+  }
+
   getProxy() {
     if (!this.proxy) {
       const self = this
       const proxy = {}
-      for (const key of ['portalId', 'target', 'width', 'height']) {
+      for (const key of ['portalId', 'target', 'width', 'height', 'resolution', 'updateRate']) {
         Object.defineProperty(proxy, key, {
           enumerable: true,
           get: () => self[key],

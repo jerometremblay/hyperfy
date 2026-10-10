@@ -21,6 +21,28 @@ app.configure([
     initial: '',
   },
   {
+    key: 'resolution',
+    type: 'switch',
+    label: 'Preview resolution',
+    options: [
+      { label: 'Low (256 px)', value: '256' },
+      { label: 'Medium (512 px)', value: '512' },
+      { label: 'High (1024 px)', value: '1024' },
+    ],
+    initial: '256',
+  },
+  {
+    key: 'updateRate',
+    type: 'switch',
+    label: 'Preview update rate',
+    options: [
+      { label: 'Low (15 FPS)', value: '15' },
+      { label: 'Medium (30 FPS)', value: '30' },
+      { label: 'Every frame', value: '0' },
+    ],
+    initial: '15',
+  },
+  {
     key: 'portalId',
     type: 'copy',
     label: 'Copy portal ID',
@@ -41,6 +63,8 @@ const surface = world.isClient
       target: destination ? '' : destinationPortalId,
       width,
       height,
+      resolution: [256, 512, 1024].includes(Number(props.resolution)) ? Number(props.resolution) : 256,
+      updateRate: [0, 15, 30].includes(Number(props.updateRate ?? 15)) ? Number(props.updateRate ?? 15) : 15,
       position: surfacePosition,
     })
   : app.create('prim', {
