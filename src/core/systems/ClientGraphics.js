@@ -13,6 +13,7 @@ import {
 } from 'postprocessing'
 
 import { System } from './System'
+import { updatePortalCamera } from '../extras/portalCamera'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -46,6 +47,8 @@ function getRenderer() {
 export class ClientGraphics extends System {
   constructor(world) {
     super(world)
+    this.portals = new Set()
+    this.renderingPortal = false
   }
 
   async init({ viewport }) {
@@ -148,6 +151,80 @@ export class ClientGraphics extends System {
       this.checkXRDimensions()
     }
     this.emit('render')
+  }
+
+  // Like Three's Reflector, render just before drawing the aperture. Three calls
+  // this with each XR eye, so each eye gets its own perspective and depth cues.
+  renderPortal(portal, eye) {
+    if (this.renderingPortal || this.world.stage.scene.overrideMaterial) return
+    const uniforms = portal.mesh.material.uniforms
+    const destination = [...this.portals].find(item => item.portalId === portal.target && item !== portal)
+    uniforms.linked.value = !!destination && !!portal.target
+    if (!uniforms.linked.value) return
+
+    const renderer = this.renderer
+    const view = portal.view
+    updatePortalCamera(view, portal.matrixWorld, destination.matrixWorld, eye)
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2())
+    const aspect = eye.projectionMatrix.elements[5] / eye.projectionMatrix.elements[0]
+    const requestedWidth = eye.viewport?.z || size.x
+    const factor = Math.min(1, 1024 / requestedWidth, 1024 / (requestedWidth / aspect))
+    const width = Math.max(1, Math.round(requestedWidth * factor))
+    const height = Math.max(1, Math.round(width / aspect))
+    if (view.target.width !== width || view.target.height !== height) view.target.setSize(width, height)
+
+    const target = renderer.getRenderTarget()
+    const cubeFace = renderer.getActiveCubeFace()
+    const mipLevel = renderer.getActiveMipmapLevel()
+    const viewport = renderer.getCurrentViewport(new THREE.Vector4())
+    const xrEnabled = renderer.xr.enabled
+    const shadows = renderer.shadowMap.autoUpdate
+    const toneMapping = renderer.toneMapping
+    const visible = [...this.portals].map(item => [item.mesh, item.mesh.visible])
+    // Spark keeps camera-dependent LOD and sort buffers. Its built-in override
+    // lets this view own those buffers without changing the active world's view.
+    const spark = this.world.stage.getSparkRenderer?.()
+    const SparkRenderer = spark?.constructor
+    const previousSpark = SparkRenderer?.sparkOverride
+    if (spark) {
+      if (!view.spark) {
+        view.spark = new SparkRenderer({ renderer, timer: spark.timer, autoUpdate: false, enableLod: spark.enableLod })
+      }
+      view.spark.lodSplatCount = spark.lodSplatCount
+      view.spark.lodSplatScale = spark.lodSplatScale
+      view.spark.maxStdDev = spark.maxStdDev
+      if (!view.sparkUpdating) {
+        view.sparkUpdating = true
+        view.spark
+          .update({ scene: this.world.stage.scene, camera: view.camera.clone() })
+          .catch(error => console.error('[portal] splat update failed', error))
+          .finally(() => {
+            view.sparkUpdating = false
+            if (view.disposed) view.spark.dispose()
+          })
+      }
+    }
+    this.renderingPortal = true
+    try {
+      for (const [mesh] of visible) mesh.visible = false
+      renderer.xr.enabled = false
+      renderer.shadowMap.autoUpdate = false
+      renderer.toneMapping = THREE.NoToneMapping
+      renderer.setRenderTarget(view.target)
+      renderer.state.buffers.depth.setMask(true)
+      renderer.clear()
+      if (SparkRenderer) SparkRenderer.sparkOverride = view.spark
+      renderer.render(this.world.stage.scene, view.camera)
+    } finally {
+      if (SparkRenderer) SparkRenderer.sparkOverride = previousSpark
+      for (const [mesh, value] of visible) mesh.visible = value
+      renderer.xr.enabled = xrEnabled
+      renderer.shadowMap.autoUpdate = shadows
+      renderer.toneMapping = toneMapping
+      renderer.setRenderTarget(target, cubeFace, mipLevel)
+      renderer.state.viewport(eye.viewport || viewport)
+      this.renderingPortal = false
+    }
   }
 
   commit() {
