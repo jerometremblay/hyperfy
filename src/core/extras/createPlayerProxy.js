@@ -25,6 +25,9 @@ export function createPlayerProxy(entity, player) {
     get local() {
       return player.data.id === world.network.id
     },
+    get ready() {
+      return !!player.controller?.controller
+    },
     get admin() {
       return player.isAdmin()
     },

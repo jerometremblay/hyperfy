@@ -243,7 +243,8 @@ export class Apps extends System {
         } else {
           urlParams.delete(key)
         }
-        const newUrl = window.location.pathname + '?' + urlParams.toString()
+        const query = urlParams.toString()
+        const newUrl = window.location.pathname + (query ? `?${query}` : '') + window.location.hash
         window.history.replaceState({}, '', newUrl)
       },
     }

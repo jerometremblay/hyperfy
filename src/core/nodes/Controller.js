@@ -81,13 +81,14 @@ export class Controller extends Node {
       shape.setSimulationFilterData(filterData)
     }
     const self = this
+    const playerId = this.ctx.entity?.isPlayer ? this.ctx.entity.data.id : null
     this.actorHandle = this.ctx.world.physics.addActor(actor, {
       controller: true,
       node: self,
       get tag() {
         return self._tag
       },
-      playerId: null,
+      playerId,
       get onContactStart() {
         return self._onContactStart
       },

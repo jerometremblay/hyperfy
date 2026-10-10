@@ -296,6 +296,18 @@ function MenuItemField({ world, props, field, value, modify }) {
   if (field.type === 'button') {
     return <MenuItemBtn label={field.label} hint={field.hint} onClick={field.onClick} />
   }
+  if (field.type === 'copy') {
+    const copy = async () => {
+      try {
+        await navigator.clipboard.writeText(field.value)
+        world.emit('toast', 'Portal ID copied')
+      } catch (err) {
+        console.error('Could not copy portal ID', err)
+        world.emit('toast', 'Could not copy portal ID')
+      }
+    }
+    return <MenuItemBtn label={field.label} hint={field.hint} onClick={copy} />
+  }
   return null
 }
 
