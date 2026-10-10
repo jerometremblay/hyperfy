@@ -89,6 +89,8 @@ export class WebView extends Node {
     const material = new THREE.MeshBasicMaterial({
       opacity: 0,
       color: new THREE.Color('black'),
+      transparent: true,
+      depthWrite: true,
       blending: hasContent ? THREE.NoBlending : THREE.NormalBlending,
       side: this._doubleside ? THREE.DoubleSide : THREE.FrontSide,
     })

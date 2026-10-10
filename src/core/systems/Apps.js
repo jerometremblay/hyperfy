@@ -247,6 +247,10 @@ export class Apps extends System {
         const newUrl = window.location.pathname + (query ? `?${query}` : '') + window.location.hash
         window.history.replaceState({}, '', newUrl)
       },
+      getWorldURL(entity) {
+        if (!isBrowser) return null
+        return `${window.location.origin}${window.location.pathname}`
+      },
     }
   }
 
