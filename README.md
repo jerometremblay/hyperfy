@@ -4,6 +4,10 @@ This repository is a fork of [Hyperfy](https://github.com/hyperfy-xyz/hyperfy).
 It keeps the Hyperfy foundation and focuses this fork on the additional features
 below.
 
+See the [complete illustrated comparison with official Hyperfy main](docs/fork-changes.md)
+for all retained changes, source references, screenshots, limitations, and the
+[full file and commit inventory](docs/fork-change-inventory.md).
+
 ## Additional features
 
 ### Real-time day–night cycle and lighting

@@ -3,7 +3,14 @@ import { build } from 'esbuild'
 
 // Serve the regression fixture without rebuilding or starting a Hyperfy world.
 const bundle = await build({
-  entryPoints: [new URL('../src/core/libs/csm/CSM.browser-test.js', import.meta.url).pathname],
+  entryPoints: [
+    new URL(
+      process.argv.includes('--budget')
+        ? '../src/core/systems/ClientGraphics.browser-test.js'
+        : '../src/core/libs/csm/CSM.browser-test.js',
+      import.meta.url
+    ).pathname,
+  ],
   bundle: true,
   format: 'esm',
   write: false,

@@ -14,6 +14,7 @@ import {
 
 import { System } from './System'
 import { updatePortalCamera } from '../extras/portalCamera'
+import { limitLightShadows } from '../extras/shadowBudget'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -139,14 +140,27 @@ export class ClientGraphics extends System {
   }
 
   render() {
-    if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
-      // Direct render: apply tone mapping on the renderer since the
-      // composer's ToneMappingEffect is not in the loop here
-      this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-      this.renderer.render(this.world.stage.scene, this.world.camera)
-      this.renderer.toneMapping = THREE.NoToneMapping
-    } else {
-      this.composer.render()
+    const disabled = this.renderer.shadowMap.enabled
+      ? limitLightShadows(
+          this.world.stage.scene,
+          this.world.camera,
+          this.renderer.capabilities.maxTextures,
+          this.world.environment?.csm?.lights
+        )
+      : []
+    const toneMapping = this.renderer.toneMapping
+    try {
+      if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
+        // Direct render: apply tone mapping on the renderer since the
+        // composer's ToneMappingEffect is not in the loop here
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+        this.renderer.render(this.world.stage.scene, this.world.camera)
+      } else {
+        this.composer.render()
+      }
+    } finally {
+      this.renderer.toneMapping = toneMapping
+      for (const light of disabled) light.castShadow = true
     }
     if (this.xrDimensionsNeeded) {
       this.checkXRDimensions()
@@ -158,8 +172,11 @@ export class ClientGraphics extends System {
   // this with each XR eye, so each eye gets its own perspective and depth cues.
   renderPortal(portal, eye) {
     if (this.renderingPortal || this.world.stage.scene.overrideMaterial) return
+    portalInverse.copy(portal.matrixWorld).invert()
+    const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
+    if (!portal.doubleside && side < 0) return
     const uniforms = portal.mesh.material.uniforms
-    const destination = [...this.portals].find(item => item.portalId === portal.target && item !== portal)
+    const destination = !portal.url && [...this.portals].find(item => item.portalId === portal.target && item !== portal)
     uniforms.linked.value = !!destination && !!portal.target
     if (!uniforms.linked.value) return
 
@@ -178,8 +195,6 @@ export class ClientGraphics extends System {
     const height = Math.max(1, Math.round(requestedHeight * factor))
     const resized = view.target.width !== width || view.target.height !== height
     const now = performance.now()
-    portalInverse.copy(portal.matrixWorld).invert()
-    const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
     if (
       !resized &&
       view.destination === destination &&
