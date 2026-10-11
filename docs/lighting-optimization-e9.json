@@ -1,0 +1,228 @@
+{
+  "target": "https://monstre.duckdns.org:3333/",
+  "bundle": "/index-JJUDRQKK.js",
+  "change": "Actual Stage.js source implementation: enable linked-batch culling, invalidate sphere after move and after dirty count/buffer cleanup. No refresh throttling or shadow quality reduction.",
+  "conditions": {
+    "timezone": "America/Toronto",
+    "cameraMatrix": [
+      1, 0, 0, 0, 0, 0.9659258262890684, -0.25881904510252074, 0, 0, 0.25881904510252074, 0.9659258262890684, 0,
+      0.890006761710829, 2.015601149329651, 2.458648680231593, 1
+    ],
+    "viewport": [1728, 880],
+    "drawingBuffer": [3456, 1760],
+    "preferences": {
+      "ao": true,
+      "bloom": true,
+      "dpr": 2,
+      "postprocessing": true,
+      "shadows": "high"
+    },
+    "meshes": 951,
+    "casters": 882,
+    "receivers": 924,
+    "uncullableCasters": 871,
+    "sun": {
+      "cascades": 3,
+      "mapSize": 2048,
+      "maxFar": 100,
+      "intensity": 0
+    },
+    "pointLightMapSize": 512
+  },
+  "samples": [
+    {
+      "label": "implemented-initial",
+      "startedAt": "2026-10-11T00:26:41.122Z",
+      "elapsedSeconds": 30.023,
+      "frames": 879,
+      "fps": 29.276230235207255,
+      "frameIntervalMs": {
+        "mean": 34.157403189069456,
+        "p95": 41.8999999910593
+      },
+      "cpuFrameMs": {
+        "mean": 33.83913538092165
+      },
+      "gpuFrameMs": {
+        "mean": 26.42044254886367,
+        "p95": 29.695998999999997
+      },
+      "drawCallsPerFrame": {
+        "mean": 9164.48805460751
+      },
+      "trianglesPerFrame": {
+        "mean": 22571280.784982935
+      },
+      "cameraUnchanged": true,
+      "valid": true,
+      "connected": true
+    },
+    {
+      "label": "disabled-control",
+      "startedAt": "2026-10-11T00:27:34.309Z",
+      "elapsedSeconds": 30.144,
+      "frames": 334,
+      "fps": 11.080903908929178,
+      "frameIntervalMs": {
+        "mean": 90.2453453453543,
+        "p95": 109.70000000298025
+      },
+      "cpuFrameMs": {
+        "mean": 89.87694610784689
+      },
+      "gpuFrameMs": {
+        "mean": 41.73058197611941,
+        "p95": 53.011666
+      },
+      "drawCallsPerFrame": {
+        "mean": 41156
+      },
+      "trianglesPerFrame": {
+        "mean": 53888056.31137724
+      },
+      "cameraUnchanged": true,
+      "valid": true,
+      "connected": true
+    },
+    {
+      "label": "implemented-final",
+      "startedAt": "2026-10-11T00:30:02.858Z",
+      "elapsedSeconds": 30.0204,
+      "frames": 871,
+      "fps": 29.02060462928391,
+      "frameIntervalMs": {
+        "mean": 34.45827586207239,
+        "p95": 39.099999994039536
+      },
+      "cpuFrameMs": {
+        "mean": 34.1574052810053
+      },
+      "gpuFrameMs": {
+        "mean": 26.45168996100917,
+        "p95": 29.333875
+      },
+      "drawCallsPerFrame": {
+        "mean": 9194.344431687716
+      },
+      "trianglesPerFrame": {
+        "mean": 22615897.33869116
+      },
+      "cameraUnchanged": true,
+      "valid": true,
+      "connected": true
+    }
+  ],
+  "motionProbe": {
+    "completedAt": "2026-10-11T00:28:45.173Z",
+    "elapsedSeconds": 6.020599999994039,
+    "frames": 182,
+    "moves": 40702,
+    "invalidations": 40702,
+    "boundsChecks": 638850,
+    "boundsFailures": 0,
+    "chosenPointRefreshes": 182,
+    "maxAvatarWorldPositionDifferenceAtShadowCapture": 0,
+    "cameraUnchanged": true,
+    "connected": true,
+    "allPointAutoUpdate": true,
+    "procedure": "Local rendered avatar placed near the nearest point light to the bedroom-2 door. Avatar oscillates plus/minus 1 unit at 0.5 Hz, door pivot oscillates through 90 degrees at 0.5 Hz in postLateUpdate before stage clean. Each changed model checks null sphere immediately after move and containment of every active transformed geometry sphere after graphics commit, tolerance 1e-4. Chosen map face-zero capture checks current avatar X. No network/player teleport. Transforms and hooks restored in finally."
+  },
+  "pixelProbe": {
+    "completedAt": "2026-10-11T00:29:49.415Z",
+    "connected": true,
+    "procedure": "Synchronous direct renderer.render and RGBA readPixels at full drawing buffer, ACES tone mapping; no simulation tick between uncullled control, control repeat and culling render. Two views: current camera, and cloned camera offset +(12,3,15), looking at (0,2,0). Simulated daylight: all CSM intensities 1, direction normalize(-1,-2,-2), csm.update. Light state, direction, renderer target/tone mapping and culling flags restored; normal postprocessed render afterward. Original-camera pixels vary even in control repeats, so no exact-equality claim there.",
+    "width": 3456,
+    "height": 1760,
+    "results": [
+      {
+        "mode": "night",
+        "view": "original",
+        "nonBlackPixels": 5244862,
+        "controlRepeat": {
+          "changedPixels": 22494,
+          "maxChannelDifference": 29,
+          "meanChannelDifference": 0.03483116757856341
+        },
+        "cullingDifference": {
+          "changedPixels": 22501,
+          "maxChannelDifference": 25,
+          "meanChannelDifference": 0.02487872430906285
+        }
+      },
+      {
+        "mode": "night",
+        "view": "offset",
+        "nonBlackPixels": 5280596,
+        "controlRepeat": {
+          "changedPixels": 0,
+          "maxChannelDifference": 0,
+          "meanChannelDifference": 0
+        },
+        "cullingDifference": {
+          "changedPixels": 0,
+          "maxChannelDifference": 0,
+          "meanChannelDifference": 0
+        }
+      },
+      {
+        "mode": "day",
+        "view": "original",
+        "nonBlackPixels": 5314157,
+        "controlRepeat": {
+          "changedPixels": 22464,
+          "maxChannelDifference": 17,
+          "meanChannelDifference": 0.023077783038720535
+        },
+        "cullingDifference": {
+          "changedPixels": 22417,
+          "maxChannelDifference": 14,
+          "meanChannelDifference": 0.01673916903409091
+        }
+      },
+      {
+        "mode": "day",
+        "view": "offset",
+        "nonBlackPixels": 5314765,
+        "controlRepeat": {
+          "changedPixels": 0,
+          "maxChannelDifference": 0,
+          "meanChannelDifference": 0
+        },
+        "cullingDifference": {
+          "changedPixels": 0,
+          "maxChannelDifference": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    ]
+  },
+  "finalState": {
+    "connected": true,
+    "allLinkedBatchesCulled": true,
+    "modelOverrides": false,
+    "graphicsCommitOverride": false,
+    "preTickOverride": false,
+    "postTickOverride": false,
+    "postLateUpdateOverride": false,
+    "avatarLocalPosition": [0, 0, 0],
+    "pointAndSunAutoUpdate": true,
+    "needsUpdate": false,
+    "getCameraOverrides": false,
+    "infoAutoReset": true,
+    "diagnosticGlobalsRemoved": true
+  },
+  "validation": {
+    "command": "node --test src/core/systems/Stage.test.mjs src/core/nodes/Light.test.mjs src/core/systems/ClientEnvironment.test.mjs",
+    "passed": 15,
+    "failed": 0,
+    "regressionBeforeFix": "Both new tests fail before implementation: frustum culling disabled; growing instance batch retains stale bounding sphere.",
+    "lint": "0 errors; 3 pre-existing Stage.js unused-variable warnings",
+    "publication": "No commit or push. No manual deployment command. Source watcher rebuilt target bundle; actual model methods verified after reconnect."
+  },
+  "decision": "Retain vanilla culling. Final FPS +161.9 percent, mean frame interval -61.8 percent and p95 -64.4 percent against same-bundle disabled control. Initial/final enabled mean frame intervals differ about 0.9 percent. No shadow update lag introduced in measured motion probe.",
+  "limitations": [
+    "Desktop stationary nighttime performance measurements; simulated daylight pixel check is not a daylight performance benchmark.",
+    "No XR performance claim.",
+    "Original-view temporal pixel variation remains; culling differences no larger in magnitude than control-repeat variation."
+  ]
+}

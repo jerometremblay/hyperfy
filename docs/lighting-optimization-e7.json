@@ -1,0 +1,116 @@
+{
+  "target": "https://monstre.duckdns.org:3333/",
+  "conditions": {
+    "timezone": "America/Toronto",
+    "cameraMatrix": [
+      1, 0, 0, 0, 0, 0.9659258262890684, -0.25881904510252074, 0, 0, 0.25881904510252074, 0.9659258262890684, 0,
+      0.29999999999999993, 2.0128566199333555, 1.4488887394336023, 1
+    ],
+    "viewport": [1728, 880],
+    "drawingBuffer": [3456, 1760],
+    "preferences": {
+      "ao": true,
+      "bloom": true,
+      "dpr": 2,
+      "postprocessing": true,
+      "shadows": "high"
+    },
+    "meshes": 951,
+    "casters": 882,
+    "receivers": 924,
+    "uncullableCasters": 871,
+    "sun": {
+      "cascades": 3,
+      "mapSize": 2048,
+      "maxFar": 100,
+      "intensity": 0
+    },
+    "pointLightMapSize": 512
+  },
+  "change": "Enable vanilla frustum culling for linked instance batches; invalidate sphere on dirty clean and move; every shadow map still refreshes normally.",
+  "samples": [
+    {
+      "label": "baseline",
+      "startedAt": "2026-10-11T00:20:11.870Z",
+      "elapsedSeconds": 30.1263,
+      "frames": 316,
+      "fps": 10.488532537759758,
+      "frameIntervalMs": {
+        "mean": 95.34222222221275,
+        "p95": 110.70000000298025
+      },
+      "cpuFrameMs": {
+        "mean": 94.89208860766097
+      },
+      "gpuFrameMs": {
+        "mean": 44.239709794952674,
+        "p95": 53.248208
+      },
+      "drawCallsPerFrame": {
+        "mean": 41156
+      },
+      "trianglesPerFrame": {
+        "mean": 53888048.73417722
+      },
+      "cameraUnchanged": true,
+      "valid": true
+    },
+    {
+      "label": "culling",
+      "startedAt": "2026-10-11T00:21:06.457Z",
+      "elapsedSeconds": 30.0065,
+      "frames": 803,
+      "fps": 26.76241515779949,
+      "frameIntervalMs": {
+        "mean": 37.36583541147875,
+        "p95": 41
+      },
+      "cpuFrameMs": {
+        "mean": 37.03437110815072
+      },
+      "gpuFrameMs": {
+        "mean": 26.915447588308464,
+        "p95": 30.664
+      },
+      "drawCallsPerFrame": {
+        "mean": 9201.92901618929
+      },
+      "trianglesPerFrame": {
+        "mean": 22615349.38729763
+      },
+      "cameraUnchanged": true,
+      "valid": true
+    },
+    {
+      "label": "restored",
+      "startedAt": "2026-10-11T00:21:42.485Z",
+      "elapsedSeconds": 30.0858,
+      "frames": 323,
+      "fps": 10.733762683841752,
+      "frameIntervalMs": {
+        "mean": 93.16397515527024,
+        "p95": 110
+      },
+      "cpuFrameMs": {
+        "mean": 92.76934984547805
+      },
+      "gpuFrameMs": {
+        "mean": 42.151598731481485,
+        "p95": 52.400915999999995
+      },
+      "drawCallsPerFrame": {
+        "mean": 41156
+      },
+      "trianglesPerFrame": {
+        "mean": 53888053.82043344
+      },
+      "cameraUnchanged": true,
+      "valid": true
+    }
+  ],
+  "batches": 942,
+  "boundComputations": 26462,
+  "restored": true,
+  "decision": "Strong candidate; moving-instance bounds and render correctness must pass before retaining.",
+  "connection": "Disconnected notice observed after E8; exact disconnect time unknown. Connected follow-up required."
+}

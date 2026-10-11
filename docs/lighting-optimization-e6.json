@@ -1,0 +1,338 @@
+{
+  "target": "https://monstre.duckdns.org:3333/",
+  "conditions": {
+    "timezone": "America/Toronto",
+    "cameraMatrix": [
+      1, 0, 0, 0, 0, 0.9659258262890684, -0.25881904510252074, 0, 0, 0.25881904510252074, 0.9659258262890684, 0,
+      0.29999999999999993, 2.0128566199333555, 1.4488887394336023, 1
+    ],
+    "viewport": [1728, 880],
+    "drawingBuffer": [3456, 1760],
+    "preferences": { "ao": true, "bloom": true, "dpr": 2, "postprocessing": true, "shadows": "high" },
+    "meshes": 951,
+    "casters": 882,
+    "receivers": 924,
+    "uncullableCasters": 871,
+    "sun": { "cascades": 3, "mapSize": 2048, "maxFar": 100, "intensity": 0 },
+    "pointLightMapSize": 512
+  },
+  "change": "Cache seven warmed point maps; oldest overdue light refreshes, at most one map per graphics commit. Initial phases spaced 100/7 ms. Each requested light becomes due 100 ms after request; no catch-up bursts. Sun and receivers unchanged.",
+  "baseline": {
+    "cameraUnchanged": true,
+    "cpuFrameMs": {
+      "count": 295,
+      "max": 278.6000000089407,
+      "mean": 102.2271186437142,
+      "median": 95.29999999701975,
+      "min": 86.30000001192093,
+      "p95": 140.5
+    },
+    "drawCallsPerFrame": { "count": 295, "max": 41156, "mean": 41156, "median": 41156, "min": 41156, "p95": 41156 },
+    "elapsedSeconds": 30.32440000000596,
+    "fps": 9.753120003183728,
+    "frameIntervalMs": {
+      "count": 294,
+      "max": 279.20000000298023,
+      "mean": 102.53129251701694,
+      "median": 95.59999999403954,
+      "min": 86.80000001192093,
+      "p95": 138.30000001192093
+    },
+    "frames": 295,
+    "gpuFrameMs": {
+      "count": 296,
+      "max": 107.165041,
+      "mean": 46.131826094594565,
+      "median": 45.559583,
+      "min": 31.425374,
+      "p95": 54.756124
+    },
+    "label": "E6-matched-baseline",
+    "startedAt": "2026-10-11T00:14:54.992Z",
+    "trianglesPerFrame": {
+      "count": 295,
+      "max": 53888080,
+      "mean": 53888052.90847458,
+      "median": 53888056,
+      "min": 53887968,
+      "p95": 53888072
+    },
+    "valid": true
+  },
+  "experiment": {
+    "actualMapsPerFrame": { "count": 611, "max": 1, "mean": 1, "median": 1, "min": 1, "p95": 1 },
+    "cameraUnchanged": true,
+    "cpuFrameMs": {
+      "count": 611,
+      "max": 74.5,
+      "mean": 48.76906710270481,
+      "median": 48.3999999910593,
+      "min": 44.20000000298023,
+      "p95": 52.70000000298023
+    },
+    "drawCallsPerFrame": {
+      "count": 611,
+      "max": 9800,
+      "mean": 9794.85433715221,
+      "median": 9794,
+      "min": 9794,
+      "p95": 9800
+    },
+    "elapsedSeconds": 30.00940000000596,
+    "fps": 20.360684519535887,
+    "frameIntervalMs": {
+      "count": 610,
+      "max": 75,
+      "mean": 49.11426229508685,
+      "median": 48.70000000298023,
+      "min": 44.400000005960464,
+      "p95": 53.1000000089407
+    },
+    "frames": 611,
+    "gpuFrameMs": {
+      "count": 612,
+      "max": 48.3505,
+      "mean": 25.54702306699347,
+      "median": 24.789875,
+      "min": 19.968249,
+      "p95": 30.415540999999997
+    },
+    "label": "E6-staggered-one-map-per-frame",
+    "maxMapsPerFrame": 1,
+    "perLight": [
+      {
+        "achievedRefreshHz": 2.9084539060204553,
+        "cacheAgeAtFrameEndMs": {
+          "count": 611,
+          "max": 371.199999988079,
+          "mean": 188.1083469722792,
+          "median": 187,
+          "min": 38.099999994039536,
+          "p95": 336.6000000089407
+        },
+        "faces": 528,
+        "index": 0,
+        "range": 10.5,
+        "refreshIntervalMs": {
+          "count": 87,
+          "max": 380.5,
+          "mean": 343.82528735628756,
+          "median": 341.5,
+          "min": 328.5,
+          "p95": 371.6000000089407
+        },
+        "refreshes": 88
+      },
+      {
+        "achievedRefreshHz": 2.9084733523671407,
+        "cacheAgeAtFrameEndMs": {
+          "count": 610,
+          "max": 371.3999999910593,
+          "mean": 188.35442622912225,
+          "median": 187.5,
+          "min": 38.400000005960464,
+          "p95": 336.90000000596046
+        },
+        "faces": 528,
+        "index": 1,
+        "range": 10.5,
+        "refreshIntervalMs": {
+          "count": 87,
+          "max": 380.59999999403954,
+          "mean": 343.8229885056786,
+          "median": 341.70000000298023,
+          "min": 326.3999999910593,
+          "p95": 373.5
+        },
+        "refreshes": 88
+      },
+      {
+        "achievedRefreshHz": 2.9114249732558086,
+        "cacheAgeAtFrameEndMs": {
+          "count": 609,
+          "max": 375.29999999701977,
+          "mean": 188.5604269289716,
+          "median": 187.70000000298023,
+          "min": 38.29999999701977,
+          "p95": 336.6000000089407
+        },
+        "faces": 522,
+        "index": 2,
+        "range": 10.5,
+        "refreshIntervalMs": {
+          "count": 86,
+          "max": 386.20000000298023,
+          "mean": 343.4744186046165,
+          "median": 341.40000000596046,
+          "min": 326.90000000596046,
+          "p95": 360.5
+        },
+        "refreshes": 87
+      },
+      {
+        "achievedRefreshHz": 2.9109815084979904,
+        "cacheAgeAtFrameEndMs": {
+          "count": 608,
+          "max": 379.09999999403954,
+          "mean": 188.17220394749583,
+          "median": 186.4000000059605,
+          "min": 37.70000000298023,
+          "p95": 336.09999999403954
+        },
+        "faces": 522,
+        "index": 3,
+        "range": 9.9,
+        "refreshIntervalMs": {
+          "count": 86,
+          "max": 387.79999999701977,
+          "mean": 343.52674418601185,
+          "median": 341.20000000298023,
+          "min": 327.09999999403954,
+          "p95": 362.5
+        },
+        "refreshes": 87
+      },
+      {
+        "achievedRefreshHz": 2.9108238646934885,
+        "cacheAgeAtFrameEndMs": {
+          "count": 607,
+          "max": 373,
+          "mean": 187.81037891225327,
+          "median": 186.0999999940395,
+          "min": 38.3999999910593,
+          "p95": 335.5
+        },
+        "faces": 522,
+        "index": 4,
+        "range": 1.8,
+        "refreshIntervalMs": {
+          "count": 86,
+          "max": 381.5,
+          "mean": 343.5453488372786,
+          "median": 340.09999999403954,
+          "min": 327.29999999701977,
+          "p95": 371.90000000596046
+        },
+        "refreshes": 87
+      },
+      {
+        "achievedRefreshHz": 2.9097995960118377,
+        "cacheAgeAtFrameEndMs": {
+          "count": 606,
+          "max": 370.20000000298023,
+          "mean": 187.8915841580913,
+          "median": 186,
+          "min": 38.29999999701977,
+          "p95": 335.59999999403954
+        },
+        "faces": 522,
+        "index": 5,
+        "range": 1.8,
+        "refreshIntervalMs": {
+          "count": 86,
+          "max": 378.20000000298023,
+          "mean": 343.6662790697328,
+          "median": 341.29999999701977,
+          "min": 327.79999999701977,
+          "p95": 366.70000000298023
+        },
+        "refreshes": 87
+      },
+      {
+        "achievedRefreshHz": 2.9090121874083295,
+        "cacheAgeAtFrameEndMs": {
+          "count": 605,
+          "max": 373.70000000298023,
+          "mean": 187.62231404909417,
+          "median": 185.79999999701977,
+          "min": 37.599999994039536,
+          "p95": 335.70000000298023
+        },
+        "faces": 522,
+        "index": 6,
+        "range": 1.8,
+        "refreshIntervalMs": {
+          "count": 86,
+          "max": 383.6000000089407,
+          "mean": 343.75930232554674,
+          "median": 339.90000000596046,
+          "min": 326.70000000298023,
+          "p95": 368
+        },
+        "refreshes": 87
+      }
+    ],
+    "pointShadowFaces": 3666,
+    "requestedMaxRefreshHz": 10,
+    "startedAt": "2026-10-11T00:15:41.461Z",
+    "trianglesPerFrame": {
+      "count": 611,
+      "max": 12878276,
+      "mean": 12851397.545008184,
+      "median": 12846938,
+      "min": 12846922,
+      "p95": 12878260
+    },
+    "valid": true
+  },
+  "restored": {
+    "cameraUnchanged": true,
+    "cpuFrameMs": {
+      "count": 320,
+      "max": 221.8999999910593,
+      "mean": 93.83187499949707,
+      "median": 90.3999999910593,
+      "min": 78.30000001192093,
+      "p95": 113.70000000298025
+    },
+    "drawCallsPerFrame": { "count": 320, "max": 41156, "mean": 41156, "median": 41156, "min": 41156, "p95": 41156 },
+    "elapsedSeconds": 30.16530000001192,
+    "fps": 10.60656942315452,
+    "frameIntervalMs": {
+      "count": 319,
+      "max": 222.29999999701977,
+      "mean": 94.28119122257988,
+      "median": 90.8999999910593,
+      "min": 78.6000000089407,
+      "p95": 115.29999999701975
+    },
+    "frames": 320,
+    "gpuFrameMs": {
+      "count": 321,
+      "max": 84.89970799999999,
+      "mean": 42.812257420560705,
+      "median": 42.517916,
+      "min": 30.959041,
+      "p95": 52.627333
+    },
+    "label": "E6-restored-baseline",
+    "startedAt": "2026-10-11T00:16:33.007Z",
+    "trianglesPerFrame": {
+      "count": 320,
+      "max": 53888080,
+      "mean": 53888056.525,
+      "median": 53888056,
+      "min": 53888032,
+      "p95": 53888072
+    },
+    "valid": true
+  },
+  "restoration": {
+    "pointAutoUpdate": true,
+    "sunAutoUpdate": true,
+    "needsUpdate": false,
+    "getCameraOverrides": false,
+    "graphicsCommitOverride": false,
+    "preTickOverride": false,
+    "postTickOverride": false,
+    "infoAutoReset": true,
+    "helperGlobalsRemoved": true
+  },
+  "limitations": [
+    "No separate E6 motion or visual quality probe; cache age measured numerically only.",
+    "Refresh workload is lower than E5, so E6 is not an equal-quality or equal-workload comparison.",
+    "Restored baseline mean frame time is 8 percent lower; environment drift limits precision.",
+    "CPU frame timing includes driver waits and is not CPU utilization."
+  ],
+  "decision": "Diagnostic only. Budget improves smoothness but delivers approximately 2.91 Hz per light. Next test vanilla frustum culling on bounded caster batches to reduce refresh cost without deliberately reducing refresh rate."
+}
