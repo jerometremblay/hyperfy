@@ -663,7 +663,7 @@ class Model {
     this.iMesh.receiveShadow = this.receiveShadow
     this.iMesh.matrixAutoUpdate = false
     this.iMesh.matrixWorldAutoUpdate = false
-    this.iMesh.frustumCulled = false
+    this.iMesh.frustumCulled = true
     this.iMesh.getEntity = this.getEntity.bind(this)
     this.items = [] // { idx, node, matrix, color }
     this.dirty = true
@@ -772,6 +772,8 @@ class Model {
   move(item, matrix) {
     item.matrix.copy(matrix)
     this.iMesh.setMatrixAt(item.idx, matrix)
+    // Moves can happen after clean(), before a main or shadow camera renders.
+    this.iMesh.boundingSphere = null
     this.dirty = true
   }
 
@@ -820,6 +822,8 @@ class Model {
       }
     }
     this.iMesh.count = count
+    // Three.js rebuilds the batch sphere lazily, using only active instances.
+    this.iMesh.boundingSphere = null
     if (this.iMesh.parent && !count) {
       this.stage.scene.remove(this.iMesh)
       this.dirty = false
@@ -838,7 +842,6 @@ class Model {
     if (this.iMesh.instanceEmissiveIntensity) {
       this.iMesh.instanceEmissiveIntensity.needsUpdate = true
     }
-    // this.iMesh.computeBoundingSphere()
     this.dirty = false
   }
 

@@ -1,0 +1,131 @@
+{
+  "experiment": "E4",
+  "target": "https://monstre.duckdns.org:3333/",
+  "clientBundle": "/index-OTBMLGCV.js",
+  "localBase": "7cea6907993604cdfd0ec1dd7f1db5edb0a3c90d",
+  "deployedRevisionVerified": false,
+  "timezone": "America/Toronto",
+  "change": "Freeze only seven point-light shadows: autoUpdate=false and needsUpdate=false. Retain warmed maps and keep sun updates/casting/receiving unchanged.",
+  "conditions": {
+    "viewport": [1728, 880],
+    "drawingBuffer": [3456, 1760],
+    "dpr": 2,
+    "shadows": "high",
+    "sunCascades": 3,
+    "sunMapSize": 2048,
+    "sunMaxFar": 100,
+    "sunIntensity": 0,
+    "shadowedPointLights": 7,
+    "pointShadowMapSize": 512,
+    "postprocessing": true,
+    "ao": true,
+    "bloom": true,
+    "cameraMatrix": [
+      1, 0, 0, 0, 0, 0.9659258262890684, -0.25881904510252074, 0, 0, 0.25881904510252074, 0.9659258262890684, 0,
+      0.8900067616616624, 2.015601149329651, 2.4586486819857547, 1
+    ],
+    "comparison": "Fresh matched baseline; camera differs from E1-E3"
+  },
+  "samples": [
+    {
+      "label": "E4-matched-baseline",
+      "startedAt": "2026-10-10T23:55:48.484Z",
+      "elapsedSeconds": 30.10920000000298,
+      "frames": 333,
+      "fps": 11.058151889708297,
+      "frameMeanMs": 90.43102409641249,
+      "frameP95Ms": 99,
+      "cpuFrameMeanMs": 90.0009009010262,
+      "gpuMeanMs": 43.56013145808387,
+      "gpuP95Ms": 53.121624,
+      "gpuQueryCount": 334,
+      "drawCallsPerFrame": 41157,
+      "trianglesPerFrameMean": 53891628.6006006,
+      "cameraUnchanged": true,
+      "visibleThroughout": true
+    },
+    {
+      "label": "E4-freeze-seven-point-light-maps",
+      "startedAt": "2026-10-10T23:56:26.537Z",
+      "elapsedSeconds": 30.08620000000298,
+      "frames": 692,
+      "fps": 23.002203684340337,
+      "frameMeanMs": 43.47409551376113,
+      "frameP95Ms": 46,
+      "cpuFrameMeanMs": 43.13612716754823,
+      "gpuMeanMs": 25.494093122655144,
+      "gpuP95Ms": 30.854041,
+      "gpuQueryCount": 693,
+      "drawCallsPerFrame": 4569,
+      "trianglesPerFrameMean": 6015543.514450867,
+      "cameraUnchanged": true,
+      "visibleThroughout": true,
+      "restored": true
+    },
+    {
+      "label": "E4-restored-baseline",
+      "startedAt": "2026-10-10T23:59:29.223Z",
+      "elapsedSeconds": 30.1735,
+      "frames": 307,
+      "fps": 10.17371789543679,
+      "frameMeanMs": 98.29248366013071,
+      "frameP95Ms": 120.40000000596046,
+      "cpuFrameMeanMs": 97.8605863191794,
+      "gpuMeanMs": 45.40276424999998,
+      "gpuP95Ms": 53.864708,
+      "gpuQueryCount": 308,
+      "drawCallsPerFrame": 41157,
+      "trianglesPerFrameMean": 53891624.8990228,
+      "cameraUnchanged": true,
+      "visibleThroughout": true
+    },
+    {
+      "label": "E4-restored-baseline-repeat",
+      "startedAt": "2026-10-11T00:00:07.890Z",
+      "elapsedSeconds": 30.18590000000596,
+      "frames": 313,
+      "fps": 10.379345103243514,
+      "frameMeanMs": 96.34519230770186,
+      "frameP95Ms": 107,
+      "cpuFrameMeanMs": 96.01277955271566,
+      "gpuMeanMs": 44.680629398089174,
+      "gpuP95Ms": 53.127582999999994,
+      "gpuQueryCount": 314,
+      "drawCallsPerFrame": 41157,
+      "trianglesPerFrameMean": 53891625.750798725,
+      "cameraUnchanged": true,
+      "visibleThroughout": true
+    }
+  ],
+  "movingCasterProbe": {
+    "completedAt": "2026-10-10T23:59:13.842Z",
+    "method": "Local render-only avatar placement inside point-light coverage; warm maps; move avatar one unit and rotate bedroom door pivot 90 degrees. No shared state edits or gameplay teleport.",
+    "doorPivot": "17214",
+    "avatarShadowCasterMeshes": 5,
+    "avatarLightCoverage": 1,
+    "doorLightCoverage": 1,
+    "frozen": {
+      "frames": 47,
+      "pointShadowFacesRendered": 0,
+      "avatarTransformChanged": true,
+      "doorTransformChanged": true,
+      "cameraUnchanged": true
+    },
+    "refreshed": {
+      "frames": 22,
+      "pointShadowFacesRendered": 924
+    },
+    "restored": true,
+    "limitation": "Render/invalidation probe; visual gameplay walkthrough not completed. Initial avatar probe outside light coverage was inconclusive and repeated inside coverage."
+  },
+  "baselineDriftPercent": [6.54, 8.69],
+  "decision": "Point-light shadow generation dominates; blanket freezing fails moving-caster invalidation. Test refresh rate or relevant-caster dirty-map invalidation next.",
+  "restoration": {
+    "allSevenPointLightsAutoUpdate": true,
+    "allThreeSunLightsAutoUpdate": true,
+    "rendererShadowAutoUpdate": true,
+    "rendererStatisticsAutoReset": true,
+    "avatarLocalPosition": [0, 0, 0],
+    "postLateUpdateOverrideRemoved": true
+  }
+}

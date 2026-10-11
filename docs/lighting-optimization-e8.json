@@ -1,0 +1,87 @@
+{
+  "target": "https://monstre.duckdns.org:3333/",
+  "change": "E7 culling plus disabled updates for three sun maps while intensity exactly zero; point maps still update every frame.",
+  "samples": [
+    {
+      "label": "combined",
+      "startedAt": "2026-10-11T00:23:00.136Z",
+      "elapsedSeconds": 30.0204,
+      "frames": 766,
+      "fps": 25.522204317764064,
+      "frameIntervalMs": {
+        "mean": 39.18156862743929,
+        "p95": 44.599999994039536
+      },
+      "cpuFrameMs": {
+        "mean": 38.858355091228184
+      },
+      "gpuFrameMs": {
+        "mean": 32.65458879661018,
+        "p95": 39.388749
+      },
+      "drawCallsPerFrame": {
+        "mean": 6937
+      },
+      "trianglesPerFrame": {
+        "mean": 19240521.864229765
+      },
+      "cameraUnchanged": true,
+      "valid": true
+    },
+    {
+      "label": "culling-control",
+      "startedAt": "2026-10-11T00:23:44.166Z",
+      "elapsedSeconds": 30.0986,
+      "frames": 704,
+      "fps": 23.401117794505225,
+      "frameIntervalMs": {
+        "mean": 42.73300142247087,
+        "p95": 47.599999994039536
+      },
+      "cpuFrameMs": {
+        "mean": 42.42329545424912
+      },
+      "gpuFrameMs": {
+        "mean": 27.23746010921985,
+        "p95": 32.185666
+      },
+      "drawCallsPerFrame": {
+        "mean": 9203
+      },
+      "trianglesPerFrame": {
+        "mean": 22616813
+      },
+      "cameraUnchanged": true,
+      "valid": true
+    },
+    {
+      "label": "combined-repeat",
+      "startedAt": "2026-10-11T00:24:59.941Z",
+      "elapsedSeconds": 30.0378,
+      "frames": 714,
+      "fps": 23.76714200951394,
+      "frameIntervalMs": {
+        "mean": 42.07489481064665,
+        "p95": 53
+      },
+      "cpuFrameMs": {
+        "mean": 41.66372549005834
+      },
+      "gpuFrameMs": {
+        "mean": 34.20554059860136,
+        "p95": 43.147873999999995
+      },
+      "drawCallsPerFrame": {
+        "mean": 6937
+      },
+      "trianglesPerFrame": {
+        "mean": 19240523.43417367
+      },
+      "cameraUnchanged": true,
+      "valid": true
+    }
+  ],
+  "connection": "Disconnected notice observed after samples; exact disconnect time unknown. Render measurements remain usable, connected gameplay not established.",
+  "restored": true,
+  "decision": "Do not implement. 2266 fewer draws but no consistent frame-time gain; repeat FPS +1.6 percent within drift and worse p95; GPU slower."
+}
