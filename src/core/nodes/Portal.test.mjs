@@ -379,3 +379,50 @@ test('one-sided portals skip preview work behind the aperture, including transfo
   eye.updateMatrixWorld()
   assert.throws(() => graphics.renderPortal(portal, eye), /preview requested/)
 })
+
+for (const destinationDoubleSide of [false, true]) {
+  for (const entrySide of [-1, 1]) {
+    test(`entry from side ${entrySide} honors direction and ${destinationDoubleSide ? 'two' : 'one'}-sided destination arrival`, () => {
+      const ctx = context()
+      const sourceRotation = Math.PI / 3
+      const destinationRotation = -Math.PI / 4
+      const destination = new Portal({
+        portalId: 'exit',
+        doubleside: destinationDoubleSide,
+        position: [30, 1.2, 40],
+        rotation: [0, destinationRotation, 0],
+      })
+      destination.activate(ctx)
+      const { portal } = mounted(
+        {
+          portalId: 'entry',
+          target: 'exit',
+          doubleside: true,
+          rotation: [0, sourceRotation, 0],
+        },
+        ctx
+      )
+      const localDirection = new THREE.Vector3(0.3, 0, -entrySide).normalize()
+      const worldDirection = localDirection.clone().transformDirection(portal.matrixWorld)
+      ctx.world.camera.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), worldDirection)
+      ctx.player.base.position.set(0.1, -1.2, entrySide * 0.2).applyMatrix4(portal.matrixWorld)
+      portal.update()
+      assert.equal(ctx.teleports.length, 1)
+      const arrival = ctx.teleports[0]
+      const localArrival = arrival.position.clone().applyMatrix4(destination.matrixWorld.clone().invert())
+      assert.equal(Math.sign(localArrival.z), destinationDoubleSide ? entrySide : 1)
+      assert.ok(Math.abs(localArrival.x + 0.1) < 0.000001)
+      const expected = new THREE.Vector3(
+        -localDirection.x,
+        localDirection.y,
+        !destinationDoubleSide && entrySide < 0 ? localDirection.z : -localDirection.z
+      ).transformDirection(destination.matrixWorld)
+      const actual = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), arrival.rotationY)
+      assert.ok(actual.distanceTo(expected) < 0.000001, 'arrival direction must follow the destination sidedness')
+      destination.update()
+      assert.equal(ctx.teleports.length, 1, 'arrival must not immediately trigger return travel')
+      portal.deactivate()
+      destination.deactivate()
+    })
+  }
+}
