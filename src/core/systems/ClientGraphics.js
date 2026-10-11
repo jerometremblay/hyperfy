@@ -158,8 +158,11 @@ export class ClientGraphics extends System {
   // this with each XR eye, so each eye gets its own perspective and depth cues.
   renderPortal(portal, eye) {
     if (this.renderingPortal || this.world.stage.scene.overrideMaterial) return
+    portalInverse.copy(portal.matrixWorld).invert()
+    const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
+    if (!portal.doubleside && side < 0) return
     const uniforms = portal.mesh.material.uniforms
-    const destination = [...this.portals].find(item => item.portalId === portal.target && item !== portal)
+    const destination = !portal.url && [...this.portals].find(item => item.portalId === portal.target && item !== portal)
     uniforms.linked.value = !!destination && !!portal.target
     if (!uniforms.linked.value) return
 
@@ -178,8 +181,6 @@ export class ClientGraphics extends System {
     const height = Math.max(1, Math.round(requestedHeight * factor))
     const resized = view.target.width !== width || view.target.height !== height
     const now = performance.now()
-    portalInverse.copy(portal.matrixWorld).invert()
-    const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
     if (
       !resized &&
       view.destination === destination &&

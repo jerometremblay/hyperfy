@@ -20,6 +20,7 @@ export function getPortalCameraDistance(portals, origin, direction, distance, ra
     portalPlane.normal.set(0, 0, 1)
     portalPlane.constant = 0
     portalPlane.applyMatrix4(portal.matrixWorld)
+    if (!portal.doubleside && portalPlane.distanceToPoint(origin) < 0) continue
     const crossing = cameraRay.distanceToPlane(portalPlane)
     if (crossing === null || crossing < 0) continue
     const approach = Math.abs(portalPlane.normal.dot(direction))

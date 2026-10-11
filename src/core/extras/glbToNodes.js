@@ -33,6 +33,26 @@ export function glbToNodes(glb, world) {
         }
         // parse(object3d.children, node)
       }
+      // Portal (native doorway, including travel; no script required)
+      else if (props.node === 'portal') {
+        const node = registerNode('portal', {
+          id: object3d.name,
+          portalId: props.portalId,
+          target: props.target,
+          url: props.url,
+          width: props.width,
+          height: props.height,
+          doubleside: props.doubleside,
+          resolution: props.resolution,
+          updateRate: props.updateRate,
+          appConfig: props.appConfig,
+          position: object3d.position.toArray(),
+          quaternion: object3d.quaternion.toArray(),
+          scale: object3d.scale.toArray(),
+        })
+        parentNode.add(node)
+        parse(object3d.children, node)
+      }
       // Snap (custom node)
       else if (props.node === 'snap') {
         const node = registerNode('snap', {
