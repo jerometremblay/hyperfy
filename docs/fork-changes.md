@@ -220,11 +220,9 @@ smooth normals, and crease angle control the resulting geometry. The geometry
 cache includes extrusion options, and copying a primitive copies its profile.
 These properties are also available through node editing and script proxies.
 
-![Actual irregular extrusion example](screenshots/fork-changes/extrusion.jpg)
+![Actual irregular extrusion example](screenshots/fork-changes/extrusion.png)
 
-*The repository's `examples/irregular-extrude.js`, rendered as a temporary local
-app in Évain: the irregular profile, bevel, and 0.3 m depth are visible. The
-portal behind it provides scene context; daylight is a local preview.*
+*The repository's `outputs/laser-cut-t-rex`
 
 Physics uses the primitive system's convex mesh path. A concave visible profile
 therefore collides as its **convex hull**; it does not create a matching concave

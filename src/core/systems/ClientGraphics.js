@@ -14,6 +14,7 @@ import {
 
 import { System } from './System'
 import { updatePortalCamera } from '../extras/portalCamera'
+import { limitLightShadows } from '../extras/shadowBudget'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -139,14 +140,27 @@ export class ClientGraphics extends System {
   }
 
   render() {
-    if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
-      // Direct render: apply tone mapping on the renderer since the
-      // composer's ToneMappingEffect is not in the loop here
-      this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-      this.renderer.render(this.world.stage.scene, this.world.camera)
-      this.renderer.toneMapping = THREE.NoToneMapping
-    } else {
-      this.composer.render()
+    const disabled = this.renderer.shadowMap.enabled
+      ? limitLightShadows(
+          this.world.stage.scene,
+          this.world.camera,
+          this.renderer.capabilities.maxTextures,
+          this.world.environment?.csm?.lights
+        )
+      : []
+    const toneMapping = this.renderer.toneMapping
+    try {
+      if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
+        // Direct render: apply tone mapping on the renderer since the
+        // composer's ToneMappingEffect is not in the loop here
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+        this.renderer.render(this.world.stage.scene, this.world.camera)
+      } else {
+        this.composer.render()
+      }
+    } finally {
+      this.renderer.toneMapping = toneMapping
+      for (const light of disabled) light.castShadow = true
     }
     if (this.xrDimensionsNeeded) {
       this.checkXRDimensions()

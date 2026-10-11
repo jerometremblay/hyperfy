@@ -404,3 +404,41 @@ For every new entry record: exact runtime/source change, timestamp, baseline use
 warmup and sample duration, unchanged-camera/visibility checks, mean and p95 frame
 time, FPS, GPU timing, draw calls and triangles, visual tradeoffs, restoration, and
 the decision. Do not claim a shipping improvement from a diagnostic-only change.
+
+## Avatar disappearance with additional shadows — 2026-10-11
+
+This is a rendering correctness fix, not a performance benchmark. In Chrome on
+Évain, enabling an eighth shadow-casting point light left the head and hands
+visible but removed the clothing and shoes from `jerome-grounded.vrm`. The scene
+also had three CSM shadows. Chrome reported that the fragment shader exceeded
+`MAX_TEXTURE_IMAGE_UNITS(16)` and Three repeatedly warned about 17 texture units.
+Disabling one point shadow locally restored the body; restoring it reproduced
+the disappearance. No avatar visibility flags or shared app settings changed.
+
+`ClientGraphics.render()` now budgets shadow samplers against the GPU's texture
+limit, reserving units for material maps, the environment, skinning, morphs and
+spotlight projection maps. It keeps CSM cascades together and prioritizes nearby
+remaining sources. Overflow lights still illuminate the scene, but their shadows
+are temporarily disabled during the frame. Requested shadow flags are restored
+in `finally`, including when rendering throws. The selection can change as the
+camera moves; it applies to the direct/XR and postprocessing paths, with portal
+views using the same frame's selection.
+
+For the observed avatar and GPU, seven units are reserved and nine shadow maps
+remain: three CSM maps and six point maps. This budget is computed from scene
+materials rather than a fixed point-light count. Arbitrary samplers injected by
+custom shader code cannot be inferred from material texture values; materials
+whose own samplers plus the protected cascades exceed the device limit remain
+outside this fallback's coverage.
+
+Validation: 13 focused Node tests pass, including restoration on a render error;
+`node scripts/test-light-shadows.mjs --budget` passes in Chrome with 7,442 body
+pixels in both direct and actual composer rendering, against zero pixels and
+shader-link errors before the fix. All six existing Basic/PCF point, spot and
+directional WebGL checks still pass. Focused ESLint, `git diff --check`, and
+`npm run build` pass. The rebuilt live client `/index-S6SW2QSS.js` was reloaded
+and its render method verified to contain the source fix, with all 11 requested
+shadow flags retained, the avatar body visible, and no new texture-budget
+warnings. All temporary browser validation hooks were removed.
+
+![Avatar body restored with the rebuilt client and shadow sources still enabled](./screenshots/shadow-budget/avatar-restored.jpg)
