@@ -1,0 +1,16 @@
+{
+  "valid": true,
+  "totalNodes": 139,
+  "extrusions": 67,
+  "runtimeConstructors": true,
+  "assetHashes": true,
+  "sourceBytes": true,
+  "exactPackagePreview": true,
+  "coplanarOverlappingPiecePairs": [],
+  "coplanarCheck": "Canonical triangle planes at 1e-6 tolerance; projected overlap area greater than 1e-9; excludes triangles belonging to the same piece.",
+  "visualViews": [
+    "side",
+    "perspective"
+  ],
+  "liveWorldImport": false
+}
