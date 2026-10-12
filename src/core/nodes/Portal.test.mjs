@@ -46,7 +46,7 @@ function context() {
       this.base.position.copy(data.position)
     },
   }
-  let query = null
+  const query = new Map()
   const world = {
     entities: { player },
     camera: new THREE.PerspectiveCamera(),
@@ -59,9 +59,9 @@ function context() {
     emit() {},
     apps: {
       worldMethods: {
-        getQueryParam: () => query,
-        setQueryParam(_entity, _key, value) {
-          query = value
+        getQueryParam: (_entity, key) => query.get(key) ?? null,
+        setQueryParam(_entity, key, value) {
+          query.set(key, value)
         },
         open(_entity, url) {
           opened.push(url)
@@ -75,10 +75,10 @@ function context() {
     player,
     teleports,
     opened,
-    setQuery(value) {
-      query = value
+    setQuery(value, key = 'portalId') {
+      query.set(key, value)
     },
-    getQuery: () => query,
+    getQuery: (key = 'portalId') => query.get(key) ?? null,
   }
 }
 
@@ -149,8 +149,13 @@ for (const doubleside of [false, true]) {
         await portal.pendingTravel
         assert.equal(count(), 1)
       }
-      if (remote) assert.equal(ctx.opened[0], 'https://example.com/world?foo=1&portalId=exit#view')
-      else {
+      if (remote) {
+        const url = new URL(ctx.opened[0])
+        assert.equal(url.searchParams.get('portalId'), 'exit')
+        assert.equal(url.searchParams.get('foo'), '1')
+        assert.equal(url.hash, '#view')
+        assert.equal(JSON.parse(url.searchParams.get('portalPose')).length, 6)
+      } else {
         assert.ok(ctx.teleports[0].position.z >= 1)
         destination.update()
         assert.equal(count(), 1)
@@ -196,6 +201,18 @@ test('remote arrival waits for player readiness, consumes query, and clears the 
   assert.equal(teleports.length, 1)
   portal.deactivate()
 })
+
+for (const pose of ['broken', '[1,2,3]', '[0,0,1,0,0,0]', '[0,0,1,0,0,"bad"]']) {
+  test(`invalid remote pose ${pose} falls back to the legacy arrival`, () => {
+    const state = mounted({ portalId: 'exit', position: [4, 1.2, 6] })
+    state.setQuery('exit')
+    state.setQuery(pose, 'portalPose')
+    state.portal.update()
+    assert.deepEqual(state.teleports[0].position.toArray(), [4, 0, 7])
+    assert.equal(state.getQuery('portalPose'), null)
+    state.portal.deactivate()
+  })
+}
 
 test('moving portals do not travel and server portals do not register client updates', async () => {
   const state = context()
@@ -461,6 +478,42 @@ for (const destinationDoubleSide of [false, true]) {
   }
 }
 
+for (const doubleside of [false, true]) {
+  for (const side of [-1, 1]) {
+    test(`remote arrival preserves internal arrival pose for side ${side}, doubleside=${doubleside}`, async () => {
+      const source = mounted({
+        portalId: 'entry',
+        target: 'exit',
+        doubleside: true,
+        url: 'https://example.com/?foo=1#view',
+        rotation: [0, 0.7, 0],
+      })
+      const localDirection = new THREE.Vector3(0.4, 0, -side).normalize()
+      const worldDirection = localDirection.clone().transformDirection(source.portal.matrixWorld)
+      source.world.camera.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), worldDirection)
+      const localPosition = new THREE.Vector3(0.2, -1.2, side * 0.2)
+      source.player.base.position.copy(localPosition).applyMatrix4(source.portal.matrixWorld)
+      source.portal.update()
+      await source.portal.pendingTravel
+      const url = new URL(source.opened[0])
+      assert.equal(url.searchParams.get('foo'), '1')
+      assert.equal(url.hash, '#view')
+      const remote = mounted({ portalId: 'exit', doubleside, position: [10, 1.2, 20], rotation: [0, -0.8, 0] })
+      remote.setQuery(url.searchParams.get('portalId'))
+      remote.setQuery(url.searchParams.get('portalPose'), 'portalPose')
+      remote.portal.update()
+      const expected = mounted({ doubleside, position: [10, 1.2, 20], rotation: [0, -0.8, 0] })
+      expected.portal.arrive(expected.player, localPosition, localDirection)
+      assert.ok(remote.teleports[0].position.distanceTo(expected.teleports[0].position) < 1e-6)
+      assert.ok(Math.abs(remote.teleports[0].rotationY - expected.teleports[0].rotationY) < 1e-6)
+      assert.equal(remote.getQuery('portalPose'), null)
+      remote.portal.update()
+      assert.equal(remote.teleports.length, 1)
+      for (const state of [source, remote, expected]) state.portal.deactivate()
+    })
+  }
+}
+
 test('missing local destinations show an aperture error which clears when the endpoint mounts', async () => {
   const { portal, world, teleports } = mounted({ target: 'missing' })
   portal.update()
@@ -577,7 +630,11 @@ test('shipped legacy portals use the configured URL for both status and native t
     await portal.destinationCheck
     assert.equal(portal.statusMessage, '')
     await portal.travel(ctx.player, new THREE.Vector3(0, 0, 0.1), new THREE.Matrix4())
-    assert.deepEqual(ctx.opened, ['https://example.org/world?portalId=exit'])
+    assert.equal(ctx.opened.length, 1)
+    const opened = new URL(ctx.opened[0])
+    assert.equal(opened.origin + opened.pathname, 'https://example.org/world')
+    assert.equal(opened.searchParams.get('portalId'), 'exit')
+    assert.deepEqual(JSON.parse(opened.searchParams.get('portalPose')), [0, 0, 0.1, 0, 0, -1])
     globalThis.fetch.mock.mockImplementation(async () => {
       throw new Error('offline')
     })

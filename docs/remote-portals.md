@@ -5,6 +5,63 @@ Configure its destination world URL and portal ID as before. An empty portal ID
 previews the destination spawn. Crossing still navigates to the destination URL.
 Older worlds remain valid travel destinations but do not supply a 3D preview.
 
+## Set up a portal link
+
+1. In the destination world, choose **Add → World Portal**, place the doorway,
+   and click **Copy portal ID** in its properties.
+2. In the source world, add another **World Portal** and paste the copied ID into
+   **Destination portal ID**.
+3. For a remote link, set **Destination world URL** to the destination's public
+   world URL, including its port (for example `https://world.example:3334`). For
+   a link in the same world, leave that URL blank.
+4. Walk through the source's front (+Z). Its back is gray and inactive by default.
+   Change **Sides** to **Two-sided** to enable entry from either side.
+5. For a return route, configure the destination with the source portal's ID and
+   world URL. Each direction is configured separately.
+
+Leave the remote destination ID empty to visit the destination spawn instead.
+Use explicit portal endpoints for doorway-relative arrival. A same-world portal
+needs a destination ID. The native node handles crossing and arrival without
+custom scripts, trigger colliders, or teleport handlers. For scripted or GLB
+endpoints, see the [Portal node reference](scripting/nodes/types/Portal.md).
+
+Crossing between updated portal endpoints preserves lateral offset and viewing
+direction through the doorway half-turn, as internal portals do. A one-sided
+destination places arrivals from the back on its front. The source passes
+`portalId` and `portalPose` in the URL; the destination consumes them after the
+player is ready. Other query parameters and fragments remain intact. Older links
+without a pose use the default arrival direction. Remote crossing uses a page
+navigation, so the preview is not a seamless world transfer.
+
+## Preview quality and connection setup
+
+The portal properties expose **Preview resolution** (256, 512, 1024, or Max) and
+**Preview update rate** (15 FPS, 30 FPS, or Every frame). Defaults are 256 and
+15 FPS. Max uses the current render resolution, including each eye's viewport in
+XR. Higher settings render more destination scene passes; begin with defaults.
+
+Both worlds must run the updated engine for live remote previews and the arrival
+pose handoff. Rebuild and refresh both clients after updating. To run multiple
+instances from one checkout, see [named world profiles](deployment.md#named-worlds-from-one-checkout).
+Each server needs its own port and world data directory.
+
+Use the destination's public hostname in its API, WebSocket and asset URLs.
+`localhost` refers to the viewer's computer or headset, so it is suitable only for
+testing on that same device. An HTTPS source needs secure HTTPS/WSS destination
+connections. A profile's `PUBLIC_ORIGIN` derives these URLs; leave shared TLS
+certificate settings inherited when serving HTTPS directly.
+
+| Symptom | Check |
+| --- | --- |
+| Gray inactive surface | Enter the front or enable Two-sided. |
+| Destination portal not found | Copy the destination endpoint's current ID; ensure it is mounted and not being moved. |
+| Destination unreachable | Confirm the public URL, port and network access; check the destination directly. |
+| `ERR_SSL_PROTOCOL_ERROR` | The URL may use HTTPS while that port serves HTTP. Check both TLS settings and `PUBLIC_ORIGIN`; restart after changing environment files. |
+| Travel works but no live preview | Confirm destination preview support, secure public URLs, reachable WebSocket/assets, and cross-origin access. |
+| Facing direction resets on arrival | Refresh updated clients in both worlds and use a destination portal ID; spawn travel has no doorway-relative arrival. |
+
+## What the preview contains
+
 The client downloads the destination's entity data, blueprints, scripts and assets,
 and reconstructs a separate scene. It executes client scripts to create procedural
 prims and animate content. Remote avatars and scene edits arrive live. Each XR eye

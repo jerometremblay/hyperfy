@@ -1,6 +1,6 @@
 ---
 name: hyperfy-hyp-app-authoring
-description: Create Hyperfy .hyp apps from JavaScript primitives, validate them against the target Hyperfy runtime, package them safely, and generate an exact-package interactive preview.
+description: Create Hyperfy .hyp apps from JavaScript primitives and native portal nodes, validate them against the target Hyperfy runtime, package them safely, and generate an exact-package interactive preview.
 ---
 
 # Hyperfy `.hyp` app authoring
@@ -26,6 +26,18 @@ Use this skill when the user asks to create, edit, diagnose, package, or preview
 15. Deliver the `.hyp`, source `.js`, and exact-package preview. Include the validation report when useful.
 
 When sitting interaction is requested, read [docs/sitting.md](docs/sitting.md) before defining furniture anchors, actions, occupancy, or cleanup. Apply the sitting validation pass below in the target runtime.
+
+## Native portals and remote previews
+
+For portal creation, linking, travel, or preview compatibility, read
+[docs/portals.md](docs/portals.md). In this fork, prefer **Add → World Portal** or
+`app.create('portal', ...)` over custom triggers, teleport handlers or arrival
+scripts. Verify native portal support in the target runtime before packaging.
+Each endpoint needs a unique ID; a remote link also needs the destination world
+URL. Keep script-generated visuals available in `world.isPreview` mode without
+requiring a local player, physics or outgoing gameplay requests. Validate actual
+travel and live previews in the engine; the bundled primitive viewer cannot
+establish portal behavior.
 
 ## Coordinate and primitive contract
 

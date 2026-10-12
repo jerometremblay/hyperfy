@@ -7,4 +7,6 @@ These docs are for 3D artists and developers looking to build assets and/or full
 
 - [Commands](/docs/commands.md)
 - [Models](/docs/supported-files/models.md)
+- [Portal setup, remote previews and troubleshooting](remote-portals.md)
+- [Portal node reference](scripting/nodes/types/Portal.md)
 - [App Scripting API](/docs/scripting/README.md)
