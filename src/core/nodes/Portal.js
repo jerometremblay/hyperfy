@@ -301,8 +301,17 @@ export class Portal extends Node {
     if (!player?.controller?.controller) return
     const methods = world.apps.worldMethods
     if (methods.getQueryParam(this.ctx.entity, 'portalId') === this.portalId) {
-      this.arrive(player)
+      let pose
+      try {
+        pose = JSON.parse(methods.getQueryParam(this.ctx.entity, 'portalPose'))
+      } catch {}
+      if (Array.isArray(pose) && pose.length === 6 && pose.every(Number.isFinite) && Math.hypot(...pose.slice(3)) > 0) {
+        this.arrive(player, new THREE.Vector3().fromArray(pose), new THREE.Vector3().fromArray(pose, 3).normalize())
+      } else {
+        this.arrive(player)
+      }
       methods.setQueryParam(this.ctx.entity, 'portalId', null)
+      methods.setQueryParam(this.ctx.entity, 'portalPose', null)
       return
     }
     const inverse = new THREE.Matrix4().copy(this.matrixWorld).invert()
@@ -334,16 +343,23 @@ export class Portal extends Node {
   travel(player, position, inverse) {
     if (!this.doubleside && position.z < 0) return
     const world = this.ctx.world
+    const direction = new THREE.Vector3(0, 0, -1)
+      .applyQuaternion(world.camera.getWorldQuaternion(new THREE.Quaternion()))
+      .transformDirection(inverse)
     if (this.url) {
       if (this.pendingTravel) return
       const url = this.url
       const target = this.target
+      const pose = JSON.stringify([...position.toArray(), ...direction.toArray()])
       this.pendingTravel = this.checkRemoteDestination()
         .then(available => {
           if (!available || !this.mesh || this.url !== url || this.target !== target || this.ctx.entity?.data.mover)
             return
           const destination = new URL(url)
-          if (target) destination.searchParams.set('portalId', target)
+          if (target) {
+            destination.searchParams.set('portalId', target)
+            destination.searchParams.set('portalPose', pose)
+          }
           world.apps.worldMethods.open(this.ctx.entity, destination.href, false)
         })
         .finally(() => {
@@ -359,9 +375,6 @@ export class Portal extends Node {
       this.setStatus('Destination portal not found')
       return
     }
-    const direction = new THREE.Vector3(0, 0, -1)
-      .applyQuaternion(world.camera.getWorldQuaternion(new THREE.Quaternion()))
-      .transformDirection(inverse)
     destination.arrive(player, position, direction)
   }
 

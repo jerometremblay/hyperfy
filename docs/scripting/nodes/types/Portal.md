@@ -69,8 +69,10 @@ model properties without an accompanying script.
 
 Same-world travel preserves lateral offset and viewing angle through the doorway
 half-turn. A one-sided destination places back-side arrivals on its front.
-Remote travel appends `portalId` while preserving the URL's other query parameters
-and fragment; the destination consumes that parameter after successful arrival.
+Remote travel to a portal preserves the same offset and viewing angle using
+`portalId` and `portalPose`, while preserving the URL's other query parameters and
+fragment. The destination consumes both parameters after successful arrival.
+Older links without a pose use the destination's default arrival direction.
 
 Restart the engine and refresh the client after updating. The two shipped legacy
 World Portal script versions now use the native primitive automatically, preserving
