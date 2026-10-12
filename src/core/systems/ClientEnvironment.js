@@ -9,6 +9,8 @@ import { getDayNightState, getWorldTime } from '../extras/dayNight'
 import { createMoon } from '../extras/createMoon'
 import { createStarField, loadStarCatalog } from '../extras/createStarField'
 import { setCelestialRotation } from '../extras/celestialRotation'
+import { getPlanetStates } from '../extras/planetPositions'
+import { createPlanets, updatePlanets } from '../extras/createPlanets'
 
 const sunsetColor = new THREE.Color('#ffb16b')
 const moonDistance = 900
@@ -92,6 +94,7 @@ export class ClientEnvironment extends System {
     this.moon = null
     this.moonDirection = new THREE.Vector3()
     this.moonLight = null
+    this.planets = null
     this.stars = null
     this.constellationLines = null
     this.starsLoading = null
@@ -165,6 +168,8 @@ export class ClientEnvironment extends System {
       this.world.stage.scene.add(this.moon)
       this.moonLight = new THREE.DirectionalLight('#b9caff', 0)
       this.world.stage.scene.add(this.moonLight, this.moonLight.target)
+      this.planets = createPlanets()
+      this.world.stage.scene.add(this.planets)
     }
 
     if (!this.stars && !this.starsLoading && !this.destroyed) {
@@ -280,6 +285,7 @@ export class ClientEnvironment extends System {
     if (!dayNightCycle) {
       if (this.stars) this.stars.visible = false
       this.moon.visible = false
+      this.planets.visible = false
       this.moonLight.intensity = 0
       scene.environmentIntensity = 1
       this.csm.lightDirection = this.skyInfo.sunDirection
@@ -292,10 +298,16 @@ export class ClientEnvironment extends System {
 
     const date = new Date(getWorldTime(this.world.settings, now))
     const state = getDayNightState(date, latitude, longitude)
+    const twilight = THREE.MathUtils.smoothstep(state.altitude, -18, -6)
+    updatePlanets(
+      this.planets,
+      getPlanetStates(date, latitude, longitude),
+      1 - twilight,
+      this.world.settings.constellationLines
+    )
     if (this.stars) {
       setCelestialRotation(this.stars.material.uniforms.celestialRotation.value, date, latitude, longitude)
       // Fully visible at astronomical night; disappear by civil twilight.
-      const twilight = THREE.MathUtils.smoothstep(state.altitude, -18, -6)
       this.stars.material.uniforms.opacity.value = 1 - twilight
       this.stars.visible = twilight < 1
     }
@@ -419,6 +431,12 @@ export class ClientEnvironment extends System {
     }
     this.constellationLines?.geometry.dispose()
     this.constellationLines?.material.dispose()
+    this.planets?.removeFromParent()
+    this.planets?.traverse(object => {
+      object.geometry?.dispose()
+      object.material?.uniforms.map?.value?.dispose()
+      object.material?.dispose()
+    })
     this.csm?.dispose()
     this.moonLight?.removeFromParent()
     this.moonLight?.target.removeFromParent()

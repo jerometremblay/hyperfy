@@ -53,7 +53,12 @@ function photo(label) {
   div.append(title, image)
   document.querySelector('main').append(div)
 }
-function read(render = () => renderer.render(scene, camera)) {
+function read(
+  render = () => {
+    renderer.clear()
+    renderer.render(scene, camera)
+  }
+) {
   render()
   const gl = renderer.getContext(),
     data = new Uint8Array(width * height * 4)
@@ -98,6 +103,7 @@ check('Constellation toggle removes lines', difference(read(), night) === 0)
 // Isolate stars to test infinity independently of the finite existing Moon/sky.
 env.solarSky.visible = false
 env.moon.visible = false
+env.planets.visible = false
 const fixed = read()
 check('Catalog uses one draw call', renderer.info.render.calls === 1, { calls: renderer.info.render.calls })
 world.rig.position.set(10000, 200, -8000)
@@ -116,11 +122,13 @@ world.settings.set('constellationLines', true)
 env.updateDayNight(now)
 env.solarSky.visible = false
 env.moon.visible = false
+env.planets.visible = false
 check('Below-horizon constellation lines are masked', difference(read(), new Uint8Array(width * height * 4)) === 0)
 world.settings.set('constellationLines', false)
 env.updateDayNight(now)
 env.solarSky.visible = false
 env.moon.visible = false
+env.planets.visible = false
 
 // Place a known bright point at screen center for occlusion and portal projection.
 env.stars.visible = false
@@ -198,6 +206,38 @@ env.updateDayNight(now)
 world.settings.dayNightCycle = false
 env.updateDayNight(now)
 check('Custom sky mode hides stars', !env.stars.visible)
+
+world.settings.dayNightCycle = true
+world.settings.constellationLines = false
+env.updateDayNight(now)
+const saturn = env.planets.planets.find(planet => planet.name === 'Saturn')
+aim(saturn.direction.value)
+const planetDisc = read()
+photo('Saturn · plain disc')
+env.planets.visible = false
+const planetPixels = difference(planetDisc, read())
+check('Planet disc renders at its computed bearing', planetPixels > 0, { planetPixels })
+world.settings.constellationLines = true
+env.updateDayNight(now)
+env.constellationLines.visible = false // Isolate planet names from constellation connections.
+const namedPlanet = read()
+const labelPixels = difference(namedPlanet, planetDisc)
+check('Constellation mode adds planet circle and name', labelPixels > 100, { labelPixels })
+photo('Saturn · thin circle and name enabled')
+env.solarSky.visible = false
+env.moon.visible = false
+const fixedPlanet = read()
+camera.position.x += 10000
+camera.updateMatrixWorld()
+const planetTranslationPixels = difference(fixedPlanet, read())
+check('Planet disc and name have no translation parallax', planetTranslationPixels === 0, { planetTranslationPixels })
+world.settings.constellationLines = false
+env.updateDayNight(now)
+aim(saturn.direction.value)
+check(
+  'Turning off constellations hides planet markers',
+  env.planets.planets.every(planet => !planet.marker.visible)
+)
 
 // Exercise the actual same-world portal renderer, not just a projected camera.
 world.settings.dayNightCycle = true
