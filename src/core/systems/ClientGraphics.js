@@ -176,8 +176,11 @@ export class ClientGraphics extends System {
     const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
     if (!portal.doubleside && side < 0) return
     const uniforms = portal.mesh.material.uniforms
-    const destination = !portal.url && [...this.portals].find(item => item.portalId === portal.target && item !== portal)
-    uniforms.linked.value = !!destination && !!portal.target
+    const destination = portal.url
+      ? this.world.portalPreviews?.get(portal)
+      : [...this.portals].find(item => item.portalId === portal.target && item !== portal)
+    const destinationWorld = destination?.world || this.world
+    uniforms.linked.value = !!destination && (!!portal.target || !!portal.url)
     if (!uniforms.linked.value) return
 
     const renderer = this.renderer
@@ -214,12 +217,23 @@ export class ClientGraphics extends System {
     const xrEnabled = renderer.xr.enabled
     const shadows = renderer.shadowMap.autoUpdate
     const toneMapping = renderer.toneMapping
-    const visible = [...this.portals].map(item => [item.mesh, item.mesh.visible])
+    const visible = [...destinationWorld.graphics.portals].map(item => [item.mesh, item.mesh.visible])
     // Spark keeps camera-dependent LOD and sort buffers. Its built-in override
     // lets this view own those buffers without changing the active world's view.
-    const spark = this.world.stage.getSparkRenderer?.()
+    const spark = destinationWorld.stage.getSparkRenderer?.()
     const SparkRenderer = spark?.constructor
     const previousSpark = SparkRenderer?.sparkOverride
+    if (view.sparkSource !== spark) {
+      const previous = view.spark
+      if (previous) {
+        if (view.sparkUpdate) view.sparkUpdate.then(() => previous.dispose())
+        else previous.dispose()
+      }
+      view.spark = null
+      view.sparkUpdate = null
+      view.sparkUpdating = false
+      view.sparkSource = spark
+    }
     if (spark) {
       if (!view.spark) {
         view.spark = new SparkRenderer({ renderer, timer: spark.timer, autoUpdate: false, enableLod: spark.enableLod })
@@ -229,12 +243,15 @@ export class ClientGraphics extends System {
       view.spark.maxStdDev = spark.maxStdDev
       if (!view.sparkUpdating) {
         view.sparkUpdating = true
-        view.spark
-          .update({ scene: this.world.stage.scene, camera: view.camera.clone() })
+        const current = view.spark
+        view.sparkUpdate = current
+          .update({ scene: destinationWorld.stage.scene, camera: view.camera.clone() })
           .catch(error => console.error('[portal] splat update failed', error))
           .finally(() => {
+            if (view.spark !== current) return
+            view.sparkUpdate = null
             view.sparkUpdating = false
-            if (view.disposed) view.spark.dispose()
+            if (view.disposed) current.dispose()
           })
       }
     }
@@ -248,7 +265,16 @@ export class ClientGraphics extends System {
       renderer.state.buffers.depth.setMask(true)
       renderer.clear()
       if (SparkRenderer) SparkRenderer.sparkOverride = view.spark
-      renderer.render(this.world.stage.scene, view.camera)
+      if (destinationWorld !== this.world) {
+        view.camera.matrixWorld.decompose(destinationWorld.rig.position, destinationWorld.rig.quaternion, destinationWorld.rig.scale)
+        destinationWorld.camera.projectionMatrix.copy(view.camera.projectionMatrix)
+        destinationWorld.camera.matrixWorld.copy(view.camera.matrixWorld)
+        destinationWorld.camera.matrixWorldInverse.copy(view.camera.matrixWorldInverse)
+        destinationWorld.environment.lateUpdate(0)
+        destinationWorld.environment.csm.camera = view.camera
+        destinationWorld.environment.csm.update()
+      }
+      renderer.render(destinationWorld.stage.scene, view.camera)
     } finally {
       if (SparkRenderer) SparkRenderer.sparkOverride = previousSpark
       for (const [mesh, value] of visible) mesh.visible = value

@@ -22,6 +22,7 @@ import { cleaner } from './cleaner'
 import { BrowserCapture } from './BrowserCapture'
 import { proxyWebViewRequest } from './WebViewProxy'
 import { getPortalStatus } from './portalStatus'
+import { PortalPreviews, PORTAL_PREVIEW_VERSION } from './PortalPreviews'
 import { appHasBrowserSource } from '../core/utils/browser'
 
 const execAsync = promisify(exec)
@@ -120,6 +121,8 @@ await world.init({
   collections: collections.list,
 })
 world.network.browserCapture = browserCapture
+const portalPreviews = new PortalPreviews(world)
+world.network.portalPreviews = portalPreviews
 world.entities.on('removed', entity => {
   if (entity.isApp) {
     browserCapture.close(entity.data.id).catch(error => {
@@ -374,7 +377,14 @@ fastify.post('/api/restore', async (req, reply) => {
   return { success: true, message: 'World restored. Restart server to apply changes.' }
 })
 
-fastify.get('/api/portal-status', async request => getPortalStatus(world, request.query?.portalId))
+fastify.get('/api/portal-status', async request => ({
+  ...getPortalStatus(world, request.query?.portalId),
+  preview: {
+    version: PORTAL_PREVIEW_VERSION,
+    wsUrl: new URL('./portal-preview', process.env.PUBLIC_WS_URL).href,
+    apiUrl: process.env.PUBLIC_API_URL,
+  },
+}))
 
 fastify.get('/health', async (request, reply) => {
   try {
@@ -435,6 +445,7 @@ try {
 }
 
 async function worldNetwork(fastify) {
+  fastify.get('/portal-preview', { websocket: true }, ws => portalPreviews.connect(ws))
   fastify.get('/ws', { websocket: true }, (ws, req) => {
     world.network.onConnection(ws, req.query)
   })

@@ -372,6 +372,7 @@ export class ClientEnvironment extends System {
   }
 
   destroy() {
+    this.skyN++ // Cancel environment loads that finish after world disposal.
     this.world.prefs.off('change', this.onPrefsChange)
     this.world.settings.off('change', this.onSettingsChange)
     this.world.graphics.off('resize', this.onViewportResize)

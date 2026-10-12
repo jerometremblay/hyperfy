@@ -95,6 +95,7 @@ export class ServerNetwork extends System {
 
   send(name, data, ignoreSocketId) {
     // console.log('->>>', name, data)
+    this.portalPreviews?.event(name, data)
     const packet = writePacket(name, data)
     this.sockets.forEach(socket => {
       if (socket.id === ignoreSocketId) return
@@ -764,6 +765,12 @@ export class ServerNetwork extends System {
         ? { clientTime: time.clientTime, serverTime: this.getServerTime() }
         : time
     )
+  }
+
+  destroy() {
+    this.portalPreviews?.destroy()
+    clearInterval(this.socketIntervalId)
+    clearTimeout(this.saveTimerId)
   }
 
   onDisconnect = (socket, code) => {

@@ -49,3 +49,102 @@ for (const mode of ['direct', 'composer', 'xr', 'exception']) {
     assert.equal(graphics.renderer.toneMapping, THREE.NoToneMapping)
   })
 }
+
+test('a portal switches Spark view buffers to the new destination and disposes an unfinished old view safely', async () => {
+  class Spark {
+    constructor({ timer }) {
+      this.timer = timer
+    }
+    update() {
+      return new Promise(resolve => {
+        this.finish = resolve
+      })
+    }
+    dispose() {
+      this.disposed = true
+    }
+  }
+  const makeDestination = timer => {
+    const spark = new Spark({ timer })
+    return {
+      matrixWorld: new THREE.Matrix4(),
+      world: {
+        stage: { scene: new THREE.Scene(), getSparkRenderer: () => spark },
+        graphics: { portals: new Set() },
+        rig: new THREE.Object3D(),
+        camera: new THREE.PerspectiveCamera(),
+        environment: { lateUpdate() {}, csm: { update() {} } },
+      },
+    }
+  }
+  let destination = makeDestination('first-world')
+  const world = { stage: { scene: new THREE.Scene() }, portalPreviews: { get: () => destination } }
+  const graphics = new ClientGraphics(world)
+  world.graphics = graphics
+  let target = null
+  graphics.renderer = {
+    xr: { enabled: true },
+    shadowMap: { autoUpdate: true },
+    toneMapping: THREE.ACESFilmicToneMapping,
+    getDrawingBufferSize: value => value.set(256, 256),
+    getRenderTarget: () => target,
+    getActiveCubeFace: () => 0,
+    getActiveMipmapLevel: () => 0,
+    getCurrentViewport: value => value.set(0, 0, 256, 256),
+    setRenderTarget(value) {
+      target = value
+    },
+    state: { buffers: { depth: { setMask() {} } }, viewport() {} },
+    clear() {},
+    render(scene) {
+      assert.equal(scene, destination.world.stage.scene)
+    },
+  }
+  const eye = new THREE.PerspectiveCamera(70, 1, 0.1, 100)
+  eye.position.z = 3
+  eye.updateMatrixWorld()
+  const view = {
+    camera: new THREE.PerspectiveCamera(),
+    textureMatrix: new THREE.Matrix4(),
+    target: new THREE.WebGLRenderTarget(1, 1),
+    lastRender: -Infinity,
+  }
+  const portal = {
+    url: 'https://destination.example',
+    target: 'exit',
+    matrixWorld: new THREE.Matrix4(),
+    resolution: 256,
+    updateRate: 0,
+    mesh: { material: { uniforms: { linked: {}, preview: {}, textureMatrix: {} } } },
+    getView: () => view,
+  }
+  graphics.renderPortal(portal, eye)
+  const first = view.spark
+  const firstUpdate = view.sparkUpdate
+  assert.equal(first.timer, 'first-world')
+  destination = makeDestination('second-world')
+  graphics.renderPortal(portal, eye)
+  const second = view.spark
+  const secondUpdate = view.sparkUpdate
+  assert.notEqual(first, second)
+  assert.equal(second.timer, 'second-world')
+  assert.equal(first.disposed, undefined)
+  first.finish()
+  await firstUpdate
+  await Promise.resolve()
+  assert.equal(first.disposed, true)
+  assert.equal(view.sparkUpdating, true, 'finishing the old view must not clear the new view update')
+  second.finish()
+  await secondUpdate
+  assert.equal(view.sparkUpdating, false)
+  assert.equal(second.disposed, undefined)
+  destination.world.stage.getSparkRenderer = () => null
+  graphics.renderPortal(portal, eye)
+  assert.equal(second.disposed, true)
+  assert.equal(view.spark, null)
+  assert.equal(target, null)
+  assert.equal(graphics.renderer.xr.enabled, true)
+  assert.equal(graphics.renderer.shadowMap.autoUpdate, true)
+  assert.equal(graphics.renderer.toneMapping, THREE.ACESFilmicToneMapping)
+  view.target.dispose()
+})

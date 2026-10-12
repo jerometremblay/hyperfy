@@ -77,8 +77,10 @@ export class Browser extends Node {
     const apiUrl = this.ctx.world.network.apiUrl
     if (!apiUrl) return
 
-    this.createKeyboardInput()
-    window.addEventListener('wheel', this.onWheel, { passive: false, capture: true })
+    if (!this.ctx.world.isPreview) {
+      this.createKeyboardInput()
+      window.addEventListener('wheel', this.onWheel, { passive: false, capture: true })
+    }
 
     const image = document.createElement('img')
     image.crossOrigin = 'anonymous'

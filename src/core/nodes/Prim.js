@@ -132,13 +132,13 @@ const getGeometry = (type, size, extrudeOptions) => {
 const materialCache = new Map()
 
 // Create material with specific properties
-const getMaterial = props => {
+const getMaterial = (props, cache = materialCache) => {
   // Create a cache key from material properties
   const cacheKey = `${props.metalness}_${props.roughness}_${props.opacity}_${props.texture}_${props.doubleside}`
 
   // Check cache first
-  if (materialCache.has(cacheKey)) {
-    return materialCache.get(cacheKey)
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey)
   }
 
   const material = new THREE.MeshStandardMaterial({
@@ -159,7 +159,7 @@ const getMaterial = props => {
   })
 
   // Cache the material
-  materialCache.set(cacheKey, material)
+  cache.set(cacheKey, material)
 
   return material
 }
@@ -257,6 +257,7 @@ export class Prim extends Node {
     const geometry = getGeometry(this._type, size, this.getExtrudeOptions())
 
     // Create material with current properties
+    const cache = this.ctx.world.isPreview ? (this.ctx.world.primMaterials ||= new Map()) : materialCache
     const material = getMaterial({
       // color: this._color,
       // emissive: this._emissive,
@@ -264,9 +265,9 @@ export class Prim extends Node {
       metalness: this._metalness,
       roughness: this._roughness,
       opacity: quantizeOpacity(this._opacity), // reduce material variations
-      texture: this._texture,
+      texture: this._texture ? this.ctx.world.resolveURL(this._texture) : null,
       doubleside: this._doubleside,
-    })
+    }, cache)
 
     // Get loader if available (client-side only)
     const loader = this.ctx.world.loader || null
@@ -309,7 +310,7 @@ export class Prim extends Node {
     }
 
     // Create physics if enabled
-    if (this._physics && !this.ctx.moving) {
+    if (this._physics && !this.ctx.moving && !this.ctx.world.isPreview) {
       this.mountPhysics(size)
     }
   }

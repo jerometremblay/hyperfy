@@ -119,7 +119,7 @@ export class UI extends Node {
   }
 
   build() {
-    if (!isBrowser) return
+    if (!isBrowser || (this.ctx.world.isPreview && this._space === 'screen')) return
     this.unbuild()
     this.canvas = document.createElement('canvas')
     this.canvas.width = this._width * this._res
@@ -227,7 +227,7 @@ export class UI extends Node {
   }
 
   draw() {
-    if (!isBrowser) return
+    if (!isBrowser || (this.ctx.world.isPreview && this._space === 'screen')) return
     this.yogaNode.calculateLayout(this._width * this._res, this._height * this._res, Yoga.DIRECTION_LTR)
     const ctx = this.canvasCtx
     ctx.clearRect(0, 0, this._width * this._res, this._height * this._res)

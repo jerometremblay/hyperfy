@@ -473,6 +473,11 @@ export class App extends Entity {
   }
 
   fetch = async (url, options = {}) => {
+    if (this.world.isPreview) {
+      if (!['GET', 'HEAD'].includes((options.method || 'GET').toUpperCase())) return
+      options = { ...options, credentials: 'omit' }
+      url = this.world.resolveURL(url)
+    }
     try {
       const resp = await fetch(url, {
         ...options,

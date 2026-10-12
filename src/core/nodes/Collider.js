@@ -48,6 +48,7 @@ export class Collider extends Node {
   }
 
   mount() {
+    if (this.ctx.world.isPreview) return
     let geometry
     let pmesh
     if (this._type === 'box') {

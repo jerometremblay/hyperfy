@@ -8,7 +8,6 @@ import { getSparkModule } from '../utils/sparkCache'
 
 // Spark.js will be dynamically imported on client-side only
 // Spark 2.0: SparkRenderer no longer needs camera attachment (auto camera-relative)
-let sparkRendererInstance = null
 
 // Pre-computed 180° rotation quaternion around X-axis for splat orientation fix
 // Splat files are typically exported upside-down and need this internal correction
@@ -84,6 +83,7 @@ export class Stage extends System {
   constructor(world) {
     super(world)
     this.scene = new THREE.Scene()
+    this.sparkRenderer = null
     this.models = new Map() // id -> Model
     this.splatMeshes = new Map() // id -> SplatMesh instances
     this.raycastObjects = new Set()
@@ -190,6 +190,7 @@ export class Stage extends System {
       destroy: () => {
         this.scene.remove(mesh)
         this.octree.remove(sItem)
+        if (this.world.isPreview) material.dispose()
       },
     }
   }
@@ -236,6 +237,10 @@ export class Stage extends System {
     if (raw.metalnessMap) {
       raw.metalnessMap = raw.metalnessMap.clone()
       textures.push(raw.metalnessMap)
+    }
+    material.dispose = () => {
+      raw.dispose()
+      for (const texture of textures) texture.dispose()
     }
     this.world.setupMaterial(raw)
     const proxy = {
@@ -498,7 +503,7 @@ export class Stage extends System {
       const { SplatMesh, SparkRenderer } = await getSparkModule()
 
       // Create SparkRenderer singleton (Spark 2.0: no camera attachment needed)
-      if (!sparkRendererInstance && this.world.camera && this.world.graphics?.renderer) {
+      if (!this.sparkRenderer && this.world.camera && this.world.graphics?.renderer) {
         const tier = getDevicePerformanceTier()
         const lodSplatCount = getDefaultLodSplatCount()
         const lodSplatScale = getDefaultLodSplatScale()
@@ -509,7 +514,7 @@ export class Stage extends System {
                           Math.sqrt(8) // Desktop: ~2.83
 
         // Spark 2.0: LOD settings are now on Renderer level
-        sparkRendererInstance = new SparkRenderer({
+        this.sparkRenderer = new SparkRenderer({
           renderer: this.world.graphics.renderer,
           enableLod: true,
           lodSplatCount: lodSplatCount,
@@ -519,9 +524,9 @@ export class Stage extends System {
 
         // Render splats early in transparent pass so UI/transparent meshes render on top
         // Three.js renders lower renderOrder first in the transparent pass
-        sparkRendererInstance.renderOrder = -1000
+        this.sparkRenderer.renderOrder = -1000
 
-        this.scene.add(sparkRendererInstance)
+        this.scene.add(this.sparkRenderer)
       }
 
       // Detect file type from source URL using shared utility
@@ -584,27 +589,27 @@ export class Stage extends System {
 
   // Spark 2.0: Global LOD control methods
   getSparkRenderer() {
-    return sparkRendererInstance
+    return this.sparkRenderer
   }
 
   setLodSplatScale(scale) {
-    if (sparkRendererInstance) {
-      sparkRendererInstance.lodSplatScale = Math.max(0.1, scale)
+    if (this.sparkRenderer) {
+      this.sparkRenderer.lodSplatScale = Math.max(0.1, scale)
     }
   }
 
   getLodSplatScale() {
-    return sparkRendererInstance?.lodSplatScale || getDefaultLodSplatScale()
+    return this.sparkRenderer?.lodSplatScale || getDefaultLodSplatScale()
   }
 
   setLodSplatCount(count) {
-    if (sparkRendererInstance) {
-      sparkRendererInstance.lodSplatCount = count
+    if (this.sparkRenderer) {
+      this.sparkRenderer.lodSplatCount = count
     }
   }
 
   getLodSplatCount() {
-    return sparkRendererInstance?.lodSplatCount || getDefaultLodSplatCount()
+    return this.sparkRenderer?.lodSplatCount || getDefaultLodSplatCount()
   }
 
   // Get current device tier for debugging
@@ -613,6 +618,15 @@ export class Stage extends System {
   }
 
   destroy() {
+    if (this.world.isPreview) {
+      for (const model of this.models.values()) {
+        model.iMesh.removeFromParent()
+        model.iMesh.dispose()
+        model.material.dispose()
+        model.geometry.dispose()
+      }
+      this.defaultMaterial?.dispose()
+    }
     this.models.clear()
     this.raycastObjects.clear()
     this.raycastObjectHits.length = 0
@@ -626,10 +640,10 @@ export class Stage extends System {
     this.splatMeshes.clear()
 
     // Clean up SparkRenderer
-    if (sparkRendererInstance) {
-      this.scene.remove(sparkRendererInstance)
-      sparkRendererInstance.dispose?.()
-      sparkRendererInstance = null
+    if (this.sparkRenderer) {
+      this.scene.remove(this.sparkRenderer)
+      this.sparkRenderer.dispose?.()
+      this.sparkRenderer = null
     }
   }
 }

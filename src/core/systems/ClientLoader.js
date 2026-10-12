@@ -40,6 +40,7 @@ export class ClientLoader extends System {
 
   start() {
     this.vrmHooks = {
+      isPreview: this.world.isPreview,
       camera: this.world.camera,
       scene: this.world.stage.scene,
       octree: this.world.stage.octree,
@@ -190,6 +191,7 @@ export class ClientLoader extends System {
         const glb = await this.gltfLoader.parseAsync(buffer)
         const node = glbToNodes(glb, this.world)
         const model = {
+          dispose: () => disposeGLB(glb),
           toNodes() {
             return node.clone(true)
           },
@@ -224,6 +226,7 @@ export class ClientLoader extends System {
         const node2 = createNode('avatar', { id: 'avatar', factory, hooks })
         node.add(node2)
         const avatar = {
+          dispose: () => disposeGLB(glb),
           factory,
           hooks,
           toNodes(customHooks) {
@@ -258,6 +261,13 @@ export class ClientLoader extends System {
       if (type === 'splat') {
         return this.createSplatData(key, url, file)
       }
+    }).then(result => {
+      if (this.destroyed && this.world.isPreview) {
+        result?.dispose?.()
+        this.results.delete(key)
+        this.files.delete(this.world.resolveURL(url))
+      }
+      return result
     })
     this.promises.set(key, promise)
     return promise
@@ -335,6 +345,7 @@ export class ClientLoader extends System {
       promise = this.gltfLoader.loadAsync(localUrl).then(glb => {
         const node = glbToNodes(glb, this.world)
         const model = {
+          dispose: () => disposeGLB(glb),
           toNodes() {
             return node.clone(true)
           },
@@ -369,6 +380,7 @@ export class ClientLoader extends System {
         const node2 = createNode('avatar', { id: 'avatar', factory, hooks })
         node.add(node2)
         const avatar = {
+          dispose: () => disposeGLB(glb),
           factory,
           hooks,
           toNodes(customHooks) {
@@ -422,6 +434,10 @@ export class ClientLoader extends System {
   }
 
   destroy() {
+    this.destroyed = true
+    if (this.world.isPreview) {
+      for (const result of this.results.values()) result?.dispose?.()
+    }
     this.files.clear()
     this.promises.clear()
     this.results.clear()
@@ -600,4 +616,16 @@ function createVideoFactory(world, url) {
       return source.createHandle()
     },
   }
+}
+
+function disposeGLB(glb) {
+  const resources = new Set()
+  glb.scene.traverse(object => {
+    if (object.geometry) resources.add(object.geometry)
+    for (const material of [object.material].flat().filter(Boolean)) {
+      resources.add(material)
+      for (const value of Object.values(material)) if (value?.isTexture) resources.add(value)
+    }
+  })
+  for (const resource of resources) resource.dispose()
 }

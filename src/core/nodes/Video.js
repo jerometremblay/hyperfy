@@ -295,6 +295,7 @@ export class Video extends Node {
 
     this.instance.loop = this._loop
 
+    if (this.ctx.world.isPreview) return
     this.gain = this.ctx.world.audio.ctx.createGain()
     this.gain.gain.value = this._volume
     this.gain.connect(this.ctx.world.audio.groupGains.music)
