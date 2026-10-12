@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import test from 'node:test'
+import test, { mock } from 'node:test'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { build } from 'esbuild'
@@ -9,6 +9,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 const bundle = await build({
   stdin: {
     contents: `export { Portal } from './src/core/nodes/Portal.js';
+      export { App } from './src/core/entities/App.js';
       export { ClientGraphics } from './src/core/systems/ClientGraphics.js';
       export { glbToNodes } from './src/core/extras/glbToNodes.js';
       export { getPortalCameraDistance } from './src/core/extras/portalCamera.js';`,
@@ -19,8 +20,17 @@ const bundle = await build({
   platform: 'node',
   write: false,
 })
-const { Portal, ClientGraphics, glbToNodes, getPortalCameraDistance } = await import(
+const { App, Portal, ClientGraphics, glbToNodes, getPortalCameraDistance } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`
+)
+
+mock.method(
+  globalThis,
+  'fetch',
+  async () =>
+    new Response(JSON.stringify({ available: true }), {
+      headers: { 'content-type': 'application/json' },
+    })
 )
 
 function context() {
@@ -78,7 +88,7 @@ function mounted(data = {}, ctx = context()) {
   return { portal, ...ctx }
 }
 
-test('portal defaults to one side, supports proxy edits, copying, and cleans up native updates', () => {
+test('portal defaults to one side, supports proxy edits, copying, and cleans up native updates', async () => {
   const { portal, world, hot } = mounted()
   assert.equal(portal.doubleside, false)
   assert.equal(portal.mesh.material.side, THREE.DoubleSide)
@@ -108,7 +118,7 @@ test('portal defaults to one side, supports proxy edits, copying, and cleans up 
 
 for (const doubleside of [false, true]) {
   for (const remote of [false, true]) {
-    test(`${doubleside ? 'two' : 'one'}-sided native ${remote ? 'remote' : 'same-world'} entry needs no script`, () => {
+    test(`${doubleside ? 'two' : 'one'}-sided native ${remote ? 'remote' : 'same-world'} entry needs no script`, async () => {
       const ctx = context()
       const destination = new Portal({ portalId: 'exit', position: [10, 1.2, 0] })
       destination.activate(ctx)
@@ -124,15 +134,19 @@ for (const doubleside of [false, true]) {
       const count = () => ctx.opened.length + ctx.teleports.length
       ctx.player.base.position.set(0, 0, -0.2)
       portal.update()
+      await portal.pendingTravel
       assert.equal(count(), doubleside ? 1 : 0)
       if (!doubleside) {
         ctx.player.base.position.set(0, 0, -1)
         portal.update()
+        await portal.pendingTravel
         ctx.player.base.position.set(0, 0, 1)
-        portal.update() // Crossed from the back; must not travel.
+        portal.update()
+        await portal.pendingTravel // Crossed from the back; must not travel.
         assert.equal(count(), 0)
         ctx.player.base.position.set(0, 0, 0.2)
         portal.update()
+        await portal.pendingTravel
         assert.equal(count(), 1)
       }
       if (remote) assert.equal(ctx.opened[0], 'https://example.com/world?foo=1&portalId=exit#view')
@@ -147,7 +161,7 @@ for (const doubleside of [false, true]) {
   }
 }
 
-test('native entry follows nested, rotated, scaled transforms and catches fast front crossings', () => {
+test('native entry follows nested, rotated, scaled transforms and catches fast front crossings', async () => {
   const { portal, player, opened } = mounted({
     url: 'https://example.com',
     position: [4, 1.2, 6],
@@ -156,33 +170,39 @@ test('native entry follows nested, rotated, scaled transforms and catches fast f
   })
   player.base.position.set(0, -1.2, 2).applyMatrix4(portal.matrixWorld)
   portal.update()
+  await portal.pendingTravel
   player.base.position.set(0, -1.2, -2).applyMatrix4(portal.matrixWorld)
   portal.update()
+  await portal.pendingTravel
   assert.equal(opened.length, 1)
   portal.deactivate()
 })
 
-test('remote arrival waits for player readiness, consumes query, and clears the exit', () => {
+test('remote arrival waits for player readiness, consumes query, and clears the exit', async () => {
   const { portal, player, setQuery, getQuery, teleports } = mounted({ portalId: 'exit', position: [4, 1.2, 6] })
   setQuery('exit')
   player.controller.controller = null
   portal.update()
+  await portal.pendingTravel
   assert.equal(teleports.length, 0)
   player.controller.controller = {}
   portal.update()
+  await portal.pendingTravel
   assert.equal(teleports.length, 1)
   assert.deepEqual(teleports[0].position.toArray(), [4, 0, 7])
   assert.equal(getQuery(), null)
   portal.update()
+  await portal.pendingTravel
   assert.equal(teleports.length, 1)
   portal.deactivate()
 })
 
-test('moving portals do not travel and server portals do not register client updates', () => {
+test('moving portals do not travel and server portals do not register client updates', async () => {
   const state = context()
   const portal = new Portal({ url: 'https://example.com', position: [0, 1.2, 0] })
   portal.activate({ ...state, moving: true })
   portal.update()
+  await portal.pendingTravel
   assert.equal(state.opened.length, 0)
   portal.deactivate()
   const server = new Portal()
@@ -190,7 +210,7 @@ test('moving portals do not travel and server portals do not register client upd
   server.deactivate()
 })
 
-test('one-sided camera clearance stops only front approaches', () => {
+test('one-sided camera clearance stops only front approaches', async () => {
   const portal = new Portal({ width: 2, height: 3 })
   const front = new THREE.Vector3(0, 0, 1)
   const back = new THREE.Vector3(0, 0, -1)
@@ -235,13 +255,14 @@ test('catalog package loads and configures a native portal with no JavaScript as
   assert.ok(entity.fields.some(field => field.key === 'destination'))
   assert.ok(entity.fields.some(field => field.key === 'destinationPortalId'))
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.opened.length, 1)
   root.deactivate()
   assert.equal(ctx.hot.size, 0)
 })
 
 for (const remote of [false, true]) {
-  test(`inactive side never triggers ${remote ? 'remote' : 'same-world'} travel during slow or fast crossings`, () => {
+  test(`inactive side never triggers ${remote ? 'remote' : 'same-world'} travel during slow or fast crossings`, async () => {
     for (const steps of [
       [-1, -0.2, -0.01, 0.01, 0.2, 1],
       [-2, 2],
@@ -256,6 +277,7 @@ for (const remote of [false, true]) {
       for (const z of steps) {
         ctx.player.base.position.set(0, -1.2, z).applyMatrix4(portal.matrixWorld)
         portal.update()
+        await portal.pendingTravel
       }
       portal.travel(ctx.player, new THREE.Vector3(0, -1.2, -0.1), new THREE.Matrix4())
       assert.equal(ctx.opened.length, 0)
@@ -266,44 +288,52 @@ for (const remote of [false, true]) {
   })
 }
 
-test('moving a linked portal does not turn the old/new local positions into a player crossing', () => {
+test('moving a linked portal does not turn the old/new local positions into a player crossing', async () => {
   const ctx = context()
   const destination = new Portal({ portalId: 'exit', position: [50, 1.2, 0] })
   destination.activate(ctx)
   const { portal } = mounted({ portalId: 'entry', target: 'exit' }, ctx)
   ctx.player.base.position.set(10, 0, 10)
   portal.update()
+  await portal.pendingTravel
   portal.position.set(20, 1.2, 20)
   portal.clean() // Builder transforms are committed through Node.clean / Stage.clean.
   assert.ok(portal.matrixWorld.elements[12] === 20 && portal.matrixWorld.elements[14] === 20)
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.teleports.length, 0, 'moving the portal must not teleport a stationary player')
 
   ctx.player.base.position.set(20, 0, 21)
   portal.update()
+  await portal.pendingTravel
   ctx.player.base.position.set(20, 0, 20.2)
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.teleports.length, 1)
   assert.ok(ctx.teleports[0].position.distanceTo(new THREE.Vector3(50, 0, 1)) < 0.000001)
   portal.deactivate()
   destination.deactivate()
 })
 
-test('portal travel follows current app move state and resumes after placement without rebuilding', () => {
+test('portal travel follows current app move state and resumes after placement without rebuilding', async () => {
   const ctx = context()
   const entity = { data: { id: 'entry', mover: 'builder' } }
   const portal = new Portal({ position: [0, 1.2, 0], url: 'https://example.com' })
   portal.activate({ world: ctx.world, entity, moving: true })
   ctx.player.base.position.set(0, 0, 0.2)
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.opened.length, 0)
   entity.data.mover = null // App.modify ends a move without rebuilding the node.
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.opened.length, 0, 'placement over the player must not trigger travel')
   ctx.player.base.position.set(0, 0, 1)
   portal.update()
+  await portal.pendingTravel
   ctx.player.base.position.set(0, 0, 0.2)
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.opened.length, 1, 'a portal created in build mode must work after placement')
   portal.deactivate()
 
@@ -315,7 +345,7 @@ test('portal travel follows current app move state and resumes after placement w
   active.deactivate()
 })
 
-test('travel follows a moved, rotated and scaled destination under an app root', () => {
+test('travel follows a moved, rotated and scaled destination under an app root', async () => {
   const ctx = context()
   const root = glbToNodes({ scene: new THREE.Scene(), animations: [] }, ctx.world)
   const destination = new Portal({ portalId: 'exit', position: [0, 1.2, 0] })
@@ -328,6 +358,7 @@ test('travel follows a moved, rotated and scaled destination under an app root',
   root.clean()
   ctx.player.base.position.set(0, 0, 0.2)
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.teleports.length, 1)
   assert.ok(ctx.teleports[0].position.distanceTo(new THREE.Vector3(30.6, 0, 40)) < 0.000001)
   assert.equal(destination.portalId, 'exit')
@@ -335,22 +366,24 @@ test('travel follows a moved, rotated and scaled destination under an app root',
   root.deactivate()
 })
 
-test('a fast diagonal crossing arrives at the aperture offset, not the previous distant sample', () => {
+test('a fast diagonal crossing arrives at the aperture offset, not the previous distant sample', async () => {
   const ctx = context()
   const destination = new Portal({ portalId: 'exit', position: [50, 1.2, 0] })
   destination.activate(ctx)
   const { portal } = mounted({ portalId: 'entry', target: 'exit' }, ctx)
   ctx.player.base.position.set(10, 0, 10)
   portal.update()
+  await portal.pendingTravel
   ctx.player.base.position.set(-10, 0, -10)
   portal.update()
+  await portal.pendingTravel
   assert.equal(ctx.teleports.length, 1)
   assert.ok(ctx.teleports[0].position.distanceTo(new THREE.Vector3(50, 0, 1)) < 0.000001)
   portal.deactivate()
   destination.deactivate()
 })
 
-test('one-sided portals skip preview work behind the aperture, including transformed portals', () => {
+test('one-sided portals skip preview work behind the aperture, including transformed portals', async () => {
   const graphics = new ClientGraphics({ stage: { scene: new THREE.Scene() } })
   const transform = new THREE.Matrix4().compose(
     new THREE.Vector3(4, 1, 6),
@@ -382,7 +415,7 @@ test('one-sided portals skip preview work behind the aperture, including transfo
 
 for (const destinationDoubleSide of [false, true]) {
   for (const entrySide of [-1, 1]) {
-    test(`entry from side ${entrySide} honors direction and ${destinationDoubleSide ? 'two' : 'one'}-sided destination arrival`, () => {
+    test(`entry from side ${entrySide} honors direction and ${destinationDoubleSide ? 'two' : 'one'}-sided destination arrival`, async () => {
       const ctx = context()
       const sourceRotation = Math.PI / 3
       const destinationRotation = -Math.PI / 4
@@ -407,6 +440,7 @@ for (const destinationDoubleSide of [false, true]) {
       ctx.world.camera.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), worldDirection)
       ctx.player.base.position.set(0.1, -1.2, entrySide * 0.2).applyMatrix4(portal.matrixWorld)
       portal.update()
+      await portal.pendingTravel
       assert.equal(ctx.teleports.length, 1)
       const arrival = ctx.teleports[0]
       const localArrival = arrival.position.clone().applyMatrix4(destination.matrixWorld.clone().invert())
@@ -426,3 +460,156 @@ for (const destinationDoubleSide of [false, true]) {
     })
   }
 }
+
+test('missing local destinations show an aperture error which clears when the endpoint mounts', async () => {
+  const { portal, world, teleports } = mounted({ target: 'missing' })
+  portal.update()
+  assert.equal(portal.statusMessage, 'Destination portal not found')
+  assert.equal(portal.mesh.material.uniforms.showStatus.value, true)
+  assert.equal(teleports.length, 0)
+  const destination = new Portal({ portalId: 'missing' })
+  destination.activate({ world })
+  portal.update()
+  assert.equal(portal.statusMessage, '')
+  assert.equal(portal.mesh.material.uniforms.showStatus.value, false)
+  portal.deactivate()
+  destination.deactivate()
+})
+
+test('remote failures remain in the portal and block travel; a fresh check can recover', async () => {
+  globalThis.fetch.mock.mockImplementation(async () => {
+    throw new Error('offline')
+  })
+  const { portal, opened } = mounted({ url: 'https://example.com' })
+  try {
+    portal.update()
+    await portal.pendingTravel
+    assert.equal(portal.statusMessage, 'Remote world unreachable')
+    assert.equal(portal.mesh.material.uniforms.showStatus.value, true)
+    assert.equal(opened.length, 0)
+    globalThis.fetch.mock.mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ available: true }), {
+          headers: { 'content-type': 'application/json' },
+        })
+    )
+    await portal.travel(new THREE.Vector3(), new THREE.Vector3(0, -1.2, 0.2), new THREE.Matrix4())
+    assert.equal(opened.length, 1)
+    assert.equal(portal.statusMessage, '')
+  } finally {
+    portal.deactivate()
+    globalThis.fetch.mock.mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ available: true }), {
+          headers: { 'content-type': 'application/json' },
+        })
+    )
+  }
+})
+
+test('unmount cancels a pending remote check and never redirects from a stale result', async () => {
+  let resolveRequest
+  globalThis.fetch.mock.mockImplementation(
+    () =>
+      new Promise(resolve => {
+        resolveRequest = resolve
+      })
+  )
+  const { portal, opened } = mounted({ url: 'https://example.com' })
+  try {
+    portal.update()
+    const pending = portal.pendingTravel
+    const signal = portal.destinationController.signal
+    portal.deactivate()
+    assert.equal(signal.aborted, true)
+    resolveRequest(
+      new Response(JSON.stringify({ available: true }), {
+        headers: { 'content-type': 'application/json' },
+      })
+    )
+    await pending
+    assert.equal(opened.length, 0)
+  } finally {
+    globalThis.fetch.mock.mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ available: true }), {
+          headers: { 'content-type': 'application/json' },
+        })
+    )
+  }
+})
+
+test('shipped legacy portals use the configured URL for both status and native travel', async () => {
+  for (const hash of [
+    'f8204cf3972edd061cd130dce6db4c48669dd6a0ae0e445df4702f908a752c2d',
+    '3b2352be97555f92bb06f60033cd57cd3987509f90a17c32331fb93f45124431',
+  ]) {
+    const ctx = context()
+    const blueprint = {
+      model: 'asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb',
+      script: `asset://${hash}.js`,
+      props: { destination: 'https://example.org/world', destinationPortalId: 'exit' },
+    }
+    ctx.world.blueprints = { get: () => blueprint }
+    ctx.world.network = { id: 'client' }
+    ctx.world.loader = {
+      get() {
+        throw new Error('Legacy model and script must not load')
+      },
+    }
+    const entity = {
+      world: ctx.world,
+      data: { id: 'legacy', position: [8, 0, -10], quaternion: [0, 0, 0, 1], scale: [1, 1, 1] },
+      n: 0,
+      eventQueue: [],
+      unbuild() {},
+    }
+    await App.prototype.build.call(entity)
+    const portal = entity.root.children[0]
+    assert.equal(entity.script, undefined)
+    assert.equal(portal.name, 'portal')
+    assert.equal(portal.url, blueprint.props.destination)
+    assert.equal(portal.target, 'exit')
+    assert.equal(portal.portalId, 'legacy')
+    assert.deepEqual(entity.root.position.toArray(), [8, 0, -10])
+    assert.equal(portal.doubleside, false)
+    portal.refreshDestinationStatus()
+    await portal.destinationCheck
+    assert.equal(portal.statusMessage, '')
+    await portal.travel(ctx.player, new THREE.Vector3(0, 0, 0.1), new THREE.Matrix4())
+    assert.deepEqual(ctx.opened, ['https://example.org/world?portalId=exit'])
+    globalThis.fetch.mock.mockImplementation(async () => {
+      throw new Error('offline')
+    })
+    try {
+      await portal.travel(ctx.player, new THREE.Vector3(0, 0, 0.1), new THREE.Matrix4())
+      assert.equal(portal.statusMessage, 'Remote world unreachable')
+      assert.equal(ctx.opened.length, 1)
+    } finally {
+      globalThis.fetch.mock.mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ available: true }), {
+            headers: { 'content-type': 'application/json' },
+          })
+      )
+      entity.root.deactivate()
+    }
+    // A custom script using the same bootstrap model must still load and execute.
+    const root = App.prototype.getNodes.call(entity)
+    root.remove(root.children[0])
+    blueprint.script = 'asset://custom.js'
+    let ran = false
+    const script = {
+      exec() {
+        ran = true
+      },
+    }
+    ctx.world.loader = { get: type => (type === 'script' ? script : { toNodes: () => root }) }
+    entity.getWorldProxy = () => ({})
+    entity.getAppProxy = () => ({})
+    await App.prototype.build.call(entity)
+    assert.equal(entity.script, script)
+    assert.equal(ran, true)
+    entity.root.deactivate()
+  }
+})

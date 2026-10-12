@@ -36,7 +36,16 @@ app.add(portal)
 
 Inherits [Node](../Node.md) transforms, activation, and parenting. The aperture
 is centered on the node and faces local +Z. It is one-sided by default: the back is light gray and never triggers travel. Set `doubleside: true` to activate both sides.
-An unlinked, missing, or self-referencing destination shows a teal surface.
+An unconfigured, missing, or self-referencing destination displays an error inside
+the aperture. Remote destinations are checked before travel and every 30 seconds,
+with a five-second timeout. Network failures and readable HTTP errors appear on
+the active surface and prevent travel. Errors clear when the destination recovers.
+The inactive back of a one-sided portal remains light gray.
+
+Updated remote worlds expose `/api/portal-status` so a missing destination portal
+ID can be reported before leaving the current world. Older worlds fall back to
+checking their page. If cross-origin restrictions hide the response, only network
+reachability can be checked; HTTP status and portal-ID existence remain unknown.
 Moving, resizing, deactivating, or deleting either endpoint updates the view.
 The third-person camera boom stops at portal surfaces, like it does at walls,
 so the camera stays on the player's side of the doorway after teleporting.
@@ -63,9 +72,10 @@ half-turn. A one-sided destination places back-side arrivals on its front.
 Remote travel appends `portalId` while preserving the URL's other query parameters
 and fragment; the destination consumes that parameter after successful arrival.
 
-Restart the engine and refresh the client after updating. Replace existing
-scripted World Portal apps with the new `WorldPortal.hyp` using Import, preserving
-instance IDs and placement. Reapply destination settings after replacement.
+Restart the engine and refresh the client after updating. The two shipped legacy
+World Portal script versions now use the native primitive automatically, preserving
+instance IDs, placement, and destination settings. Custom scripts remain unchanged;
+replace those with `WorldPortal.hyp` using Import to adopt native travel.
 
 The World Portal properties expose **Preview resolution** and **Preview update
 rate**, defaulting to Low (256 px) and Low (15 FPS).

@@ -21,6 +21,7 @@ import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { BrowserCapture } from './BrowserCapture'
 import { proxyWebViewRequest } from './WebViewProxy'
+import { getPortalStatus } from './portalStatus'
 import { appHasBrowserSource } from '../core/utils/browser'
 
 const execAsync = promisify(exec)
@@ -372,6 +373,8 @@ fastify.post('/api/restore', async (req, reply) => {
   await fs.remove(zipPath)
   return { success: true, message: 'World restored. Restart server to apply changes.' }
 })
+
+fastify.get('/api/portal-status', async request => getPortalStatus(world, request.query?.portalId))
 
 fastify.get('/health', async (request, reply) => {
   try {

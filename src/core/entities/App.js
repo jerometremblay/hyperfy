@@ -12,6 +12,19 @@ import { Layers } from '../extras/Layers'
 import { createPlayerProxy } from '../extras/createPlayerProxy'
 import { serializeError } from '../extras/serializeError'
 
+// Exact shipped WorldPortal assets only: custom scripts keep their own behavior.
+function legacyPortalRoot(blueprint) {
+  if (blueprint.model !== 'asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb') return
+  if (
+    blueprint.script !== 'asset://f8204cf3972edd061cd130dce6db4c48669dd6a0ae0e445df4702f908a752c2d.js' &&
+    blueprint.script !== 'asset://3b2352be97555f92bb06f60033cd57cd3987509f90a17c32331fb93f45124431.js'
+  )
+    return
+  const root = createNode('group')
+  root.add(createNode('portal', { appConfig: true, position: [0, 1.2, 0] }))
+  return root
+}
+
 const hotEventNames = ['fixedUpdate', 'update', 'animate', 'lateUpdate']
 
 const Modes = {
@@ -81,15 +94,20 @@ export class App extends Entity {
     }
     // otherwise we can load the model and script
     else {
+      // Older bundled portals delegate both status and travel to the native primitive.
+      const legacyPortal = legacyPortalRoot(blueprint)
+      if (legacyPortal) {
+        root = legacyPortal
+      }
       // load model if present (skip script-only dummy models)
-      if (blueprint.model && blueprint.model.trim() !== '' && blueprint.model !== 'script-only') {
+      else if (blueprint.model && blueprint.model.trim() !== '' && blueprint.model !== 'script-only') {
         try {
           // check if it's a splat file
           if (blueprint.model.match(/\.(ply|splat|ksplat|spz)$/i)) {
             // load splat data from cache first, then create node
             let splatData = this.world.loader.get('splat', blueprint.model)
             if (!splatData) splatData = await this.world.loader.load('splat', blueprint.model)
-            
+
             // create gaussiansplat node directly for splat files
             root = createNode('gaussiansplat', {
               src: blueprint.model,
@@ -113,7 +131,7 @@ export class App extends Entity {
         root = createNode('group')
       }
       // fetch script (if any)
-      if (blueprint.script) {
+      if (blueprint.script && !legacyPortal) {
         try {
           script = this.world.loader.get('script', blueprint.script)
           if (!script) script = await this.world.loader.load('script', blueprint.script)
@@ -494,6 +512,8 @@ export class App extends Entity {
     // note: this is currently just used in the nodes tab in the app inspector
     // to get a clean hierarchy
     if (!this.blueprint) return
+    const legacyPortal = legacyPortalRoot(this.blueprint)
+    if (legacyPortal) return legacyPortal
     const type = this.blueprint.model.endsWith('vrm') ? 'avatar' : 'model'
     let glb = this.world.loader.get(type, this.blueprint.model)
     if (!glb) return

@@ -202,10 +202,11 @@ Remote-world **travel** is supported by URL, but remote-world **previews** are n
 Headset rendering and representative streamed-splat LOD need their own checks.
 
 The earlier iframe-based portal preview was reverted and superseded by native 3D
-rendering. Existing placed apps must be replaced with the new WorldPortal package
-to receive its script behavior; engine updates alone do not rewrite old apps.
-Replacement keeps the instance ID and placement but uses the package's properties,
-so record and reapply destination settings.
+rendering. The two shipped legacy WorldPortal script versions automatically use
+the native primitive after an engine update, retaining instance IDs, placement,
+and properties.
+Their old triggers no longer run separately from the surface. Custom scripts remain
+unchanged; replace those with the new WorldPortal package to adopt native travel.
 
 References: [Portal](scripting/nodes/types/Portal.md),
 [portal camera math](../src/core/extras/portalCamera.js),

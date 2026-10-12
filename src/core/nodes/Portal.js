@@ -1,6 +1,7 @@
 import * as THREE from '../extras/three'
 import { Node } from './Node'
 import { portalFields } from '../extras/portalFields'
+import { checkPortalDestination } from '../extras/portalDestination'
 
 function createView() {
   return {
@@ -24,6 +25,8 @@ export class Portal extends Node {
     this.previousPosition = new THREE.Vector3()
     this.hasPreviousPosition = false
     this.inside = false
+    this.destinationError = ''
+    this.nextDestinationCheck = 0
     this.width = data.width ?? 1.6
     this.height = data.height ?? 2.4
     this.resolution = data.resolution ?? 256
@@ -59,12 +62,16 @@ export class Portal extends Node {
         linked: { value: false },
         fallback: { value: new THREE.Color('#46a9b8') },
         doubleside: { value: this.doubleside },
+        status: { value: null },
+        showStatus: { value: false },
         inactive: { value: new THREE.Color('#d3d3d3') },
       },
       vertexShader: `
         uniform mat4 textureMatrix;
         varying vec4 portalUV;
+        varying vec2 surfaceUV;
         void main() {
+          surfaceUV = uv;
           portalUV = textureMatrix * vec4(position, 1.0);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
@@ -75,10 +82,16 @@ export class Portal extends Node {
         uniform vec3 fallback;
         uniform bool doubleside;
         uniform vec3 inactive;
+        uniform sampler2D status;
+        uniform bool showStatus;
+        varying vec2 surfaceUV;
         varying vec4 portalUV;
         void main() {
           if (!doubleside && !gl_FrontFacing) {
             gl_FragColor = vec4(inactive, 1.0);
+          } else if (showStatus) {
+            vec2 statusUV = vec2(gl_FrontFacing ? surfaceUV.x : 1.0 - surfaceUV.x, surfaceUV.y);
+            gl_FragColor = texture2D(status, statusUV);
           } else {
             gl_FragColor = linked ? vec4(texture2DProj(preview, portalUV).rgb, 1.0)
                                  : vec4(fallback, 1.0);
@@ -125,6 +138,10 @@ export class Portal extends Node {
   }
 
   unmount() {
+    this.cancelDestinationCheck()
+    this.statusTexture?.dispose()
+    this.statusTexture = null
+    this.statusMessage = null
     if (!this.mesh) return
     const world = this.ctx.world
     world.setHot(this, false)
@@ -173,7 +190,9 @@ export class Portal extends Node {
   }
   set target(value) {
     if (typeof value !== 'string') throw new Error('[portal] target must be a string')
+    if (this._target === value) return
     this._target = value
+    this.cancelDestinationCheck()
   }
 
   get url() {
@@ -184,11 +203,94 @@ export class Portal extends Node {
     const url = value.trim()
     if (url && !['http:', 'https:'].includes(new URL(url).protocol))
       throw new Error('[portal] url must be an HTTP(S) URL')
+    if (this._url === url) return
     this._url = url
+    this.cancelDestinationCheck()
+  }
+
+  cancelDestinationCheck() {
+    this.destinationController?.abort()
+    this.destinationController = null
+    this.destinationCheck = null
+    this.nextDestinationCheck = 0
+    this.destinationError = ''
+  }
+
+  setStatus(message) {
+    if (!this.mesh || this.statusMessage === message) return
+    this.statusMessage = message
+    this.mesh.material.uniforms.showStatus.value = !!message
+    if (!message || typeof document === 'undefined') return
+    if (!this.statusTexture) {
+      const canvas = document.createElement('canvas')
+      canvas.width = 512
+      canvas.height = 768
+      this.statusTexture = new THREE.CanvasTexture(canvas)
+      this.statusTexture.colorSpace = THREE.SRGBColorSpace
+      this.mesh.material.uniforms.status.value = this.statusTexture
+    }
+    const canvas = this.statusTexture.image
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#332329'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 32px sans-serif'
+    ctx.fillText(message === 'Checking destination…' ? 'Please wait' : 'Destination unavailable', 256, 320)
+    ctx.font = '26px sans-serif'
+    const words = message.split(' ')
+    let line = ''
+    let y = 380
+    for (const word of words) {
+      const next = line ? `${line} ${word}` : word
+      if (ctx.measureText(next).width > 440 && line) {
+        ctx.fillText(line, 256, y)
+        y += 36
+        line = word
+      } else line = next
+    }
+    ctx.fillText(line, 256, y)
+    this.statusTexture.needsUpdate = true
+  }
+
+  checkRemoteDestination() {
+    if (this.destinationCheck) return this.destinationCheck
+    const controller = new AbortController()
+    this.destinationController = controller
+    this.setStatus('Checking destination…')
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    this.destinationCheck = checkPortalDestination(this.url, this.target, globalThis.fetch, controller.signal)
+      .then(error => {
+        if (this.destinationController !== controller || !this.mesh) return false
+        this.destinationError = error
+        this.nextDestinationCheck = performance.now() + 30000
+        this.setStatus(error)
+        return !error
+      })
+      .finally(() => {
+        clearTimeout(timeout)
+        if (this.destinationController === controller) {
+          this.destinationController = null
+          this.destinationCheck = null
+        }
+      })
+    return this.destinationCheck
+  }
+
+  refreshDestinationStatus() {
+    if (this.url) {
+      if (performance.now() >= this.nextDestinationCheck) this.checkRemoteDestination()
+    } else {
+      const destination = [...this.ctx.world.graphics.portals].find(
+        portal => portal !== this && portal.portalId === this.target && !portal.ctx.entity?.data.mover
+      )
+      this.setStatus(this.target ? (destination ? '' : 'Destination portal not found') : 'No destination configured')
+    }
   }
 
   update() {
     const world = this.ctx.world
+    this.refreshDestinationStatus()
     const player = world.entities.player
     const moving = this.ctx.entity ? !!this.ctx.entity.data.mover : this.ctx.moving
     if (moving) {
@@ -233,15 +335,28 @@ export class Portal extends Node {
     if (!this.doubleside && position.z < 0) return
     const world = this.ctx.world
     if (this.url) {
-      const destination = new URL(this.url)
-      if (this.target) destination.searchParams.set('portalId', this.target)
-      world.apps.worldMethods.open(this.ctx.entity, destination.href, false)
-      return
+      if (this.pendingTravel) return
+      const url = this.url
+      const target = this.target
+      this.pendingTravel = this.checkRemoteDestination()
+        .then(available => {
+          if (!available || !this.mesh || this.url !== url || this.target !== target || this.ctx.entity?.data.mover)
+            return
+          const destination = new URL(url)
+          if (target) destination.searchParams.set('portalId', target)
+          world.apps.worldMethods.open(this.ctx.entity, destination.href, false)
+        })
+        .finally(() => {
+          this.pendingTravel = null
+        })
+      return this.pendingTravel
     }
     if (!this.target || this.target === this.portalId) return
-    const destination = [...world.graphics.portals].find(portal => portal !== this && portal.portalId === this.target)
+    const destination = [...world.graphics.portals].find(
+      portal => portal !== this && portal.portalId === this.target && !portal.ctx.entity?.data.mover
+    )
     if (!destination) {
-      world.emit('toast', 'Destination portal not found')
+      this.setStatus('Destination portal not found')
       return
     }
     const direction = new THREE.Vector3(0, 0, -1)
