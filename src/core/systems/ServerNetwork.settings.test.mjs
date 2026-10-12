@@ -37,6 +37,7 @@ test('server rejects malformed location settings instead of relaying them to oth
     { key: 'latitude', value: 100 },
     { key: 'longitude', value: '-74' },
     { key: 'dayNightCycle', value: 'false' },
+    { key: 'constellationLines', value: 'true' },
     { key: 'timeZone', value: 'not/a-zone' },
   ])
     network.onSettingsModified(socket, data)

@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict'
-import test from 'node:test'
+import test, { after, mock } from 'node:test'
+import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
 import * as THREE from 'three'
 import EventEmitter from 'eventemitter3'
 import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, getDayNightState } from '../extras/dayNight.js'
+import { setCelestialRotation } from '../extras/celestialRotation.js'
+
+const catalog = JSON.parse(await readFile(new URL('../../client/public/stars.json', import.meta.url), 'utf8'))
+mock.method(globalThis, 'fetch', async url => {
+  assert.equal(url, '/stars.json')
+  return { ok: true, json: async () => catalog }
+})
+after(() => mock.restoreAll())
 
 const bundle = await build({
   stdin: {
@@ -45,8 +54,87 @@ async function createEnvironment() {
   })
   environment.buildCSM()
   await environment.updateSky()
+  await environment.starsLoading
   return { environment, world, messages }
 }
+
+test('catalog stars follow world time and location, fade in twilight, and hide with custom skies', async () => {
+  const { environment, world } = await createEnvironment()
+  const stars = environment.stars
+  assert.equal(stars.geometry.getAttribute('position').count, 8920)
+  environment.updateDayNight(Date.parse('2026-10-10T05:00:00Z'))
+  assert.equal(stars.visible, true)
+  assert.equal(stars.material.uniforms.opacity.value, 1)
+  const rotation = stars.material.uniforms.celestialRotation.value.clone()
+  const now = Date.parse('2026-10-10T05:00:00Z')
+  world.settings.timeOffset = 3600000
+  environment.updateDayNight(now)
+  assert.notDeepEqual(stars.material.uniforms.celestialRotation.value.elements, rotation.elements)
+  world.settings.timeOffset = 0
+  world.settings.longitude += 15
+  environment.updateDayNight(now)
+  const offsetRotation = stars.material.uniforms.celestialRotation.value.clone()
+  world.settings.latitude = -45
+  environment.updateDayNight(now)
+  assert.notDeepEqual(stars.material.uniforms.celestialRotation.value.elements, offsetRotation.elements)
+  world.settings.latitude = DEFAULT_LATITUDE
+  world.settings.longitude = DEFAULT_LONGITUDE
+  let twilightFound = false
+  for (let hour = 20; hour < 26; hour += 0.1) {
+    environment.updateDayNight(Date.parse('2026-10-10T00:00:00Z') + hour * 3600000)
+    const opacity = stars.material.uniforms.opacity.value
+    if (opacity > 0 && opacity < 1) twilightFound = true
+  }
+  assert.ok(twilightFound)
+  environment.updateDayNight(Date.parse('2026-06-21T17:00:00Z'))
+  assert.equal(stars.visible, false)
+  assert.equal(stars.material.uniforms.opacity.value, 0)
+  world.settings.dayNightCycle = false
+  environment.updateDayNight(now)
+  assert.equal(stars.visible, false)
+  let geometryDisposed = false,
+    materialDisposed = false
+  stars.geometry.addEventListener('dispose', () => {
+    geometryDisposed = true
+  })
+  stars.material.addEventListener('dispose', () => {
+    materialDisposed = true
+  })
+  environment.destroy()
+  assert.equal(stars.parent, null)
+  assert.ok(geometryDisposed && materialDisposed)
+})
+
+test('constellation lines toggle immediately, persist, share star rotation/fading, and dispose with the world', async () => {
+  const { environment, world } = await createEnvironment()
+  const lines = environment.constellationLines
+  const now = Date.parse('2026-10-10T05:00:00Z')
+  world.network.getServerTime = () => now
+  assert.equal(world.settings.constellationLines, false)
+  assert.equal(lines.visible, false)
+  assert.equal(world.settings.set('constellationLines', 'true'), false)
+  world.settings.set('constellationLines', true, true)
+  environment.onSettingsChange({ constellationLines: { value: true } })
+  assert.equal(lines.visible, true)
+  assert.equal(lines.material.uniforms.celestialRotation, environment.stars.material.uniforms.celestialRotation)
+  assert.equal(lines.material.uniforms.opacity, environment.stars.material.uniforms.opacity)
+  const restored = new Settings({})
+  restored.deserialize(world.settings.serialize())
+  assert.equal(restored.constellationLines, true)
+  world.settings.set('dayNightCycle', false)
+  environment.updateDayNight()
+  assert.equal(environment.stars.visible, false)
+  let geometryDisposed = false,
+    materialDisposed = false
+  lines.geometry.addEventListener('dispose', () => {
+    geometryDisposed = true
+  })
+  lines.material.addEventListener('dispose', () => {
+    materialDisposed = true
+  })
+  environment.destroy()
+  assert.ok(geometryDisposed && materialDisposed)
+})
 
 test('old worlds get defaults; coordinates and enabled state survive serialization', () => {
   const settings = new Settings({})
@@ -179,11 +267,12 @@ test('time offset changes the visible sun and keeps advancing with wall time', a
   environment.destroy()
 })
 
-test('sun and moon update every frame during fast-forward and resume the normal refresh interval', async t => {
+test('sun, moon, and stars update during fast-forward and resume the normal refresh interval', async t => {
   const start = Date.parse('2026-06-21T05:00:00Z')
   t.mock.timers.enable({ apis: ['Date'], now: start })
   const { environment, world } = await createEnvironment()
   const before = environment.csm.lightDirection.clone()
+  const beforeStars = environment.stars.material.uniforms.celestialRotation.value.clone()
   world.settings.set('timeOffset', 12 * 60 * 60 * 1000 - 5000)
   world.settings.set('timeTransition', { startedAt: start, endsAt: start + 5000, fromOffset: 0 })
   environment.onSettingsChange({ timeOffset: {}, timeTransition: {} })
@@ -194,13 +283,16 @@ test('sun and moon update every frame during fast-forward and resume the normal 
   t.mock.timers.tick(16)
   environment.update()
   assert.equal(environment.solarUpdatedAt, start + 32)
+  assert.notDeepEqual(environment.stars.material.uniforms.celestialRotation.value.elements, beforeStars.elements)
   t.mock.timers.tick(4968)
   environment.update()
   assert.ok(environment.csm.lights.every(light => light.intensity === 1))
   assert.equal(environment.solarUpdatedAt, start + 5000)
+  const afterStars = environment.stars.material.uniforms.celestialRotation.value.clone()
   t.mock.timers.tick(16)
   environment.update()
   assert.equal(environment.solarUpdatedAt, start + 5000)
+  assert.deepEqual(environment.stars.material.uniforms.celestialRotation.value.elements, afterStars.elements)
   environment.destroy()
 })
 
@@ -222,7 +314,7 @@ test('settings changes and shadow quality rebuilds refresh the real sun, and sky
   environment.destroy()
 })
 
-test('sun and moon use server time even when the device clock is hours wrong', async t => {
+test('sun, moon, and stars use server time even when the device clock is hours wrong', async t => {
   const { environment, world } = await createEnvironment()
   const serverTime = Date.parse('2026-10-26T01:00:00Z')
   world.network.getServerTime = () => serverTime
@@ -233,5 +325,7 @@ test('sun and moon use server time even when the device clock is hours wrong', a
   assert.ok(environment.solarDirection.distanceTo(new THREE.Vector3().fromArray(state.sunPosition)) < 1e-10)
   assert.ok(environment.moonDirection.distanceTo(new THREE.Vector3().fromArray(state.moon.position)) < 1e-10)
   assert.ok(environment.moonLight.intensity > 0.4)
+  const rotation = setCelestialRotation(new THREE.Matrix3(), new Date(serverTime), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+  assert.deepEqual(environment.stars.material.uniforms.celestialRotation.value.elements, rotation.elements)
   environment.destroy()
 })

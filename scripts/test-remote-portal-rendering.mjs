@@ -1,9 +1,15 @@
 import { createServer } from 'node:http'
 import { build } from 'esbuild'
 import { polyfillNode } from 'esbuild-plugin-polyfill-node'
+import { readFile } from 'node:fs/promises'
+
+const stars = await readFile(new URL('../src/client/public/stars.json', import.meta.url))
 
 createServer(async (request, response) => {
-  if (request.url === '/test.js') {
+  if (request.url === '/stars.json') {
+    response.setHeader('Content-Type', 'application/json')
+    response.end(stars)
+  } else if (request.url === '/test.js') {
     const bundle = await build({
       entryPoints: ['src/core/systems/RemotePortal.browser-test.js'],
       bundle: true,

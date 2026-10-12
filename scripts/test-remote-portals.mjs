@@ -9,6 +9,8 @@ import Database from 'better-sqlite3'
 const directory = await mkdtemp(join(tmpdir(), 'hyperfy-remote-portals-'))
 const children = new Set()
 const secret = randomBytes(24).toString('hex')
+const sourcePort = Number(process.env.PORTAL_TEST_SOURCE_PORT || 3334)
+const destinationPort = Number(process.env.PORTAL_TEST_DESTINATION_PORT || 3335)
 function launch(port) {
   const child = spawn(process.execPath, ['build/index.js'], {
     cwd: process.cwd(),
@@ -67,10 +69,10 @@ async function seed(port) {
   const db = new Database(join(worldDir, 'db.sqlite'))
   db.prepare('DELETE FROM entities').run()
   const code =
-    port === 3334
+    port === sourcePort
       ? `
     app.add(app.create('prim', { type: 'box', size: [30, 0.2, 30], position: [0, -0.1, 0], color: '#888888', physics: 'static' }));
-    app.add(app.create('portal', { portalId: 'entrance', target: 'exit', url: 'http://localhost:3335', position: [0, 1.2, 0], width: 3, height: 2.4, resolution: 512, updateRate: 30 }));
+    app.add(app.create('portal', { portalId: 'entrance', target: 'exit', url: 'http://localhost:${destinationPort}', position: [0, 1.2, 0], width: 3, height: 2.4, resolution: 512, updateRate: 30 }));
     for (const x of [-1.6, 1.6]) app.add(app.create('prim', { type: 'box', size: [0.15, 2.6, 0.2], position: [x, 1.3, 0], color: '#ffffff' }));
   `
       : `
@@ -116,12 +118,12 @@ async function seed(port) {
     stamp
   )
   for (const [key, value] of Object.entries({
-    spawn: { position: [0, 0, port === 3334 ? 6 : 8], quaternion: [0, 0, 0, 1] },
+    spawn: { position: [0, 0, port === sourcePort ? 6 : 8], quaternion: [0, 0, 0, 1] },
     settings: {
       title: `Portal test ${port}`,
       dayNightCycle: true,
       latitude: 45,
-      longitude: port === 3334 ? -74 : 105,
+      longitude: port === sourcePort ? -74 : 105,
       timeZone: 'UTC',
     },
   }))
@@ -132,18 +134,18 @@ async function cleanup(exitCode = 0) {
   await Promise.all([...children].map(stop))
   process.exit(exitCode)
 }
-process.on('SIGINT', cleanup)
-process.on('SIGTERM', cleanup)
+process.on('SIGINT', () => cleanup())
+process.on('SIGTERM', () => cleanup())
 try {
-  for (const port of [3334, 3335]) {
+  for (const port of [sourcePort, destinationPort]) {
     const child = launch(port)
     await ready(child, port)
     await stop(child)
     await seed(port)
   }
-  for (const port of [3334, 3335]) await ready(launch(port), port)
+  for (const port of [sourcePort, destinationPort]) await ready(launch(port), port)
   console.log(
-    `Portal acceptance worlds ready: http://localhost:3334 and http://localhost:3335\nDisposable data: ${directory}`
+    `Portal acceptance worlds ready: http://localhost:${sourcePort} and http://localhost:${destinationPort}\nDisposable data: ${directory}`
   )
   setInterval(() => {}, 60000)
 } catch (error) {

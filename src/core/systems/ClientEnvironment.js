@@ -7,6 +7,8 @@ import { isNumber, isString } from 'lodash-es'
 import { Sky as SolarSky } from 'three/addons/objects/Sky.js'
 import { getDayNightState, getWorldTime } from '../extras/dayNight'
 import { createMoon } from '../extras/createMoon'
+import { createStarField, loadStarCatalog } from '../extras/createStarField'
+import { setCelestialRotation } from '../extras/celestialRotation'
 
 const sunsetColor = new THREE.Color('#ffb16b')
 const moonDistance = 900
@@ -90,6 +92,10 @@ export class ClientEnvironment extends System {
     this.moon = null
     this.moonDirection = new THREE.Vector3()
     this.moonLight = null
+    this.stars = null
+    this.constellationLines = null
+    this.starsLoading = null
+    this.destroyed = false
   }
 
   init({ baseEnvironment }) {
@@ -159,6 +165,23 @@ export class ClientEnvironment extends System {
       this.world.stage.scene.add(this.moon)
       this.moonLight = new THREE.DirectionalLight('#b9caff', 0)
       this.world.stage.scene.add(this.moonLight, this.moonLight.target)
+    }
+
+    if (!this.stars && !this.starsLoading && !this.destroyed) {
+      this.starsLoading = loadStarCatalog()
+        .then(catalog => {
+          if (this.destroyed) return
+          this.stars = createStarField(catalog)
+          this.constellationLines = this.stars.getObjectByName('constellations')
+          this.world.stage.scene.add(this.stars)
+          this.updateDayNight()
+        })
+        .catch(error => {
+          if (!this.destroyed) console.warn('Unable to load night sky stars:', error)
+        })
+        .finally(() => {
+          this.starsLoading = null
+        })
     }
 
     const base = this.base
@@ -253,7 +276,9 @@ export class ClientEnvironment extends System {
     const { dayNightCycle, latitude, longitude } = this.world.settings
     this.solarSky.visible = dayNightCycle
     this.sky.visible = !dayNightCycle && !!this.skyInfo.bgUrl
+    if (this.constellationLines) this.constellationLines.visible = this.world.settings.constellationLines
     if (!dayNightCycle) {
+      if (this.stars) this.stars.visible = false
       this.moon.visible = false
       this.moonLight.intensity = 0
       scene.environmentIntensity = 1
@@ -265,7 +290,15 @@ export class ClientEnvironment extends System {
       return
     }
 
-    const state = getDayNightState(new Date(getWorldTime(this.world.settings, now)), latitude, longitude)
+    const date = new Date(getWorldTime(this.world.settings, now))
+    const state = getDayNightState(date, latitude, longitude)
+    if (this.stars) {
+      setCelestialRotation(this.stars.material.uniforms.celestialRotation.value, date, latitude, longitude)
+      // Fully visible at astronomical night; disappear by civil twilight.
+      const twilight = THREE.MathUtils.smoothstep(state.altitude, -18, -6)
+      this.stars.material.uniforms.opacity.value = 1 - twilight
+      this.stars.visible = twilight < 1
+    }
     this.solarUpdatedAt = now
     this.solarDirection.fromArray(state.sunPosition)
     this.solarSky.material.uniforms.sunPosition.value.copy(this.solarDirection).multiplyScalar(450000)
@@ -362,6 +395,7 @@ export class ClientEnvironment extends System {
   onSettingsChange = changes => {
     if (
       changes.dayNightCycle ||
+      changes.constellationLines ||
       changes.latitude ||
       changes.longitude ||
       changes.timeOffset ||
@@ -372,16 +406,19 @@ export class ClientEnvironment extends System {
   }
 
   destroy() {
+    this.destroyed = true
     this.skyN++ // Cancel environment loads that finish after world disposal.
     this.world.prefs.off('change', this.onPrefsChange)
     this.world.settings.off('change', this.onSettingsChange)
     this.world.graphics.off('resize', this.onViewportResize)
-    for (const sky of [this.sky, this.solarSky, this.moon]) {
+    for (const sky of [this.sky, this.solarSky, this.moon, this.stars]) {
       if (!sky) continue
       sky.removeFromParent()
       sky.geometry.dispose()
       sky.material.dispose()
     }
+    this.constellationLines?.geometry.dispose()
+    this.constellationLines?.material.dispose()
     this.csm?.dispose()
     this.moonLight?.removeFromParent()
     this.moonLight?.target.removeFromParent()

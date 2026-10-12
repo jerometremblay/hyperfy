@@ -22,6 +22,7 @@ export class Settings extends System {
     this.playerLimit = null
     this.ao = null
     this.dayNightCycle = true
+    this.constellationLines = false
     this.latitude = DEFAULT_LATITUDE
     this.longitude = DEFAULT_LONGITUDE
     this.timeZone = DEFAULT_TIME_ZONE
@@ -50,6 +51,7 @@ export class Settings extends System {
     this.playerLimit = data.playerLimit
     this.ao = data.ao
     this.dayNightCycle = typeof data.dayNightCycle === 'boolean' ? data.dayNightCycle : true
+    this.constellationLines = data.constellationLines === true
     this.latitude = isValidDayNightSetting('latitude', data.latitude) ? data.latitude : DEFAULT_LATITUDE
     this.longitude = isValidDayNightSetting('longitude', data.longitude) ? data.longitude : DEFAULT_LONGITUDE
     this.timeZone = isValidDayNightSetting('timeZone', data.timeZone) ? data.timeZone : DEFAULT_TIME_ZONE
@@ -66,6 +68,7 @@ export class Settings extends System {
       playerLimit: { value: this.playerLimit },
       ao: { value: this.ao },
       dayNightCycle: { value: this.dayNightCycle },
+      constellationLines: { value: this.constellationLines },
       latitude: { value: this.latitude },
       longitude: { value: this.longitude },
       timeZone: { value: this.timeZone },
@@ -86,6 +89,7 @@ export class Settings extends System {
       playerLimit: this.playerLimit,
       ao: this.ao,
       dayNightCycle: this.dayNightCycle,
+      constellationLines: this.constellationLines,
       latitude: this.latitude,
       longitude: this.longitude,
       timeZone: this.timeZone,

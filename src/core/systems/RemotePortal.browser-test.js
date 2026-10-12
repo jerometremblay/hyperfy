@@ -5,6 +5,7 @@ import { World } from '../World'
 import { ClientGraphics } from './ClientGraphics'
 import { ClientPortalPreviews } from './ClientPortalPreviews'
 import { Portal } from '../nodes/Portal'
+import { setCelestialRotation } from '../extras/celestialRotation'
 
 const source = new World()
 const graphics = new ClientGraphics(source)
@@ -28,7 +29,7 @@ renderer.setClearColor('#090c20')
 graphics.renderer = renderer
 graphics.maxAnisotropy = renderer.capabilities.getMaxAnisotropy()
 const portal = new Portal({
-  url: 'http://localhost:3335',
+  url: new URLSearchParams(window.location.search).get('destination') || 'http://localhost:3335',
   target: 'exit',
   width: 3,
   height: 2.4,
@@ -55,6 +56,7 @@ function render() {
   const remote = source.portalPreviews.get(portal)?.world
   if (
     !remote?.environment.skyInfo ||
+    !remote.environment.stars ||
     remote.frame < 5 ||
     !remote?.entities.items.size ||
     ![...remote.entities.items.values()].some(entity => entity.isApp && entity.root?.children.length)
@@ -77,6 +79,9 @@ function render() {
     return
   }
   try {
+    // Keep geometry/parallax checks deterministic in daylight first.
+    remote.settings.timeOffset = Date.parse('2026-10-12T05:00:00Z') - remote.network.getServerTime()
+    remote.environment.updateDayNight()
     const results = []
     for (const [index, camera] of cameras.entries()) {
       renderer.render(source.stage.scene, camera)
@@ -99,6 +104,55 @@ function render() {
       caption.textContent = index ? 'Right eye' : 'Left eye'
       figure.append(image, caption)
       document.querySelector('main').append(figure)
+    }
+    // Now render the destination's night sky through the real portal path.
+    const referenceDate = Date.parse('2026-10-12T17:00:00Z')
+    remote.settings.timeOffset = referenceDate - remote.network.getServerTime()
+    remote.environment.updateDayNight()
+    const expectedRotation = setCelestialRotation(
+      new THREE.Matrix3(),
+      new Date(referenceDate),
+      remote.settings.latitude,
+      remote.settings.longitude
+    )
+    const actualRotation = remote.environment.stars.material.uniforms.celestialRotation.value
+    const remoteStars = {
+      count: remote.environment.stars.geometry.getAttribute('position').count,
+      visible: remote.environment.stars.visible,
+      destinationRotation: actualRotation.elements.every(
+        (value, i) => Math.abs(value - expectedRotation.elements[i]) < 0.0001
+      ),
+      portalPixels: [],
+    }
+    for (const [index, camera] of cameras.entries()) {
+      renderer.render(source.stage.scene, camera)
+      const pixels = new Uint8Array(640 * 480 * 4)
+      const gl = renderer.getContext()
+      gl.readPixels(0, 0, 640, 480, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+      const figure = document.createElement('figure'),
+        image = new Image(),
+        caption = document.createElement('figcaption')
+      image.src = renderer.domElement.toDataURL()
+      caption.textContent = index ? 'Night · right eye' : 'Night · left eye'
+      figure.append(image, caption)
+      document.querySelector('main').append(figure)
+      remote.environment.stars.visible = false
+      renderer.render(source.stage.scene, camera)
+      const withoutStars = new Uint8Array(pixels.length)
+      gl.readPixels(0, 0, 640, 480, gl.RGBA, gl.UNSIGNED_BYTE, withoutStars)
+      let starPixels = 0
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (
+          Math.max(
+            pixels[i] - withoutStars[i],
+            pixels[i + 1] - withoutStars[i + 1],
+            pixels[i + 2] - withoutStars[i + 2]
+          ) > 3
+        )
+          starPixels++
+      }
+      remoteStars.portalPixels.push(starPixels)
+      remote.environment.stars.visible = true
     }
     const separateTargets =
       portal.views.size === 2 && new Set([...portal.views.values()].map(view => view.target)).size === 2
@@ -144,6 +198,10 @@ function render() {
       noPhysics &&
       cleanup &&
       lightingMatches &&
+      remoteStars.count === 8920 &&
+      remoteStars.visible &&
+      remoteStars.destinationRotation &&
+      remoteStars.portalPixels.every(count => count > 0) &&
       scripts.every(app => !app.error) &&
       !errors.length
     output.textContent = JSON.stringify(
@@ -155,6 +213,7 @@ function render() {
         restored,
         noPhysics,
         remoteLighting,
+        remoteStars,
         scripts,
         remoteAvatars: avatars,
         remoteLongitude: longitude,

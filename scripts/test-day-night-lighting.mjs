@@ -14,10 +14,14 @@ main{display:grid;grid-template-columns:440px 440px;gap:14px}p{margin:5px 0}pre{
 <h1>Day/night lighting · bloom enabled</h1><main></main><pre>Rendering…</pre>
 <script type="module" src="/test.js"></script>`
 const hdr = await readFile(new URL('../src/client/public/Clear_08_4pm_LDR.hdr', import.meta.url))
+const stars = await readFile(new URL('../src/client/public/stars.json', import.meta.url))
 createServer((request, response) => {
   if (request.url === '/test.js') {
     response.setHeader('Content-Type', 'text/javascript')
     response.end(bundle.outputFiles[0].contents)
+  } else if (request.url === '/stars.json') {
+    response.setHeader('Content-Type', 'application/json')
+    response.end(stars)
   } else if (request.url === '/ambient.hdr') {
     response.end(hdr)
   } else if (request.url === '/') {

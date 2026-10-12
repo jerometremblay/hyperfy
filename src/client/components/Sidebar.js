@@ -720,6 +720,7 @@ function World({ world, hidden }) {
   const [playerLimit, setPlayerLimit] = useState(world.settings.playerLimit)
   const [ao, setAO] = useState(world.settings.ao)
   const [dayNightCycle, setDayNightCycle] = useState(world.settings.dayNightCycle)
+  const [constellationLines, setConstellationLines] = useState(world.settings.constellationLines)
   const [latitude, setLatitude] = useState(world.settings.latitude)
   const [longitude, setLongitude] = useState(world.settings.longitude)
   const [timeZone, setTimeZone] = useState(world.settings.timeZone)
@@ -748,6 +749,7 @@ function World({ world, hidden }) {
       if (changes.playerLimit) setPlayerLimit(changes.playerLimit.value)
       if (changes.ao) setAO(changes.ao.value)
       if (changes.dayNightCycle) setDayNightCycle(changes.dayNightCycle.value)
+      if (changes.constellationLines) setConstellationLines(changes.constellationLines.value)
       if (changes.latitude) setLatitude(changes.latitude.value)
       if (changes.longitude) setLongitude(changes.longitude.value)
       if (changes.timeZone) setTimeZone(changes.timeZone.value)
@@ -859,6 +861,14 @@ function World({ world, hidden }) {
             falseLabel='Off'
             value={dayNightCycle}
             onChange={value => world.settings.set('dayNightCycle', value, true)}
+          />
+          <FieldToggle
+            label='Constellation Lines'
+            hint='Show faint constellation connections in the night sky while the day–night cycle is enabled.'
+            trueLabel='On'
+            falseLabel='Off'
+            value={constellationLines}
+            onChange={value => world.settings.set('constellationLines', value, true)}
           />
           <FieldNumber
             label='Latitude'
