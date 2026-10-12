@@ -44,6 +44,7 @@ env.init({
 })
 env.buildCSM()
 await env.updateSky()
+await env.starsLoading
 const scene = world.stage.scene
 const floorMat = new THREE.MeshStandardMaterial({ color: '#718467', roughness: 1 })
 const boxMat = new THREE.MeshStandardMaterial({ color: '#b8b8b8', roughness: 1 })

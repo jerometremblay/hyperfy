@@ -49,7 +49,7 @@ export function getWorldTime(settings, now = Date.now()) {
 }
 
 export function isValidDayNightSetting(key, value) {
-  if (key === 'dayNightCycle') return typeof value === 'boolean'
+  if (key === 'dayNightCycle' || key === 'constellationLines') return typeof value === 'boolean'
   if (key === 'timeZone') {
     if (typeof value !== 'string' || !value) return false
     try {
