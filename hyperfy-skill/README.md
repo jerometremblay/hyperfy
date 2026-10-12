@@ -1,6 +1,13 @@
-# hyperfy-hyp-app-authoring 2.4.2
+# hyperfy-hyp-app-authoring 2.4.3
 
 Generic ChatGPT → Hyperfy primitive JavaScript → `.hyp` → exact-package preview workflow.
+
+## 2.4.3 native portals and remote previews
+
+Use [docs/portals.md](docs/portals.md) for native portal creation, linking worlds,
+front/back entry, arrival orientation, and procedural visuals in remote previews.
+Prefer the engine's World Portal primitive or `portal` node over custom travel
+scripts. Validate live previews and travel in the target engine.
 
 ## 2.4.2 pre-save validation
 
@@ -41,6 +48,7 @@ The package retains the orientation discipline introduced in 2.2.0: define struc
 - `docs/extrusion.md`
 - `docs/orientation.md`
 - `docs/physics.md`
+- `docs/portals.md`
 - `docs/sitting.md`
 - `templates/minimal_primitive_app.js`
 - `templates/orientation_helpers.js`

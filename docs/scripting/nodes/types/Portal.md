@@ -7,6 +7,10 @@ For same-world destinations it supplies a live view through the other portal. It
 scene using a camera transformed through the source and destination doorways.
 The view follows the viewer, with parallax, destination plane clipping, and
 separate views for each XR eye.
+Updated remote worlds provide a separate live preview scene with procedural
+geometry, avatars and destination lighting. See the
+[portal setup guide](../../../remote-portals.md#set-up-a-portal-link) for builder
+instructions, connection setup and troubleshooting.
 
 ```js
 const portal = app.create('portal', {
@@ -54,6 +58,8 @@ The player can still cross the surface normally.
 Use **Add → World Portal** for the script-free primitive. Configure
 **Destination world URL** and **Destination portal ID**; leave the URL empty for
 same-world travel. **Copy portal ID** gives the destination endpoint's ID.
+Configure the return link separately. An empty remote destination ID travels to
+the world's spawn; an empty same-world destination ID is unconfigured.
 The native node handles entry detection, teleportation, URL query parameters,
 waiting for the destination player to load, and placing arrivals clear of the exit.
 Its **Sides** setting defaults to **One-sided**. The root sits on the floor,
@@ -92,13 +98,13 @@ refreshes the preview immediately.
 
 Each visible portal renders an extra scene pass per eye at its configured rate,
 capped at its configured resolution on the longest side. Nested portal surfaces
-are omitted from that pass to prevent
-recursion. The primary composer's AO/bloom are not rerun for the destination;
-lighting and existing shadow maps are shared with the active view. CSS3D WebViews
-are not WebGL content and cannot appear in this preview. Updated remote worlds also provide live regional previews with procedural scripts, avatars
-and independent daylight/HDR/fog/lights. Remote previews omit physics and shadows.
-See [Remote portal previews](../../../remote-portals.md) for lifecycle and script limitations. Gaussian splats use separate Spark LOD/sort buffers per
-portal so destination updates do not replace the active camera's buffers.
+are omitted to prevent recursion. The primary composer's AO/bloom are not rerun
+for the destination. Internal previews share the active world's lighting and
+existing shadow maps; remote previews use independent daylight, HDR, fog and app
+lights, without remote shadows or physics. CSS3D WebViews cannot appear in these
+WebGL previews. See [Remote portal previews](../../../remote-portals.md) for
+lifecycle and script limitations. Gaussian splats use separate Spark LOD/sort
+buffers per portal so destination updates do not replace the active camera's buffers.
 Desktop rendering, parallax, clipping, the composer, simulated stereo cameras,
 and a procedural Gaussian splat scene have been checked in the browser. Headset
 rendering and streamed splat LOD still require checks with representative content.

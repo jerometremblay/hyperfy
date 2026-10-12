@@ -10,6 +10,26 @@ for all retained changes, source references, screenshots, limitations, and the
 
 ## Additional features
 
+### World portals with live destination previews
+
+Use **Add → World Portal** to create a doorway to another portal in the same world
+or to another Hyperfy instance. Copy the destination's **portal ID** into the
+source portal; for a remote destination, also set its **world URL**. No travel
+script is required. One-sided portals open from the front; two-sided portals work
+from either side. Travel between updated portal endpoints preserves your viewing
+direction and offset through the doorway.
+
+Internal portals show the current scene through the destination. Updated remote
+worlds provide a live 50-metre destination preview with procedural geometry,
+avatars, and independent daylight, HDR, fog and lights. Views follow the camera
+with parallax and separate XR eye views. Remote crossing uses normal URL travel;
+older worlds remain travel destinations without a live preview. Remote shadows,
+audio and nested previews are omitted, and XR headset acceptance is pending.
+
+See [portal setup and remote previews](docs/remote-portals.md), the
+[Portal node reference](docs/scripting/nodes/types/Portal.md), and
+[running multiple worlds](docs/deployment.md#named-worlds-from-one-checkout).
+
 ### Real-time day–night cycle and lighting
 
 The sun and moon follow their real positions at the latitude and longitude set in
