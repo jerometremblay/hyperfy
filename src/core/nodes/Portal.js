@@ -37,7 +37,7 @@ export class Portal extends Node {
   mount() {
     this.needsRebuild = false
     const world = this.ctx.world
-    if (!world.graphics) return
+    if (!world.graphics || world.isPreview) return
     if (!this.portalId) this.portalId = this.ctx.entity?.data.id || this.id
     if (this.appConfig && this.ctx.entity) {
       const entity = this.ctx.entity

@@ -16,8 +16,9 @@ import { Stage } from './systems/Stage'
 import { Scripts } from './systems/Scripts'
 
 export class World extends EventEmitter {
-  constructor() {
+  constructor({ preview = false } = {}) {
     super()
+    this.isPreview = preview
 
     this.maxDeltaTime = 1 / 30 // 0.33333
     this.fixedDeltaTime = 1 / 50 // 0.01666
@@ -47,7 +48,7 @@ export class World extends EventEmitter {
     this.register('chat', Chat)
     this.register('blueprints', Blueprints)
     this.register('entities', Entities)
-    this.register('physics', Physics)
+    if (!preview) this.register('physics', Physics)
     this.register('stage', Stage)
   }
 
@@ -195,6 +196,7 @@ export class World extends EventEmitter {
   }
 
   setupMaterial = material => {
+    if (this.isPreview) return // Preview sunlight uses ordinary lighting, without CSM shadow shaders.
     this.environment.csm?.setupMaterial(material)
   }
 
@@ -229,6 +231,7 @@ export class World extends EventEmitter {
       return `https:${url}`
     }
     if (url.startsWith('/')) {
+      if (this.isPreview) return new URL(url, this.destinationURL).href
       return url
     }
     return `https://${url}`
@@ -242,5 +245,7 @@ export class World extends EventEmitter {
     for (const system of this.systems) {
       system.destroy()
     }
+    for (const material of this.primMaterials?.values() || []) material.dispose()
+    this.primMaterials?.clear()
   }
 }

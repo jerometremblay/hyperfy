@@ -1,5 +1,6 @@
 import { World } from './World'
 
+import { ClientPortalPreviews } from './systems/ClientPortalPreviews'
 import { Client } from './systems/Client'
 import { ClientLiveKit } from './systems/ClientLiveKit'
 import { ClientPointer } from './systems/ClientPointer'
@@ -53,5 +54,6 @@ export function createClientWorld() {
   world.register('wind', Wind)
   world.register('xr', XR)
   world.register('ai', ClientAI)
+  world.register('portalPreviews', ClientPortalPreviews)
   return world
 }

@@ -93,8 +93,9 @@ capped at its configured resolution on the longest side. Nested portal surfaces
 are omitted from that pass to prevent
 recursion. The primary composer's AO/bloom are not rerun for the destination;
 lighting and existing shadow maps are shared with the active view. CSS3D WebViews
-are not WebGL content and cannot appear in this preview. Remote-world previews
-are not implemented. Gaussian splats use separate Spark LOD/sort buffers per
+are not WebGL content and cannot appear in this preview. Updated remote worlds also provide live regional previews with procedural scripts, avatars
+and independent daylight/HDR/fog/lights. Remote previews omit physics and shadows.
+See [Remote portal previews](../../../remote-portals.md) for lifecycle and script limitations. Gaussian splats use separate Spark LOD/sort buffers per
 portal so destination updates do not replace the active camera's buffers.
 Desktop rendering, parallax, clipping, the composer, simulated stereo cameras,
 and a procedural Gaussian splat scene have been checked in the browser. Headset

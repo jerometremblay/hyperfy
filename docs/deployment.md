@@ -29,6 +29,45 @@ npm start
 
 The server listens on `PORT` (default 3000). Visit `http://localhost:3000` to confirm it's running.
 
+### Named worlds from one checkout
+
+`npm start` and `npm run dev` retain the existing `.env` loading behavior. Select a
+world by adding its name:
+
+```bash
+npm start -- world2
+npm run dev -- world2
+```
+
+Create `.env.world2` containing only the overrides:
+
+```dotenv
+WORLD=worlds/world2
+PORT=3334
+PUBLIC_ORIGIN=https://your-server.com:3334
+DB_URI=local
+ASSETS=local
+```
+
+This profile uses a separate SQLite database and assets directory, and inherits
+TLS certificates from the shared configuration. Use the hostname covered by your
+certificate in `PUBLIC_ORIGIN`. For local HTTP instead, use
+`PUBLIC_ORIGIN=http://localhost:3334` and explicitly clear both `TLS_KEY_FILE=` and
+`TLS_CERT_FILE=` in the profile. Add `.env.world1` or other named files the same way;
+a missing profile stops startup with an error.
+
+The usual dotenv-flow files load first, followed by `.env.<world>` and optional
+`.env.<world>.local`. Exported environment variables have the highest priority.
+World selection does not change `NODE_ENV`. `PUBLIC_ORIGIN` derives the WebSocket
+(`/ws`), API (`/api`) and assets (`/assets`) URLs, replacing shared URLs. Explicit
+URL settings in the world profile or exported environment take precedence, so
+separate API or asset hosts still work. Profile files are ignored by Git.
+
+Build once with `npm run build`, then run multiple `npm start -- <world>` processes
+using different ports and data directories. Use only one development build watcher
+per checkout because development commands share the build directory. PostgreSQL
+worlds also need separate `DB_SCHEMA` values; S3 worlds need separate storage locations.
+
 ### Docker
 
 ```bash

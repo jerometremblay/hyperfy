@@ -55,15 +55,17 @@ export class RigidBody extends Node {
     this.onTriggerEnter = data.onTriggerEnter
     this.onTriggerLeave = data.onTriggerLeave
 
-    this._tm = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
+    this._tm = null
 
     this.tempVec3 = new THREE.Vector3()
     this.tempQuat = new THREE.Quaternion()
   }
 
   mount() {
+    if (this.ctx.world.isPreview) return
     this.needsRebuild = false
     if (this.ctx.moving) return // physics ignored when moving apps around
+    this._tm ||= new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
     this.matrixWorld.decompose(_v1, _q1, _v2)
     this.transform = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
     _v1.toPxTransform(this.transform)
@@ -434,6 +436,7 @@ export class RigidBody extends Node {
     if (this._type !== 'kinematic') {
       throw new Error('[rigidbody] setKinematicTarget failed (not kinematic)')
     }
+    if (!this.actor) return
     position.toPxTransform(this._tm)
     quaternion.toPxTransform(this._tm)
     this.actor?.setKinematicTarget(this._tm)

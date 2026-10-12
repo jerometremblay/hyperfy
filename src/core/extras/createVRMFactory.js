@@ -1023,6 +1023,7 @@ export function createVRMFactory(glb, setupMaterial) {
         rateCheck = false
       },
       destroy() {
+        if (hooks.isPreview) skeleton.dispose()
         hooks.scene.remove(vrm.scene)
         // world.updater.remove(update)
         hooks.octree?.remove(sItem)

@@ -41,6 +41,9 @@ export class Apps extends System {
     const world = this.world
     const allowLoaders = ['avatar', 'model']
     this.worldGetters = {
+      isPreview() {
+        return !!world.isPreview
+      },
       networkId(entity) {
         return world.network.id
       },

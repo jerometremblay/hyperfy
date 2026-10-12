@@ -53,7 +53,7 @@ export class Light extends Node {
         this.light = new THREE.PointLight(color, this._intensity, this._distance, this._decay)
     }
 
-    this.light.castShadow = this._castShadow
+    this.light.castShadow = !this.ctx.world.isPreview && this._castShadow
 
     if (this._type === 'directional' || this._type === 'spot') {
       this.ctx.world.stage.scene.add(this.light.target)

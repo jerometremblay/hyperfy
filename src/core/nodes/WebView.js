@@ -46,6 +46,7 @@ export class WebView extends Node {
   }
 
   mount() {
+    if (this.ctx.world.isPreview) return
     this.build()
   }
 

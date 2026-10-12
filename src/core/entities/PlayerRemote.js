@@ -98,6 +98,7 @@ export class PlayerRemote extends Entity {
     const avatarUrl = this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm'
     if (this.avatarUrl === avatarUrl) return
     this.world.loader.load('avatar', avatarUrl).then(src => {
+      if (this.destroyed) return
       if ((this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm') !== avatarUrl) return
       if (this.avatar) this.avatar.deactivate()
       this.avatar = src.toNodes().get('avatar')

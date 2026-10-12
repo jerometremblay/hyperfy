@@ -33,6 +33,7 @@ export class Controller extends Node {
   }
 
   mount() {
+    if (this.ctx.world.isPreview) return
     this.needsRebuild = false
     if (this._visible) {
       const geometry = new THREE.CapsuleGeometry(this._radius, this._height, 2, 8)
