@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import EventEmitter from 'eventemitter3'
 import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, getDayNightState } from '../extras/dayNight.js'
 import { setCelestialRotation } from '../extras/celestialRotation.js'
+import { getPlanetStates } from '../extras/planetPositions.js'
 
 const catalog = JSON.parse(await readFile(new URL('../../client/public/stars.json', import.meta.url), 'utf8'))
 mock.method(globalThis, 'fetch', async url => {
@@ -134,6 +135,44 @@ test('constellation lines toggle immediately, persist, share star rotation/fadin
   })
   environment.destroy()
   assert.ok(geometryDisposed && materialDisposed)
+})
+
+test('planet discs follow world time; constellation mode toggles their circles and names', async () => {
+  const { environment, world } = await createEnvironment()
+  const now = Date.parse('2026-10-12T05:00:00Z')
+  world.network.getServerTime = () => now
+  environment.updateDayNight()
+  assert.equal(environment.planets.planets.length, 7)
+  const expected = getPlanetStates(new Date(now), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+  for (const [i, planet] of environment.planets.planets.entries()) {
+    assert.equal(planet.anchor.visible, expected[i].altitude > 0)
+    assert.deepEqual(planet.direction.value.toArray(), expected[i].direction)
+    assert.equal(planet.marker.visible, false)
+  }
+  world.settings.set('constellationLines', true)
+  environment.onSettingsChange({ constellationLines: { value: true } })
+  assert.ok(environment.planets.planets.every(planet => planet.marker.visible))
+  world.settings.timeOffset = 3600000
+  environment.updateDayNight()
+  const changed = getPlanetStates(new Date(now + 3600000), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+  assert.deepEqual(environment.planets.planets[0].direction.value.toArray(), changed[0].direction)
+  world.settings.dayNightCycle = false
+  environment.updateDayNight()
+  assert.equal(environment.planets.visible, false)
+  const planet = environment.planets.planets[0]
+  let textureDisposed = false,
+    geometryDisposed = false
+  planet.marker.material.uniforms.map.value = {
+    dispose: () => {
+      textureDisposed = true
+    },
+  }
+  planet.disc.geometry.addEventListener('dispose', () => {
+    geometryDisposed = true
+  })
+  environment.destroy()
+  assert.equal(environment.planets.parent, null)
+  assert.ok(textureDisposed && geometryDisposed)
 })
 
 test('old worlds get defaults; coordinates and enabled state survive serialization', () => {

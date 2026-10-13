@@ -19,8 +19,38 @@ approximate muted colors. Missing color indices use a neutral color.
 
 This is a J2000 fixed catalog with mean sidereal rotation, using UTC as an approximation
 to UT1. It omits precession, proper motion, nutation, aberration, refraction, atmospheric
-extinction, Moon-driven dimming, light pollution, twinkling, planets, and a Milky Way image.
+extinction, Moon-driven dimming, light pollution, twinkling, and a Milky Way image.
 It is intended for a recognizable night sky, not precision astrometry.
+
+## Planets
+
+Mercury, Venus, Mars, Jupiter, Saturn, Uranus, and Neptune are plain, full discs.
+[Astronomy Engine](https://github.com/cosinekitty/astronomy) (MIT, pinned to 2.1.19)
+calculates topocentric apparent positions for the same effective world date and
+location as the existing Sun/Moon, including light travel time and aberration.
+The conversion uses equator-of-date coordinates and an airless geometric horizon.
+The Sun/Moon implementation remains the existing SunCalc implementation.
+
+Planets update on the environment's existing one-second cadence and every frame
+during time transitions. They fade through twilight and disappear below the horizon
+or when custom sky mode is active. Angular sizes follow mean physical radii and
+observer distance, with a one-pixel diameter floor for unresolved planets. Display
+brightness is compressed and colors are approximate. There are no surface textures,
+Saturn rings, or rendered phases yet.
+
+With **Constellation Lines** enabled, visible planets also show a thin circle and
+their name to the right. These are scene-rendered annotations, so they work in XR
+and portal cameras. They share the planet's direction and twilight/horizon fading.
+Both discs and annotations ignore camera translation, matching the star renderer.
+Name textures are created once on first use and disposed with the environment.
+
+Annotation vertices are fixed angular directions on the celestial sphere, using a
+world-oriented tangent frame at the planet. They follow the sky through head yaw,
+pitch, and roll rather than retaining a screen-space offset. Sprite size uses the
+active eye viewport during stereo rendering. Direct/XR frames clear color and depth
+even after desktop postprocessing disables automatic clearing, then restore the
+composer's clearing state. This prevents the previous head pose's depth buffer from
+masking the current sky.
 
 ## Rebuilding the data
 

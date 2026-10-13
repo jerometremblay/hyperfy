@@ -149,8 +149,12 @@ export class ClientGraphics extends System {
         )
       : []
     const toneMapping = this.renderer.toneMapping
+    const autoClear = this.renderer.autoClear
     try {
       if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
+        // The composer disables autoClear. XR must clear color/depth for the
+        // current eye pose, including when Three uses an internal output target.
+        this.renderer.autoClear = true
         // Direct render: apply tone mapping on the renderer since the
         // composer's ToneMappingEffect is not in the loop here
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -160,6 +164,7 @@ export class ClientGraphics extends System {
       }
     } finally {
       this.renderer.toneMapping = toneMapping
+      this.renderer.autoClear = autoClear
       for (const light of disabled) light.castShadow = true
     }
     if (this.xrDimensionsNeeded) {
