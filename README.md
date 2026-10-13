@@ -37,6 +37,13 @@ The sun and moon follow their real positions at the latitude and longitude set i
 twilight, moon phases, and moonlight. Nighttime ambient lighting keeps unlit surfaces
 visible. The default location is `45.75689615017221, -74.01942099403277`.
 
+At night, 8,920 catalog stars and seven planets follow the world's location and shared
+time, fading through twilight. Enable **Constellation Lines** in World Settings to show
+the 88 constellations and circles and names beside visible planets. The toggle is off
+by default. The night sky renders in desktop, XR, and portal views; planet labels stay
+fixed to celestial directions during head turns. Headset appearance and frame cost
+still require a hardware check.
+
 Builders can use `/time set 13h23` to smoothly fast-forward to the next 13:23 over
 up to five seconds, then continue at normal speed. The server owns the clock, and commands
 use the shared **World Time Zone** (default `America/Toronto`). The time offset is saved with
@@ -45,7 +52,8 @@ the world. `/time reset` returns to real time. Disabling the cycle restores the 
 Scripts can read coordinates with `world.getLocation()` and the shared cycle time with
 `world.time` (Unix milliseconds). Create point, spot, and directional lights with
 `app.create('light')`, including shadows.
-See the [day–night cycle guide](docs/day-night-cycle.md) and
+See the [day–night cycle guide](docs/day-night-cycle.md),
+[night sky details and limitations](docs/night-sky.md), and
 [lighting reference and examples](docs/scripting/nodes/types/Light.md).
 
 ### Prompt-box creation and construction edits
