@@ -117,8 +117,9 @@ export function createStarField(stars) {
   // Draw over the opaque sky, before transparent Moon/scene objects.
   field.renderOrder = -1
   const viewport = new THREE.Vector4()
-  field.onBeforeRender = renderer => {
-    renderer.getCurrentViewport(viewport)
+  field.onBeforeRender = (renderer, _scene, camera) => {
+    if (camera.viewport) viewport.copy(camera.viewport)
+    else renderer.getCurrentViewport(viewport)
     material.uniforms.pixelScale.value = Math.max(0.5, viewport.w / 800)
   }
   return field

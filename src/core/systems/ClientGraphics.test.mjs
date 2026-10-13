@@ -29,6 +29,7 @@ for (const mode of ['direct', 'composer', 'xr', 'exception']) {
     let rendered = false
     const draw = () => {
       assert.equal(lights.filter(light => light.castShadow).length, 15)
+      assert.equal(graphics.renderer.autoClear, mode === 'direct' || mode === 'xr')
       rendered = true
       if (mode === 'exception') throw new Error('render failed')
     }
@@ -38,6 +39,7 @@ for (const mode of ['direct', 'composer', 'xr', 'exception']) {
       capabilities: { maxTextures: 16 },
       xr: { isPresenting: mode === 'xr' },
       toneMapping: THREE.NoToneMapping,
+      autoClear: false,
       render: draw,
     }
     graphics.usePostprocessing = mode !== 'direct'
@@ -47,8 +49,27 @@ for (const mode of ['direct', 'composer', 'xr', 'exception']) {
     assert.ok(rendered)
     assert.ok(lights.every(light => light.castShadow))
     assert.equal(graphics.renderer.toneMapping, THREE.NoToneMapping)
+    assert.equal(graphics.renderer.autoClear, false)
   })
 }
+
+test('XR restores composer clearing state even when direct rendering throws', () => {
+  const graphics = new ClientGraphics({ stage: { scene: new THREE.Scene() }, camera: new THREE.PerspectiveCamera() })
+  graphics.renderer = {
+    shadowMap: { enabled: false },
+    xr: { isPresenting: true },
+    toneMapping: THREE.NoToneMapping,
+    autoClear: false,
+    render() {
+      assert.equal(this.autoClear, true)
+      throw new Error('XR draw failed')
+    },
+  }
+  graphics.usePostprocessing = true
+  assert.throws(() => graphics.render(), /XR draw failed/)
+  assert.equal(graphics.renderer.autoClear, false)
+  assert.equal(graphics.renderer.toneMapping, THREE.NoToneMapping)
+})
 
 test('a portal switches Spark view buffers to the new destination and disposes an unfinished old view safely', async () => {
   class Spark {

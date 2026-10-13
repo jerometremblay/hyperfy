@@ -231,6 +231,120 @@ camera.position.x += 10000
 camera.updateMatrixWorld()
 const planetTranslationPixels = difference(fixedPlanet, read())
 check('Planet disc and name have no translation parallax', planetTranslationPixels === 0, { planetTranslationPixels })
+
+// Sample one fixed texel in the annotation under different head rotations.
+// Its ray must stay fixed in world coordinates, not at a fixed screen offset.
+env.stars.visible = false
+for (const planet of env.planets.planets) planet.anchor.visible = planet === saturn
+saturn.disc.visible = false
+const nameTexture = saturn.marker.material.uniforms.map.value
+const dot = new Uint8Array(32 * 32 * 4)
+for (let y = 14; y < 18; y++)
+  for (let x = 14; x < 18; x++) {
+    dot.set([255, 255, 255, 255], (y * 32 + x) * 4)
+  }
+const dotTexture = new THREE.DataTexture(dot, 32, 32)
+dotTexture.needsUpdate = true
+saturn.marker.material.uniforms.map.value = dotTexture
+const headOrientation = camera.quaternion.clone()
+const markerRays = []
+for (const [pitch, yaw, roll] of [
+  [0, 0, 0],
+  [0, 0.3, 0],
+  [0.15, 0, 0.4],
+]) {
+  camera.position.set(0, 0, 0)
+  camera.quaternion
+    .copy(headOrientation)
+    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, roll)))
+  camera.updateMatrixWorld()
+  const pixels = read()
+  let xs = 0,
+    ys = 0,
+    weight = 0
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      const brightness = pixels[i] + pixels[i + 1] + pixels[i + 2]
+      xs += (x + 0.5) * brightness
+      ys += (y + 0.5) * brightness
+      weight += brightness
+    }
+  markerRays.push(
+    new THREE.Vector3((xs / weight / width) * 2 - 1, (ys / weight / height) * 2 - 1, 0.5)
+      .unproject(camera)
+      .sub(camera.position)
+      .normalize()
+  )
+}
+const markerDrift = Math.max(...markerRays.slice(1).map(ray => markerRays[0].angleTo(ray)))
+check('Annotation texel is pinned to a celestial direction during head turns', markerDrift < 0.002, { markerDrift })
+
+const eyes = [-0.032, 0.032].map((x, i) => {
+  const eye = new THREE.PerspectiveCamera(60, width / 2 / height, 0.2, 1200)
+  eye.position.set(x, 0, 0)
+  eye.quaternion.copy(headOrientation)
+  eye.projectionMatrix.elements[8] = i ? -0.07 : 0.07
+  eye.projectionMatrixInverse.copy(eye.projectionMatrix).invert()
+  eye.updateMatrixWorld()
+  eye.viewport = new THREE.Vector4((i * width) / 2, 0, width / 2, height)
+  return eye
+})
+const eyePixels = read(() => {
+  renderer.clear()
+  renderer.render(scene, new THREE.ArrayCamera(eyes))
+})
+const eyeRays = eyes.map((eye, index) => {
+  let xs = 0,
+    ys = 0,
+    weight = 0
+  const start = (index * width) / 2
+  for (let y = 0; y < height; y++)
+    for (let x = start; x < start + width / 2; x++) {
+      const i = (y * width + x) * 4
+      const brightness = eyePixels[i] + eyePixels[i + 1] + eyePixels[i + 2]
+      xs += (x - start + 0.5) * brightness
+      ys += (y + 0.5) * brightness
+      weight += brightness
+    }
+  return new THREE.Vector3((xs / weight / (width / 2)) * 2 - 1, (ys / weight / height) * 2 - 1, 0.5)
+    .unproject(eye)
+    .sub(eye.position)
+    .normalize()
+})
+const stereoMarkerDrift = eyeRays[0].angleTo(eyeRays[1])
+check('Asymmetric XR eye views agree on the annotation celestial bearing', stereoMarkerDrift < 0.002, {
+  stereoMarkerDrift,
+})
+renderer.setViewport(0, 0, width, height)
+saturn.marker.material.uniforms.map.value = nameTexture
+dotTexture.dispose()
+saturn.disc.visible = true
+
+// XR/direct rendering shares the renderer with the desktop composer. It must
+// clear the previous pose's depth before drawing a new head pose's sky.
+env.planets.visible = false
+probe.visible = true
+scene.add(probe)
+aim(new THREE.Vector3(0, 1, 0))
+scene.add(blocker)
+const directGraphics = new ClientGraphics(world)
+directGraphics.renderer = renderer
+directGraphics.usePostprocessing = false
+renderer.clear()
+directGraphics.render()
+blocker.removeFromParent()
+camera.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.02))
+camera.updateMatrixWorld()
+const staleFrame = read(() => directGraphics.render())
+renderer.clear()
+const cleanFrame = read(() => directGraphics.render())
+const staleSkyPixels = difference(staleFrame, cleanFrame)
+check('Direct frames clear the previous head pose depth', staleSkyPixels === 0, {
+  staleSkyPixels,
+  composerAutoClear: renderer.autoClear,
+})
+probe.removeFromParent()
 world.settings.constellationLines = false
 env.updateDayNight(now)
 aim(saturn.direction.value)
@@ -278,6 +392,19 @@ for (const x of [-0.032, 0.032]) {
   const portalPixels = difference(withStars, withoutStars)
   check(`Same-world portal renders stars and constellation lines for eye ${x}`, portalPixels > 150, { portalPixels })
 }
+const xrEye = new THREE.PerspectiveCamera(60, width / height, 0.2, 1200)
+xrEye.position.set(0, 1.2, 4)
+xrEye.lookAt(0, 2.6, 0)
+xrEye.updateMatrixWorld()
+xrEye.viewport = new THREE.Vector4(0, 0, width / 2, height / 2)
+entrance.resolution = 256
+graphics.renderPortal(entrance, xrEye)
+env.stars.onBeforeRender(renderer, scene, xrEye)
+const trackedStarScale = env.stars.material.uniforms.pixelScale.value
+check('XR stars retain eye size after a smaller portal render', trackedStarScale === 0.5, {
+  trackedStarScale,
+  expected: 0.5,
+})
 entrance.deactivate()
 exit.deactivate()
 const pass = errors.length === 0 && values.every(value => value.pass)

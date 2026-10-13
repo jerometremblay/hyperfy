@@ -2,17 +2,22 @@ import * as THREE from './three'
 import { PLANET_NAMES } from './planetPositions'
 
 const colors = ['#cbc4b7', '#fff2cc', '#e8a080', '#e9dac3', '#e6d4ac', '#b8e3e8', '#8aa8e8']
+// Preserve the original 60-degree/800-pixel footprint as a fixed angular size.
+const angularUnit = Math.tan(Math.PI / 6) / 400
+const zenith = new THREE.Vector3(0, 1, 0)
+const polarReference = new THREE.Vector3(0, 0, 1)
 const vertexShader = `
   uniform vec3 direction;
-  uniform vec2 viewportSize;
+  uniform vec3 right;
+  uniform vec3 up;
   uniform vec2 extent;
   uniform vec2 offset;
   varying vec2 vUv;
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * vec4(mat3(viewMatrix) * direction, 0.0);
-    float pixelScale = max(0.5, viewportSize.y / 800.0);
-    gl_Position.xy += (position.xy * extent + offset) * pixelScale * 2.0 * gl_Position.w / viewportSize;
+    vec2 tangent = position.xy * extent + offset;
+    vec3 ray = normalize(direction + right * tangent.x + up * tangent.y);
+    gl_Position = projectionMatrix * vec4(mat3(viewMatrix) * ray, 0.0);
     gl_Position.z = gl_Position.w;
   }
 `
@@ -92,9 +97,11 @@ export function createPlanets() {
         uniforms: {
           ...uniforms,
           map: { value: null },
-          extent: { value: new THREE.Vector2(128, 32) },
+          right: { value: new THREE.Vector3() },
+          up: { value: new THREE.Vector3() },
+          extent: { value: new THREE.Vector2(128, 32).multiplyScalar(angularUnit) },
           // The texture's circle is at x=40/512; align it with the disc.
-          offset: { value: new THREE.Vector2(108, 0) },
+          offset: { value: new THREE.Vector2(108, 0).multiplyScalar(angularUnit) },
         },
         transparent: true,
         depthWrite: false,
@@ -120,8 +127,9 @@ export function createPlanets() {
     for (const mesh of [disc, marker]) {
       mesh.frustumCulled = false
       mesh.renderOrder = -0.5 // Over the stars, behind the Moon and scene transparency.
-      mesh.onBeforeRender = renderer => {
-        renderer.getCurrentViewport(viewport)
+      mesh.onBeforeRender = (renderer, _scene, camera) => {
+        if (camera.viewport) viewport.copy(camera.viewport)
+        else renderer.getCurrentViewport(viewport)
         uniforms.viewportSize.value.set(viewport.z, viewport.w)
         // Create labels only when rendered; headless/preview setup needs no DOM.
         if (mesh === marker && !marker.material.uniforms.map.value) {
@@ -142,6 +150,11 @@ export function updatePlanets(group, states, opacity, showNames) {
     const planet = group.planets[i]
     planet.anchor.visible = state.altitude > 0
     planet.direction.value.fromArray(state.direction)
+    const { right, up } = planet.marker.material.uniforms
+    right.value.crossVectors(planet.direction.value, zenith)
+    if (right.value.lengthSq() < 1e-12) right.value.crossVectors(planet.direction.value, polarReference)
+    right.value.normalize()
+    up.value.crossVectors(right.value, planet.direction.value).normalize()
     planet.opacity.value = opacity
     planet.marker.visible = showNames
     planet.disc.material.uniforms.angularRadius.value = state.angularRadius

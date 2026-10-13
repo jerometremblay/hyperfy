@@ -44,6 +44,14 @@ and portal cameras. They share the planet's direction and twilight/horizon fadin
 Both discs and annotations ignore camera translation, matching the star renderer.
 Name textures are created once on first use and disposed with the environment.
 
+Annotation vertices are fixed angular directions on the celestial sphere, using a
+world-oriented tangent frame at the planet. They follow the sky through head yaw,
+pitch, and roll rather than retaining a screen-space offset. Sprite size uses the
+active eye viewport during stereo rendering. Direct/XR frames clear color and depth
+even after desktop postprocessing disables automatic clearing, then restore the
+composer's clearing state. This prevents the previous head pose's depth buffer from
+masking the current sky.
+
 ## Rebuilding the data
 
 Run `node scripts/build-star-catalog.mjs` to download and filter the pinned HYG 4.1
