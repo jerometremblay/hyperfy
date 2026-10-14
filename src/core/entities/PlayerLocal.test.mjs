@@ -195,7 +195,7 @@ test('uses controller grip poses when hand tracking is unavailable', () => {
   assert.deepEqual(appliedPose.left.f, {})
 })
 
-test('uses the posed head as the desktop seated camera pivot', () => {
+test('keeps the desktop seated camera right of the posed head as the camera turns', () => {
   globalThis.PHYSX = { PxSphereGeometry: class {} }
 
   const bodyScene = new THREE.Group()
@@ -245,6 +245,19 @@ test('uses the posed head as the desktop seated camera pivot', () => {
 
   PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
 
+  assert.ok(Math.abs(player.cam.position.x - -0.7) < 1e-8)
+  assert.ok(Math.abs(player.cam.position.y - 1.1) < 1e-8)
+  assert.ok(Math.abs(player.cam.position.z) < 1e-8)
+
+  player.cam.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2)
+  PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+
   assert.ok(Math.abs(player.cam.position.x - -1) < 1e-8)
   assert.ok(Math.abs(player.cam.position.y - 1.1) < 1e-8)
+  assert.ok(Math.abs(player.cam.position.z - -0.3) < 1e-8)
+
+  player.firstPerson = true
+  player.camHeight = 1.6
+  PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+  assert.deepEqual(player.cam.position.toArray(), [0, 1.6, 0])
 })

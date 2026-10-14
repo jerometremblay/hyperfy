@@ -30,6 +30,7 @@ const MAX_ZOOM = 8
 const STICK_OUTER_RADIUS = 50
 const STICK_INNER_RADIUS = 25
 const DEFAULT_CAM_HEIGHT = 1.2
+const FIRST_PERSON_ZOOM = 0.3
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -1039,13 +1040,13 @@ export class PlayerLocal extends Entity {
     }
 
     // transition in and out of first person
-    if (this.cam.zoom < 1 && !this.firstPerson) {
+    if (this.cam.zoom < FIRST_PERSON_ZOOM && !this.firstPerson) {
       this.cam.zoom = 0
       this.firstPerson = true
       if (this.avatar) this.avatar.visible = true
       this.avatar?.setFirstPerson(true)
     } else if (this.cam.zoom > 0 && this.firstPerson) {
-      this.cam.zoom = 1
+      this.cam.zoom = FIRST_PERSON_ZOOM
       this.firstPerson = false
       this.avatar?.setFirstPerson(false)
       if (this.avatar) this.avatar.visible = true
@@ -1336,7 +1337,7 @@ export class PlayerLocal extends Entity {
         this.cam.position.y += this.camHeight
       }
       // and slightly to the right over the avatars shoulder, when not first person / xr
-      if (!this.firstPerson && !anchor) {
+      if (!this.firstPerson) {
         const forward = v1.copy(FORWARD).applyQuaternion(this.cam.quaternion)
         const right = v2.crossVectors(forward, UP).normalize()
         this.cam.position.add(right.multiplyScalar(0.3))
