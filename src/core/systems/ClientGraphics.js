@@ -15,6 +15,7 @@ import {
 import { System } from './System'
 import { updatePortalCamera } from '../extras/portalCamera'
 import { limitLightShadows } from '../extras/shadowBudget'
+import { getPortalArrival } from '../extras/portalArrival'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -294,6 +295,66 @@ export class ClientGraphics extends System {
     view.destination = destination
     view.side = side
     view.updateRate = portal.updateRate
+  }
+
+  async capturePortalArrival(portal) {
+    const width = 1280
+    const height = 720
+    const arrival = getPortalArrival(portal)
+    const camera = new THREE.PerspectiveCamera(this.world.camera.fov, width / height, 0.2, 1200)
+    camera.zoom = 1.5
+    camera.position.copy(arrival.position)
+    camera.position.y += 1.2
+    camera.rotation.set((-15 * Math.PI) / 180, arrival.rotationY, 0, 'YXZ')
+    camera.layers.mask = this.world.camera.layers.mask
+    camera.updateProjectionMatrix()
+    camera.updateMatrixWorld()
+    const renderer = this.renderer
+    const target = new THREE.WebGLRenderTarget(width, height, { colorSpace: THREE.SRGBColorSpace })
+    const previousTarget = renderer.getRenderTarget()
+    const cubeFace = renderer.getActiveCubeFace()
+    const mipLevel = renderer.getActiveMipmapLevel()
+    const viewport = renderer.getCurrentViewport(new THREE.Vector4())
+    const xrEnabled = renderer.xr.enabled
+    const toneMapping = renderer.toneMapping
+    const autoClear = renderer.autoClear
+    const renderingPortal = this.renderingPortal
+    const pixels = new Uint8Array(width * height * 4)
+    try {
+      this.renderingPortal = true
+      renderer.xr.enabled = false
+      renderer.autoClear = true
+      renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.setRenderTarget(target)
+      renderer.clear()
+      renderer.render(this.world.stage.scene, camera)
+      renderer.readRenderTargetPixels(target, 0, 0, width, height, pixels)
+    } finally {
+      renderer.setRenderTarget(previousTarget, cubeFace, mipLevel)
+      renderer.state.viewport(viewport)
+      renderer.xr.enabled = xrEnabled
+      renderer.toneMapping = toneMapping
+      renderer.autoClear = autoClear
+      this.renderingPortal = renderingPortal
+      target.dispose()
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    const image = context.createImageData(width, height)
+    const stride = width * 4
+    for (let y = 0; y < height; y++) {
+      image.data.set(pixels.subarray((height - y - 1) * stride, (height - y) * stride), y * stride)
+    }
+    context.putImageData(image, 0, 0)
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(
+        blob => (blob ? resolve(blob) : reject(new Error('Could not encode arrival preview'))),
+        'image/jpeg',
+        0.85
+      )
+    )
   }
 
   commit() {

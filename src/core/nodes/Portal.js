@@ -2,6 +2,8 @@ import * as THREE from '../extras/three'
 import { Node } from './Node'
 import { portalFields } from '../extras/portalFields'
 import { checkPortalDestination } from '../extras/portalDestination'
+import { getPortalArrival, parsePortalPose } from '../extras/portalArrival'
+import { hashFile } from '../utils-client'
 
 function createView() {
   return {
@@ -37,7 +39,6 @@ export class Portal extends Node {
   mount() {
     this.needsRebuild = false
     const world = this.ctx.world
-    if (!world.graphics || world.isPreview) return
     if (!this.portalId) this.portalId = this.ctx.entity?.data.id || this.id
     if (this.appConfig && this.ctx.entity) {
       const entity = this.ctx.entity
@@ -47,8 +48,11 @@ export class Portal extends Node {
       this.doubleside = props.doubleside === true || props.doubleside === 'true'
       this.resolution = props.resolution === 'max' ? 'max' : Number(props.resolution ?? 256)
       this.updateRate = Number(props.updateRate ?? 15)
-      entity.fields = portalFields(this.portalId)
-      entity.onFields?.(entity.fields)
+    }
+    if (!world.graphics || world.isPreview) return
+    if (this.appConfig && this.ctx.entity) {
+      this.ctx.entity.fields = portalFields(this.portalId, () => this.refreshArrivalPreview())
+      this.ctx.entity.onFields?.(this.ctx.entity.fields)
     }
     world.setHot(this, true)
     const geometry = new THREE.PlaneGeometry(this.width, this.height)
@@ -301,15 +305,8 @@ export class Portal extends Node {
     if (!player?.controller?.controller) return
     const methods = world.apps.worldMethods
     if (methods.getQueryParam(this.ctx.entity, 'portalId') === this.portalId) {
-      let pose
-      try {
-        pose = JSON.parse(methods.getQueryParam(this.ctx.entity, 'portalPose'))
-      } catch {}
-      if (Array.isArray(pose) && pose.length === 6 && pose.every(Number.isFinite) && Math.hypot(...pose.slice(3)) > 0) {
-        this.arrive(player, new THREE.Vector3().fromArray(pose), new THREE.Vector3().fromArray(pose, 3).normalize())
-      } else {
-        this.arrive(player)
-      }
+      const pose = parsePortalPose(methods.getQueryParam(this.ctx.entity, 'portalPose'))
+      this.arrive(player, pose?.position, pose?.direction)
       methods.setQueryParam(this.ctx.entity, 'portalId', null)
       methods.setQueryParam(this.ctx.entity, 'portalPose', null)
       return
@@ -334,6 +331,8 @@ export class Portal extends Node {
     }
     if (entered && !this.inside && (this.doubleside || entryPosition.z >= 0)) {
       this.travel(player, entryPosition, inverse)
+      // Local travel can teleport during this update; retain the arrival position.
+      position.copy(player.base.position).applyMatrix4(inverse)
     }
     this.inside = inVolume
     this.previousPosition.copy(position)
@@ -379,20 +378,40 @@ export class Portal extends Node {
   }
 
   arrive(player, sourcePosition, sourceDirection) {
-    const position = sourcePosition?.clone() || new THREE.Vector3(0, -this.height / 2, 1)
-    const direction = sourceDirection?.clone() || new THREE.Vector3(0, 0, -1)
-    const entrySide = position.z >= 0 ? 1 : -1
-    const side = this.doubleside ? entrySide : 1
-    const scale = new THREE.Vector3().setFromMatrixScale(this.matrixWorld)
-    position.x = -position.x
-    position.z = side * Math.max(1, 0.6 / Math.abs(scale.z))
-    position.applyMatrix4(this.matrixWorld)
-    direction.x = -direction.x
-    direction.z = !this.doubleside && entrySide < 0 ? direction.z : -direction.z
-    direction.transformDirection(this.matrixWorld)
-    player.teleport({ position, rotationY: Math.atan2(-direction.x, -direction.z) })
-    this.inside = true
-    this.hasPreviousPosition = false
+    player.teleport(getPortalArrival(this, sourcePosition, sourceDirection))
+    // A teleport is not movement through any of the intervening doorways.
+    for (const portal of this.ctx.world.graphics.portals) {
+      portal.inside = true
+      portal.hasPreviousPosition = false
+    }
+  }
+
+  async refreshArrivalPreview() {
+    const world = this.ctx.world
+    const entity = this.ctx.entity
+    if (this.savingArrivalPreview || !this.mounted || entity?.data.mover || !world.entities.player?.isBuilder()) return
+    this.savingArrivalPreview = true
+    try {
+      world.emit('toast', 'Saving arrival preview…')
+      const blob = await world.graphics.capturePortalArrival(this)
+      const file = new File([blob], 'arrival-preview.jpg', { type: 'image/jpeg' })
+      const hash = await hashFile(file)
+      const url = `asset://${hash}.jpg`
+      await world.network.upload(file)
+      if (!this.mounted || entity.data.mover) return
+      const blueprint = world.blueprints.get(entity.blueprint.id)
+      const props = { ...blueprint.props, [`arrivalImage_${this.portalId}`]: { type: 'image', name: file.name, url } }
+      const change = { id: blueprint.id, version: blueprint.version + 1, props }
+      world.loader.insert('image', url, file)
+      world.blueprints.modify(change)
+      world.network.send('blueprintModified', change)
+      world.emit('toast', 'Arrival preview saved')
+    } catch (error) {
+      console.error('Could not save arrival preview', error)
+      world.emit('toast', 'Could not save arrival preview')
+    } finally {
+      this.savingArrivalPreview = false
+    }
   }
 
   get width() {

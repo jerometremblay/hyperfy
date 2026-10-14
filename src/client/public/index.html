@@ -32,6 +32,16 @@
     </script>
   </head>
   <body>
+    <div id="loading-preview" style="position: fixed; inset: 0; background: black; pointer-events: none">
+      <img id="loading-preview-image" alt="" style="width: 100%; height: 100%; object-fit: cover" />
+      <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4)"></div>
+    </div>
+    <!-- prettier-ignore -->
+    <script>
+      window.LOADING_IMAGE = {loadingImage}
+      window.LOADING_PORTAL_IMAGE = {arrivalImage}
+      if (window.LOADING_IMAGE) document.getElementById('loading-preview-image').src = window.LOADING_IMAGE
+    </script>
     <div id="root"></div>
     <script src="/env.js?v={buildId}"></script>
     <script src="{jsPath}" type="module"></script>

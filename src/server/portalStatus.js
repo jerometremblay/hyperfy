@@ -12,3 +12,22 @@ export function getPortalStatus(world, portalId = '') {
   }
   return { available: false, error: 'Destination portal not found' }
 }
+
+export function getPortalLoadingImage(world, portalId) {
+  if (typeof portalId !== 'string' || !portalId || portalId.length > 256) return null
+  for (const entity of world.entities.items.values()) {
+    if (!entity.isApp || entity.blueprint?.disabled || entity.data.mover) continue
+    let found = false
+    const visit = node => {
+      if (node.name === 'portal' && node.mounted && (node.portalId || entity.data.id || node.id) === portalId)
+        found = true
+    }
+    entity.root?.traverse(visit)
+    for (const node of entity.worldNodes || []) node.traverse(visit)
+    if (found) {
+      const image = entity.blueprint?.props?.[`arrivalImage_${portalId}`]
+      return image?.type === 'image' && typeof image.url === 'string' ? image : null
+    }
+  }
+  return null
+}

@@ -32,6 +32,11 @@ export class ClientNetwork extends System {
     let url = `${wsUrl}?authToken=${authToken}`
     if (name) url += `&name=${encodeURIComponent(name)}`
     if (avatar) url += `&avatar=${encodeURIComponent(avatar)}`
+    const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+    for (const key of ['portalId', 'portalPose']) {
+      const value = query.get(key)
+      if (value) url += `&${key}=${encodeURIComponent(value)}`
+    }
     this.ws = new WebSocket(url)
     this.ws.binaryType = 'arraybuffer'
     this.ws.addEventListener('message', this.onPacket)
@@ -110,6 +115,11 @@ export class ClientNetwork extends System {
   }
 
   onSnapshot(data) {
+    // The server already placed us at the endpoint; do not repeat arrival after loading.
+    if (data.portalArrival) {
+      this.world.apps.worldMethods.setQueryParam(null, 'portalId', null)
+      this.world.apps.worldMethods.setQueryParam(null, 'portalPose', null)
+    }
     this.id = data.id
     this.serverTimeOffset = data.serverTime - performance.now()
     this.serverTimestamp = Number.isFinite(data.serverTimestamp) ? data.serverTimestamp : null

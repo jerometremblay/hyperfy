@@ -116,6 +116,120 @@ test('portal defaults to one side, supports proxy edits, copying, and cleans up 
   assert.equal(hot.size, 0)
 })
 
+test('arrival screenshot uses the endpoint camera, flips pixels and restores renderer state after capture and failure', async t => {
+  const ctx = context()
+  const { portal } = mounted({ position: [10, 1.2, 20] }, ctx)
+  const previousTarget = {}
+  const viewport = new THREE.Vector4(1, 2, 3, 4)
+  let target = previousTarget
+  let disposed = false
+  let image
+  const renderer = {
+    xr: { enabled: true },
+    toneMapping: 123,
+    autoClear: false,
+    getRenderTarget: () => target,
+    getActiveCubeFace: () => 2,
+    getActiveMipmapLevel: () => 3,
+    getCurrentViewport: out => out.copy(viewport),
+    setRenderTarget(value) {
+      target = value
+      if (value?.isWebGLRenderTarget)
+        value.addEventListener('dispose', () => {
+          disposed = true
+        })
+    },
+    state: {
+      viewport(value) {
+        assert.deepEqual(value.toArray(), viewport.toArray())
+      },
+    },
+    clear() {},
+    render(_scene, camera) {
+      assert.deepEqual(camera.position.toArray(), [10, 1.2, 21])
+      assert.ok(Math.abs(camera.rotation.y) === Math.PI)
+      assert.equal(renderer.xr.enabled, false)
+    },
+    readRenderTargetPixels(_target, _x, _y, width, height, pixels) {
+      pixels.fill(42, 0, width * 4)
+      pixels.fill(99, (height - 1) * width * 4)
+    },
+  }
+  globalThis.document = {
+    createElement() {
+      return {
+        getContext() {
+          return {
+            createImageData(width, height) {
+              return { data: new Uint8ClampedArray(width * height * 4) }
+            },
+            putImageData(value) {
+              image = value
+            },
+          }
+        },
+        toBlob(callback) {
+          callback(new Blob(['jpg'], { type: 'image/jpeg' }))
+        },
+      }
+    },
+  }
+  t.after(() => {
+    delete globalThis.document
+  })
+  const graphics = { world: ctx.world, renderer, renderingPortal: false }
+  const blob = await ClientGraphics.prototype.capturePortalArrival.call(graphics, portal)
+  assert.equal(blob.type, 'image/jpeg')
+  assert.equal(image.data[0], 99)
+  assert.equal(image.data.at(-1), 42)
+  assert.equal(target, previousTarget)
+  assert.equal(renderer.xr.enabled, true)
+  assert.equal(renderer.toneMapping, 123)
+  assert.equal(renderer.autoClear, false)
+  assert.equal(graphics.renderingPortal, false)
+  assert.equal(disposed, true)
+  renderer.render = () => {
+    throw new Error('capture failed')
+  }
+  await assert.rejects(ClientGraphics.prototype.capturePortalArrival.call(graphics, portal), /capture failed/)
+  assert.equal(target, previousTarget)
+  assert.equal(renderer.xr.enabled, true)
+  portal.deactivate()
+})
+
+test('refresh arrival preview uploads before saving through existing blueprint modification', async () => {
+  const ctx = context()
+  const blueprint = { id: 'portal-app', version: 1, props: { destinationPortalId: 'other' } }
+  ctx.entity = { data: { id: 'exit' }, blueprint }
+  ctx.player.isBuilder = () => true
+  const { portal } = mounted({ appConfig: true }, ctx)
+  const events = []
+  ctx.world.graphics.capturePortalArrival = async () => new Blob(['saved preview'], { type: 'image/jpeg' })
+  ctx.world.network = {
+    async upload() {
+      events.push('upload')
+    },
+    send(name, change) {
+      events.push(name)
+      assert.equal(change.props.arrivalImage_exit.type, 'image')
+    },
+  }
+  ctx.world.loader = { insert() {} }
+  ctx.world.blueprints = {
+    get: () => blueprint,
+    modify(change) {
+      events.push('modify')
+      assert.equal(change.version, 2)
+      assert.equal(change.props.destinationPortalId, 'other')
+      assert.match(change.props.arrivalImage_exit.url, /^asset:\/\/[a-f0-9]{64}\.jpg$/)
+    },
+  }
+  const button = ctx.entity.fields.find(field => field.key === 'refreshArrivalPreview')
+  await button.onClick()
+  assert.deepEqual(events, ['upload', 'modify', 'blueprintModified'])
+  portal.deactivate()
+})
+
 for (const doubleside of [false, true]) {
   for (const remote of [false, true]) {
     test(`${doubleside ? 'two' : 'one'}-sided native ${remote ? 'remote' : 'same-world'} entry needs no script`, async () => {
@@ -181,6 +295,38 @@ test('native entry follows nested, rotated, scaled transforms and catches fast f
   await portal.pendingTravel
   assert.equal(opened.length, 1)
   portal.deactivate()
+})
+
+test('remote arrival does not sweep the spawn-to-destination jump through another portal', () => {
+  const ctx = context()
+  const entrance = mounted(
+    {
+      portalId: 'uPOFtrqbln',
+      target: 'PBETNgBqKt',
+      position: [1.3370979987264022, 1.2022886152394405, 0.5277763532587141],
+      quaternion: [0, -0.7071067811865475, 0, 0.7071067811865476],
+    },
+    ctx
+  ).portal
+  const wrongExit = mounted({ portalId: 'PBETNgBqKt', position: [32.88, 1.32, 17.31] }, ctx).portal
+  const arrival = mounted(
+    {
+      portalId: 'OL3wuJiVCk',
+      position: [35.248015737151604, 1.320967176636911, 8.598231050782724],
+      quaternion: [0, -0.766044443118978, 0, 0.6427876096865394],
+    },
+    ctx
+  ).portal
+  ctx.setQuery('OL3wuJiVCk')
+  entrance.update()
+  wrongExit.update()
+  arrival.update()
+  entrance.update()
+  wrongExit.update()
+  arrival.update()
+  assert.equal(ctx.teleports.length, 1)
+  assert.equal(ctx.getQuery(), null)
+  for (const portal of [entrance, wrongExit, arrival]) portal.deactivate()
 })
 
 test('remote arrival waits for player readiness, consumes query, and clears the exit', async () => {

@@ -28,10 +28,29 @@ endpoints, see the [Portal node reference](scripting/nodes/types/Portal.md).
 Crossing between updated portal endpoints preserves lateral offset and viewing
 direction through the doorway half-turn, as internal portals do. A one-sided
 destination places arrivals from the back on its front. The source passes
-`portalId` and `portalPose` in the URL; the destination consumes them after the
-player is ready. Other query parameters and fragments remain intact. Older links
+`portalId` and `portalPose` in the URL and initial connection. The destination
+server creates the player at the portal before sending the first snapshot, and
+the client consumes the acknowledged arrival before loading entities. This avoids
+the visible spawn-to-portal jump. Missing or unavailable endpoints use normal
+spawn; endpoints that mount later retain the client arrival fallback. Other query
+parameters and fragments remain intact. Older links
 without a pose use the default arrival direction. Remote crossing uses a page
 navigation, so the preview is not a seamless world transfer.
+
+## Saved loading images
+
+In the **destination** portal's properties, click **Refresh arrival preview** to
+save a screenshot from its default arrival position. The capture does not move
+your player. It uses the existing asset upload and portal property storage; you
+can also upload an image with **Arrival image**, or clear it to use the world's
+image. Refresh the screenshot after changing the surrounding world or moving
+the doorway.
+
+When a link includes this portal's `portalId`, its saved image is included in the
+initial loading page, before the engine downloads. The progress bar remains
+visible while loading. Ordinary joins and portals without an arrival image use
+the world image. This is a static view of the default arrival, so lateral offsets,
+entry from the other side and later scene changes can differ from the screenshot.
 
 ## Preview quality and connection setup
 

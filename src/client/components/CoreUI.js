@@ -23,6 +23,9 @@ import { PoseEditorPanel, SittingPoseButton } from './PoseEditorPanel'
 export function CoreUI({ world }) {
   const ref = useRef()
   const [ready, setReady] = useState(false)
+  useEffect(() => {
+    if (ready) document.getElementById('loading-preview')?.remove()
+  }, [ready])
   const [player, setPlayer] = useState(() => world.entities.player)
   const [ui, setUI] = useState(world.ui.state)
   const [xr, setXR] = useState(() => !!world.xr.session)
@@ -725,6 +728,9 @@ function Disconnected() {
 function LoadingOverlay({ world }) {
   const [progress, setProgress] = useState(0)
   const { title, desc, image } = world.settings
+  const fallbackImage = image ? world.resolveURL(image.url) : ''
+  const [loadingImage, setLoadingImage] = useState(() => window.LOADING_IMAGE || '')
+  const arrivalImage = window.LOADING_PORTAL_IMAGE && loadingImage === window.LOADING_IMAGE
   useEffect(() => {
     world.on('progress', setProgress)
     return () => {
@@ -756,14 +762,16 @@ function LoadingOverlay({ world }) {
           background-position: center;
           background-size: cover;
           background-repeat: no-repeat;
-          background-image: ${image ? `url(${world.resolveURL(image.url)})` : 'none'};
-          animation: pulse 5s ease-in-out infinite;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          animation: ${arrivalImage ? 'none' : 'pulse 5s ease-in-out infinite'};
         }
         .loading-shade {
           position: absolute;
           inset: 0;
           background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(15px);
+          backdrop-filter: blur(${arrivalImage ? '2px' : '15px'});
         }
         .loading-info {
           position: absolute;
@@ -801,7 +809,14 @@ function LoadingOverlay({ world }) {
         }
       `}
     >
-      <div className='loading-image' />
+      {(loadingImage || fallbackImage) && (
+        <img
+          className='loading-image'
+          alt=''
+          src={loadingImage || fallbackImage}
+          onError={() => setLoadingImage(fallbackImage === loadingImage ? '' : fallbackImage)}
+        />
+      )}
       <div className='loading-shade' />
       <div className='loading-info'>
         {title && <div className='loading-title'>{title}</div>}

@@ -1,4 +1,4 @@
-export function portalFields(portalId) {
+export function portalFields(portalId, refreshArrivalPreview) {
   return [
     {
       key: 'doubleside',
@@ -49,6 +49,20 @@ export function portalFields(portalId) {
         { label: 'Every frame', value: '0' },
       ],
       initial: '15',
+    },
+    {
+      key: `arrivalImage_${portalId}`,
+      type: 'file',
+      kind: 'image',
+      label: 'Arrival image',
+      hint: 'Shown while loading into this portal. Refresh after changing the surrounding world.',
+    },
+    {
+      key: 'refreshArrivalPreview',
+      type: 'button',
+      label: 'Refresh arrival preview',
+      hint: 'Save a screenshot from this portal’s default arrival position.',
+      onClick: refreshArrivalPreview,
     },
     {
       key: 'portalId',

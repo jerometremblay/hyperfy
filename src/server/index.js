@@ -21,7 +21,7 @@ import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { BrowserCapture } from './BrowserCapture'
 import { proxyWebViewRequest } from './WebViewProxy'
-import { getPortalStatus } from './portalStatus'
+import { getPortalStatus, getPortalLoadingImage } from './portalStatus'
 import { PortalPreviews, PORTAL_PREVIEW_VERSION } from './PortalPreviews'
 import { appHasBrowserSource } from '../core/utils/browser'
 
@@ -153,6 +153,8 @@ fastify.get('/', async (req, reply) => {
   const title = world.settings.title || 'World'
   const desc = world.settings.desc || ''
   const image = world.resolveURL(world.settings.image?.url) || ''
+  const arrivalImage = getPortalLoadingImage(world, req.query?.portalId)
+  const loadingImage = world.resolveURL(arrivalImage?.url) || image
   const url = process.env.ASSETS_BASE_URL
   const filePath = path.join(__dirname, 'public', 'index.html')
   let html = fs.readFileSync(filePath, 'utf-8')
@@ -160,6 +162,9 @@ fastify.get('/', async (req, reply) => {
   html = html.replaceAll('{title}', title)
   html = html.replaceAll('{desc}', desc)
   html = html.replaceAll('{image}', image)
+  // Keep saved image metadata inside a JSON script value, including URLs containing markup.
+  html = html.replaceAll('{loadingImage}', () => JSON.stringify(loadingImage).replaceAll('<', '\\u003c'))
+  html = html.replaceAll('{arrivalImage}', arrivalImage ? 'true' : 'false')
   reply.type('text/html').send(html)
 })
 fastify.register(statics, {

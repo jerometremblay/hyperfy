@@ -10,6 +10,7 @@ import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
 import { isValidDayNightSetting, getWorldTime, getTimeOffset, TIME_TRANSITION_DURATION } from '../extras/dayNight'
 import { cloneHandTrackingPose } from '../extras/handTracking'
+import { getPortalArrival, parsePortalPose } from '../extras/portalArrival'
 import {
   getStoredSeatPose,
   sanitizeNormalizedPose,
@@ -227,6 +228,31 @@ export class ServerNetwork extends System {
       })
   }
 
+  getPortalSpawn(portalId, portalPose) {
+    if (typeof portalId !== 'string' || !portalId || portalId.length > 256) return null
+    let portal
+    for (const entity of this.world.entities.items.values()) {
+      if (!entity.isApp || entity.blueprint?.disabled || entity.data.mover) continue
+      const visit = node => {
+        if (node.name === 'portal' && node.mounted && node.portalId === portalId) portal = node
+      }
+      entity.root?.traverse(visit)
+      for (const node of entity.worldNodes || []) node.traverse(visit)
+      if (portal) break
+    }
+    if (!portal) return null
+    let pose = typeof portalPose === 'string' && portalPose.length <= 1024 ? parsePortalPose(portalPose) : null
+    // URL input may preserve an aperture offset, but cannot select an arbitrary spawn position.
+    if (pose && (Math.abs(pose.position.x) > portal.width / 2 || Math.abs(pose.position.y) > portal.height / 2 + 0.1)) {
+      pose = null
+    }
+    const arrival = getPortalArrival(portal, pose?.position, pose?.direction)
+    const position = arrival.position.toArray()
+    if (!position.every(Number.isFinite) || !Number.isFinite(arrival.rotationY)) return null
+    const quaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), arrival.rotationY).toArray()
+    return { position, quaternion }
+  }
+
   async onConnection(ws, params) {
     try {
       // check player limit
@@ -279,13 +305,15 @@ export class ServerNetwork extends System {
       // create socket
       const socket = new Socket({ id: user.id, ws, network: this })
 
+      const arrival = this.getPortalSpawn(params.portalId, params.portalPose)
+      const spawn = arrival || this.spawn
       // spawn player
       socket.player = this.world.entities.add(
         {
           id: user.id,
           type: 'player',
-          position: this.spawn.position.slice(),
-          quaternion: this.spawn.quaternion.slice(),
+          position: spawn.position.slice(),
+          quaternion: spawn.quaternion.slice(),
           owner: socket.id, // deprecated, same as userId
           userId: user.id, // deprecated, same as userId
           name: name || user.name,
@@ -315,6 +343,7 @@ export class ServerNetwork extends System {
         livekit,
         authToken,
         hasAdminCode: !!process.env.ADMIN_CODE,
+        portalArrival: !!arrival,
       })
 
       this.sockets.set(socket.id, socket)
