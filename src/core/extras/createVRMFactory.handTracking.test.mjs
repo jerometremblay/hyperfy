@@ -421,3 +421,37 @@ test('lost finger segments and tracking exit restore animation instead of retain
   instance.update(1 / 60)
   assert.ok(instance.getBoneTransform('leftHand').elements.every(Number.isFinite))
 })
+
+test('loaded VRM factory isolates expressions across player instances', async () => {
+  const glb = await loadAvatar()
+  glb.scene.traverse(node => {
+    if (node.geometry && !node.geometry.computeBoundsTree) node.geometry.computeBoundsTree = () => node.geometry
+  })
+  const scene = new THREE.Scene()
+  const camera = new THREE.Object3D()
+  camera.updateMatrixWorld(true)
+  const factory = createVRMFactory(glb, () => {})
+  const hooks = {
+    camera,
+    scene,
+    loader: { load: () => Promise.resolve({ toClip: () => new THREE.AnimationClip('test', 0, []) }) },
+  }
+  const a = factory.create(new THREE.Matrix4(), hooks)
+  const b = factory.create(new THREE.Matrix4(), hooks)
+  a.disableRateCheck()
+  b.disableRateCheck()
+  const manager = a.raw.userData.vrm.expressionManager
+  assert.ok(manager.expressions.length > 0)
+  const expression = manager.expressions.find(expression => expression.binds.some(bind => bind.primitives?.length))
+  assert.ok(expression)
+  a.setExpression(expression.expressionName, 1)
+  a.update(0.016)
+  b.update(0.016)
+  const bind = expression.binds.find(bind => bind.primitives?.length)
+  assert.ok(bind.primitives.some(mesh => mesh.morphTargetInfluences[bind.index] > 0))
+  const other = b.raw.userData.vrm.expressionManager.getExpression(expression.expressionName)
+  assert.equal(other.weight, 0)
+  assert.notEqual(bind.primitives[0], other.binds.find(bind => bind.primitives?.length).primitives[0])
+  a.destroy()
+  b.destroy()
+})

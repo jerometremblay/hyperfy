@@ -1,3 +1,4 @@
+import { cloneExpressionManager, createAvatarExpressions } from './avatarExpressions'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js'
 
 import * as THREE from './three'
@@ -213,6 +214,8 @@ export function createVRMFactory(glb, setupMaterial) {
   function create(matrix, hooks, node) {
     const vrm = cloneGLB(glb)
     const tvrm = vrm.userData.vrm
+    const facial = createAvatarExpressions(tvrm.expressionManager)
+    let speaking = false
     const skinnedMeshes = getSkinnedMeshes(vrm.scene)
     const skeleton = skinnedMeshes[0].skeleton // should be same across all skinnedMeshes
     const rootBone = skeleton.bones[0] // should always be 0
@@ -376,6 +379,7 @@ export function createVRMFactory(glb, setupMaterial) {
       elapsed += delta
       const should = rateCheck ? elapsed >= rate : true
       if (should) {
+        if (avatarVisible) facial.update(elapsed, speaking)
         mixer.update(elapsed)
         skeleton.bones.forEach(bone => bone.updateMatrixWorld())
         skeleton.update = THREE.Skeleton.prototype.update
@@ -992,6 +996,11 @@ export function createVRMFactory(glb, setupMaterial) {
       height,
       headToHeight,
       setEmote,
+      setExpression: facial.setExpression,
+      setExpressions: facial.setExpressions,
+      setSpeaking(value) {
+        speaking = !!value
+      },
       setFirstPerson,
       setHandTrackingPose,
       getNormalizedPose() {
@@ -1024,6 +1033,21 @@ export function createVRMFactory(glb, setupMaterial) {
       },
       destroy() {
         if (hooks.isPreview) skeleton.dispose()
+        const sourceMaterials = new Set()
+        glb.scene.traverse(object => {
+          for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+            if (material) sourceMaterials.add(material)
+          }
+        })
+        const disposed = new Set()
+        vrm.scene.traverse(object => {
+          for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+            if (material && !sourceMaterials.has(material) && !disposed.has(material)) {
+              material.dispose()
+              disposed.add(material)
+            }
+          }
+        })
         hooks.scene.remove(vrm.scene)
         // world.updater.remove(update)
         hooks.octree?.remove(sItem)
@@ -1035,7 +1059,9 @@ export function createVRMFactory(glb, setupMaterial) {
 function cloneGLB(glb) {
   // returns a shallow clone of the gltf but a deep clone of the scene.
   // uses SkeletonUtils.clone which is the same as Object3D.clone except also clones skinned meshes etc
-  return { ...glb, scene: SkeletonUtils.clone(glb.scene) }
+  const scene = SkeletonUtils.clone(glb.scene)
+  const expressionManager = cloneExpressionManager(glb.userData.vrm.expressionManager, glb.scene, scene)
+  return { ...glb, scene, userData: { ...glb.userData, vrm: { ...glb.userData.vrm, expressionManager } } }
 }
 
 function getSkinnedMeshes(scene) {

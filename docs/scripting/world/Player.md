@@ -138,3 +138,35 @@ Calling `player.setVoiceLevel(null)` removes the current apps override and rever
 **NOTE:** Changes stack with priority, so if two apps have set a voice level, the higher priority level takes precendence. Global is the highest priority.
 
 Must be called on the server for security reasons.
+
+### `.setExpression(name, weight, { duration })`
+
+Sets a facial expression and shares it with every player, including late joiners.
+Weight is clamped to 0–1. Optional `duration` is a nonnegative number of seconds;
+expiry is controlled by the server. Calling again replaces that expression's timer.
+Missing expressions on an avatar are harmless.
+
+```js
+world.getPlayer().setExpression('happy', 1, { duration: 2 })
+```
+
+Accepted names: `blink`, `blinkLeft`, `blinkRight`, `aa`, `ih`, `ou`, `ee`, `oh`,
+`happy`, `angry`, `sad`, `relaxed`, `surprised`, `neutral`, `lookUp`, `lookDown`,
+`lookLeft`, `lookRight`. Names are case insensitive. VRM 0 aliases `A`, `I`, `U`,
+`E`, `O`, `joy`, `Sorrow`, `Fun`, `Blink_L`, and `Blink_R` are also accepted.
+
+Client scripts can change only their local player; server scripts can change any
+player. The server rejects unknown names, nonfinite or out-of-range network weights,
+invalid durations, and more than 20 requests per player per second. The method returns
+`false` for invalid names/weights (and server-side rejection); client requests are asynchronous.
+
+### `.clearExpressions()`
+
+Clears scripted expressions and their duration timers. Automatic blinking and voice
+mouth movement continue. The avatar's standard VRM blink/mouth override rules apply.
+All preset expressions are replicated; automatic blink and mouth animation are computed
+locally from the existing speaking status.
+
+Desktop keys **1–5** toggle happy, angry, sad, relaxed, and surprised respectively,
+clearing the previous expression. Higher-priority controls take precedence, and shortcuts
+are disabled in build mode, in VR, and while typing in chat or another input.

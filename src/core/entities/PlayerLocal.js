@@ -1,3 +1,4 @@
+import { createPlayerProxy } from '../extras/createPlayerProxy'
 import { Entity } from './Entity'
 import { clamp } from '../utils'
 import * as THREE from '../extras/three'
@@ -297,6 +298,16 @@ export class PlayerLocal extends Entity {
           this.pan = null
         }
       },
+    })
+    const expressions = ['happy', 'angry', 'sad', 'relaxed', 'surprised']
+    expressions.forEach((name, i) => {
+      this.control[`digit${i + 1}`].onPress = () => {
+        if (this.world.builder?.enabled || this.world.xr?.session) return
+        const proxy = createPlayerProxy(null, this)
+        const active = this.data.x?.[name] > 0
+        proxy.clearExpressions()
+        if (!active) proxy.setExpression(name, 1)
+      }
     })
     this.control.camera.write = true
     this.control.camera.position.copy(this.cam.position)
@@ -934,6 +945,8 @@ export class PlayerLocal extends Entity {
   }
 
   update(delta) {
+    this.avatar?.setExpressions(this.data.x)
+    this.avatar?.setSpeaking(this.speaking)
     if (this.poseEditorActive) {
       this.moveDir.set(0, 0, 0)
       this.axis.set(0, 0, 0)
@@ -1432,6 +1445,7 @@ export class PlayerLocal extends Entity {
   }
 
   modify(data) {
+    if (Object.hasOwn(data, 'x')) this.data.x = data.x
     let avatarChanged
     let changed
     if (data.hasOwnProperty('name')) {

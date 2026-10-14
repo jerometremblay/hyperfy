@@ -169,6 +169,14 @@ export class Avatar extends Node {
     }
   }
 
+  setExpressions(weights) {
+    this.instance?.setExpressions(weights)
+  }
+
+  setSpeaking(speaking) {
+    this.instance?.setSpeaking(speaking)
+  }
+
   setLocomotion(mode, axis, gazeDir) {
     this.instance?.setLocomotion(mode, axis, gazeDir)
   }

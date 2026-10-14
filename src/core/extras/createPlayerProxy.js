@@ -1,3 +1,4 @@
+import { normalizeExpression, applyPlayerExpression } from './playerExpressions'
 import { getRef } from '../nodes/Node'
 import { clamp, uuid } from '../utils'
 import * as THREE from './three'
@@ -79,6 +80,20 @@ export function createPlayerProxy(entity, player) {
     editSittingPose(options = {}) {
       if (!world.network.isClient || player.data.owner !== world.network.id) return false
       return world.poseEditor?.open(player, options) || false
+    },
+    setExpression(name, weight, options = {}) {
+      name = normalizeExpression(name)
+      if (!name || !Number.isFinite(weight)) return false
+      const request = { id: player.data.id, name, weight: clamp(weight, 0, 1), duration: options.duration }
+      if (world.network.isServer) return applyPlayerExpression(player, request)
+      world.network.send('playerExpression', request)
+      return true
+    },
+    clearExpressions() {
+      const request = { id: player.data.id, clear: true }
+      if (world.network.isServer) return applyPlayerExpression(player, request)
+      world.network.send('playerExpression', request)
+      return true
     },
     setSessionAvatar(url) {
       const avatar = url

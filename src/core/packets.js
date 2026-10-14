@@ -31,6 +31,7 @@ const names = [
   'playerSeatPoseResult',
   'playerSeatPoseStyles',
   'playerSeatPoseStylesResult',
+  'playerExpression',
 ]
 
 const byName = {}

@@ -1,3 +1,4 @@
+import { applyPlayerExpression } from '../extras/playerExpressions'
 import moment from 'moment'
 import { writePacket } from '../packets'
 import { Socket } from '../Socket'
@@ -517,12 +518,21 @@ export class ServerNetwork extends System {
     if (entity.isApp) this.dirtyApps.add(entity.data.id)
   }
 
+  onPlayerExpression = (socket, data) => {
+    if (!data || typeof data !== 'object') return
+    const player = this.world.entities.get(data.id)
+    // Client scripts can control their own player; server scripts can control any player.
+    if (!player?.isPlayer || player.data.owner !== socket.id) return
+    applyPlayerExpression(player, data)
+  }
+
   onEntityModified = async (socket, data) => {
     const entity = this.world.entities.get(data.id)
     if (!entity) return console.error('onEntityModified: no entity found', data)
     if (entity.isPlayer && entity.data.owner !== socket.id) {
       return console.error('player attempted to modify another player', { socketId: socket.id, playerId: data.id })
     }
+    if (entity.isPlayer && Object.hasOwn(data, 'x')) return
     if (entity.isPlayer && Object.hasOwn(data, 'seatPose')) {
       return console.error('player attempted to modify authoritative seat pose data', { playerId: data.id })
     }

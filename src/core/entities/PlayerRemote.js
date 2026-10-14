@@ -152,6 +152,8 @@ export class PlayerRemote extends Entity {
   }
 
   update(delta) {
+    this.avatar?.setExpressions(this.data.x)
+    this.avatar?.setSpeaking(this.speaking)
     const anchor = this.getAnchorMatrix()
     if (!anchor) {
       this.position.update(delta)
@@ -199,6 +201,7 @@ export class PlayerRemote extends Entity {
   }
 
   modify(data) {
+    if (Object.hasOwn(data, 'x')) this.data.x = data.x
     let avatarChanged
     if (data.hasOwnProperty('t')) {
       this.teleport++
@@ -278,6 +281,7 @@ export class PlayerRemote extends Entity {
   }
 
   destroy(local) {
+    for (const timer of this.expressionTimers?.values() || []) clearTimeout(timer)
     if (this.destroyed) return
     this.destroyed = true
 
