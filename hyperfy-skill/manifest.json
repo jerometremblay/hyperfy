@@ -1,6 +1,6 @@
 {
   "name": "hyperfy-hyp-app-authoring",
-  "version": "2.4.3",
-  "description": "Author, validate, package, and preview Hyperfy .hyp apps from JavaScript primitives and native portal nodes, with target-runtime compatibility checks, orientation-safe geometry, remote-preview guidance, and crash-safe defaults.",
+  "version": "2.4.4",
+  "description": "Author, validate, package, and preview Hyperfy .hyp apps from JavaScript primitives and native portal nodes, or inspect and manage live-world apps through Hyperfy's authenticated Agent REST API.",
   "entrypoint": "SKILL.md"
 }

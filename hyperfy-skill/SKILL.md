@@ -1,6 +1,6 @@
 ---
 name: hyperfy-hyp-app-authoring
-description: Create Hyperfy .hyp apps from JavaScript primitives and native portal nodes, validate them against the target Hyperfy runtime, package them safely, and generate an exact-package interactive preview.
+description: Create and validate Hyperfy .hyp apps from JavaScript primitives and native portal nodes, package and preview them, or inspect and manage apps in a running world through its authenticated Agent REST API.
 ---
 
 # Hyperfy `.hyp` app authoring
@@ -388,6 +388,14 @@ When the user supplies an existing `.hyp`:
 5. compare extracted output to intended inputs;
 6. regenerate the preview from the repacked file;
 7. run the orientation audit if geometry rotations changed.
+
+## Live-world app operations
+
+When the user asks to inspect, deploy, or change an app in a running Hyperfy world, read [docs/agent-api.md](docs/agent-api.md). The Agent API controls that live world; it does not start or stop server processes. It is disabled unless the world has an Agent API token configured, and loading this skill does not grant API access. Use live mutations only when the user asks for them.
+
+For an existing script blueprint, fetch its current version, upload the exact JavaScript source, then PATCH the blueprint with the returned script asset URL and current version. Preserve the other blueprint fields: `props` replaces the entire properties object, and changing a blueprint rebuilds every instance that uses it. For a new script-only app, create the blueprint and then create an entity only when placement is requested. The Agent API uploads JavaScript source; model assets use Hyperfy's existing upload path.
+
+Keep bearer tokens in the configured secret environment, never in source, skill files, output artifacts, or logs. A successful mutation is broadcast immediately but may still be waiting for Hyperfy's normal persistence save.
 
 ## Delivery
 

@@ -1,6 +1,10 @@
-# hyperfy-hyp-app-authoring 2.4.3
+# hyperfy-hyp-app-authoring 2.4.4
 
 Generic ChatGPT → Hyperfy primitive JavaScript → `.hyp` → exact-package preview workflow.
+
+## 2.4.4 live-world Agent API guidance
+
+Adds a focused reference for inspecting and managing apps in a running world through Hyperfy's authenticated Agent REST API. It documents token scopes, script upload and versioned blueprint updates, instance operations, and the effects of live mutations. See [docs/agent-api.md](docs/agent-api.md).
 
 ## 2.4.3 native portals and remote previews
 
@@ -50,6 +54,7 @@ The package retains the orientation discipline introduced in 2.2.0: define struc
 - `docs/physics.md`
 - `docs/portals.md`
 - `docs/sitting.md`
+- `docs/agent-api.md`
 - `templates/minimal_primitive_app.js`
 - `templates/orientation_helpers.js`
 - `tools/hyp_pack.py`
