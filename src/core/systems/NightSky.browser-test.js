@@ -60,6 +60,7 @@ function read(
     renderer.render(scene, camera)
   }
 ) {
+  renderer.toneMappingExposure = env.renderExposure
   render()
   const gl = renderer.getContext(),
     data = new Uint8Array(width * height * 4)
@@ -207,7 +208,7 @@ env.updateDayNight(Date.parse('2026-06-21T17:00:00Z'))
 const day = read(() => composer.render())
 env.stars.visible = true
 check(
-  'Daylight opacity hides stars',
+  'Daylight magnitude limit hides stars',
   difference(
     day,
     read(() => composer.render())

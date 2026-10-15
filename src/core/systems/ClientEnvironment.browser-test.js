@@ -71,6 +71,7 @@ const bloom = new BloomEffect({
 composer.addPass(new EffectPass(world.camera, bloom, new ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC })))
 const result = document.querySelector('pre')
 const read = () => {
+  renderer.toneMappingExposure = env.renderExposure
   composer.render()
   const gl = renderer.getContext()
   const data = new Uint8Array(440 * 270 * 4)
@@ -133,7 +134,7 @@ for (const [label, date, isSun, shadows] of [
     ? glare < 200 && average > 180
     : lightIntensity === 0
       ? average > 5
-      : moonPixels > 10000 && maxMoonDifference > 25
+      : moonPixels > 10000 && maxMoonDifference > 15
   values.push({ label, pass, average: Math.round(average), glare, moonPixels, maxMoonDifference })
 }
 // Aim at the real, life-size moon rather than testing only the light it casts.

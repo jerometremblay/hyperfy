@@ -7,6 +7,7 @@ import EventEmitter from 'eventemitter3'
 import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, getDayNightState } from '../extras/dayNight.js'
 import { setCelestialRotation } from '../extras/celestialRotation.js'
 import { getPlanetStates } from '../extras/planetPositions.js'
+import { getCelestialVisibility } from '../extras/celestialVisibility.js'
 
 const catalog = JSON.parse(await readFile(new URL('../../client/public/stars.json', import.meta.url), 'utf8'))
 mock.method(globalThis, 'fetch', async url => {
@@ -59,7 +60,7 @@ async function createEnvironment() {
   return { environment, world, messages }
 }
 
-test('catalog stars follow world time and location, fade in twilight, and hide with custom skies', async () => {
+test('catalog stars follow world time and location, emerge by magnitude, and hide with custom skies', async () => {
   const { environment, world } = await createEnvironment()
   const stars = environment.stars
   assert.equal(stars.geometry.getAttribute('position').count, 8920)
@@ -83,13 +84,14 @@ test('catalog stars follow world time and location, fade in twilight, and hide w
   let twilightFound = false
   for (let hour = 20; hour < 26; hour += 0.1) {
     environment.updateDayNight(Date.parse('2026-10-10T00:00:00Z') + hour * 3600000)
-    const opacity = stars.material.uniforms.opacity.value
+    const opacity = stars.material.uniforms.constellationOpacity.value
     if (opacity > 0 && opacity < 1) twilightFound = true
   }
   assert.ok(twilightFound)
   environment.updateDayNight(Date.parse('2026-06-21T17:00:00Z'))
   assert.equal(stars.visible, false)
-  assert.equal(stars.material.uniforms.opacity.value, 0)
+  assert.equal(stars.material.uniforms.opacity.value, 1)
+  assert.equal(stars.material.uniforms.constellationOpacity.value, 0)
   world.settings.dayNightCycle = false
   environment.updateDayNight(now)
   assert.equal(stars.visible, false)
@@ -118,7 +120,7 @@ test('constellation lines toggle immediately, persist, share star rotation/fadin
   environment.onSettingsChange({ constellationLines: { value: true } })
   assert.equal(lines.visible, true)
   assert.equal(lines.material.uniforms.celestialRotation, environment.stars.material.uniforms.celestialRotation)
-  assert.equal(lines.material.uniforms.opacity, environment.stars.material.uniforms.opacity)
+  assert.equal(lines.material.uniforms.opacity, environment.stars.material.uniforms.constellationOpacity)
   const restored = new Settings({})
   restored.deserialize(world.settings.serialize())
   assert.equal(restored.constellationLines, true)
@@ -145,13 +147,21 @@ test('planet discs follow world time; constellation mode toggles their circles a
   assert.equal(environment.planets.planets.length, 7)
   const expected = getPlanetStates(new Date(now), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
   for (const [i, planet] of environment.planets.planets.entries()) {
-    assert.equal(planet.anchor.visible, expected[i].altitude > 0)
+    const visibility = getCelestialVisibility(
+      expected[i].magnitude,
+      expected[i].direction,
+      environment.celestialVisibility.sunDirection.value,
+      environment.celestialVisibility.moonDirection.value,
+      environment.celestialVisibility.moonFraction.value
+    )
+    assert.equal(planet.anchor.visible, expected[i].altitude > 0 && visibility > 0.001)
     assert.deepEqual(planet.direction.value.toArray(), expected[i].direction)
     assert.equal(planet.marker.visible, false)
   }
   world.settings.set('constellationLines', true)
   environment.onSettingsChange({ constellationLines: { value: true } })
-  assert.ok(environment.planets.planets.every(planet => planet.marker.visible))
+  assert.ok(environment.planets.planets.some(planet => planet.marker.visible))
+  assert.ok(environment.planets.planets.filter(planet => planet.marker.visible).every(planet => planet.anchor.visible))
   world.settings.timeOffset = 3600000
   environment.updateDayNight()
   const changed = getPlanetStates(new Date(now + 3600000), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
@@ -227,7 +237,10 @@ test('visible sun, shadows, and ambient light follow day and night; disabling re
   const { environment, world } = await createEnvironment()
   environment.updateDayNight(Date.parse('2026-06-21T17:00:00Z'))
   assert.equal(environment.solarSky.visible, true)
-  assert.equal(environment.solarSky.material.uniforms.daylight.value, 1)
+  assert.equal(
+    environment.solarSky.material.uniforms.sunAltitude.value,
+    getDayNightState(new Date('2026-06-21T17:00:00Z'), DEFAULT_LATITUDE, DEFAULT_LONGITUDE).altitude
+  )
   assert.equal(environment.sky.visible, false)
   assert.ok(environment.csm.lightDirection.y < -0.9)
   assert.equal(world.stage.scene.environmentIntensity, 1)
@@ -237,8 +250,9 @@ test('visible sun, shadows, and ambient light follow day and night; disabling re
 
   environment.updateDayNight(Date.parse('2026-06-21T05:00:00Z'))
   assert.ok(environment.csm.lights.every(light => light.intensity === 0))
-  assert.equal(world.stage.scene.environmentIntensity, 0.2)
-  assert.equal(environment.solarSky.material.uniforms.daylight.value, 0)
+  assert.equal(world.stage.scene.environmentIntensity, 0.08)
+  assert.equal(environment.renderExposure, 1.8)
+  assert.ok(environment.solarSky.material.uniforms.sunAltitude.value < 0)
 
   world.settings.set('dayNightCycle', false)
   environment.onSettingsChange({ dayNightCycle: { value: false } })
@@ -277,13 +291,12 @@ test('moon follows the astronomical position and phase, disappears below the hor
       new THREE.Vector3().fromArray(state.moon.lightDirection)
     ) < 1e-10
   )
-  assert.ok(environment.moonLight.intensity > 0.1)
+  assert.ok(environment.moonLight.intensity > 0.01)
   assert.equal(environment.moonLight.castShadow, false)
   assert.ok(environment.moonLight.target.position.equals(world.rig.position))
   assert.ok(
-    environment.moonLight.position.distanceTo(
-      world.rig.position.clone().add(direction.clone().multiplyScalar(900))
-    ) < 1e-10
+    environment.moonLight.position.distanceTo(world.rig.position.clone().add(direction.clone().multiplyScalar(900))) <
+      1e-10
   )
 
   const beforeRise = Date.parse('2026-10-10T01:00:00Z')
@@ -302,7 +315,7 @@ test('moon follows the astronomical position and phase, disappears below the hor
   world.settings.set('timeOffset', now - Date.parse('2026-10-25T13:00:00Z'))
   environment.updateDayNight(Date.parse('2026-10-25T13:00:00Z'))
   assert.equal(environment.moon.visible, true)
-  assert.ok(environment.moonLight.intensity > 0.1)
+  assert.ok(environment.moonLight.intensity > 0.01)
   const moon = environment.moon
   const moonMarker = environment.moonMarker
   const light = environment.moonLight
@@ -390,7 +403,7 @@ test('sun, moon, and stars use server time even when the device clock is hours w
   assert.equal(environment.solarUpdatedAt, serverTime)
   assert.ok(environment.solarDirection.distanceTo(new THREE.Vector3().fromArray(state.sunPosition)) < 1e-10)
   assert.ok(environment.moonDirection.distanceTo(new THREE.Vector3().fromArray(state.moon.position)) < 1e-10)
-  assert.ok(environment.moonLight.intensity > 0.4)
+  assert.ok(environment.moonLight.intensity > 0.01)
   const rotation = setCelestialRotation(new THREE.Matrix3(), new Date(serverTime), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
   assert.deepEqual(environment.stars.material.uniforms.celestialRotation.value.elements, rotation.elements)
   environment.destroy()

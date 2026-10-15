@@ -62,9 +62,11 @@ test('default location follows the season and switches off sunlight at night', (
   assert.ok(winter.altitude > 19 && winter.altitude < 23)
   assert.ok(night.sunPosition[1] < 0)
   assert.equal(night.sunIntensity, 0)
-  assert.equal(night.environmentIntensity, 0.2)
+  assert.equal(night.environmentIntensity, 0.08)
+  assert.equal(night.renderExposure, 1.8)
   assert.equal(summer.sunIntensity, 1)
   assert.equal(summer.environmentIntensity, 1)
+  assert.equal(summer.renderExposure, 1)
 })
 
 test('longitude changes local solar time, including across the date line', () => {

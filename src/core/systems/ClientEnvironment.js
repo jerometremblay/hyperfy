@@ -12,6 +12,7 @@ import { createStarField, loadStarCatalog } from '../extras/createStarField'
 import { setCelestialRotation } from '../extras/celestialRotation'
 import { getPlanetStates } from '../extras/planetPositions'
 import { createPlanets, updatePlanets } from '../extras/createPlanets'
+import { celestialTwilightShader, getNightProgress } from '../extras/celestialVisibility'
 
 const sunsetColor = new THREE.Color('#ffb16b')
 const moonDistance = 900
@@ -92,9 +93,15 @@ export class ClientEnvironment extends System {
     this.solarSky = null
     this.solarDirection = new THREE.Vector3()
     this.solarUpdatedAt = -Infinity
+    this.renderExposure = 1
     this.moon = null
     this.moonMarker = null
     this.moonDirection = new THREE.Vector3()
+    this.celestialVisibility = {
+      sunDirection: { value: new THREE.Vector3(0, -1, 0) },
+      moonDirection: { value: new THREE.Vector3(0, -1, 0) },
+      moonFraction: { value: 0 },
+    }
     this.moonLight = null
     this.planets = null
     this.stars = null
@@ -156,11 +163,20 @@ export class ClientEnvironment extends System {
       // The physical sky radiance overwhelms the world's bloom at normal exposure.
       // Scale only the sky, keeping sunlight and other emissive objects unchanged.
       this.solarSky.material.uniforms.showSunDisc.value = 0.001
-      this.solarSky.material.uniforms.daylight = { value: 0 }
-      this.solarSky.material.fragmentShader = 'uniform float daylight;\n' + this.solarSky.material.fragmentShader
+      this.solarSky.material.uniforms.sunAltitude = { value: 0 }
+      this.solarSky.material.fragmentShader =
+        'uniform float sunAltitude;\n' + celestialTwilightShader + this.solarSky.material.fragmentShader
       this.solarSky.material.fragmentShader = this.solarSky.material.fragmentShader.replace(
         '#include <tonemapping_fragment>',
-        'gl_FragColor.rgb = mix(gl_FragColor.rgb * 0.05, vec3(0.18, 0.6, 1.2), daylight * 0.8);\n#include <tonemapping_fragment>'
+        `
+          float nightProgress = getNightProgress(sunAltitude);
+          float daylight = smoothstep(-1.5, 6.0, sunAltitude);
+          vec3 nightSky = vec3(0.0015, 0.002, 0.006);
+          vec3 scatteringSky = max(gl_FragColor.rgb, vec3(0.0)) * 0.05;
+          vec3 twilightSky = max(scatteringSky, vec3(0.012, 0.018, 0.035));
+          gl_FragColor.rgb = mix(twilightSky, nightSky, nightProgress);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.18, 0.6, 1.2), daylight * 0.8);
+          #include <tonemapping_fragment>`
       )
       this.solarSky.visible = false
       this.solarSky.frustumCulled = false
@@ -177,7 +193,7 @@ export class ClientEnvironment extends System {
       this.world.stage.scene.add(this.moon, this.moonMarker)
       this.moonLight = new THREE.DirectionalLight('#b9caff', 0)
       this.world.stage.scene.add(this.moonLight, this.moonLight.target)
-      this.planets = createPlanets()
+      this.planets = createPlanets(this.celestialVisibility)
       this.world.stage.scene.add(this.planets)
     }
 
@@ -185,7 +201,7 @@ export class ClientEnvironment extends System {
       this.starsLoading = loadStarCatalog()
         .then(catalog => {
           if (this.destroyed) return
-          this.stars = createStarField(catalog)
+          this.stars = createStarField(catalog, this.celestialVisibility)
           this.constellationLines = this.stars.getObjectByName('constellations')
           this.world.stage.scene.add(this.stars)
           this.updateDayNight()
@@ -298,6 +314,7 @@ export class ClientEnvironment extends System {
       this.planets.visible = false
       this.moonLight.intensity = 0
       scene.environmentIntensity = 1
+      this.renderExposure = 1
       this.csm.lightDirection = this.skyInfo.sunDirection
       for (const light of this.csm.lights) {
         light.intensity = this.skyInfo.sunIntensity
@@ -308,30 +325,41 @@ export class ClientEnvironment extends System {
 
     const date = new Date(getWorldTime(this.world.settings, now))
     const state = getDayNightState(date, latitude, longitude)
-    const twilight = THREE.MathUtils.smoothstep(state.altitude, -18, -6)
+    const nightProgress = getNightProgress(state.altitude)
+    this.solarUpdatedAt = now
+    this.renderExposure = state.renderExposure
+    this.solarDirection.fromArray(state.sunPosition)
+    this.moonDirection.fromArray(state.moon.position)
+    this.celestialVisibility.sunDirection.value.copy(this.solarDirection)
+    this.celestialVisibility.moonDirection.value.copy(this.moonDirection)
+    this.celestialVisibility.moonFraction.value = state.moon.fraction
     updatePlanets(
       this.planets,
       getPlanetStates(date, latitude, longitude),
-      1 - twilight,
-      this.world.settings.constellationLines
+      this.celestialVisibility,
+      this.world.settings.constellationLines,
+      nightProgress
     )
     if (this.stars) {
       setCelestialRotation(this.stars.material.uniforms.celestialRotation.value, date, latitude, longitude)
-      // Fully visible at astronomical night; disappear by civil twilight.
-      this.stars.material.uniforms.opacity.value = 1 - twilight
-      this.stars.visible = twilight < 1
+      this.stars.material.uniforms.opacity.value = 1
+      this.stars.material.uniforms.constellationOpacity.value = nightProgress
+      // Individual stars fade according to magnitude; skip the field once its
+      // brightest catalog stars are below the solar glare limit.
+      this.stars.visible = state.altitude < 1
+      if (this.constellationLines) {
+        this.constellationLines.visible =
+          this.world.settings.constellationLines && this.stars.material.uniforms.constellationOpacity.value > 0
+      }
     }
-    this.solarUpdatedAt = now
-    this.solarDirection.fromArray(state.sunPosition)
     this.solarSky.material.uniforms.sunPosition.value.copy(this.solarDirection).multiplyScalar(450000)
-    this.solarSky.material.uniforms.daylight.value = state.skyDaylight
+    this.solarSky.material.uniforms.sunAltitude.value = state.altitude
     this.csm.lightDirection = this.solarDirection.clone().negate()
     for (const light of this.csm.lights) {
       light.intensity = this.skyInfo.sunIntensity * state.sunIntensity
       light.color.set(this.skyInfo.sunColor).lerp(sunsetColor, state.warmth)
     }
     scene.environmentIntensity = state.environmentIntensity
-    this.moonDirection.fromArray(state.moon.position)
     this.moon.visible = state.moon.altitude > 0
     const moonUniforms = this.moon.material.uniforms
     moonUniforms.angularRadius.value = state.moon.angularRadius
@@ -340,7 +368,7 @@ export class ClientEnvironment extends System {
     updateCelestialMarker(
       this.moonMarker,
       this.moonDirection,
-      1 - twilight,
+      nightProgress,
       this.moon.visible && this.world.settings.constellationLines
     )
     this.moonLight.intensity = state.moon.lightIntensity

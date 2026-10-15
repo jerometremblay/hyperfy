@@ -73,9 +73,9 @@ does not offer a phase or date selector.
 
 The cycle displays 8,920 catalog stars and seven planets: Mercury, Venus, Mars, Jupiter,
 Saturn, Uranus, and Neptune. Their bearings follow the world's latitude, longitude, and
-shared date/time, including `/time set` transitions. Stars and planets fade in as the sun
-descends from 6° to 18° below the horizon and fade out again at dawn. Stars fade near the
-horizon; planets disappear below it.
+shared date/time, including `/time set` transitions. Stars and planet discs emerge by
+apparent magnitude as twilight darkens; the faintest catalog stars are visible only under
+a dark sky. Low objects fade from atmospheric extinction and disappear below the horizon.
 
 Enable **Constellation Lines** in World Settings to show faint connections for all 88
 modern constellations, plus a thin circle and name beside each visible planet. The toggle
@@ -84,24 +84,32 @@ visible with the toggle off.
 
 The night sky follows camera rotation without shifting when players walk. It also renders
 in XR and portal views, with planet labels fixed to celestial directions during head turns.
-World geometry and the moon cover stars behind them. Disabling the day–night cycle hides
-stars, constellation lines, planets, and their labels and restores the sky app's background.
+World geometry and the moon cover stars behind them. Moonlight dims stars, most strongly
+near the Moon, and atmospheric extinction reduces the brightness of stars and planets near
+the horizon. Disabling the day–night cycle hides stars, constellation lines, planets, and
+their labels and restores the sky app's background.
 
-Stars use approximate colors and compressed brightness. Planets are plain discs with
-distance-based angular sizes and a minimum one-pixel diameter; they have no surface
-textures, rings, or rendered phases. Moonlight does not dim the stars. The sky is intended
-to be recognizable rather than a precision astronomy display. See the [night sky guide](night-sky.md)
-for calculation details, limitations, catalog attribution, and data rebuilding.
+Stars use approximate colors and compressed brightness. Planet disc sizes follow their
+apparent magnitudes, matching the star size convention, and have a minimum one-pixel
+diameter. They have no surface textures, rings, or rendered phases. Twilight glare,
+Moon glow, and atmospheric extinction are approximate visibility cues rather than a
+photometric simulation. The sky is intended to be recognizable rather than a precision
+astronomy display. See the [night sky guide](night-sky.md) for calculation details,
+limitations, catalog attribution, and data rebuilding.
 
 ## How lighting is handled
 
 While enabled, Three.js's procedural sky replaces the background supplied by sky apps.
-Direct sunlight fades at the horizon, and the existing HDR ambient lighting dims through
-twilight to 20% brightness at night, so unlit surfaces remain visible. The procedural sky
-and sun disc are scaled to avoid excessive bloom. The HDR reflection image remains the
-world's existing image. App lights and emissive materials keep their own brightness.
-The sky smoothly brightens to light blue as the sun rises above the horizon, reaching
-full daytime color at one degree of elevation and retaining its twilight colors below it.
+Its scattering colors follow the Sun through civil, nautical, and astronomical twilight.
+A blue floor keeps the sky from becoming black before civil twilight ends; it fades through
+nautical twilight and settles to dark blue by astronomical twilight. The star visibility
+limit advances from magnitude 1 at the end of civil twilight, through magnitude 4 at the
+end of nautical twilight, to magnitude 6.5 at the end of astronomical twilight. Direct
+sunlight fades at the horizon, and the existing HDR environment dims through twilight to
+8% at night while render exposure rises to 1.8. The same exposure applies to desktop, XR,
+and portal rendering. The HDR reflection image remains the world's existing image. App
+lights and emissive materials keep their own intensity. The procedural sky and sun disc
+are scaled to avoid excessive bloom.
 
 Switching the cycle off restores the sky app's background, sun direction, sunlight color
 and intensity, and full HDR lighting.

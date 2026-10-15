@@ -62,7 +62,7 @@ const errors = []
 renderer.debug.onShaderError = (gl, program, vertex, fragment) => {
   errors.push(gl.getProgramInfoLog(program) + gl.getShaderInfoLog(vertex) + gl.getShaderInfoLog(fragment))
 }
-const graphics = new ClientGraphics({ stage: { scene }, camera, environment: { csm } })
+const graphics = new ClientGraphics({ stage: { scene }, camera, environment: { csm, renderExposure: 1.1 } })
 graphics.renderer = renderer
 graphics.usePostprocessing = false
 const results = []
@@ -87,7 +87,14 @@ for (const [label, render] of [
   let bodyPixels = 0
   for (let i = 0; i < pixels.length; i += 4) if (pixels[i] > pixels[i + 1] * 1.5 && pixels[i] > 50) bodyPixels++
   const restored = [...points, ...csm.lights].every(light => light.castShadow)
-  results.push({ label, bodyPixels, restored, pass: bodyPixels > 2000 && restored && errors.length === 0 })
+  const exposureApplied = renderer.toneMappingExposure === 1.1
+  results.push({
+    label,
+    bodyPixels,
+    restored,
+    exposureApplied,
+    pass: bodyPixels > 2000 && restored && exposureApplied && errors.length === 0,
+  })
   const image = new Image()
   image.src = renderer.domElement.toDataURL()
   const caption = document.createElement('div')

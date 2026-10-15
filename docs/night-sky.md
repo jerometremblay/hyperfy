@@ -2,9 +2,11 @@
 
 The day/night environment displays 8,920 real stars down to apparent magnitude 6.5.
 Stars rotate with the world's latitude, longitude, and synchronized effective time,
-including time offsets and transitions. They fade between solar altitudes -18° and
--6°, fade near the geometric horizon, and disappear when the day/night cycle is off.
-The existing custom background sky then takes over.
+including time offsets and transitions. Their visibility follows apparent magnitude
+and Sun altitude: the limiting magnitude reaches 1 at the end of civil twilight, 4 at
+the end of nautical twilight, and 6.5 at the end of astronomical twilight. They fade
+near the horizon and disappear when the day/night cycle is off. The existing custom
+background sky then takes over.
 
 World settings includes a **Constellation Lines** toggle, off by default. When enabled,
 faint connections highlight all 88 modern constellations. They share the star field's
@@ -13,14 +15,17 @@ The toggle is saved and shared with the world using the existing builder-control
 settings workflow. Custom sky mode hides the lines along with the stars.
 
 Positions are directions at infinity in the active camera, including each XR eye and
-portal view. Geometry and the Moon cover the stars. Magnitudes determine brightness
-and point size; the dynamic range is compressed for display. B-V indices produce
-approximate muted colors. Missing color indices use a neutral color.
+portal view. Geometry and the Moon cover the stars. Apparent magnitude determines
+brightness and point size; the dynamic range is compressed for display. The visibility
+limit changes with twilight and Moon illumination. A Kasten–Young air-mass approximation
+reduces brightness near the horizon. B-V indices produce approximate muted colors.
+Missing color indices use a neutral color.
 
 This is a J2000 fixed catalog with mean sidereal rotation, using UTC as an approximation
-to UT1. It omits precession, proper motion, nutation, aberration, refraction, atmospheric
-extinction, Moon-driven dimming, light pollution, twinkling, and a Milky Way image.
-It is intended for a recognizable night sky, not precision astrometry.
+to UT1. It omits precession, proper motion, nutation, refraction, light pollution,
+twinkling, and a Milky Way image. Atmospheric extinction and Moon-driven sky glow are
+approximate visibility cues, not a radiometric sky model. It is intended for a recognizable
+night sky, not precision astrometry.
 
 ## Planets
 
@@ -32,15 +37,15 @@ The conversion uses equator-of-date coordinates and an airless geometric horizon
 The Sun/Moon implementation remains the existing SunCalc implementation.
 
 Planets update on the environment's existing one-second cadence and every frame
-during time transitions. They fade through twilight and disappear below the horizon
-or when custom sky mode is active. Angular sizes follow mean physical radii and
-observer distance, with a one-pixel diameter floor for unresolved planets. Display
-brightness is compressed and colors are approximate. There are no surface textures,
-Saturn rings, or rendered phases yet.
+during time transitions. Their disc sizes follow apparent magnitude, using the same
+size curve as stars, with a one-pixel diameter floor. A visibility limit changes with
+twilight and Moon glow; atmospheric extinction dims objects near the horizon. Colors
+are approximate. There are no surface textures, Saturn rings, or rendered phases yet.
 
 With **Constellation Lines** enabled, visible planets also show a thin circle and
-their name to the right. These are scene-rendered annotations, so they work in XR
-and portal cameras. They share the planet's direction and twilight/horizon fading.
+their name to the right during the night. These are scene-rendered annotations, so they
+work in XR and portal cameras. They share the planet's direction, visibility, and
+nighttime fading.
 Both discs and annotations ignore camera translation, matching the star renderer.
 Name textures are created once on first use and disposed with the environment.
 
@@ -93,7 +98,7 @@ Sidereal rotation follows the
 
 ## Checks
 
-Run `node --test src/core/extras/celestialRotation.test.mjs src/core/extras/createStarField.test.mjs src/core/systems/ClientEnvironment.test.mjs`
+Run `node --test src/core/extras/celestialRotation.test.mjs src/core/extras/celestialVisibility.test.mjs src/core/extras/createStarField.test.mjs src/core/systems/ClientEnvironment.test.mjs`
 for astronomical bearings and environment lifecycle checks.
 Run `node scripts/test-night-sky.mjs` and open the printed URL for WebGL checks with
 the shipped catalog, geometry occlusion, Moon ordering, horizon masking, translation,

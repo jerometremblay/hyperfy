@@ -91,8 +91,10 @@ export function getDayNightState(date, latitude, longitude) {
     azimuth,
     sunPosition: skyDirection(altitude, azimuth),
     sunIntensity: smoothstep(-0.833, 10, altitude),
-    skyDaylight: smoothstep(0, 1, altitude),
-    environmentIntensity: 0.2 + 0.8 * daylight,
+    skyDaylight: smoothstep(-1, 6, altitude),
+    environmentIntensity: 0.08 + 0.92 * daylight,
+    // Approximate eye adaptation, applied by the graphics system on each path.
+    renderExposure: 1 + 0.8 * (1 - daylight),
     warmth: 1 - smoothstep(0, 15, altitude),
     moon: {
       altitude: moon.altitude,
@@ -102,7 +104,9 @@ export function getDayNightState(date, latitude, longitude) {
       phase: illumination.phase,
       lightDirection: [-Math.sin(tilt) * lightXY, Math.cos(tilt) * lightXY, lightZ],
       opacity: 1 - 0.35 * daylight,
-      lightIntensity: 0.5 * illumination.fraction * smoothstep(0, 5, moon.altitude) * (1 - daylight),
+      // Scene-space intensity is art-directed; literal lux would be invisible
+      // beside the existing unit-scale sun and HDR environment.
+      lightIntensity: 0.1 * illumination.fraction * smoothstep(0, 5, moon.altitude) * (1 - daylight),
     },
   }
 }

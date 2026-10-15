@@ -141,6 +141,7 @@ export class ClientGraphics extends System {
   }
 
   render() {
+    this.renderer.toneMappingExposure = this.world.environment?.renderExposure ?? 1
     const disabled = this.renderer.shadowMap.enabled
       ? limitLightShadows(
           this.world.stage.scene,
@@ -223,6 +224,7 @@ export class ClientGraphics extends System {
     const xrEnabled = renderer.xr.enabled
     const shadows = renderer.shadowMap.autoUpdate
     const toneMapping = renderer.toneMapping
+    const toneMappingExposure = renderer.toneMappingExposure
     const visible = [...destinationWorld.graphics.portals].map(item => [item.mesh, item.mesh.visible])
     // Spark keeps camera-dependent LOD and sort buffers. Its built-in override
     // lets this view own those buffers without changing the active world's view.
@@ -280,6 +282,7 @@ export class ClientGraphics extends System {
         destinationWorld.environment.csm.camera = view.camera
         destinationWorld.environment.csm.update()
       }
+      renderer.toneMappingExposure = destinationWorld.environment?.renderExposure ?? toneMappingExposure
       renderer.render(destinationWorld.stage.scene, view.camera)
     } finally {
       if (SparkRenderer) SparkRenderer.sparkOverride = previousSpark
@@ -287,6 +290,7 @@ export class ClientGraphics extends System {
       renderer.xr.enabled = xrEnabled
       renderer.shadowMap.autoUpdate = shadows
       renderer.toneMapping = toneMapping
+      renderer.toneMappingExposure = toneMappingExposure
       renderer.setRenderTarget(target, cubeFace, mipLevel)
       renderer.state.viewport(eye.viewport || viewport)
       this.renderingPortal = false
@@ -317,6 +321,7 @@ export class ClientGraphics extends System {
     const viewport = renderer.getCurrentViewport(new THREE.Vector4())
     const xrEnabled = renderer.xr.enabled
     const toneMapping = renderer.toneMapping
+    const toneMappingExposure = renderer.toneMappingExposure
     const autoClear = renderer.autoClear
     const renderingPortal = this.renderingPortal
     const pixels = new Uint8Array(width * height * 4)
@@ -325,6 +330,7 @@ export class ClientGraphics extends System {
       renderer.xr.enabled = false
       renderer.autoClear = true
       renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = this.world.environment?.renderExposure ?? 1
       renderer.setRenderTarget(target)
       renderer.clear()
       renderer.render(this.world.stage.scene, camera)
@@ -334,6 +340,7 @@ export class ClientGraphics extends System {
       renderer.state.viewport(viewport)
       renderer.xr.enabled = xrEnabled
       renderer.toneMapping = toneMapping
+      renderer.toneMappingExposure = toneMappingExposure
       renderer.autoClear = autoClear
       this.renderingPortal = renderingPortal
       target.dispose()
