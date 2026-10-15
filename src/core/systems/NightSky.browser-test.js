@@ -5,6 +5,7 @@ import { EffectComposer, RenderPass, EffectPass, BloomEffect, ToneMappingEffect,
 import { ClientEnvironment } from './ClientEnvironment'
 import { Settings } from './Settings'
 import { createStarField } from '../extras/createStarField'
+import { updateCelestialMarker } from '../extras/createCelestialMarker'
 import { ClientGraphics } from './ClientGraphics'
 import { Portal } from '../nodes/Portal'
 
@@ -146,15 +147,25 @@ scene.add(blocker)
 check('Opaque world geometry covers stars', difference(read(), new Uint8Array(width * height * 4)) === 0)
 blocker.removeFromParent()
 env.moon.visible = true
-env.moon.position.set(0, 900, 0)
-env.moon.lookAt(0, 0, 0)
-env.moon.scale.setScalar(20)
+updateCelestialMarker(env.moonMarker, new THREE.Vector3(0, 1, 0), 1, false)
+env.moon.material.uniforms.angularRadius.value = 0.1
 env.moon.material.uniforms.lightDirection.value.set(0, 0, 1)
 env.moon.material.uniforms.opacity.value = 1
 const moonAndStar = read()
 probe.visible = false
 check('Moon covers stars', difference(moonAndStar, read()) === 0)
 env.moon.visible = false
+probe.visible = true
+probe.visible = false
+updateCelestialMarker(env.moonMarker, new THREE.Vector3(0, 1, 0), 1, true)
+const fixedMoonMarker = read()
+camera.position.x += 10000
+camera.updateMatrixWorld()
+const moonMarkerTranslationPixels = difference(fixedMoonMarker, read())
+check('Moon marker has no translation parallax', moonMarkerTranslationPixels === 0, { moonMarkerTranslationPixels })
+camera.position.x -= 10000
+camera.updateMatrixWorld()
+env.moonMarker.visible = false
 probe.visible = true
 
 // Portal cameras use an oblique near plane. Sky directions must ignore it and

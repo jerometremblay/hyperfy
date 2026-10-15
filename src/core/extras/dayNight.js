@@ -101,7 +101,7 @@ export function getDayNightState(date, latitude, longitude) {
       fraction: illumination.fraction,
       phase: illumination.phase,
       lightDirection: [-Math.sin(tilt) * lightXY, Math.cos(tilt) * lightXY, lightZ],
-      opacity: 1 - 0.7 * daylight,
+      opacity: 1 - 0.35 * daylight,
       lightIntensity: 0.5 * illumination.fraction * smoothstep(0, 5, moon.altitude) * (1 - daylight),
     },
   }

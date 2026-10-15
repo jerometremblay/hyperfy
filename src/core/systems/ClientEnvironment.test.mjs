@@ -257,11 +257,21 @@ test('moon follows the astronomical position and phase, disappears below the hor
   const now = Date.parse('2026-10-26T01:00:00Z')
   const state = getDayNightState(new Date(now), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
   environment.updateDayNight(now)
+  world.settings.set('constellationLines', true)
+  environment.onSettingsChange({ constellationLines: { value: true } })
+  environment.updateDayNight(now)
+  assert.equal(environment.moonMarker.name, 'Moon marker')
+  assert.equal(environment.moonMarker.visible, true)
   world.rig.position.set(4000, 300, -2000)
   environment.lateUpdate()
   assert.equal(environment.moon.visible, true)
-  const direction = environment.moon.position.clone().sub(world.rig.position).normalize()
+  const direction = environment.moon.material.uniforms.direction.value
   assert.ok(direction.distanceTo(new THREE.Vector3().fromArray(state.moon.position)) < 1e-10)
+  assert.deepEqual(environment.moon.position.toArray(), [0, 0, 0])
+  assert.equal(environment.moon.material.uniforms.angularRadius.value, state.moon.angularRadius)
+  assert.equal(environment.moonMarker.material.uniforms.direction, environment.moon.material.uniforms.direction)
+  assert.equal(environment.moonMarker.material.uniforms.right, environment.moon.material.uniforms.right)
+  assert.equal(environment.moonMarker.material.uniforms.up, environment.moon.material.uniforms.up)
   assert.ok(
     environment.moon.material.uniforms.lightDirection.value.distanceTo(
       new THREE.Vector3().fromArray(state.moon.lightDirection)
@@ -270,21 +280,38 @@ test('moon follows the astronomical position and phase, disappears below the hor
   assert.ok(environment.moonLight.intensity > 0.1)
   assert.equal(environment.moonLight.castShadow, false)
   assert.ok(environment.moonLight.target.position.equals(world.rig.position))
-  const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(environment.moon.quaternion)
-  assert.ok(forward.dot(direction) < -0.99999)
+  assert.ok(
+    environment.moonLight.position.distanceTo(
+      world.rig.position.clone().add(direction.clone().multiplyScalar(900))
+    ) < 1e-10
+  )
 
   const beforeRise = Date.parse('2026-10-10T01:00:00Z')
   environment.updateDayNight(beforeRise)
   assert.equal(environment.moon.visible, false)
   assert.equal(environment.moonLight.intensity, 0)
+  const daytime = Date.parse('2026-10-15T19:00:00Z')
+  const daytimeState = getDayNightState(new Date(daytime), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+  assert.ok(daytimeState.altitude > 0)
+  assert.ok(daytimeState.moon.altitude > 0)
+  environment.updateDayNight(daytime)
+  assert.equal(environment.moon.visible, true)
+  assert.ok(environment.moon.material.uniforms.opacity.value >= 0.65)
+  assert.equal(environment.moonMarker.visible, true)
+  assert.equal(environment.moonMarker.material.uniforms.opacity.value, 0)
   world.settings.set('timeOffset', now - Date.parse('2026-10-25T13:00:00Z'))
   environment.updateDayNight(Date.parse('2026-10-25T13:00:00Z'))
   assert.equal(environment.moon.visible, true)
   assert.ok(environment.moonLight.intensity > 0.1)
   const moon = environment.moon
+  const moonMarker = environment.moonMarker
   const light = environment.moonLight
+  let markerTextureDisposed = false
+  moonMarker.material.uniforms.map.value = { dispose: () => (markerTextureDisposed = true) }
   environment.destroy()
   assert.equal(moon.parent, null)
+  assert.equal(moonMarker.parent, null)
+  assert.equal(markerTextureDisposed, true)
   assert.equal(light.parent, null)
   assert.equal(light.target.parent, null)
 })

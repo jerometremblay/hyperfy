@@ -7,6 +7,7 @@ import { isNumber, isString } from 'lodash-es'
 import { Sky as SolarSky } from 'three/addons/objects/Sky.js'
 import { getDayNightState, getWorldTime } from '../extras/dayNight'
 import { createMoon } from '../extras/createMoon'
+import { createCelestialMarker, updateCelestialMarker } from '../extras/createCelestialMarker'
 import { createStarField, loadStarCatalog } from '../extras/createStarField'
 import { setCelestialRotation } from '../extras/celestialRotation'
 import { getPlanetStates } from '../extras/planetPositions'
@@ -92,6 +93,7 @@ export class ClientEnvironment extends System {
     this.solarDirection = new THREE.Vector3()
     this.solarUpdatedAt = -Infinity
     this.moon = null
+    this.moonMarker = null
     this.moonDirection = new THREE.Vector3()
     this.moonLight = null
     this.planets = null
@@ -165,7 +167,14 @@ export class ClientEnvironment extends System {
       this.world.stage.scene.add(this.solarSky)
 
       this.moon = createMoon()
-      this.world.stage.scene.add(this.moon)
+      const moonUniforms = this.moon.material.uniforms
+      this.moonMarker = createCelestialMarker('Moon', {
+        direction: moonUniforms.direction,
+        right: moonUniforms.right,
+        up: moonUniforms.up,
+        opacity: { value: 0 },
+      })
+      this.world.stage.scene.add(this.moon, this.moonMarker)
       this.moonLight = new THREE.DirectionalLight('#b9caff', 0)
       this.world.stage.scene.add(this.moonLight, this.moonLight.target)
       this.planets = createPlanets()
@@ -285,6 +294,7 @@ export class ClientEnvironment extends System {
     if (!dayNightCycle) {
       if (this.stars) this.stars.visible = false
       this.moon.visible = false
+      this.moonMarker.visible = false
       this.planets.visible = false
       this.moonLight.intensity = 0
       scene.environmentIntensity = 1
@@ -323,9 +333,16 @@ export class ClientEnvironment extends System {
     scene.environmentIntensity = state.environmentIntensity
     this.moonDirection.fromArray(state.moon.position)
     this.moon.visible = state.moon.altitude > 0
-    this.moon.scale.setScalar(moonDistance * Math.tan(state.moon.angularRadius))
+    const moonUniforms = this.moon.material.uniforms
+    moonUniforms.angularRadius.value = state.moon.angularRadius
     this.moon.material.uniforms.lightDirection.value.fromArray(state.moon.lightDirection)
     this.moon.material.uniforms.opacity.value = state.moon.opacity
+    updateCelestialMarker(
+      this.moonMarker,
+      this.moonDirection,
+      1 - twilight,
+      this.moon.visible && this.world.settings.constellationLines
+    )
     this.moonLight.intensity = state.moon.lightIntensity
   }
 
@@ -334,9 +351,7 @@ export class ClientEnvironment extends System {
     this.sky.position.z = this.world.rig.position.z
     this.sky.matrixWorld.setPosition(this.sky.position)
     this.solarSky.position.copy(this.world.rig.position)
-    this.moon.position.copy(this.moonDirection).multiplyScalar(moonDistance).add(this.world.rig.position)
-    this.moon.lookAt(this.world.rig.position)
-    this.moonLight.position.copy(this.moon.position)
+    this.moonLight.position.copy(this.moonDirection).multiplyScalar(moonDistance).add(this.world.rig.position)
     this.moonLight.target.position.copy(this.world.rig.position)
     // this.sky.matrixWorld.copyPosition(this.world.rig.matrixWorld)
   }
@@ -423,12 +438,13 @@ export class ClientEnvironment extends System {
     this.world.prefs.off('change', this.onPrefsChange)
     this.world.settings.off('change', this.onSettingsChange)
     this.world.graphics.off('resize', this.onViewportResize)
-    for (const sky of [this.sky, this.solarSky, this.moon, this.stars]) {
+    for (const sky of [this.sky, this.solarSky, this.moon, this.moonMarker, this.stars]) {
       if (!sky) continue
       sky.removeFromParent()
       sky.geometry.dispose()
       sky.material.dispose()
     }
+    this.moonMarker?.material.uniforms.map.value?.dispose()
     this.constellationLines?.geometry.dispose()
     this.constellationLines?.material.dispose()
     this.planets?.removeFromParent()
