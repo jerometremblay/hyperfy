@@ -16,6 +16,8 @@ import { celestialTwilightShader, getNightProgress } from '../extras/celestialVi
 
 const sunsetColor = new THREE.Color('#ffb16b')
 const moonDistance = 900
+const obliquity = THREE.MathUtils.degToRad(23.439281)
+const eclipticPoleEquatorial = new THREE.Vector3(0, Math.cos(obliquity), Math.sin(obliquity))
 
 const csmLevels = {
   none: {
@@ -92,6 +94,8 @@ export class ClientEnvironment extends System {
     this.hdrUrl = null
     this.solarSky = null
     this.solarDirection = new THREE.Vector3()
+    this.celestialRotation = new THREE.Matrix3()
+    this.eclipticPole = new THREE.Vector3()
     this.solarUpdatedAt = -Infinity
     this.renderExposure = 1
     this.moon = null
@@ -326,6 +330,8 @@ export class ClientEnvironment extends System {
     const date = new Date(getWorldTime(this.world.settings, now))
     const state = getDayNightState(date, latitude, longitude)
     const nightProgress = getNightProgress(state.altitude)
+    setCelestialRotation(this.celestialRotation, date, latitude, longitude)
+    this.eclipticPole.copy(eclipticPoleEquatorial).applyMatrix3(this.celestialRotation).normalize()
     this.solarUpdatedAt = now
     this.renderExposure = state.renderExposure
     this.solarDirection.fromArray(state.sunPosition)
@@ -338,10 +344,11 @@ export class ClientEnvironment extends System {
       getPlanetStates(date, latitude, longitude),
       this.celestialVisibility,
       this.world.settings.constellationLines,
-      nightProgress
+      nightProgress,
+      this.eclipticPole
     )
     if (this.stars) {
-      setCelestialRotation(this.stars.material.uniforms.celestialRotation.value, date, latitude, longitude)
+      this.stars.material.uniforms.celestialRotation.value.copy(this.celestialRotation)
       this.stars.material.uniforms.opacity.value = 1
       this.stars.material.uniforms.constellationOpacity.value = nightProgress
       // Individual stars fade according to magnitude; skip the field once its

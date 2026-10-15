@@ -1,6 +1,9 @@
 import * as THREE from './three'
 import { celestialDirection } from './celestialRotation'
+import { CELESTIAL_ANNOTATION_LINEAR_COLOR, CELESTIAL_ANNOTATION_OPACITY } from './celestialAnnotationStyle'
 import catalog from './constellations.json'
+
+const annotationColor = CELESTIAL_ANNOTATION_LINEAR_COLOR.join(', ')
 
 export function createConstellationLines(uniforms) {
   const positions = []
@@ -44,7 +47,7 @@ export function createConstellationLines(uniforms) {
       void main() {
         if (vAltitude <= 0.0) discard;
         float horizon = smoothstep(0.0, 0.035, vAltitude);
-        gl_FragColor = vec4(vec3(0.16, 0.22, 0.3), opacity * horizon * 0.18);
+        gl_FragColor = vec4(vec3(${annotationColor}), opacity * horizon * ${CELESTIAL_ANNOTATION_OPACITY});
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }

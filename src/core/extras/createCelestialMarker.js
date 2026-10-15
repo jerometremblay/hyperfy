@@ -1,4 +1,5 @@
 import * as THREE from './three'
+import { CELESTIAL_ANNOTATION_COLOR, CELESTIAL_ANNOTATION_OPACITY } from './celestialAnnotationStyle'
 
 // Preserve the original 60-degree/800-pixel footprint as a fixed angular size.
 const angularUnit = Math.tan(Math.PI / 6) / 400
@@ -26,9 +27,10 @@ function createNameTexture(name) {
   canvas.width = 512
   canvas.height = 128
   const context = canvas.getContext('2d')
-  context.strokeStyle = '#b9c9dc'
-  context.fillStyle = '#d8e1ee'
+  context.strokeStyle = CELESTIAL_ANNOTATION_COLOR
+  context.fillStyle = CELESTIAL_ANNOTATION_COLOR
   context.lineWidth = 2
+  // Outline only: keep the center transparent so the planet sprite beneath it shows through.
   context.beginPath()
   context.arc(40, 64, 24, 0, Math.PI * 2)
   context.stroke()
@@ -47,6 +49,7 @@ export function createCelestialMarker(name, uniforms) {
       uniforms: {
         ...uniforms,
         map: { value: null },
+        textOffset: { value: 0 },
         right: uniforms.right ?? { value: new THREE.Vector3() },
         up: uniforms.up ?? { value: new THREE.Vector3() },
         extent: { value: new THREE.Vector2(128, 32).multiplyScalar(angularUnit) },
@@ -54,17 +57,22 @@ export function createCelestialMarker(name, uniforms) {
         offset: { value: new THREE.Vector2(108, 0).multiplyScalar(angularUnit) },
       },
       transparent: true,
+      blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexShader,
       fragmentShader: `
         uniform sampler2D map;
         uniform float opacity;
+        uniform float textOffset;
         uniform vec3 direction;
         varying vec2 vUv;
         void main() {
           if (direction.y <= 0.0) discard;
-          gl_FragColor = texture2D(map, vUv);
-          gl_FragColor.a *= opacity * smoothstep(0.0, 0.035, direction.y) * 0.65;
+          vec2 sampleUv = vUv;
+          // The marker plane spans 64 reference pixels vertically.
+          if (vUv.x > 0.14) sampleUv.y += textOffset / 64.0;
+          gl_FragColor = texture2D(map, sampleUv);
+          gl_FragColor.a *= opacity * smoothstep(0.0, 0.035, direction.y) * ${CELESTIAL_ANNOTATION_OPACITY};
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }
@@ -83,13 +91,19 @@ export function createCelestialMarker(name, uniforms) {
   return marker
 }
 
-export function updateCelestialMarker(marker, direction, opacity, visible) {
+export function updateCelestialMarker(marker, direction, opacity, visible, rightDirection, textOffset = 0) {
   const uniforms = marker.material.uniforms
   uniforms.direction.value.copy(direction)
   uniforms.opacity.value = opacity
-  uniforms.right.value.crossVectors(direction, zenith)
+  uniforms.textOffset.value = textOffset
+  if (rightDirection?.lengthSq() > 1e-12) uniforms.right.value.copy(rightDirection)
+  else uniforms.right.value.crossVectors(direction, zenith)
   if (uniforms.right.value.lengthSq() < 1e-12) uniforms.right.value.crossVectors(direction, polarReference)
   uniforms.right.value.normalize()
   uniforms.up.value.crossVectors(uniforms.right.value, direction).normalize()
+  if (uniforms.up.value.y < 0) {
+    uniforms.right.value.negate()
+    uniforms.up.value.negate()
+  }
   marker.visible = visible
 }

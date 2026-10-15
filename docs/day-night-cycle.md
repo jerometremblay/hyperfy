@@ -73,16 +73,18 @@ does not offer a phase or date selector.
 
 The cycle displays 8,920 catalog stars and seven planets: Mercury, Venus, Mars, Jupiter,
 Saturn, Uranus, and Neptune. Their bearings follow the world's latitude, longitude, and
-shared date/time, including `/time set` transitions. Stars and planet discs emerge by
-apparent magnitude as twilight darkens; the faintest catalog stars are visible only under
-a dark sky. Each star's twilight contrast also depends on its altitude and distance from
-the Sun, so stars fade in at different times. Low objects fade from atmospheric extinction
-and disappear below the horizon.
+shared date/time, including `/time set` transitions. Stars and planet points emerge by
+apparent magnitude as twilight darkens. The faintest catalog
+stars are visible only under a dark sky. Each star's twilight contrast also depends on its
+altitude and distance from the Sun, so stars fade in at different times. Low objects fade
+from atmospheric extinction and disappear below the horizon.
 
 Enable **Constellation Lines** in World Settings to show faint connections for all 88
-modern constellations, plus a thin circle and name beside each visible planet. The toggle
-is off by default and is saved and shared with the world. Stars and planet discs remain
-visible with the toggle off.
+modern constellations, plus a thin circle and name beside each visible planet. Circles and
+names share the subdued constellation color; names follow the ecliptic and move into separate
+rows when planets are close together.
+The toggle is off by default and is saved and shared with the world. Stars and planet points
+remain visible with the toggle off; planet circles and names require it.
 
 The night sky follows camera rotation without shifting when players walk. It also renders
 in XR and portal views, with planet labels fixed to celestial directions during head turns.
@@ -91,11 +93,11 @@ near the Moon, and atmospheric extinction reduces the brightness of stars and pl
 the horizon. Disabling the day–night cycle hides stars, constellation lines, planets, and
 their labels and restores the sky app's background.
 
-Stars use approximate colors and compressed brightness. Planet disc sizes follow their
-apparent magnitudes, matching the star size convention, and have a minimum one-pixel
-diameter. They have no surface textures, rings, or rendered phases. Twilight glare,
-Moon glow, and atmospheric extinction are approximate visibility cues rather than a
-photometric simulation. The sky is intended to be recognizable rather than a precision
+Stars use approximate colors and compressed brightness. Planet points use per-planet colors
+and the same magnitude-based size and brightness curve. Circles and names are annotations;
+planets have no surface textures, rings, or rendered phases. Twilight glare, Moon glow, and
+atmospheric extinction are approximate visibility cues rather than a photometric simulation.
+The sky is intended to be recognizable rather than a precision
 astronomy display. See the [night sky guide](night-sky.md) for calculation details,
 limitations, catalog attribution, and data rebuilding.
 

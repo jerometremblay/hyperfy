@@ -36,17 +36,16 @@ location as the existing Sun/Moon, including light travel time and aberration.
 The conversion uses equator-of-date coordinates and an airless geometric horizon.
 The Sun/Moon implementation remains the existing SunCalc implementation.
 
-Planets update on the environment's existing one-second cadence and every frame
-during time transitions. Their disc sizes follow apparent magnitude, using the same
-size curve as stars, with a one-pixel diameter floor. A visibility limit changes with
-twilight and Moon glow; atmospheric extinction dims objects near the horizon. Colors
-are approximate. There are no surface textures, Saturn rings, or rendered phases yet.
+Planet positions update on the environment's existing one-second cadence and every frame
+during time transitions. Planet point size and brightness follow apparent magnitude, using
+the star rendering curve. Their visibility changes with twilight and Moon glow; atmospheric
+extinction dims objects near the horizon.
 
-With **Constellation Lines** enabled, visible planets also show a thin circle and
-their name to the right during the night. These are scene-rendered annotations, so they
-work in XR and portal cameras. They share the planet's direction, visibility, and
-nighttime fading.
-Both discs and annotations ignore camera translation, matching the star renderer.
+With **Constellation Lines** enabled, visible planets show a thin circle and their name
+to the right during the night. These are scene-rendered annotations, so they work in XR
+and portal cameras. They share the planet's direction, visibility, and nighttime fading.
+The annotations ignore camera translation, matching the star renderer. The circle is an
+outline with a transparent center, so the magnitude-rendered planet point remains visible.
 Name textures are created once on first use and disposed with the environment.
 
 Annotation vertices are fixed angular directions on the celestial sphere, using a
