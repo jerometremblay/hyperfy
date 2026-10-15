@@ -17,6 +17,7 @@ import { createServerWorld } from '../core/createServerWorld'
 import { getDB } from './db'
 import { Storage } from './Storage'
 import { assets } from './assets'
+import { agentAPI } from './agent-api'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { BrowserCapture } from './BrowserCapture'
@@ -222,6 +223,13 @@ fastify.register(multipart, {
 })
 fastify.register(ws)
 fastify.register(worldNetwork)
+fastify.register(agentAPI, {
+  prefix: '/api/agent',
+  world,
+  assets,
+  readToken: process.env.AGENT_API_READ_TOKEN,
+  writeToken: process.env.AGENT_API_WRITE_TOKEN,
+})
 fastify.addHook('onClose', async () => browserCapture.closeAll())
 
 const publicEnvs = {}

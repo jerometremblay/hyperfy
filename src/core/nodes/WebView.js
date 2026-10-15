@@ -13,6 +13,7 @@ const defaults = {
   interactive: true,
   space: 'world',
   proxy: false,
+  renderOrder: 0,
 }
 
 const v1 = new THREE.Vector3()
@@ -30,6 +31,7 @@ export class WebView extends Node {
     this.interactive = data.interactive
     this.space = data.space
     this.proxy = data.proxy
+    this.renderOrder = data.renderOrder
   }
 
   copy(source, recursive) {
@@ -42,6 +44,7 @@ export class WebView extends Node {
     this._interactive = source._interactive
     this._space = source._space
     this._proxy = source._proxy
+    this._renderOrder = source._renderOrder
     return this
   }
 
@@ -90,10 +93,13 @@ export class WebView extends Node {
     const material = new THREE.MeshBasicMaterial({
       opacity: 0,
       color: new THREE.Color('black'),
+      transparent: true,
+      depthWrite: true,
       blending: hasContent ? THREE.NoBlending : THREE.NormalBlending,
       side: this._doubleside ? THREE.DoubleSide : THREE.FrontSide,
     })
     this.mesh = new THREE.Mesh(geometry, material)
+    this.mesh.renderOrder = this._renderOrder
     this.matrixWorld.decompose(this.mesh.position, this.mesh.quaternion, this.mesh.scale)
     this.ctx.world.stage.scene.add(this.mesh)
 
@@ -114,6 +120,7 @@ export class WebView extends Node {
 
       // Container
       const container = document.createElement('div')
+      container.style.zIndex = this._renderOrder === 0 ? 'auto' : String(this._renderOrder)
       container.style.width = widthPx
       container.style.height = heightPx
 
@@ -141,6 +148,7 @@ export class WebView extends Node {
       // Create CSS3DObject
       this.objectCSS = new CSS3DObject(container)
       this.objectCSS.target = this.mesh // important: the mesh to follow
+      this.objectCSS.renderOrder = this._renderOrder
       this.matrixWorld.decompose(this.objectCSS.position, this.objectCSS.quaternion, this.objectCSS.scale)
       this.objectCSS.scale.multiplyScalar(1 / this._factor)
 
@@ -366,6 +374,20 @@ export class WebView extends Node {
     this.setDirty()
   }
 
+  get renderOrder() {
+    return this._renderOrder
+  }
+
+  set renderOrder(value = defaults.renderOrder) {
+    if (!Number.isSafeInteger(value)) throw new Error('[webview] renderOrder must be an integer')
+    this._renderOrder = value
+    if (this.mesh) this.mesh.renderOrder = value
+    if (this.objectCSS) {
+      this.objectCSS.renderOrder = value
+      this.objectCSS.element.style.zIndex = value === 0 ? 'auto' : String(value)
+    }
+  }
+
   get interactive() {
     return this._interactive
   }
@@ -398,6 +420,12 @@ export class WebView extends Node {
     if (!this._scriptProxy) {
       const self = this
       let proxy = {
+        get renderOrder() {
+          return self.renderOrder
+        },
+        set renderOrder(value) {
+          self.renderOrder = value
+        },
         get src() {
           return self.src
         },

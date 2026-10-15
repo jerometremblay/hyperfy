@@ -53,6 +53,9 @@ export class Apps extends System {
       isClient(entity) {
         return world.network.isClient
       },
+      isBuilding() {
+        return !!world.builder?.enabled
+      },
       time() {
         return world.settings.getTime()
       },

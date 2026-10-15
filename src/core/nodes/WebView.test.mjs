@@ -38,3 +38,24 @@ test('WebView proxy defaults to direct iframe loading', () => {
   assert.equal(webview.proxy, false)
   assert.equal(webview.getIframeSource(), 'https://example.com')
 })
+
+test('WebView render order updates CSS stacking and cutout without rebuilding its iframe', () => {
+  const webview = new WebView({ renderOrder: 0 })
+  const iframe = {}
+  webview.iframe = iframe
+  webview.mesh = { renderOrder: 0 }
+  webview.objectCSS = { element: { style: {} } }
+  webview.needsRebuild = false
+  const proxy = webview.getProxy()
+  proxy.renderOrder = 100
+  assert.equal(webview.mesh.renderOrder, 100)
+  assert.equal(webview.objectCSS.element.style.zIndex, '100')
+  assert.equal(proxy.renderOrder, 100)
+  assert.equal(webview.needsRebuild, false)
+  assert.equal(webview.iframe, iframe)
+  proxy.renderOrder = 0
+  assert.equal(webview.objectCSS.element.style.zIndex, 'auto')
+  assert.equal(webview.mesh.renderOrder, 0)
+  assert.throws(() => { proxy.renderOrder = Infinity }, /integer/)
+  assert.throws(() => { proxy.renderOrder = 1.5 }, /integer/)
+})

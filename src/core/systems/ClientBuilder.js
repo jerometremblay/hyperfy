@@ -106,6 +106,7 @@ export class ClientBuilder extends System {
       this.select(null)
       this.enabled = false
       this.world.emit('build-mode', false)
+      this.world.events.emit('build-mode', false)
     }
     this.updateActions()
   }
@@ -703,6 +704,7 @@ export class ClientBuilder extends System {
     if (!this.enabled) this.select(null)
     this.updateActions()
     this.world.emit('build-mode', enabled)
+    this.world.events.emit('build-mode', enabled)
   }
 
   setMode(mode) {

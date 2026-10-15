@@ -27,9 +27,31 @@ export class ClientPointer extends System {
     this.control = this.world.controls.bind({
       priority: ControlPriorities.POINTER,
     })
+    // Consume the DOM press before the lower-priority builder requests pointer lock.
+    this.control.mouseLeft.onPress = this.captureScriptClick
+    this.control.mouseRight.onPress = this.captureScriptClick
+  }
+
+  captureScriptClick = () => {
+    if (this.world.builder?.enabled) return false
+    const hit = this.control.pointer.locked
+      ? this.world.stage.raycastReticle()[0]
+      : this.screenHit || this.world.stage.raycastPointer(this.control.pointer.position)[0]
+    let node = hit?.node
+    while (node) {
+      // Node callbacks live in _onPointerDown; subclasses may expose an own callback.
+      if (typeof node.onPointerDown === 'function' && (node._onPointerDown || Object.hasOwn(node, 'onPointerDown')))
+        return true
+      node = node.parent
+    }
+    return false
   }
 
   update(delta) {
+    if (this.world.builder?.enabled) {
+      this.pointerState.update(null, [], ['left', 'right'])
+      return
+    }
     if (this.world.xrUI?.visible) {
       this.pointerState.update(null, [], ['left', 'right'])
       return

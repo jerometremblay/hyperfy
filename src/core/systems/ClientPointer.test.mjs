@@ -146,3 +146,32 @@ test('an open XR sidebar blocks clicks on objects behind it and releases existin
   assert.equal(raycasts, 1)
   assert.deepEqual(events, ['down', 'up'])
 })
+
+test('script interaction consumes a press before lower-priority pointer lock, but leaves editor and ordinary clicks alone', () => {
+  let hit = { node: { _onPointerDown() {}, get onPointerDown() { return this._onPointerDown } } }
+  const world = {
+    builder: { enabled: false },
+    stage: { raycastPointer: () => [hit], raycastReticle: () => [hit] },
+  }
+  const pointer = new ClientPointer(world)
+  pointer.control = { pointer: { locked: false, position: { x: 1, y: 2 } } }
+  assert.equal(pointer.captureScriptClick(), true)
+  hit = { node: { onPointerDown() {} } } // WebView's assigned script callback.
+  assert.equal(pointer.captureScriptClick(), true)
+  world.builder.enabled = true
+  assert.equal(pointer.captureScriptClick(), false)
+  world.builder.enabled = false
+  hit = { node: {} }
+  assert.equal(pointer.captureScriptClick(), false)
+})
+
+test('edit mode does not dispatch gameplay pointer callbacks', () => {
+  let calls = 0
+  const pointer = new ClientPointer({
+    builder: { enabled: true },
+    stage: { raycastPointer() { calls++; return [] } },
+  })
+  pointer.update(0)
+  assert.equal(calls, 0)
+  assert.equal(pointer.pointerState.activePath.size, 0)
+})
