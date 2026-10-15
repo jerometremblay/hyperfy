@@ -6,9 +6,9 @@
     "image": null,
     "author": "Jerome",
     "url": null,
-    "desc": "18 x 15 m primitive-only log lodge. Three upper bedrooms, open mezzanine, L stair and full-height stone fireplace. Ridge 9.8 m; approved 22.9-degree gable. Static visual model, no collision. Requires Hyperfy native extrude.",
+    "desc": "18 x 15 m primitive-only log lodge. Three upper bedrooms, open mezzanine, L stair and full-height stone fireplace. Ridge 9.8 m; approved 22.9-degree gable. Structural collision including roof; five animated server-authoritative hinged doors; four interior sconces and ten exterior spots. Requires Hyperfy native extrude.",
     "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
-    "script": "asset://d9d7fa7c9e01879e97bbce21a5bd0eea1ba100d8eb50a0c81403ef9fee764603.js",
+    "script": "asset://b6b8225550e5af34d0c2c0a7492c577aa9bfc53e45cff789656fd8f1bc7483e4.js",
     "props": {},
     "preload": false,
     "public": false,
@@ -25,8 +25,8 @@
     },
     {
       "type": "script",
-      "url": "asset://d9d7fa7c9e01879e97bbce21a5bd0eea1ba100d8eb50a0c81403ef9fee764603.js",
-      "size": 24892,
+      "url": "asset://b6b8225550e5af34d0c2c0a7492c577aa9bfc53e45cff789656fd8f1bc7483e4.js",
+      "size": 42516,
       "mime": "text/plain"
     }
   ]

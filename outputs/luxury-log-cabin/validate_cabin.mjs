@@ -9,11 +9,24 @@ const directory = path.dirname(new URL(import.meta.url).pathname)
 const bundle = await build({ entryPoints: [path.join(directory, 'runtime_adapter.mjs')], bundle: true, format: 'esm', platform: 'node', write: false })
 const { executeSource, parseHyp } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`)
 const source = await fs.readFile(path.join(directory, 'luxury_log_cabin.js'), 'utf8')
-const suffix = '\nreturn {D, bedrooms, stair, yAxisRotationBetween, chimneyHalf, roofY, frontOpenings, rearOpenings, leftOpenings, rightOpenings}'
-const { nodes, visuals, events, configs, audit } = await executeSource(source, suffix)
-assert.equal(events.length, 0)
-assert.equal(nodes.length, visuals.length)
-assert(configs.every(c => c.physics === null && !c.texture))
+const suffix = '\nreturn {D, bedrooms, stair, yAxisRotationBetween, chimneyHalf, roofY, frontOpenings, rearOpenings, leftOpenings, rightOpenings, interiorFixtures, roofLights, physicsEntries, doorRegistry, syncStructuralPhysics}'
+const { nodes, visuals, events, configs, lights, handlers, detached, app, audit } = await executeSource(source, suffix)
+assert(events.includes('update') && events.includes('doorState') && events.includes('destroy'))
+assert.equal(detached.length, audit.physicsEntries.length)
+assert.equal(lights.length, audit.interiorFixtures.length * 2 + audit.roofLights.length)
+assert.equal(configs.filter(c => c.id.includes('sconce-backplate')).length, audit.interiorFixtures.length)
+assert.equal(audit.interiorFixtures.length, 4)
+assert.equal(audit.roofLights.length, 10)
+assert.equal(configs.filter(c => c.id.startsWith('exterior-lighting:') && c.type === 'cone').length, 0)
+for (const light of lights) {
+  assert.equal(light.castShadow, false)
+  const direction = light.target.position.clone().sub(light.position).normalize()
+  assert(Math.abs(direction.y - (light.position.y < light.target.position.y ? 1 : -1)) < 1e-6)
+  assert(light.intensity > 0 && light.distance > 0)
+}
+assert(configs.every(c => !c.texture))
+assert.equal(configs.filter(c => c.physics === 'kinematic').length, 5)
+assert.equal(configs.filter(c => /physics:(left|right)-roof:/.test(c.id)).length, 2)
 assert(configs.length < 2000)
 
 const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })
@@ -31,7 +44,7 @@ assert(Math.abs(bounds.min.y) < 0.001)
 assert.equal(audit.D.ridge, 9.8)
 assert.equal(audit.bedrooms.length, 3)
 assert.equal(configs.filter(c => c.id.includes('bedroom-ceiling')).length, 3)
-assert.equal(configs.filter(c => c.id.includes('open-bedroom-door')).length, 3)
+assert.equal(Object.keys(audit.doorRegistry).length, 5)
 assert(configs.filter(c => c.id.startsWith('mezzanine:')).every(c => c.position[2] - c.size[2] / 2 >= 1.399))
 
 // Check the canonical endpoint helper against the target engine's actual YXZ convention.
@@ -83,7 +96,7 @@ let stairHeadroom = Infinity
 for (const flight of audit.stair.flights) for (let step = 0; step < 9; step++) {
   const p = new THREE.Vector3(...flight.a).lerp(new THREE.Vector3(...flight.b), (step + 0.5) / 9)
   const treadY = flight.a[1] + (step + 1) * (flight.b[1] - flight.a[1]) / 9
-  const overhead = hits([p.x, treadY + 0.01, p.z], [0, 1, 0], m => !m.name.startsWith('stairs:'))
+  const overhead = hits([p.x, treadY + 0.01, p.z], [0, 1, 0], m => !m.name.startsWith('stairs:') && !m.name.startsWith('interior-lighting:'))
   if (overhead[0]) stairHeadroom = Math.min(stairHeadroom, overhead[0].distance + 0.01)
 }
 assert(stairHeadroom > 2.1, `Insufficient stair headroom: ${stairHeadroom}`)
@@ -93,6 +106,30 @@ for (const y of [9.65, 9.8, 9.9]) {
   const roofHits = hits([0, y, 0.95], [0, 0, 1], m => m.name.startsWith('roof:'))
   assert(!roofHits.some(h => h.distance < 0.80), 'Roof fills chimney penetration')
 }
+// Check every leaf reaches its target and its kinematic anchor follows the hinge.
+for (const door of Object.values(audit.doorRegistry)) {
+  handlers.get('doorState').forEach(fn => fn({ id: door.id, open: true }))
+  for (let i = 0; i < 30; i++) handlers.get('update').forEach(fn => fn(0.08))
+  assert(Math.abs(door.angle - door.openAngle) < 1e-6)
+  assert(Math.abs(door.physicsEntry.anchor.rotation.y - door.angle) < 1e-6)
+  assert(door.physicsEntry.collider.position.distanceTo(door.physicsEntry.anchor.position) < 1e-6)
+  handlers.get('doorState').forEach(fn => fn({ id: door.id, open: false }))
+  for (let i = 0; i < 30; i++) handlers.get('update').forEach(fn => fn(0.08))
+  assert.equal(door.angle, 0)
+}
+const messages = []
+const server = await executeSource(source, suffix, { server: true, onSend: (name, data) => messages.push({name, data}) })
+server.handlers.get('toggleDoor').forEach(fn => fn({ id: 'entrance-left' }))
+assert.equal(server.app.state.doors['entrance-left'], true)
+assert.deepEqual(messages[0], {name: 'doorState', data: {id: 'entrance-left', open: true}})
+server.handlers.get('toggleDoor').forEach(fn => fn({ id: 'invalid' }))
+assert.equal(messages.length, 1)
+app.position.set(3, 2, -4)
+audit.syncStructuralPhysics(true)
+for (const entry of audit.physicsEntries) assert(entry.collider.position.distanceTo(entry.anchor.position.clone().add(app.position)) < 1e-6)
+app.position.set(0, 0, 0)
+audit.syncStructuralPhysics(true)
+
 const packagePath = path.join(directory, 'luxury_log_cabin.hyp')
 let packageChecks = null
 try {
@@ -114,9 +151,12 @@ try {
 } catch (error) { if (error.code !== 'ENOENT') throw error }
 const report = {
   valid: true, runtime: 'local Hyperfy 0.16.0 with native extrude',
-  constructorsAndGeometry: 'Actual Prim constructor, proxy, mount and geometry code',
-  primitiveCount: nodes.length, primitiveTypes: [...new Set(configs.map(c => c.type))],
-  callbacks: events.length, detachedNodes: 0, physicsNodes: 0, externalTexturesOrGeometry: 0,
+  constructorsAndGeometry: 'Actual Prim, Group, Action and Light constructors; visible geometry mounted; PhysX simulation not performed',
+  doors: { count: 5, animationAndColliderAnchorChecks: 'pass', serverAuthorityChecks: 'pass', liveInteraction: 'not tested' },
+  collision: { roofPanels: 2, appTranslationSync: 'pass', physXSimulation: 'not performed' },
+  lighting: { interiorFixtures: audit.interiorFixtures.length, exteriorFixtures: audit.roofLights.length, spotlights: lights.length },
+  primitiveCount: visuals.length, primitiveTypes: [...new Set(configs.map(c => c.type))],
+  callbacks: events.length, detachedNodes: detached.length, physicsNodes: audit.physicsEntries.length, externalTexturesOrGeometry: 0,
   bounds: { min: bounds.min.toArray(), max: bounds.max.toArray() },
   enclosedBedrooms: 3, bedroomClearHeadroomMetres: 2.61, checkedWallOpenings: checkedWindows,
   mainEntranceSightline: 'clear to recessed fireplace', fireOpening: 'open arch with recessed fireback',

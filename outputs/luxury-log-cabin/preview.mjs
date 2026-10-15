@@ -41,6 +41,10 @@ const binary = atob(window.EMBEDDED_HYP)
 const bytes = Uint8Array.from(binary, c => c.charCodeAt(0))
 const parsed = parseHyp(bytes)
 const runtime = await executeSource(parsed.source)
+for (const light of runtime.lights) {
+  scene.add(light)
+  if (light.target) scene.add(light.target)
+}
 // Use the actual Prim.mount() geometry and transforms, grouped for fast rendering.
 const batches = new Map()
 for (const visual of runtime.visuals) {
@@ -120,7 +124,7 @@ document.getElementById('download').addEventListener('click', () => {
   a.href = url; a.download = 'luxury_log_cabin.hyp'; a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 })
-document.getElementById('status').textContent = `${runtime.nodes.length.toLocaleString()} primitives · 3 bedrooms · 0 update callbacks`
+document.getElementById('status').textContent = `${runtime.visuals.length.toLocaleString()} primitives · ${runtime.lights.length} lights · 3 bedrooms · 5 hinged doors`
 function draw() { renderer.render(scene, camera) }
 function resize() {
   renderer.setSize(innerWidth, innerHeight)
