@@ -142,9 +142,10 @@ function snoutProfile() {
 }
 
 function jawProfile() {
+  // Lower teeth point upward toward the upper jaw.
   return [
-    [-0.38,0.08],[0.39,0.07],[0.55,0.00],[0.43,-0.08],[0.31,-0.05],[0.23,-0.12],[0.14,-0.05],[0.05,-0.12],
-    [-0.04,-0.05],[-0.13,-0.11],[-0.21,-0.04],[-0.34,-0.02],[-0.43,0.02],
+    [-0.38,-0.08],[0.39,-0.07],[0.55,-0.00],[0.43,0.08],[0.31,0.05],[0.23,0.12],[0.14,0.05],[0.05,0.12],
+    [-0.04,0.05],[-0.13,0.11],[-0.21,0.04],[-0.34,0.02],[-0.43,-0.02],
   ]
 }
 
@@ -211,11 +212,13 @@ for (const z of [-0.055,0.055]) {
 }
 
 // --- Skull -----------------------------------------------------------------
-// Stagger the overlapping neck, cranium, snout and jaw across separate layers.
+// Stagger neck, cranium and snout plates across separate layers.
 for (const z of [-0.055,0.055]) {
   woodPiece(skullTopProfile(), [1.50,1.93,z + Math.sign(z)*LAYER], [0,0,0], PLATE, WOOD_LIGHT)
   woodPiece(snoutProfile(), [1.68,1.78,z + Math.sign(z)*LAYER*2], [0,0,-0.02], PLATE, WOOD)
-  woodPiece(jawProfile(), [1.67,1.60,z + Math.sign(z)*LAYER*3], [0,0,0.03], PLATE, WOOD_LIGHT)
+  // Match the upper tooth row, inset 5 mm to avoid coplanar faces.
+  // Tilt the jaw down 16 degrees, keeping its rear near the original hinge.
+  woodPiece(jawProfile(), [1.65,1.47,z + Math.sign(z)*(LAYER*2 - 0.005)], [0,0,-0.28], PLATE, WOOD_LIGHT)
 }
 // Skull spacers / slot tabs crossing the side laminations.
 for (const [x,y,w,h] of [[1.30,1.95,0.25,0.12],[1.60,1.99,0.23,0.12],[1.83,1.87,0.19,0.10]]) {
