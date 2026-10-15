@@ -14,7 +14,7 @@ import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
-import { getAvatarCameraFocus } from '../extras/avatarFocus'
+import { getAvatarCameraFocus, getAvatarEyePosition } from '../extras/avatarFocus'
 import { XR_HAND_BONES } from '../extras/handTracking'
 
 const UP = new THREE.Vector3(0, 1, 0)
@@ -192,6 +192,7 @@ export class PlayerLocal extends Entity {
     this.camHeight = DEFAULT_CAM_HEIGHT
     this.cameraFocus = new THREE.Vector3()
     this.cameraFocusBounds = new THREE.Box3()
+    this.seatedEyeOffset = null
 
     this.cam = {}
     this.cam.position = new THREE.Vector3().copy(this.base.position)
@@ -249,6 +250,7 @@ export class PlayerLocal extends Entity {
   }
 
   applySeatPose() {
+    this.seatedEyeOffset = null
     if (!this.avatar) return
     const avatarUrl = this.getAvatarUrl()
     const seatPose = getMatchingSeatPose(this.data, avatarUrl)
@@ -1323,17 +1325,33 @@ export class PlayerLocal extends Entity {
       this.base.quaternion.setFromRotationMatrix(anchor)
       this.controller.teleport(this.base.position)
     }
-    if (this.poseEditorActive) return
+    if (this.poseEditorActive) {
+      this.seatedEyeOffset = null
+      return
+    }
+    if (!anchor || !this.firstPerson || xr) this.seatedEyeOffset = null
     // make camera follow our position horizontally
     this.cam.position.copy(this.base.position)
     if (xr) {
       // ...
     } else {
-      if (anchor && !this.firstPerson && this.avatar?.instance?.raw?.scene) {
-        getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), this.cameraFocus, this.cameraFocusBounds)
-        this.cam.position.copy(this.cameraFocus)
+      if (anchor && this.avatar?.instance?.raw?.scene) {
+        if (this.firstPerson) {
+          if (!this.seatedEyeOffset) {
+            const eyes = getAvatarEyePosition(this.avatar, this.cameraFocus)
+            if (!eyes) {
+              getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), this.cameraFocus, this.cameraFocusBounds)
+            }
+            // Keep the posed eye reference in seat space, without copying idle/head animation into the camera.
+            this.seatedEyeOffset = this.cameraFocus.clone().applyMatrix4(m1.copy(anchor).invert())
+          }
+          this.cam.position.copy(this.seatedEyeOffset).applyMatrix4(anchor)
+        } else {
+          getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), this.cameraFocus, this.cameraFocusBounds)
+          this.cam.position.copy(this.cameraFocus)
+        }
       } else {
-        // Keep the default shoulder view while upright and preserve first-person framing.
+        // Standing uses the default camera height; seated views follow the posed avatar.
         this.cam.position.y += this.camHeight
       }
       // and slightly to the right over the avatars shoulder, when not first person / xr

@@ -26,12 +26,13 @@ test('does not carry the player with an app that is being moved', () => {
   assert.equal(getPlatformActor(stationaryHit), actor)
 })
 
-test('marks XR head calibration pending when applying a seated pose', () => {
+test('applying a seated pose recalibrates desktop eyes and XR head tracking', () => {
   let appliedPose
   const player = {
     data: { effect: { anchorId: 'chair:seat' } },
     isXR: true,
     xrHeadCalibrationPending: false,
+    seatedEyeOffset: new THREE.Vector3(1, 2, 3),
     avatar: {
       position: { set() {} },
       quaternion: { set() {} },
@@ -47,6 +48,7 @@ test('marks XR head calibration pending when applying a seated pose', () => {
   assert.ok(appliedPose)
   assert.equal(player.xrHeadCalibrationPending, true)
   assert.equal(player.xrHeadRecenterPending, true)
+  assert.equal(player.seatedEyeOffset, null)
 })
 
 test('re-centers XR yaw to the seated avatar head', () => {
@@ -195,7 +197,7 @@ test('uses controller grip poses when hand tracking is unavailable', () => {
   assert.deepEqual(appliedPose.left.f, {})
 })
 
-test('keeps the desktop seated camera right of the posed head as the camera turns', () => {
+test('keeps the seated shoulder camera aligned and the first-person eye reference stable', () => {
   globalThis.PHYSX = { PxSphereGeometry: class {} }
 
   const bodyScene = new THREE.Group()
@@ -205,6 +207,7 @@ test('keeps the desktop seated camera right of the posed head as the camera turn
   bodyScene.updateMatrixWorld(true)
 
   const headMatrix = new THREE.Matrix4().makeTranslation(-1, 1.1, 0)
+  const eyeMatrix = new THREE.Matrix4()
   const basePosition = new THREE.Vector3()
   basePosition.toPxTransform = () => {}
   const anchor = new THREE.Matrix4()
@@ -229,7 +232,11 @@ test('keeps the desktop seated camera right of the posed head as the camera turn
     getAnchorMatrix: () => anchor,
     avatar: {
       instance: { raw: { scene: bodyScene } },
-      getBoneTransform: () => headMatrix,
+      getBoneTransform(name) {
+        if (name === 'leftEye') return eyeMatrix.makeTranslation(-1.03, 1.18, 0.08)
+        if (name === 'rightEye') return eyeMatrix.makeTranslation(-0.97, 1.18, 0.08)
+        return name === 'head' ? headMatrix : null
+      },
       getHeight: () => 2,
     },
     aura: { position: new THREE.Vector3() },
@@ -258,6 +265,41 @@ test('keeps the desktop seated camera right of the posed head as the camera turn
 
   player.firstPerson = true
   player.camHeight = 1.6
+  PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+  assert.deepEqual(player.cam.position.toArray(), [-1, 1.18, 0.08])
+
+  const seatedEyePosition = player.cam.position.clone()
+  let frame = 0
+  player.avatar.getBoneTransform = name => {
+    if (name === 'leftEye') return eyeMatrix.makeTranslation(-1.03, 1.18 + Math.sin(frame) * 0.02, 0.08)
+    if (name === 'rightEye') return eyeMatrix.makeTranslation(-0.97, 1.18 + Math.sin(frame) * 0.02, 0.08)
+    return name === 'head' ? headMatrix : null
+  }
+  for (frame = 1; frame <= 30; frame++) {
+    PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+    assert.deepEqual(
+      player.cam.position.toArray(),
+      seatedEyePosition.toArray(),
+      'head idle animation must not shake the seated camera'
+    )
+  }
+
+  // A moving seat still carries the stable eye reference with it.
+  anchor.makeTranslation(2, 0, 0)
+  PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+  assert.deepEqual(player.cam.position.toArray(), [1, 1.18, 0.08])
+  anchor.makeRotationY(Math.PI / 2).setPosition(2, 0, 0)
+  PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+  assert.ok(player.cam.position.distanceTo(new THREE.Vector3(2.08, 1.18, 1)) < 1e-8)
+
+  // Changing pose recalibrates the reference rather than preserving the old head location.
+  player.seatedEyeOffset = null
+  anchor.identity()
+  player.avatar.getBoneTransform = name => (name === 'head' ? headMatrix : null)
+  PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
+  assert.deepEqual(player.cam.position.toArray(), [-1, 1.1, 0])
+
+  player.getAnchorMatrix = () => null
   PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
   assert.deepEqual(player.cam.position.toArray(), [0, 1.6, 0])
 })
