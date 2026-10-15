@@ -249,9 +249,10 @@ test('visible sun, shadows, and ambient light follow day and night; disabling re
   assert.ok(sun.clone().add(environment.csm.lightDirection).length() < 1e-10)
 
   environment.updateDayNight(Date.parse('2026-06-21T05:00:00Z'))
+  const nightState = getDayNightState(new Date('2026-06-21T05:00:00Z'), DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
   assert.ok(environment.csm.lights.every(light => light.intensity === 0))
-  assert.equal(world.stage.scene.environmentIntensity, 0.08)
-  assert.equal(environment.renderExposure, 1.8)
+  assert.equal(world.stage.scene.environmentIntensity, nightState.environmentIntensity)
+  assert.equal(environment.renderExposure, nightState.renderExposure)
   assert.ok(environment.solarSky.material.uniforms.sunAltitude.value < 0)
 
   world.settings.set('dayNightCycle', false)

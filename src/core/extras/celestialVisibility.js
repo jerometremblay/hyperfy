@@ -10,6 +10,13 @@ export const celestialTwilightShader = `
     if (sunAltitude >= -6.0) {
       return -4.5 + 5.5 * (1.0 - smoothstep(-6.0, 0.0, sunAltitude));
     }
+    return 1.0 + 5.5 * getNightProgress(sunAltitude);
+  }
+
+  float getCelestialLimitingMagnitude(float sunAltitude) {
+    if (sunAltitude >= -6.0) {
+      return -4.5 + 5.5 * (1.0 - smoothstep(-6.0, 0.0, sunAltitude));
+    }
     if (sunAltitude >= -12.0) {
       return 1.0 + 3.0 * (1.0 - smoothstep(-12.0, -6.0, sunAltitude));
     }
@@ -22,6 +29,14 @@ export const celestialTwilightShader = `
 export const celestialVisibilityShader = celestialTwilightShader + `
   float getCelestialAltitude(vec3 direction) {
     return asin(clamp(direction.y, -1.0, 1.0)) * 57.2957795;
+  }
+
+  float getStarLimitingMagnitude(float sunAltitude, float starAltitude, float sunSeparation) {
+    float twilight = 1.0 - getNightProgress(sunAltitude);
+    float sunwardSky = 1.0 - smoothstep(0.2, 1.3, sunSeparation);
+    float horizonSky = 1.0 - smoothstep(0.0, 55.0, starAltitude);
+    float localSkyGlow = twilight * (0.45 * sunwardSky + 0.85 * horizonSky);
+    return getLimitingMagnitude(sunAltitude) - localSkyGlow;
   }
 
   float getAtmosphericExtinction(float altitude) {
@@ -60,7 +75,25 @@ export const celestialVisibilityShader = celestialTwilightShader + `
   ) {
     float altitude = getCelestialAltitude(direction);
     float sunAltitude = getCelestialAltitude(sunDirection);
-    float limitingMagnitude = getLimitingMagnitude(sunAltitude);
+    float limitingMagnitude = getCelestialLimitingMagnitude(sunAltitude);
+    float observedMagnitude = getObservedMagnitude(
+      magnitude, direction, sunDirection, moonDirection, moonFraction
+    );
+    float contrast = 1.0 - smoothstep(limitingMagnitude - 0.5, limitingMagnitude + 0.5, observedMagnitude);
+    return smoothstep(0.0, 2.0, altitude) * contrast;
+  }
+
+  float getStarVisibility(
+    float magnitude,
+    vec3 direction,
+    vec3 sunDirection,
+    vec3 moonDirection,
+    float moonFraction
+  ) {
+    float altitude = getCelestialAltitude(direction);
+    float sunAltitude = getCelestialAltitude(sunDirection);
+    float sunSeparation = acos(clamp(dot(direction, sunDirection), -1.0, 1.0));
+    float limitingMagnitude = getStarLimitingMagnitude(sunAltitude, altitude, sunSeparation);
     float observedMagnitude = getObservedMagnitude(
       magnitude, direction, sunDirection, moonDirection, moonFraction
     );
@@ -74,7 +107,19 @@ export function getCelestialVisibility(magnitude, direction, sunDirection, moonD
   if (altitude <= 0) return 0
 
   const sunAltitude = altitudeDegrees(sunDirection)
-  const limitingMagnitude = getLimitingMagnitude(sunAltitude)
+  const limitingMagnitude = getCelestialLimitingMagnitude(sunAltitude)
+  const observedMagnitude = getObservedMagnitude(magnitude, direction, sunDirection, moonDirection, moonFraction)
+  const contrast = 1 - smoothstep(limitingMagnitude - 0.5, limitingMagnitude + 0.5, observedMagnitude)
+  return smoothstep(0, 2, altitude) * contrast
+}
+
+export function getStarVisibility(magnitude, direction, sunDirection, moonDirection, moonFraction = 0) {
+  const altitude = altitudeDegrees(direction)
+  if (altitude <= 0) return 0
+
+  const sunAltitude = altitudeDegrees(sunDirection)
+  const sunSeparation = angularSeparation(direction, sunDirection)
+  const limitingMagnitude = getStarLimitingMagnitude(sunAltitude, altitude, sunSeparation)
   const observedMagnitude = getObservedMagnitude(magnitude, direction, sunDirection, moonDirection, moonFraction)
   const contrast = 1 - smoothstep(limitingMagnitude - 0.5, limitingMagnitude + 0.5, observedMagnitude)
   return smoothstep(0, 2, altitude) * contrast
@@ -84,11 +129,25 @@ export function getNightProgress(sunAltitude) {
   return 1 - smoothstep(-18, -6, sunAltitude)
 }
 
-// Target naked-eye limits at the ends of civil, nautical, and astronomical twilight.
+// A smooth baseline from daylight through astronomical night. Each star also
+// gets a local limit based on the sky around its own direction.
 function getLimitingMagnitude(sunAltitude) {
+  if (sunAltitude >= -6) return -4.5 + 5.5 * (1 - smoothstep(-6, 0, sunAltitude))
+  return 1 + 5.5 * getNightProgress(sunAltitude)
+}
+
+function getCelestialLimitingMagnitude(sunAltitude) {
   if (sunAltitude >= -6) return -4.5 + 5.5 * (1 - smoothstep(-6, 0, sunAltitude))
   if (sunAltitude >= -12) return 1 + 3 * (1 - smoothstep(-12, -6, sunAltitude))
   return 4 + 2.5 * (1 - smoothstep(-18, -12, sunAltitude))
+}
+
+function getStarLimitingMagnitude(sunAltitude, starAltitude, sunSeparation) {
+  const twilight = 1 - getNightProgress(sunAltitude)
+  const sunwardSky = 1 - smoothstep(0.2, 1.3, sunSeparation)
+  const horizonSky = 1 - smoothstep(0, 55, starAltitude)
+  const localSkyGlow = twilight * (0.45 * sunwardSky + 0.85 * horizonSky)
+  return getLimitingMagnitude(sunAltitude) - localSkyGlow
 }
 
 export function getObservedMagnitude(magnitude, direction, sunDirection, moonDirection, moonFraction = 0) {

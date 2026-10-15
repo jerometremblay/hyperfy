@@ -97,7 +97,7 @@ export function createStarField(
         float apparentMagnitude = getObservedMagnitude(
           magnitude, direction, sunDirection, moonDirection, moonFraction
         );
-        vVisibility = getMagnitudeVisibility(
+        vVisibility = getStarVisibility(
           magnitude, direction, sunDirection, moonDirection, moonFraction
         );
         vColor = color;

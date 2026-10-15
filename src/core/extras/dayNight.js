@@ -1,10 +1,20 @@
 import { getPosition, getMoonPosition, getMoonIllumination } from 'suncalc'
+import { getNightProgress } from './celestialVisibility'
 
 export const DEFAULT_LATITUDE = 45.75689615017221
 export const DEFAULT_LONGITUDE = -74.01942099403277
 export const DEFAULT_TIME_ZONE = 'America/Toronto'
 export const TIME_PATTERN = /^([01]?\d|2[0-3])h([0-5]\d)$/
 export const TIME_TRANSITION_DURATION = 5000
+
+// Scene-space tuning weights; these are deliberately easy to adjust.
+export const DAY_NIGHT_LIGHTING = {
+  nightEnvironmentBase: 0.12,
+  moonEnvironment: 0.05,
+  starEnvironment: 0.02,
+  moonDirect: 0.1,
+  maxEyeExposure: 1.8,
+}
 
 export function getTimeOffset(time, now = new Date(), timeZone = DEFAULT_TIME_ZONE) {
   const match = typeof time === 'string' && time.match(TIME_PATTERN)
@@ -86,15 +96,29 @@ export function getDayNightState(date, latitude, longitude) {
   const lightZ = 2 * illumination.fraction - 1
   const lightXY = Math.sqrt(Math.max(0, 1 - lightZ * lightZ))
   const daylight = smoothstep(-6, 6, altitude)
+  const moonContribution = illumination.fraction * smoothstep(0, 5, moon.altitude) * (1 - daylight)
+  // Stars add a small night-sky fill; their catalog flux is not treated as real scene lighting.
+  const starContribution = getNightProgress(altitude)
+  const environmentIntensity = Math.min(
+    1,
+    DAY_NIGHT_LIGHTING.nightEnvironmentBase +
+      (1 - DAY_NIGHT_LIGHTING.nightEnvironmentBase) * daylight +
+      DAY_NIGHT_LIGHTING.moonEnvironment * moonContribution +
+      DAY_NIGHT_LIGHTING.starEnvironment * starContribution
+  )
+  const nightAdaptation = Math.max(
+    0,
+    Math.min(1, (1 - environmentIntensity) / (1 - DAY_NIGHT_LIGHTING.nightEnvironmentBase))
+  )
   return {
     altitude,
     azimuth,
     sunPosition: skyDirection(altitude, azimuth),
     sunIntensity: smoothstep(-0.833, 10, altitude),
     skyDaylight: smoothstep(-1, 6, altitude),
-    environmentIntensity: 0.08 + 0.92 * daylight,
-    // Approximate eye adaptation, applied by the graphics system on each path.
-    renderExposure: 1 + 0.8 * (1 - daylight),
+    environmentIntensity,
+    // Approximate eye adaptation from the combined Sun, Moon, and star fill.
+    renderExposure: 1 + (DAY_NIGHT_LIGHTING.maxEyeExposure - 1) * nightAdaptation,
     warmth: 1 - smoothstep(0, 15, altitude),
     moon: {
       altitude: moon.altitude,
@@ -106,7 +130,7 @@ export function getDayNightState(date, latitude, longitude) {
       opacity: 1 - 0.35 * daylight,
       // Scene-space intensity is art-directed; literal lux would be invisible
       // beside the existing unit-scale sun and HDR environment.
-      lightIntensity: 0.1 * illumination.fraction * smoothstep(0, 5, moon.altitude) * (1 - daylight),
+      lightIntensity: DAY_NIGHT_LIGHTING.moonDirect * moonContribution,
     },
   }
 }

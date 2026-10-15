@@ -75,7 +75,9 @@ The cycle displays 8,920 catalog stars and seven planets: Mercury, Venus, Mars, 
 Saturn, Uranus, and Neptune. Their bearings follow the world's latitude, longitude, and
 shared date/time, including `/time set` transitions. Stars and planet discs emerge by
 apparent magnitude as twilight darkens; the faintest catalog stars are visible only under
-a dark sky. Low objects fade from atmospheric extinction and disappear below the horizon.
+a dark sky. Each star's twilight contrast also depends on its altitude and distance from
+the Sun, so stars fade in at different times. Low objects fade from atmospheric extinction
+and disappear below the horizon.
 
 Enable **Constellation Lines** in World Settings to show faint connections for all 88
 modern constellations, plus a thin circle and name beside each visible planet. The toggle
@@ -103,13 +105,20 @@ While enabled, Three.js's procedural sky replaces the background supplied by sky
 Its scattering colors follow the Sun through civil, nautical, and astronomical twilight.
 A blue floor keeps the sky from becoming black before civil twilight ends; it fades through
 nautical twilight and settles to dark blue by astronomical twilight. The star visibility
-limit advances from magnitude 1 at the end of civil twilight, through magnitude 4 at the
-end of nautical twilight, to magnitude 6.5 at the end of astronomical twilight. Direct
-sunlight fades at the horizon, and the existing HDR environment dims through twilight to
-8% at night while render exposure rises to 1.8. The same exposure applies to desktop, XR,
-and portal rendering. The HDR reflection image remains the world's existing image. App
-lights and emissive materials keep their own intensity. The procedural sky and sun disc
-are scaled to avoid excessive bloom.
+visibility is a continuous contrast fade based on each star's magnitude and estimated
+local sky brightness. The twilight baseline varies smoothly with solar altitude; the
+near-horizon sky and region around the Sun remain brighter, so there is no single
+solar-altitude switch-on time for every star. Moon glow and atmospheric extinction also
+vary by star direction. This is an art-directed estimate, not a photometric prediction.
+Direct sunlight follows solar altitude. The existing HDR environment has a 12% night baseline;
+Moon phase and altitude add up to 5% ambient fill plus 0.1 directional light. The shared
+star-night progression adds up to 2% fill as a small readability cue, not summed catalog
+starlight. Render exposure rises as the combined environment dims, up to 1.8, as a simple
+eye adaptation cue. These scene-space weights are grouped in `DAY_NIGHT_LIGHTING` for
+tuning; they are not photometric lux values. The same exposure applies to desktop, XR, and
+portal rendering. The HDR reflection image remains the world's existing image. App lights
+and emissive materials keep their own intensity. The procedural sky and sun disc are
+scaled to avoid excessive bloom.
 
 Switching the cycle off restores the sky app's background, sun direction, sunlight color
 and intensity, and full HDR lighting.

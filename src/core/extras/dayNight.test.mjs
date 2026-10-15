@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { DEFAULT_LATITUDE, DEFAULT_LONGITUDE, getDayNightState, getTimeOffset, getWorldTime } from './dayNight.js'
+import {
+  DAY_NIGHT_LIGHTING,
+  DEFAULT_LATITUDE,
+  DEFAULT_LONGITUDE,
+  getDayNightState,
+  getTimeOffset,
+  getWorldTime,
+} from './dayNight.js'
 
 test('time commands target the next world-local occurrence, crossing midnight when needed', () => {
   const now = new Date('2026-10-10T00:00:10Z')
@@ -62,8 +69,10 @@ test('default location follows the season and switches off sunlight at night', (
   assert.ok(winter.altitude > 19 && winter.altitude < 23)
   assert.ok(night.sunPosition[1] < 0)
   assert.equal(night.sunIntensity, 0)
-  assert.equal(night.environmentIntensity, 0.08)
-  assert.equal(night.renderExposure, 1.8)
+  assert.ok(night.environmentIntensity >= DAY_NIGHT_LIGHTING.nightEnvironmentBase)
+  assert.ok(night.environmentIntensity < 1)
+  assert.ok(night.renderExposure > 1)
+  assert.ok(night.renderExposure <= DAY_NIGHT_LIGHTING.maxEyeExposure)
   assert.equal(summer.sunIntensity, 1)
   assert.equal(summer.environmentIntensity, 1)
   assert.equal(summer.renderExposure, 1)
