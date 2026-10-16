@@ -32,6 +32,7 @@ export class WebView extends Node {
     this.space = data.space
     this.proxy = data.proxy
     this.renderOrder = data.renderOrder
+    this.onMessage = data.onMessage ?? null
   }
 
   copy(source, recursive) {
@@ -45,6 +46,7 @@ export class WebView extends Node {
     this._space = source._space
     this._proxy = source._proxy
     this._renderOrder = source._renderOrder
+    this._onMessage = source._onMessage
     return this
   }
 
@@ -140,7 +142,6 @@ export class WebView extends Node {
       iframe.style.height = heightPx
       iframe.style.border = '0px'
       iframe.style.pointerEvents = 'none'
-      iframe.src = this.getIframeSource()
 
       container.appendChild(inner)
       inner.appendChild(iframe)
@@ -155,6 +156,8 @@ export class WebView extends Node {
       // Store references
       this.iframe = iframe
       this.inner = inner
+      this.listenForMessages(iframe)
+      iframe.src = this.getIframeSource()
 
       // IFrame Pointer Events Handling
       // Chrome has a bug where iframe receiving pointer-events breaks drag-and-drop.
@@ -229,13 +232,14 @@ export class WebView extends Node {
     iframe.style.height = '100%'
     iframe.style.border = '0px'
     iframe.style.pointerEvents = this._interactive ? 'auto' : 'none'
-    iframe.src = this.getIframeSource()
 
     container.appendChild(iframe)
 
     // Store references
     this.container = container
     this.iframe = iframe
+    this.listenForMessages(iframe)
+    iframe.src = this.getIframeSource()
 
     // Add to UI container
     if (this.ctx.world.pointer?.ui) {
@@ -244,6 +248,10 @@ export class WebView extends Node {
   }
 
   unbuild() {
+    if (this.messageListener) {
+      globalThis.removeEventListener('message', this.messageListener)
+      this.messageListener = null
+    }
     // World space cleanup
     if (this.mesh) {
       this.ctx.world.stage.scene.remove(this.mesh)
@@ -266,6 +274,15 @@ export class WebView extends Node {
     }
     this.iframe = null
     this.inner = null
+  }
+
+  listenForMessages(iframe) {
+    if (!this._onMessage) return
+    this.messageListener = event => {
+      if (event.source !== iframe.contentWindow) return
+      this._onMessage?.({ data: event.data, origin: event.origin })
+    }
+    globalThis.addEventListener('message', this.messageListener)
   }
 
   // Pointer down handler - unlocks pointer so user can interact with iframe
@@ -309,6 +326,23 @@ export class WebView extends Node {
     this._proxy = value
     this.needsRebuild = true
     this.setDirty()
+  }
+
+  get onMessage() {
+    return this._onMessage
+  }
+
+  set onMessage(value) {
+    if (value !== null && typeof value !== 'function') {
+      throw new Error('[webview] onMessage must be a function or null')
+    }
+    this._onMessage = value
+    if (!value && this.messageListener) {
+      globalThis.removeEventListener('message', this.messageListener)
+      this.messageListener = null
+    } else if (value && this.iframe && !this.messageListener) {
+      this.listenForMessages(this.iframe)
+    }
   }
 
   getIframeSource() {
@@ -437,6 +471,12 @@ export class WebView extends Node {
         },
         set proxy(value) {
           self.proxy = value
+        },
+        get onMessage() {
+          return self.onMessage
+        },
+        set onMessage(value) {
+          self.onMessage = value
         },
         get width() {
           return self.width

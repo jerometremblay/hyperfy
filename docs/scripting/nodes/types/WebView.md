@@ -81,6 +81,19 @@ webview.onPointerDown = (e) => {
 }
 ```
 
+### `.onMessage`: Function
+
+Called when the embedded page sends a `postMessage` to its parent window. The callback receives `{ data, origin }`. Only messages sent by this WebView's own iframe are delivered; check `origin` and validate `data` before using it.
+
+```javascript
+webview.onMessage = ({ data, origin }) => {
+  if (origin !== 'https://example.com') return
+  if (data?.type === 'page-count') {
+    console.log('Page count:', data.count)
+  }
+}
+```
+
 ### `.{...Node}`
 
 Inherits all [Node](/docs/scripting/nodes/Node.md) properties
