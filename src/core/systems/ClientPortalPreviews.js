@@ -3,6 +3,13 @@ import { System } from './System'
 import { createPreviewWorld } from '../createPreviewWorld'
 
 const position = new THREE.Vector3()
+const INITIAL_RETRY_DELAY = 5000
+const MAX_RETRY_DELAY = 60000
+
+function scheduleRetry(entry, now) {
+  entry.retryCount++
+  entry.retryAt = now + Math.min(INITIAL_RETRY_DELAY * 2 ** (entry.retryCount - 1), MAX_RETRY_DELAY)
+}
 
 export class ClientPortalPreviews extends System {
   constructor(world) {
@@ -32,7 +39,7 @@ export class ClientPortalPreviews extends System {
     for (const [key, portals] of wanted) {
       let entry = this.worlds.get(key)
       if (!entry) {
-        entry = { key, lastUsed: now, portals, retryAt: 0 }
+        entry = { key, lastUsed: now, portals, retryAt: 0, retryCount: 0 }
         this.worlds.set(key, entry)
       }
       entry.lastUsed = now
@@ -42,10 +49,11 @@ export class ClientPortalPreviews extends System {
         entry.error = entry.remote.network.error
         entry.remote.destroy()
         entry.remote = null
-        entry.retryAt = now + 5000
+        scheduleRetry(entry, now)
       }
       if (!entry.remote && !entry.loading && now >= entry.retryAt) this.load(entry)
       if (entry.remote) {
+        if (entry.remote.network.ready) entry.retryCount = 0
         const subscriptions = JSON.stringify(ids)
         if (entry.subscriptions !== subscriptions) {
           entry.remote.network.setSubscriptions(ids)
@@ -118,7 +126,7 @@ export class ClientPortalPreviews extends System {
     } catch (error) {
       remote?.destroy()
       entry.error = error.message
-      entry.retryAt = performance.now() + 10000
+      scheduleRetry(entry, performance.now())
     } finally {
       clearTimeout(timeout)
       entry.loading = false

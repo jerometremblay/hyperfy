@@ -29,6 +29,7 @@ export class Portal extends Node {
     this.inside = false
     this.destinationError = ''
     this.nextDestinationCheck = 0
+    this.destinationFailures = 0
     this.width = data.width ?? 1.6
     this.height = data.height ?? 2.4
     this.resolution = data.resolution ?? 256
@@ -217,6 +218,7 @@ export class Portal extends Node {
     this.destinationController = null
     this.destinationCheck = null
     this.nextDestinationCheck = 0
+    this.destinationFailures = 0
     this.destinationError = ''
   }
 
@@ -257,8 +259,9 @@ export class Portal extends Node {
     this.statusTexture.needsUpdate = true
   }
 
-  checkRemoteDestination() {
-    if (this.destinationCheck) return this.destinationCheck
+  checkRemoteDestination(force = false) {
+    if (this.destinationCheck && !force) return this.destinationCheck
+    if (force) this.destinationController?.abort()
     const controller = new AbortController()
     this.destinationController = controller
     this.setStatus('Checking destination…')
@@ -267,7 +270,18 @@ export class Portal extends Node {
       .then(error => {
         if (this.destinationController !== controller || !this.mesh) return false
         this.destinationError = error
-        this.nextDestinationCheck = performance.now() + 30000
+        const unavailable =
+          error === 'Remote destination timed out' ||
+          error === 'Remote world unreachable' ||
+          error?.startsWith('Remote world unavailable')
+        if (unavailable) {
+          this.destinationFailures++
+          const delay = Math.min(30000 * 2 ** (this.destinationFailures - 1), 300000)
+          this.nextDestinationCheck = performance.now() + delay
+        } else {
+          this.destinationFailures = 0
+          this.nextDestinationCheck = performance.now() + 30000
+        }
         this.setStatus(error)
         return !error
       })
@@ -350,7 +364,7 @@ export class Portal extends Node {
       const url = this.url
       const target = this.target
       const pose = JSON.stringify([...position.toArray(), ...direction.toArray()])
-      this.pendingTravel = this.checkRemoteDestination()
+      this.pendingTravel = this.checkRemoteDestination(true)
         .then(available => {
           if (!available || !this.mesh || this.url !== url || this.target !== target || this.ctx.entity?.data.mover)
             return

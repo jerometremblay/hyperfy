@@ -63,6 +63,8 @@ export class WebView extends Node {
     if (didMove) {
       if (this.mesh) {
         this.matrixWorld.decompose(this.mesh.position, this.mesh.quaternion, this.mesh.scale)
+      }
+      if (this.objectCSS) {
         this.matrixWorld.decompose(this.objectCSS.position, this.objectCSS.quaternion, this.objectCSS.scale)
       }
       if (this.sItem) {
