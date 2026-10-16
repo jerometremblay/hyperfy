@@ -1,14 +1,14 @@
 {
   "blueprint": {
     "id": "larch-house-luxury-log-cabin",
-    "version": 0,
+    "version": 1,
     "name": "Larch House \u2014 Luxury Log Cabin",
     "image": null,
     "author": "Jerome",
     "url": null,
     "desc": "18 x 15 m primitive-only log lodge. Three upper bedrooms, open mezzanine, L stair and full-height stone fireplace. Ridge 9.8 m; approved 22.9-degree gable. Structural collision including roof; five animated server-authoritative hinged doors; four interior sconces and ten exterior spots. Requires Hyperfy native extrude.",
     "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
-    "script": "asset://b6b8225550e5af34d0c2c0a7492c577aa9bfc53e45cff789656fd8f1bc7483e4.js",
+    "script": "asset://57f466cbc20ccf910c417c80628a71373070aa78e32f3ea07d52fe06a403833a.js",
     "props": {},
     "preload": false,
     "public": false,
@@ -25,8 +25,8 @@
     },
     {
       "type": "script",
-      "url": "asset://b6b8225550e5af34d0c2c0a7492c577aa9bfc53e45cff789656fd8f1bc7483e4.js",
-      "size": 42516,
+      "url": "asset://57f466cbc20ccf910c417c80628a71373070aa78e32f3ea07d52fe06a403833a.js",
+      "size": 42521,
       "mime": "text/plain"
     }
   ]

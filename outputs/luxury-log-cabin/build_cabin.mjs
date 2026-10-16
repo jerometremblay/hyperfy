@@ -21,6 +21,8 @@ console.log(run('python3', 'hyperfy-skill/tools/hyp_pack.py', path.join(director
 const packed = await fs.readFile(hyp)
 const oldHeaderSize = packed.readUInt32LE(0)
 const header = JSON.parse(packed.subarray(4, 4 + oldHeaderSize).toString())
+// Increment when publishing a revised cabin package.
+header.blueprint.version = 1
 for (const asset of header.assets) if (asset.type === 'script') asset.mime = 'text/plain'
 const newHeader = Buffer.from(JSON.stringify(header)), length = Buffer.alloc(4)
 length.writeUInt32LE(newHeader.length)
@@ -66,5 +68,5 @@ console.log(run('node', path.join(directory, 'validate_cabin.mjs')))
 const reportPath = path.join(directory, 'validation_report.json')
 const report = JSON.parse(await fs.readFile(reportPath, 'utf8'))
 report.package.previewEmbedsIdenticalBytes = true
-report.visualInspection = { status: 'Not repeated after lighting update; local-file browser access blocked by browser policy' }
+report.visualInspection = { status: 'Live-world checks are separate from this local build; see README and lighting-optimization.md' }
 await fs.writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')

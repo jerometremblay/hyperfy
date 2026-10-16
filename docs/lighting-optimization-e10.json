@@ -1,0 +1,114 @@
+{
+  "target": "https://monstre.duckdns.org:3333/",
+  "bundle": "/index-F3YWJAUP.js",
+  "change": "Add opt-in static shadow caching to Light nodes; dynamic remains the default. The matched diagnostic applies the same native LightShadow flags to local lights.",
+  "conditions": {
+    "timezone": "America/Toronto",
+    "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+    "cameraPosition": [
+      0.29999999999999993,
+      1.8600129209100067,
+      1.4488887394336023
+    ],
+    "cameraPositionUnchanged": true,
+    "cameraMatrixMaxAbsDelta": 5.551115123125783e-17,
+    "viewport": [1728, 880],
+    "drawingBuffer": [1728, 880],
+    "devicePixelRatio": 2,
+    "rendererPixelRatio": 1,
+    "preferences": {
+      "ao": true,
+      "bloom": true,
+      "dpr": 1,
+      "postprocessing": true,
+      "shadows": "med"
+    },
+    "tabVisible": true
+  },
+  "historicalPreEditHudSnapshot": {
+    "fps": 20,
+    "note": "Single instantaneous HUD reading at the requested view; settings and duration were not recorded, so it is not the controlled comparison."
+  },
+  "samples": [
+    {
+      "label": "dynamic-baseline-matched",
+      "startedAt": "2026-10-16T01:49:04.277Z",
+      "elapsedSeconds": 15.0485,
+      "frames": 601,
+      "fps": 39.94141925176408,
+      "frameIntervalMs": {
+        "mean": 25.036666666666665,
+        "p95": 29,
+        "min": 14.399999976158142,
+        "max": 45.5
+      },
+      "cpuFrameMs": {
+        "mean": 24.694841928966035,
+        "p95": 28.69999998807907
+      },
+      "gpuFrameMs": null,
+      "drawCallsPerFrame": 4728,
+      "trianglesPerFrame": 7350409,
+      "localShadowLights": 7,
+      "localAutoUpdate": [true, true, true, true, true, true, true],
+      "cameraUnchanged": true,
+      "valid": true
+    },
+    {
+      "label": "static-cache-matched",
+      "startedAt": "2026-10-16T01:49:53.941Z",
+      "elapsedSeconds": 15.011,
+      "frames": 790,
+      "fps": 52.62982356668779,
+      "frameIntervalMs": {
+        "mean": 19.00063371356147,
+        "p95": 20.700000047683716,
+        "min": 10.799999952316284,
+        "max": 25.899999976158146
+      },
+      "cpuFrameMs": {
+        "mean": 18.76177215214017,
+        "p95": 20.5
+      },
+      "gpuFrameMs": null,
+      "drawCallsPerFrame": 2178.453164556962,
+      "trianglesPerFrame": 2573870.2784810127,
+      "localShadowLights": 7,
+      "localAutoUpdate": [false, false, false, false, false, false, false],
+      "localShadowFacesDuringSample": [0, 0, 0, 0, 0, 0, 0],
+      "pendingRefreshesDuringSample": 1,
+      "cameraPositionUnchanged": true,
+      "cameraMatrixMaxAbsDelta": 5.551115123125783e-17,
+      "valid": true,
+      "restoredAfterSample": true
+    }
+  ],
+  "cacheWarmup": {
+    "warmupFrames": 3,
+    "localShadowLights": {
+      "point": 6,
+      "spot": 1
+    },
+    "directionalCsmAutoUpdate": [true, true, true],
+    "shadowFacesByLocalLight": [6, 6, 1, 0, 6, 6, 6],
+    "mapsRefreshed": 6,
+    "facesRendered": 31,
+    "pendingRefreshes": 1,
+    "note": "The pending point light had no shadow-camera calls during warmup or the sample; it was not counted as a warmed map."
+  },
+  "comparison": {
+    "fpsIncreasePercent": 31.76753493646398,
+    "meanFrameIntervalReductionPercent": 24.108772279743828,
+    "p95FrameIntervalReductionPercent": 28.620689655172416,
+    "drawCallReductionPercent": 53.924425453532955,
+    "triangleReductionPercent": 64.98330530340539
+  },
+  "restored": {
+    "localLightAutoUpdate": true,
+    "directionalCsmAutoUpdate": true,
+    "diagnosticHooksAndGlobalsRemoved": true,
+    "viewportOverrideReset": true,
+    "sharedWorldSettingsOrAssetsChanged": false
+  },
+  "decision": "Retain opt-in per-light static mode; preserve dynamic default. Moving casters keep stale shadows until refreshShadow is requested or the light moves."
+}

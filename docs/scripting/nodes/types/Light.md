@@ -19,6 +19,8 @@ visuals. Server-side light nodes can exist, but do not create rendering objects.
 | `angle` | `Math.PI / 3` | Spotlight cone half-angle in radians. |
 | `penumbra` | `0` | Spotlight edge softness, from `0` (hard) to `1` (soft). |
 | `castShadow` | `false` | Whether this light casts shadows. |
+| `shadowMode` | `'dynamic'` | `'dynamic'` updates its map every frame; `'static'` reuses it until refreshed. |
+| `shadowNear` | `0.25` | Near clipping distance in metres for point/spot shadow cameras. Lower it for blockers very close to a light. |
 
 Directional light intensity is illuminance; point and spot intensity is luminous
 intensity. The same numeric intensity will not give the same result across all types.
@@ -89,6 +91,31 @@ surface must receive them. Primitives default to both; set `castShadow` and
 `receiveShadow` explicitly when needed. Imported mesh nodes expose those flags too.
 Additional shadow-casting lights cost more to render. Leave shadows off for small
 fill lights and enable them only where the scene needs them.
+
+## Cache shadows from a fixed light
+
+Set `shadowMode` to `'static'` when the light and its shadow-casting geometry stay
+fixed. The first eligible render creates the map; later frames reuse it. The default
+is `'dynamic'`, so existing lights keep updating every frame. A static light can
+still change color or intensity without rebuilding its map.
+
+Point and spot lights use a `0.25` m shadow-camera near plane by default. Set
+`shadowNear` lower when nearby geometry should block the light; for example, a wall
+sconce mounted `0.22` m from a timber post can use `shadowNear = 0.05`. Keep a larger
+value on long-range spotlights to preserve depth precision.
+
+```js
+light.castShadow = true
+light.shadowMode = 'static'
+
+// Refresh after moving the light or changing fixed shadow-casting geometry.
+light.refreshShadow()
+```
+
+Moving a static light refreshes its map automatically. Call `refreshShadow()` after
+changing walls or furniture that should cast new shadows. Cached maps include the
+casters present at refresh time, so moving avatars can leave stale shadows until the
+next refresh. Daylight's cascaded shadows remain dynamic.
 
 ## Directional fill light
 

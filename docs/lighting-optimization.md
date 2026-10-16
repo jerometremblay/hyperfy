@@ -417,12 +417,13 @@ the disappearance. No avatar visibility flags or shared app settings changed.
 
 `ClientGraphics.render()` now budgets shadow samplers against the GPU's texture
 limit, reserving units for material maps, the environment, skinning, morphs and
-spotlight projection maps. It keeps CSM cascades together and prioritizes nearby
-remaining sources. Overflow lights still illuminate the scene, but their shadows
-are temporarily disabled during the frame. Requested shadow flags are restored
-in `finally`, including when rendering throws. The selection can change as the
-camera moves; it applies to the direct/XR and postprocessing paths, with portal
-views using the same frame's selection.
+spotlight projection maps. Its initial selection kept CSM cascades together and
+prioritized nearby remaining sources. Overflow lights still illuminate the
+scene, but their shadows are temporarily disabled during the frame. Requested
+shadow flags are restored in `finally`, including when rendering throws. The
+initial selection changed as the camera moved; the stable selection update is
+recorded below. The budget applies to direct/XR and postprocessing paths, with
+portal views using the same frame's selection.
 
 For the observed avatar and GPU, seven units are reserved and nine shadow maps
 remain: three CSM maps and six point maps. This budget is computed from scene
@@ -442,3 +443,167 @@ shadow flags retained, the avatar body visible, and no new texture-budget
 warnings. All temporary browser validation hooks were removed.
 
 ![Avatar body restored with the rebuilt client and shadow sources still enabled](./screenshots/shadow-budget/avatar-restored.jpg)
+
+## E10 — Opt-in static local-light shadow caching (2026-10-15, 21:49 EDT)
+
+At the requested house entrance view, a pre-edit HUD snapshot read 20 FPS. That
+was a single instantaneous reading without recorded quality or viewport settings.
+The controlled comparison below uses the same reloaded local build, camera,
+viewport, and graphics preferences: dynamic default behavior before enabling the
+cache, then the cached steady state. Both samples ran for 15 seconds with the
+world frame hooks and renderer statistics visible and the camera stationary.
+A 30-second browser evaluation exceeded its remote timeout, so both matched
+samples use the shorter duration.
+
+| Mode | Start (EDT) | Frames | FPS | Frame interval mean / p95 (ms) | CPU mean / p95 (ms) | GPU mean (ms) | Draw calls/frame | Triangles/frame |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Dynamic default | 21:49:04 | 601 | 39.94 | 25.04 / 29.00 | 24.69 / 28.70 | unavailable | 4,728 | 7,350,409 |
+| Local shadows cached | 21:49:53 | 790 | 52.63 | 19.00 / 20.70 | 18.76 / 20.50 | unavailable | 2,178 | 2,573,870 |
+
+The measured FPS increased 31.8%; mean frame interval fell 24.1%. The browser
+did not provide GPU timer-query samples. The GPU was an Apple M1 Max through
+ANGLE Metal. CSS viewport was 1728 × 880; the drawing buffer was 1728 × 880 at
+device pixel ratio 2 and renderer pixel ratio 1. Preferences were medium shadows,
+DPR 1, postprocessing, AO, and bloom enabled. The entrance view showed the pool
+table and fire. Camera position stayed exactly the same; the strict matrix
+comparison differed by only 5.6e-17 in one rotation value due to floating-point
+rounding.
+
+The diagnostic set Three.js `LightShadow.autoUpdate = false` and
+`needsUpdate = true` on seven local shadow lights (six point, one spot), matching
+the new Light node's static mode. All three directional CSM lights remained
+dynamic. Warmup rendered 31 faces across six maps (`[6, 6, 1, 0, 6, 6, 6]`); one
+point light stayed pending and generated no faces in this view. No local shadow
+faces rendered during the cached sample. This was a stationary benchmark, so it
+does not measure the visual lag of moving casters: their shadows remain frozen
+until the light or relevant geometry requests `refreshShadow()`.
+
+Decision: keep dynamic shadows as the default and retain caching as an opt-in
+per-light mode. After sampling, local lights were restored to dynamic mode,
+directional shadows remained dynamic, temporary frame hooks and page globals
+were removed, and the browser viewport was reset. The local client loaded
+`/index-F3YWJAUP.js`, which contains the new `shadowMode` and `refreshShadow`
+implementation. No shared world settings or assets were edited. Measurements:
+[lighting-optimization-e10.json](./lighting-optimization-e10.json).
+
+## Évain Larch House lighting assignment — 2026-10-16
+
+The live `Larch House — Luxury Log Cabin` app configures all 18 building
+spotlights in static shadow mode: eight interior sconce cones and ten roof
+downlights. Animated door movement requests a shadow refresh while the doors
+move. The app's `Receive shadows` setting is enabled, and its primitive helper
+applies that receiver flag to every visible house mesh. The separate `Fire and
+Grate` and `Billiards - Triple Green Pendant Light` apps keep dynamic shadows.
+
+Before replacement, the entrance-view HUD snapshot read 20 FPS. After
+replacement, instantaneous HUD readings were 33 FPS and later 62 FPS as the view
+warmed; a later check read 33 FPS again. These are single HUD snapshots, not
+matched averages, so they do not establish a sustained before/after gain. The
+controlled 39.94 → 52.63 FPS comparison above covered the earlier seven-light
+setup, so it is not directly comparable to this 18-light house configuration.
+
+## Stable local shadow selection while walking — 2026-10-16
+
+Inside the house, the local shadow budget previously reassigned its limited
+shadow slots to the lights nearest the camera each frame. That caused nearby
+shadows to appear and disappear while walking. Selection now prioritizes dynamic
+lights, then brighter cached lights, with stable Three.js light IDs breaking
+ties. It retains the GPU texture-unit budget and protected CSM cascades. Camera
+layers and invisible branches are still respected, so walking does not change
+which local lights cast shadows.
+
+On the recorded M1 Max configuration, the 16 texture-unit limit leaves nine
+shadow maps after material samplers are reserved: three CSM maps and six local
+maps. The fireplace contributes one dynamic point light, and the triple pool
+pendant contributes three dynamic point lights. Those four sources leave two
+local slots for cached building shadows on this device. All 18 building lights
+remain configured as static, but the renderer cannot sample all their maps at
+once. The selector gives dynamic lights priority, then chooses brighter static
+lights with stable IDs breaking ties; it does not switch the selected set just
+because the camera walks closer to another fixture. Every visible house mesh is
+still configured to receive shadows from the selected sources.
+
+Validation: all seven `shadowBudget.test.mjs` tests pass, including moving the
+camera and verifying the selected sources remain unchanged, dynamic-light
+priority, and high-intensity interior sconce coverage. `git diff --check`
+passes. No new FPS sample was taken for this selection-only change; the prior
+matched 39.94 → 52.63 FPS result measures static shadow caching, not this budget
+selection adjustment. The current 18-light cabin's HUD readings above are
+instantaneous and not a matched benchmark.
+
+## Proximity priority for distant outdoor lights — 2026-10-16
+
+The selector now groups local lights into broad 32-world-unit camera-distance
+bands. A closer band wins shadow slots before a farther band; within each band,
+dynamic lights still come first, followed by brighter cached lights and stable
+IDs. The cabin fits within one band while walking indoors, so this deprioritizes
+the much farther outdoor lights without reordering the house lights at every
+step. There is no distance cutoff: farther lights remain eligible when slots
+are available. Selection can change when a light moves into another band.
+
+This is a slot-allocation change only. The previous FPS samples do not measure
+it, and no new benchmark was taken. Tests were not rerun for this change.
+
+## Close local-light shadow clipping — 2026-10-16
+
+Point and spot shadow cameras default to a 0.25 m near plane, with the projection
+matrix updated at mount. Long-range roof spots keep that value for depth
+precision. The fireplace point light sits about 0.495 m from the arch's front
+masonry, but the arch sides come closer, so its app now sets `shadowNear: 0.05`.
+It remains dynamic. `Light.test.mjs` checks both camera types and their
+projection matrices; the cabin validator confirms the mounted rafters and all
+384 fireplace primitives cast shadows.
+
+### Nearby sconce beams
+
+The wall sconces sit 0.22 m in front of timber posts that extend through the
+emitters' height. The default 0.25 m near plane clips the timber immediately in
+front of each cone. The Light node has a per-light `shadowNear` control. The
+local cabin source now sets its eight interior sconces to 0.05 m and keeps the
+0.25 m default for the fireplace and ten exterior roof spots. The cabin package
+was rebuilt and its verifier confirms the mounted spot cameras use those values.
+
+The browser regression fixture now covers point and spot lights. With a blocker
+0.20 m from the light, `near = 0.25` leaves the receiver lit (mean luminance 255),
+while `near = 0.05` produces the shadow (mean luminance 100) for both light
+types. Static-cache checks show the six point-shadow faces render once and then
+stop, while dynamic lights continue updating. Direct and composer render paths
+pass without shader errors. The cabin validator confirms 18 static building
+spots, 384 shadow-casting fireplace primitives, 12 shadow-casting roof beams,
+and shadow reception on visible house primitives.
+
+The live Évain client serves `index-HLEALSTI.js` with support for both
+`shadowMode` and `shadowNear`. Through the Agent API, the house blueprint moved
+from version 1 to version 2 and now points to
+`asset://25938da3b76d1f1aa0abd1fca32b0d760554776ae1268962b45b7f904a2f2138.js`.
+Its model and `castShadows` / `receiveShadows` properties were preserved. The
+fire blueprint moved from version 26 to 27 and points to
+`asset://079d7b7a65acdd2e0fd3a4ad8627f82f62cfd71008727d56f7ed2ab0bd76a08e.js`;
+its existing `lightShadows: true` property remains enabled. The pool pendant is
+still version 16 with `castLightShadows: true`. Neither the fire nor the pool
+script sets static mode, so both keep the live client's dynamic default.
+
+A live screenshot after these updates showed the fireplace aperture glowing
+while surrounding masonry stayed shaded, with timber beams and rafters casting
+visible shadows. A pool-table edge was in frame. The tab HUD read 23 FPS before
+the asset updates and 21 FPS after. These are single HUD snapshots, not matched
+averages: framing changed slightly, so this pair does not establish an FPS gain.
+The three HUD readings are recorded in
+[lighting-optimization-e11.json](./lighting-optimization-e11.json).
+The earlier controlled 39.94 → 52.63 FPS cache test remains the only matched
+performance comparison. A full room-by-room walking check is still outstanding;
+the selector's camera-movement test passes and no distance-based shadow cutoff
+is present.
+
+## Disable built-in cabin spotlight shadows — 2026-10-16
+
+All 18 house-authored spotlights now keep their illumination but set
+`castShadow: false`; static shadow mode and the now-unused door-triggered cache
+refresh were removed. House geometry remains configured to cast and receive
+shadows from other sources. The separately authored fireplace and pool lights
+remain dynamic shadow casters. The package builder sets blueprint version 1;
+the `.hyp`, extracted header/script, preview, and validation report are rebuilt
+from the same source. Its script was uploaded through the Agent API to the live
+Évain blueprint, advancing that blueprint from version 2 to version 3 while
+preserving its existing model asset and app properties. The uploaded script
+asset is `asset://57f466cbc20ccf910c417c80628a71373070aa78e32f3ea07d52fe06a403833a.js`.

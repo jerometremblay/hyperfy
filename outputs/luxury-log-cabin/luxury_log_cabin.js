@@ -776,7 +776,8 @@ for (const post of interiorFixtures) {
       rotation: [up ? Math.PI : 0, 0, 0], color: C.iron, metalness: 0.65 }, 'sconce-cone')
     prim('cylinder', { size: [0.145, 0.145, 0.015], position: [fx, y + direction * 0.245, fz],
       color: '#ffe0af', emissive: '#ffd29a', emissiveIntensity: 1.5, castShadow: false }, 'sconce-lens')
-    spot([fx, y + direction * 0.27, fz], up, up ? 65 : 45, up ? 9 : 7, up ? 'sconce-up' : 'sconce-down')
+    spot([fx, y + direction * 0.27, fz], up, up ? 25 : 5, up ? 9 : 7,
+      up ? 'sconce-up' : 'sconce-down')
   }
 }
 
@@ -788,6 +789,6 @@ for (const z of [-8.05, 8.05]) for (const x of [-4.5, 4.5]) roofLights.push([x, 
 for (const [x, y, z] of roofLights) {
   prim('cylinder', { size: [0.18, 0.18, 0.06], position: [x, y, z], color: C.iron, metalness: 0.65 }, 'roof-light-trim')
   prim('cylinder', { size: [0.13, 0.13, 0.012], position: [x, y - 0.037, z],
-    color: '#ffe0af', emissive: '#ffd29a', emissiveIntensity: 1.5, castShadow: false }, 'roof-light-lens')
-  spot([x, y - 0.055, z], false, 85, 12, 'roof-downlight')
+    color: '#ffe0af', emissive: '#ffd29a', emissiveIntensity: 0.2, castShadow: false }, 'roof-light-lens')
+  spot([x, y - 0.055, z], false, 15, 22, 'roof-downlight')
 }

@@ -414,7 +414,7 @@ export class ClientEnvironment extends System {
         cascades: 3,
         maxCascades: 3,
         shadowMapSize: 2048,
-        maxFar: 100,
+        maxFar: 150,
         lightIntensity: 1,
         lightDirection: new THREE.Vector3(0, -1, 0).normalize(),
         fade: true,

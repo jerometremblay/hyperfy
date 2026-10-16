@@ -50,14 +50,70 @@ test('larger GPU texture budget preserves all requested shadows', () => {
   assert.deepEqual(limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades), [])
 })
 
-test('camera movement chooses nearby sources in world space and excludes invisible branches', () => {
+test('camera movement keeps the same shadow sources and excludes invisible branches', () => {
   const f = fixture()
+  const first = limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades)
+  assert.deepEqual(first, f.points.slice(6))
+  for (const light of first) light.castShadow = true
+
   f.camera.position.x = 10
   f.camera.updateMatrixWorld(true)
+  const afterMoving = limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades)
+  assert.deepEqual(afterMoving, first)
+  for (const light of afterMoving) light.castShadow = true
+
   f.points[0].visible = false
-  const disabled = limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades)
-  assert.deepEqual(disabled, [f.points[1]])
+  const afterHiding = limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades)
+  assert.deepEqual(afterHiding, [f.points[7]])
   assert.ok(f.points[0].castShadow, 'invisible lights do not consume the budget or lose requested flags')
+})
+
+test('dynamic lights keep budget slots ahead of stable cached lights', () => {
+  const f = fixture()
+  for (const light of f.points) light.shadow.autoUpdate = false
+  const fireplace = new THREE.PointLight()
+  fireplace.castShadow = true
+  f.scene.add(fireplace)
+  f.scene.updateMatrixWorld(true)
+
+  const disabled = limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades)
+
+  assert.ok(!disabled.includes(fireplace), 'dynamic fireplace shadow keeps a slot')
+  assert.deepEqual(disabled, f.points.slice(5))
+})
+
+test('high-priority static sconces keep shadow slots ahead of lower-intensity spots', () => {
+  const f = fixture()
+  for (const light of f.points) light.castShadow = false
+
+  const dynamicLights = Array.from({ length: 2 }, () => {
+    const light = new THREE.PointLight()
+    light.castShadow = true
+    f.scene.add(light)
+    return light
+  })
+  const lowerPriority = Array.from({ length: 14 }, (_, i) => {
+    const light = new THREE.SpotLight(0xffffff, i < 10 ? 15 : 5)
+    light.shadow.autoUpdate = false
+    light.castShadow = true
+    f.scene.add(light)
+    return light
+  })
+  const upwardSconces = Array.from({ length: 4 }, (_, i) => {
+    const light = new THREE.SpotLight(0xffffff, 25)
+    light.name = `upward-sconce-${i}`
+    light.shadow.autoUpdate = false
+    light.castShadow = true
+    f.scene.add(light)
+    return light
+  })
+
+  const disabled = limitLightShadows(f.scene, f.camera, f.maxTextures, f.cascades)
+
+  assert.equal(disabled.length, 14)
+  assert.ok(dynamicLights.every(light => !disabled.includes(light)))
+  assert.ok(upwardSconces.every(light => !disabled.includes(light)))
+  assert.ok(lowerPriority.every(light => disabled.includes(light)))
 })
 
 test('spotlight projection maps and morph targets also consume texture slots', () => {
