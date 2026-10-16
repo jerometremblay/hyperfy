@@ -23,12 +23,16 @@ With neither set, the routes do not exist. A read token allows GET requests. A w
 | POST | `/entities` | Instantiate an existing `blueprint` |
 | PATCH | `/entities/:id` | Set position, quaternion, scale or pinned |
 | DELETE | `/entities/:id` | Remove an app instance |
+| GET | `/players` | List connected players (write token required) |
+| POST | `/players/:id/teleport` | Teleport a connected player (write token required) |
 | POST | `/scripts` | Upload JavaScript source through existing local/S3 storage |
 | GET | `/openapi.json` | Authenticated OpenAPI schema |
 
 Blueprints define apps; entities are placed instances. Creating a blueprint does not place it in the world. Editing a blueprint rebuilds **every instance sharing it**. `props` replaces the entire properties object, so fetch and merge it before updating. Supply the version returned by GET; a stale version returns 409. Successful updates increment the version. Scene blueprints/instances are protected from edits; unique blueprints cannot be instantiated through this API. Instance moves/removals return 409 while a builder is moving or uploading them.
 
 Transforms use world coordinates, a normalized quaternion `[x,y,z,w]`, and positive scale. Omitted creation transforms default to the origin, identity rotation, and unit scale. New app `model` may be `script-only` or an existing hashed `asset://` URL. `script` accepts an existing hashed asset URL or null. Binary model upload continues to use the existing `/api/upload` endpoint; this API adds text script upload only.
+
+Player operations are limited to connected players and require the write token, including `GET /players`. The listing returns only each player's ID, name, and last reported world position. `POST /players/:id/teleport` accepts `position: [x,y,z]` and optional `rotationY` in radians, then sends Hyperfy's normal client teleport event. Seated players are rejected. Verify completion by reading `/players` again after the client reports its new position; this does not change the saved spawn point.
 
 Example from a terminal (also usable by a Codex agent with shell access):
 

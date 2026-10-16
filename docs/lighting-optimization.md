@@ -607,3 +607,42 @@ from the same source. Its script was uploaded through the Agent API to the live
 Évain blueprint, advancing that blueprint from version 2 to version 3 while
 preserving its existing model asset and app properties. The uploaded script
 asset is `asset://57f466cbc20ccf910c417c80628a71373070aa78e32f3ea07d52fe06a403833a.js`.
+
+## Selective fireplace shadow casters — 2026-10-16
+
+The cabin source now opts in only the fireplace's three inner-layer primitives
+(arched surround, recessed fireback and firebox floor) and its 13 arch stones
+(voussoirs) to cast shadows. The other 368 fireplace primitives do not cast.
+This reduces fireplace casters from 384 to 16 (95.8% fewer). The house-wide
+Cast shadows toggle still controls the remaining house casters, and the
+visible-house receiver configuration is unchanged. The package validator
+asserts this exact 3 + 13 caster selection.
+
+For a behind-the-fireplace view, the avatar was placed at the same position
+through the Agent API's new authenticated `POST /players/{id}/teleport` route;
+the position was not reached by walking. The API addition is covered by five
+passing `agent-api.test.mjs` tests. The live Évain house blueprint advanced from
+version 3 to version 4, with its model and app properties preserved. Its script
+asset is
+`asset://1a3c936123525166b9999a555ce6a6b12796b5b2e7b56a1514a75e4e142fa513.js`.
+
+The in-game HUD readings did not show a performance improvement. The three
+before samples averaged 32.67 FPS, 30.15 ms CPU and 98.87 ms GPU. The first
+three after samples averaged 28.67 FPS, 33.99 ms CPU and 118.09 ms GPU; one
+additional after sample read 29 FPS, 33.71 ms CPU and 117.61 ms GPU. These are
+short live HUD snapshots, not a controlled benchmark, so they do not establish
+that the caster change caused the lower readings. Full readings are in
+[lighting-optimization-e12.json](./lighting-optimization-e12.json).
+
+## Block upper-floor light at the mezzanine — 2026-10-16
+
+The mezzanine deck slab and boards now explicitly cast shadows. The two
+down-facing sconce spotlights on the upper floor also cast shadows in static
+mode, so their light is blocked by the deck before reaching the lower floor.
+Other cabin spotlights remain non-shadow-casting. Static maps refresh while an
+upper-floor door moves so the animated door shadows stay current. The validator
+checks that both upper lights cast cached shadows and that a downward ray from
+each intersects a shadow-casting mezzanine primitive. No performance comparison
+was taken for this targeted shadow change. The live Évain blueprint advanced
+from version 4 to version 5 with its model and shadow properties preserved; the
+script is `asset://f110913549a994266c526646b273c40162bec2bb30348fc2fab9c0e777d2ccbf.js`.

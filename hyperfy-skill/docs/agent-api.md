@@ -32,6 +32,8 @@ All paths below are relative to `/api/agent`.
 | PATCH | `/entities/:id` | Change an instance transform or `pinned` state |
 | DELETE | `/entities/:id` | Remove an instance |
 | POST | `/scripts` | Upload JavaScript source and receive its content-addressed asset URL |
+| GET | `/players` | List connected players; write token required |
+| POST | `/players/:id/teleport` | Teleport a connected player; write token required |
 | GET | `/openapi.json` | Read the authenticated OpenAPI schema |
 
 Use `/openapi.json` for the live request schemas. The request body rejects unknown fields. Script source is limited to 262,144 characters.
@@ -50,6 +52,8 @@ Uploading a script does not attach it to a blueprint. A new script-only app requ
 ## Instances and conflicts
 
 Entity transforms use world-space `position: [x,y,z]`, normalized `quaternion: [x,y,z,w]`, positive `scale: [x,y,z]`, and optional `pinned`. Creation defaults to the origin, identity rotation, and unit scale.
+
+Player routes are limited to connected players and require the write token, including `GET /players`. The listing returns only player ID, name, and last reported world position. `POST /players/:id/teleport` accepts `position: [x,y,z]` and optional `rotationY` in radians and sends Hyperfy's normal client teleport event. Seated players are rejected. Verify completion by reading `/players` again after the client reports its new position. This does not change the saved spawn point.
 
 The API protects scene blueprints and instances. It cannot instantiate unique blueprints. Moving or deleting an instance that is currently being edited or uploaded returns `409`; retry after that operation finishes and re-read the instance first. `DELETE` has no API undo operation.
 

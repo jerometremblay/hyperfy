@@ -6,7 +6,12 @@ import { agentAPI } from './agent-api.js'
 async function setup(t, tokens = { readToken: 'reader', writeToken: 'writer' }) {
   const blueprints = new Map([['box', { id: 'box', version: 0, model: 'script-only', props: {} }]])
   const items = new Map()
+  const players = new Map()
+  const sockets = new Map([['player-owner', {}]])
+  const playerData = { id: 'player-1', type: 'player', owner: 'player-owner', name: 'Jerome', position: [0, 0, 0] }
+  players.set(playerData.id, { data: playerData, isPlayer: true })
   const sent = []
+  const sentTo = []
   const world = {
     settings: { serialize: () => ({ title: 'Test' }) },
     blueprints: {
@@ -18,7 +23,7 @@ async function setup(t, tokens = { readToken: 'reader', writeToken: 'writer' }) 
     },
     entities: {
       items,
-      players: new Map(),
+      players,
       get: id => items.get(id),
       remove: id => items.delete(id),
       add(data) {
@@ -32,7 +37,13 @@ async function setup(t, tokens = { readToken: 'reader', writeToken: 'writer' }) 
         return item
       },
     },
-    network: { send: (...args) => sent.push(args), dirtyBlueprints: new Set(), dirtyApps: new Set() },
+    network: {
+      send: (...args) => sent.push(args),
+      sendTo: (...args) => sentTo.push(args),
+      sockets,
+      dirtyBlueprints: new Set(),
+      dirtyApps: new Set(),
+    },
   }
   const uploads = []
   const assets = { exists: async () => true, upload: async file => uploads.push(file) }
@@ -42,7 +53,7 @@ async function setup(t, tokens = { readToken: 'reader', writeToken: 'writer' }) 
   await server.ready()
   const call = (method, path, payload, token = 'writer') =>
     server.inject({ method, url: `/api/agent${path}`, payload, headers: { authorization: `Bearer ${token}` } })
-  return { server, call, world, sent, uploads }
+  return { server, call, world, sent, sentTo, sockets, uploads }
 }
 
 test('disabled by default; tokens separate read and write access', async t => {
@@ -72,6 +83,34 @@ test('create, move, and remove use broadcasts and persistence tracking', async t
     sent.map(item => item[0]),
     ['entityAdded', 'entityModified', 'entityRemoved']
   )
+})
+
+test('write-only player inspection and teleport target connected players', async t => {
+  const { call, world, sentTo, sockets } = await setup(t)
+  assert.equal((await call('GET', '/players', undefined, 'reader')).statusCode, 403)
+  assert.deepEqual((await call('GET', '/players')).json(), [
+    { id: 'player-1', name: 'Jerome', position: [0, 0, 0] },
+  ])
+  assert.equal((await call('POST', '/players/missing/teleport', { position: [1, 2, 3] })).statusCode, 404)
+  assert.equal(
+    (await call('POST', '/players/player-1/teleport', { position: [1, 2, 3], unexpected: true })).statusCode,
+    400
+  )
+  const moved = await call('POST', '/players/player-1/teleport', {
+    position: [4, 5, 6],
+    rotationY: 1.25,
+  })
+  assert.equal(moved.statusCode, 200)
+  assert.deepEqual(moved.json(), { id: 'player-1', name: 'Jerome', position: [4, 5, 6], rotationY: 1.25 })
+  assert.deepEqual(sentTo, [
+    ['player-owner', 'playerTeleport', { position: [4, 5, 6], rotationY: 1.25 }],
+  ])
+  assert.equal(world.network.dirtyApps.size, 0)
+  world.entities.players.get('player-1').data.effect = { anchorId: 'seat-1' }
+  assert.equal((await call('POST', '/players/player-1/teleport', { position: [1, 2, 3] })).statusCode, 409)
+  world.entities.players.get('player-1').data.effect = null
+  sockets.delete('player-owner')
+  assert.equal((await call('POST', '/players/player-1/teleport', { position: [1, 2, 3] })).statusCode, 409)
 })
 
 test('blueprint version conflicts and invalid bodies cannot mutate world', async t => {
@@ -106,5 +145,7 @@ test('script storage, app creation and OpenAPI describe the usable workflow', as
   assert.equal((await call('GET', `/apps/${created.json().id}`)).json().script, uploaded.json().url)
   const schema = (await call('GET', '/openapi.json', undefined, 'reader')).json()
   assert.equal(schema.paths['/entities/{id}'].patch.operationId, 'updateEntity')
+  assert.equal(schema.paths['/players'].get.operationId, 'listPlayers')
+  assert.equal(schema.paths['/players/{id}/teleport'].post.responses['200'].description, 'Success')
   assert.equal(schema.components.securitySchemes.bearerAuth.scheme, 'bearer')
 })

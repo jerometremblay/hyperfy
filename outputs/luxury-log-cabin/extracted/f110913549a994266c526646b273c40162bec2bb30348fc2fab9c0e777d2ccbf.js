@@ -113,14 +113,17 @@ app.on('destroy', () => {
 })
 
 const lightingPosts = []
+const upperFloorShadowLights = []
 let section = 'floor'
 let serial = 0
 function prim(type, data, name = type) {
+  // Fireplace pieces opt in; other house sections keep their existing default.
+  const castsShadow = section === 'fireplace' ? data.castShadow === true : data.castShadow !== false
   const node = app.create('prim', {
     id: `${section}:${name}:${serial++}`, type, color: C.timber,
     roughness: 0.82, metalness: 0, physics: null,
     ...data,
-    castShadow: SHADOW_CASTING && data.castShadow !== false && (data.opacity ?? 1) > 0,
+    castShadow: SHADOW_CASTING && castsShadow && (data.opacity ?? 1) > 0,
     receiveShadow: SHADOW_RECEIVING && data.receiveShadow !== false && (data.opacity ?? 1) > 0,
   })
   app.add(node)
@@ -228,10 +231,10 @@ function doorFrame(axis, fixed, u, bottom, width, height) {
   wallBox(axis, fixed, u, bottom + 0.025, width + 0.18, 0.05, 0.44, C.trim, 'threshold')
 }
 function floorDeck(x0, x1, z0, z1, y, prefix) {
-  box([x1 - x0, 0.21, z1 - z0], [(x0 + x1) / 2, y - 0.155, (z0 + z1) / 2], C.trim, [0, 0, 0], {}, prefix + '-deck')
+  box([x1 - x0, 0.21, z1 - z0], [(x0 + x1) / 2, y - 0.155, (z0 + z1) / 2], C.trim, [0, 0, 0], { castShadow: true }, prefix + '-deck')
   const n = Math.ceil((x1 - x0) / 0.36), width = (x1 - x0) / n
   for (let i = 0; i < n; i++) box([width - 0.005, 0.05, z1 - z0],
-    [x0 + (i + 0.5) * width, y - 0.023, (z0 + z1) / 2], C.floor[i % 4], [0, 0, 0], {}, prefix + '-board')
+    [x0 + (i + 0.5) * width, y - 0.023, (z0 + z1) / 2], C.floor[i % 4], [0, 0, 0], { castShadow: true }, prefix + '-board')
 }
 const guardPostPositions = new Set()
 function railing(a, b, name = 'guard') {
@@ -450,9 +453,9 @@ for (let i = 1; i <= 16; i++) {
   surround.push([openingRadius * Math.cos(angle), spring + openingRadius * Math.sin(angle)])
 }
 surround.push([1.3, 0.36], [2.3, 0.36], [2.3, 2.98], [-2.3, 2.98])
-extrude(surround, 1.4, 1.0, C.mortar, 0.012, 'arched-surround')
-box([2.6, 2.12, 0.11], [0, 1.42, 1.62], C.inside, [0, 0, 0], {}, 'recessed-fireback')
-box([2.58, 0.045, 1.16], [0, 0.384, 0.98], C.inside, [0, 0, 0], {}, 'firebox-floor')
+extrude(surround, 1.4, 1.0, C.mortar, 0.012, 'arched-surround', { castShadow: true })
+box([2.6, 2.12, 0.11], [0, 1.42, 1.62], C.inside, [0, 0, 0], { castShadow: true }, 'recessed-fireback')
+box([2.58, 0.045, 1.16], [0, 0.384, 0.98], C.inside, [0, 0, 0], { castShadow: true }, 'firebox-floor')
 const chimneyProfile = [[-2.3, 2.98], [2.3, 2.98], [2.3, 3.24], [1.05, 6.0], [0.95, 6.5],
   [0.95, 10.72], [-0.95, 10.72], [-0.95, 6.5], [-1.05, 6.0], [-2.3, 3.24]]
 extrude(chimneyProfile, 1.4, 1.0, C.mortar, 0.02, 'tapered-chimney')
@@ -489,7 +492,7 @@ for (let i = 0; i < 13; i++) {
   const a = i / 13 * Math.PI + 0.011, b = (i + 1) / 13 * Math.PI - 0.011
   const p = (r, t) => [r * Math.cos(t), spring + r * Math.sin(t)]
   extrude([p(1.31, a), p(1.64, a), p(1.64, b), p(1.31, b)], 0.18, 0.175,
-    C.stone[(i + 2) % 6], 0.01, 'arch-voussoir')
+    C.stone[(i + 2) % 6], 0.01, 'arch-voussoir', { castShadow: true })
 }
 box([5.18, 0.29, 0.63], [0, 3.005, 0.11], C.timber, [0, 0, 0], {}, 'mantel')
 for (const x of [-1.84, 1.84]) box([0.30, 0.32, 0.61], [x, 2.77, 0.26], C.trim, [0, 0, 0], {}, 'mantel-corbels')
@@ -736,33 +739,39 @@ app.on('update', (delta) => {
   const step = Math.min(Math.max(delta || 0, 0), 0.08) * 3.2
   if (!step) return
   let changed = false
+  let changedUpperDoor = false
   for (const door of Object.values(doorRegistry)) {
     const diff = door.target - door.angle
     if (Math.abs(diff) < 0.0001) continue
     const next = Math.abs(diff) <= step ? door.target : door.angle + Math.sign(diff) * step
     setDoorGeometry(door, next)
     changed = true
+    if (door.hingeY >= D.upper) changedUpperDoor = true
   }
   if (changed) syncStructuralPhysics(true)
+  if (changedUpperDoor) for (const light of upperFloorShadowLights) light.refreshShadow()
 })
 
 // 16. Four warm paired-cone sconces: two downstairs and two upstairs.
 // Native spots illuminate surfaces; the small emissive lenses show the openings.
-function spot(position, up, intensity, distance, name) {
+function spot(position, up, intensity, distance, name, shadowMode = null) {
   const light = app.create('light', {
     id: `${section}:${name}:${serial++}`, type: 'spot', color: '#ffd29a',
     position, rotation: [up ? Math.PI : 0, 0, 0],
     intensity, distance, decay: 2, angle: Math.PI / 3, penumbra: 0.65,
-    castShadow: false,
+    castShadow: shadowMode !== null,
+    ...(shadowMode ? { shadowMode } : {}),
   })
   app.add(light)
+  if (shadowMode) upperFloorShadowLights.push(light)
 }
 section = 'interior-lighting'
 const interiorFixtures = lightingPosts.filter(post => post.name === 'wall-post' && [-4.25, 3.0].includes(post.position[2]))
 for (const post of interiorFixtures) {
   const [x, cy, z] = post.position
   const height = post.size[1], bottom = cy - height / 2
-  const y = z === 3.0 ? D.upper + 2.15 : bottom + 2.15
+  const isUpperFloor = z === 3.0
+  const y = isUpperFloor ? D.upper + 2.15 : bottom + 2.15
   // Side posts face inward; other posts carry their fixture on the front face.
   const side = post.name === 'wall-post' || (post.name === 'mezzanine-post' && Math.abs(x) > 8)
   const fx = side ? x - Math.sign(x) * (post.size[0] / 2 + 0.22) : x
@@ -777,7 +786,7 @@ for (const post of interiorFixtures) {
     prim('cylinder', { size: [0.145, 0.145, 0.015], position: [fx, y + direction * 0.245, fz],
       color: '#ffe0af', emissive: '#ffd29a', emissiveIntensity: 1.5, castShadow: false }, 'sconce-lens')
     spot([fx, y + direction * 0.27, fz], up, up ? 25 : 5, up ? 9 : 7,
-      up ? 'sconce-up' : 'sconce-down')
+      up ? 'sconce-up' : 'sconce-down', isUpperFloor && !up ? 'static' : null)
   }
 }
 
