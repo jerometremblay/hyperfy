@@ -66,35 +66,79 @@ try {
 
   world.physics = new Physics(world)
   await world.physics.init()
-  let destinationSlab
-  for (const x of [0, 10]) {
-    if (x === 10) {
-      // Native Prim physics must receive the same aperture as Collider nodes.
-      destinationSlab = new Prim({
-        type: 'box',
-        size: [8, 0.2, 8],
-        physics: 'static',
-        position: [x, 3.1, 0],
-        opacity: 0,
-      })
-      destinationSlab.activate({ world })
-      continue
-    }
-    const slab = new RigidBody({ type: 'static', position: [x, 2.9, 0] })
-    slab.add(new Collider({ type: 'box', width: 8, height: 0.2, depth: 8 }))
-    slab.activate({ world })
+  const sourceSlab = new Prim({
+    type: 'box',
+    size: [8, 0.2, 8],
+    physics: 'static',
+    position: [0, 2.9, 0],
+    opacity: 0,
+  })
+  // Exercise the same native static Prim colliders used by structural scene
+  // geometry on both sides of the feet-first traversal.
+  const destinationSlab = new Prim({
+    type: 'box',
+    size: [8, 0.2, 8],
+    physics: 'static',
+    position: [10, 3.1, 0],
+    opacity: 0,
+  })
+  // This lower roof intentionally sits beyond the portal's temporary 2.5 m
+  // collision passage. If the feet miss the portal plane, the CCT will land
+  // here just as it does in the reported failure.
+  const underlyingRoof = new Prim({
+    type: 'box',
+    size: [8, 0.2, 8],
+    physics: 'static',
+    position: [0, 0.2, 0],
+    opacity: 0,
+  })
+  sourceSlab.activate({ world })
+  destinationSlab.activate({ world })
+  underlyingRoof.activate({ world })
+  // Descending steps on the source side lead to the floor opening. The lowest
+  // tread ends above the portal so the capsule must leave its tread and pass
+  // through the aperture with its feet first.
+  const descendingStairs = []
+  for (const [z, top] of [
+    [1.2, 4],
+    [0.9, 3.7],
+    [0.6, 3.4],
+  ]) {
+    const stair = new Prim({
+      type: 'box',
+      size: [2, top - 3, 0.3],
+      physics: 'static',
+      position: [0, (top + 3) / 2, z],
+      opacity: 0,
+    })
+    stair.activate({ world })
+    descendingStairs.push(stair)
   }
   const step = new RigidBody({ type: 'static', position: [10, 0.95, 0] })
   step.add(new Collider({ type: 'box', width: 3, height: 1.9, depth: 3 }))
   step.activate({ world })
-  const controller = new Controller({ radius: 0.3, height: 1, position: [0, 3.5, 0], layer: 'player' })
+  const controller = new Controller({ radius: 0.3, height: 1, position: [0, 4, 1.2], layer: 'player' })
   controller.activate({ world })
-  const base = { position: new THREE.Vector3(0, 3.5, 0) }
+  const base = { position: controller.position.clone(), quaternion: new THREE.Quaternion() }
+  const loader = new GLTFLoader()
+  loader.register(parser => new VRMLoaderPlugin(parser))
+  const glb = await loader.loadAsync('/avatar.vrm')
+  const factory = createVRMFactory(glb, () => {})
+  const matrix = new THREE.Matrix4().compose(base.position, base.quaternion, new THREE.Vector3(1, 1, 1))
+  const instance = factory.create(matrix, {
+    scene,
+    camera,
+    loader: { load: async () => ({ toClip: () => new THREE.AnimationClip('fixture', 1, []) }) },
+  })
+  const crossings = []
   const player = {
     base,
     controller,
+    avatar: { instance, getHeight: () => instance.height },
     crossPortal(transform) {
+      const rotation = new THREE.Quaternion().setFromRotationMatrix(transform)
       base.position.applyMatrix4(transform)
+      base.quaternion.premultiply(rotation)
       controller.teleport(base.position)
       crossings.push({
         base: base.position.clone(),
@@ -103,16 +147,37 @@ try {
       })
     },
   }
-  const crossings = []
   world.entities.player = player
+  world.entities.players.set('player', player)
+  const copies = new PortalAvatars(world)
+  const updateAvatar = () => {
+    matrix.compose(base.position, base.quaternion, new THREE.Vector3(1, 1, 1))
+    instance.raw.scene.matrix.copy(matrix)
+    instance.raw.scene.matrixWorld.copy(matrix)
+    copies.update()
+  }
+  updateAvatar()
   source.update()
-  // Cross the source plane with the actual CCT, then let the destination tread
-  // support it. No source-side duplicate collider or second controller exists.
-  controller.move(new THREE.Vector3(0, -0.6, 0), 0.02)
-  base.position.copy(controller.position)
-  source.update()
+  // Walk down the source-side stairs in ordinary short steps. Feet cross first
+  // while the head remains above the source floor; the native CCT must enter
+  // the destination passage instead of catching the ceiling/floor collider.
+  let sourceApertureSeen = false
+  for (let i = 0; i < 250 && crossings.length === 0; i++) {
+    controller.move(new THREE.Vector3(0, -0.02, -0.025), 0.02)
+    sourceApertureSeen ||= world.physics.portalCollisions.replacements.has(sourceSlab)
+    world.physics.postFixedUpdate(0.02)
+    base.position.copy(controller.position)
+    updateAvatar()
+  }
+  // No source-side duplicate collider or second controller exists.
   if (crossings.length !== 1 || crossings[0].base.distanceTo(crossings[0].collider) > 1e-5) {
     throw new Error(`The native capsule did not follow the feet through the first portal: ${JSON.stringify(crossings)}`)
+  }
+  if (!sourceApertureSeen) {
+    throw new Error('The source native Prim floor never received an aperture collision replacement before crossing')
+  }
+  if (world.physics.portalCollisions.replacements.has(underlyingRoof)) {
+    throw new Error('The lower roof was unexpectedly removed instead of remaining solid outside the portal passage')
   }
   if (!world.physics.portalCollisions.replacements.has(destinationSlab)) {
     throw new Error('Native Prim ceiling/floor collision did not receive a portal aperture')
@@ -120,28 +185,30 @@ try {
   for (let i = 0; i < 100; i++) {
     controller.move(new THREE.Vector3(0, -0.04, 0), 0.02)
     world.physics.postFixedUpdate(0.02)
+    base.position.copy(controller.position)
+    updateAvatar()
   }
   base.position.copy(controller.position)
+  updateAvatar()
   const feetY = base.position.y
   if (base.position.x < 9 || feetY < 1.85 || feetY > 2.1)
     throw new Error(`Destination tread did not support feet: ${base.position.toArray()}`)
+  for (const stair of descendingStairs) stair.deactivate()
 
-  const loader = new GLTFLoader()
-  loader.register(parser => new VRMLoaderPlugin(parser))
-  const glb = await loader.loadAsync('/avatar.vrm')
-  const factory = createVRMFactory(glb, () => {})
-  const matrix = new THREE.Matrix4().makeTranslation(base.position.x, feetY, base.position.z)
-  const instance = factory.create(matrix, {
-    scene,
-    camera,
-    loader: { load: async () => ({ toClip: () => new THREE.AnimationClip('fixture', 1, []) }) },
-  })
-  player.avatar = { instance, getHeight: () => instance.height }
-  world.entities.players.set('player', player)
-  const copies = new PortalAvatars(world)
-  copies.update()
   if (!copies.copies.has(player)) throw new Error('Avatar did not straddle the ceiling opening')
   const copy = copies.copies.get(player)
+  const feet = base.position.clone()
+  const head = feet.clone().add(new THREE.Vector3(0, instance.height, 0))
+  const mappedFeet = feet.clone().applyMatrix4(getPortalTransform(copy.source, copy.destination))
+  const mappedHead = head.clone().applyMatrix4(getPortalTransform(copy.source, copy.destination))
+  if (
+    copy.sourcePlane.distanceToPoint(feet) <= 0 ||
+    copy.sourcePlane.distanceToPoint(head) >= 0 ||
+    copy.exitPlane.distanceToPoint(mappedFeet) >= 0 ||
+    copy.exitPlane.distanceToPoint(mappedHead) <= 0
+  ) {
+    throw new Error('Feet-first descent did not split the avatar at the portal plane')
+  }
   const pixels = new Uint8Array(560 * 400 * 4)
   const target = new THREE.WebGLRenderTarget(560, 400)
   const figures = document.querySelector('main')
@@ -204,7 +271,8 @@ try {
     world.physics.postFixedUpdate(0.02)
   }
   const climbed = base.position.toArray()
-  if (base.position.x > 1 || base.position.y < 3.15) {
+  // CCT contactOffset keeps the feet slightly above the plane after crossing.
+  if (base.position.x > 1 || base.position.y < 3.05) {
     throw new Error(`Climbing through the ceiling got stuck: ${climbed}`)
   }
   if (crossings.length !== 2 || crossings[1].base.distanceTo(crossings[1].collider) > 1e-5) {
