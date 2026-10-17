@@ -9,6 +9,7 @@ export { Browser as browser } from './Browser.js'
 export { Image as image } from './Image.js'
 export { Snap as snap } from './Snap.js'
 export { Prim as prim } from './Prim.js'
+export { TreeNode as tree } from './Tree.js'
 export { Portal as portal } from './Portal.js'
 
 export { Avatar as avatar } from './Avatar.js'

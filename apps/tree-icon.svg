@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#243c32" />
+      <stop offset="1" stop-color="#111a17" />
+    </linearGradient>
+    <linearGradient id="leaves" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#b4d977" />
+      <stop offset="1" stop-color="#547c3e" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="32" fill="url(#sky)" />
+  <path d="M114 217h28l-5-75h-18z" fill="#9a6943" />
+  <path d="M128 27 83 99h25L73 145h37l-21 39h78l-21-39h37l-35-46h25z" fill="url(#leaves)" />
+  <path d="M128 36 91 96h20l-32 43h35l-18 35h64l-18-35h35l-32-43h20z" fill="none" stroke="#d3eca0" stroke-opacity=".35" stroke-width="3" stroke-linejoin="round" />
+</svg>

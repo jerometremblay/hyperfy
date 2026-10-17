@@ -22,10 +22,13 @@ const buildDirectory = path.join(rootDir, 'build')
 {
   const clientCtx = await esbuild.context({
     entryPoints: ['src/client/world-client.js'],
-    outfile: 'build/world-client.js',
+    outdir: buildDir,
+    entryNames: 'world-client',
+    chunkNames: 'chunks/[name]-[hash]',
     platform: 'browser',
     format: 'esm',
     bundle: true,
+    splitting: true,
     treeShaking: true,
     minify: false,
     sourcemap: 'inline',
