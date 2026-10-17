@@ -11,12 +11,9 @@ const defaults = {
   angle: Math.PI / 3,
   penumbra: 0,
   castShadow: false,
-  shadowMode: 'dynamic',
-  shadowNear: 0.25,
 }
 
 const types = ['directional', 'point', 'spot']
-const shadowModes = ['dynamic', 'static']
 
 export class Light extends Node {
   constructor(data = {}) {
@@ -31,8 +28,6 @@ export class Light extends Node {
     this.angle = data.angle
     this.penumbra = data.penumbra
     this.castShadow = data.castShadow
-    this.shadowMode = data.shadowMode
-    this.shadowNear = data.shadowNear
   }
 
   mount() {
@@ -58,14 +53,7 @@ export class Light extends Node {
         this.light = new THREE.PointLight(color, this._intensity, this._distance, this._decay)
     }
 
-    if (this.light.isPointLight || this.light.isSpotLight) {
-      this.light.shadow.camera.near = this._shadowNear
-      this.light.shadow.camera.updateProjectionMatrix()
-    }
-
     this.light.castShadow = !this.ctx.world.isPreview && this._castShadow
-    this.light.shadow.autoUpdate = this._shadowMode === 'dynamic'
-    if (this._shadowMode === 'static') this.refreshShadow()
 
     if (this._type === 'directional' || this._type === 'spot') {
       this.ctx.world.stage.scene.add(this.light.target)
@@ -84,14 +72,7 @@ export class Light extends Node {
     }
     if (didMove && this.light) {
       this.updateLightPosition()
-      if (this._shadowMode === 'static') this.refreshShadow()
     }
-  }
-
-  refreshShadow() {
-    if (!this.light?.castShadow) return false
-    this.light.shadow.needsUpdate = true
-    return true
   }
 
   updateLightPosition() {
@@ -131,8 +112,6 @@ export class Light extends Node {
     this._angle = source._angle
     this._penumbra = source._penumbra
     this._castShadow = source._castShadow
-    this._shadowMode = source._shadowMode || defaults.shadowMode
-    this._shadowNear = source._shadowNear ?? defaults.shadowNear
     return this
   }
 
@@ -262,37 +241,6 @@ export class Light extends Node {
     this.setDirty()
   }
 
-  get shadowMode() {
-    return this._shadowMode
-  }
-
-  set shadowMode(value = defaults.shadowMode) {
-    if (!isShadowMode(value)) {
-      throw new Error('[light] shadowMode invalid, must be: dynamic, static')
-    }
-    if (this._shadowMode === value) return
-    this._shadowMode = value
-    if (!this.light) return
-    this.light.shadow.autoUpdate = value === 'dynamic'
-    if (value === 'static') this.refreshShadow()
-  }
-
-  get shadowNear() {
-    return this._shadowNear
-  }
-
-  set shadowNear(value = defaults.shadowNear) {
-    if (!Number.isFinite(value) || value <= 0) {
-      throw new Error('[light] shadowNear must be a finite positive number')
-    }
-    if (this._shadowNear === value) return
-    this._shadowNear = value
-    if (!this.light?.shadow?.camera || (!this.light.isPointLight && !this.light.isSpotLight)) return
-    this.light.shadow.camera.near = value
-    this.light.shadow.camera.updateProjectionMatrix()
-    if (this._shadowMode === 'static') this.refreshShadow()
-  }
-
   getProxy() {
     if (!this.proxy) {
       const self = this
@@ -345,21 +293,6 @@ export class Light extends Node {
         set castShadow(value) {
           self.castShadow = value
         },
-        get shadowMode() {
-          return self.shadowMode
-        },
-        set shadowMode(value) {
-          self.shadowMode = value
-        },
-        get shadowNear() {
-          return self.shadowNear
-        },
-        set shadowNear(value) {
-          self.shadowNear = value
-        },
-        refreshShadow() {
-          return self.refreshShadow()
-        },
       }
       proxy = Object.defineProperties(proxy, Object.getOwnPropertyDescriptors(super.getProxy()))
       this.proxy = proxy
@@ -370,8 +303,4 @@ export class Light extends Node {
 
 function isType(value) {
   return types.includes(value)
-}
-
-function isShadowMode(value) {
-  return shadowModes.includes(value)
 }

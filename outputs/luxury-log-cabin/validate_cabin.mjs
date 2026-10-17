@@ -14,6 +14,7 @@ const { nodes, visuals, events, configs, lights, handlers, detached, app, audit 
 assert(events.includes('update') && events.includes('doorState') && events.includes('destroy'))
 assert.equal(detached.length, audit.physicsEntries.length)
 assert.equal(lights.length, audit.interiorFixtures.length * 2 + audit.roofLights.length)
+assert(lights.every(light => !light.castShadow), 'Built-in house lights must not cast shadows')
 assert.equal(configs.filter(c => c.id.includes('sconce-backplate')).length, audit.interiorFixtures.length)
 assert.equal(audit.interiorFixtures.length, 4)
 assert.equal(audit.roofLights.length, 10)
@@ -22,33 +23,19 @@ assert(configs.filter(c => (c.opacity ?? 1) > 0).every(c => c.receiveShadow === 
 const lightNodes = nodes.filter(node => node.name === 'light')
 const interiorSconces = lightNodes.filter(node => node.id.startsWith('interior-lighting:'))
 const roofSpots = lightNodes.filter(node => node.id.startsWith('exterior-lighting:'))
-const upperFloorDownSconces = interiorSconces.filter(node => node.id.includes('sconce-down') && node.position.y > audit.D.upper)
 assert.equal(interiorSconces.length, audit.interiorFixtures.length * 2)
-assert.equal(upperFloorDownSconces.length, 2)
-assert(upperFloorDownSconces.every(node => node.castShadow === true && node.shadowMode === 'static'),
-  'Both upper-floor down sconces must cast cached shadows onto the mezzanine floor')
-assert(interiorSconces.filter(node => !upperFloorDownSconces.includes(node)).every(node => node.castShadow === false))
+assert(interiorSconces.every(node => node.castShadow === false))
 assert.equal(roofSpots.length, audit.roofLights.length)
 assert(roofSpots.every(node => node.castShadow === false))
-assert.equal(lights.filter(light => light.castShadow).length, 2)
-assert(lights.filter(light => light.castShadow).every(light => light.shadow.autoUpdate === false))
 const fireplacePrims = nodes.filter(node => node.id.startsWith('fireplace:'))
-const fireplaceCasters = fireplacePrims.filter(node => node.castShadow)
-assert(fireplacePrims.some(node => node.id.includes('arched-surround') && node.castShadow))
-assert(fireplacePrims.some(node => node.id.includes('recessed-fireback') && node.castShadow))
-assert(fireplacePrims.some(node => node.id.includes('firebox-floor') && node.castShadow))
-assert.equal(fireplaceCasters.filter(node => node.id.includes('arch-voussoir')).length, 13)
-assert.equal(fireplaceCasters.length, 16, 'Only the inner firebox/arch stones should cast shadows')
-assert(fireplacePrims.filter(node => !node.id.includes('arched-surround') && !node.id.includes('recessed-fireback') &&
-  !node.id.includes('firebox-floor') && !node.id.includes('arch-voussoir')).every(node => !node.castShadow),
-  'Other fireplace stones and trim must not cast shadows')
+assert(fireplacePrims.some(node => node.id.includes('arched-surround')))
+assert(fireplacePrims.some(node => node.id.includes('arch-voussoir')))
+assert(fireplacePrims.every(node => node.castShadow === true), 'Fireplace masonry must cast shadows')
 const rafterVisuals = visuals.filter(visual => visual.node.id.startsWith('roof-frame:rafter:'))
 assert(rafterVisuals.length > 0)
 assert(rafterVisuals.every(visual => visual.castShadow === true), 'Roof beams must cast shadows')
-const mezzanineFloorVisuals = visuals.filter(visual => /^mezzanine:(?:rear|left-front|right-front)-(?:deck|board):/.test(visual.node.id))
-assert(mezzanineFloorVisuals.length > 3)
-assert(mezzanineFloorVisuals.every(visual => visual.castShadow === true), 'Mezzanine deck and boards must cast shadows')
 for (const light of lights) {
+  assert.equal(light.castShadow, false)
   const direction = light.target.position.clone().sub(light.position).normalize()
   assert(Math.abs(direction.y - (light.position.y < light.target.position.y ? 1 : -1)) < 1e-6)
   assert(light.intensity > 0 && light.distance > 0)
@@ -98,12 +85,6 @@ for (let i = 0; i < audit.stair.flights.length; i++) {
 function hits(origin, direction, filter = () => true) {
   const ray = new THREE.Raycaster(new THREE.Vector3(...origin), new THREE.Vector3(...direction), 0.002, 50)
   return ray.intersectObjects(meshes.filter(filter), false)
-}
-for (const light of upperFloorDownSconces) {
-  const floorHit = hits(light.position.toArray(), [0, -1, 0], mesh => mesh.name.startsWith('mezzanine:'))[0]
-  assert(floorHit, 'An upper-floor down sconce has no mezzanine floor beneath it')
-  assert(mezzanineFloorVisuals.some(visual => visual.node.id === floorHit.object.name && visual.castShadow),
-    'The upper-floor light beam must intersect a shadow-casting mezzanine primitive')
 }
 const logs = m => m.name.startsWith('logs:')
 let checkedWindows = 0
@@ -193,7 +174,7 @@ const report = {
   collision: { roofPanels: 2, appTranslationSync: 'pass', physXSimulation: 'not performed' },
   lighting: {
     interiorFixtures: audit.interiorFixtures.length, exteriorFixtures: audit.roofLights.length,
-    spotlights: lights.length, shadowCastingLights: 2, upperFloorDownSconces: 'static; refresh on upper-door movement',
+    spotlights: lights.length, builtInShadowCasting: false,
   },
   primitiveCount: visuals.length, primitiveTypes: [...new Set(configs.map(c => c.type))],
   callbacks: events.length, detachedNodes: detached.length, physicsNodes: audit.physicsEntries.length, externalTexturesOrGeometry: 0,
@@ -204,13 +185,7 @@ const report = {
     minimumOverheadClearanceMetres: stairHeadroom, endpointAndDirectionChecks: 'pass' },
   roof: { ridgeMetres: 9.8, wallEaveMetres: 6, pitchDegrees: Math.atan2(3.8, 9) * 180 / Math.PI, chimneyPenetration: 'open' },
   package: packageChecks,
-  fireplaceArch: {
-    shadowCasters: fireplaceCasters.length,
-    innerLayerCasters: fireplaceCasters.length - 13,
-    archVoussoirs: 13,
-    casting: 'selective pass',
-  },
-  mezzanineFloor: { shadowCasters: mezzanineFloorVisuals.length, upperLightOcclusion: 'pass' },
+  fireplaceArch: { shadowCasters: fireplacePrims.length, casting: 'pass' },
   roofBeams: { shadowCasters: rafterVisuals.length, casting: 'pass' },
   liveWorldImport: 'Not part of this validator; live replacement is documented in README',
 }

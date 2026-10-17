@@ -17,8 +17,7 @@
     "interiorFixtures": 4,
     "exteriorFixtures": 10,
     "spotlights": 18,
-    "shadowCastingLights": 2,
-    "upperFloorDownSconces": "static; refresh on upper-door movement"
+    "builtInShadowCasting": false
   },
   "primitiveCount": 1624,
   "primitiveTypes": [
@@ -64,8 +63,8 @@
     "chimneyPenetration": "open"
   },
   "package": {
-    "bytes": 44405,
-    "sha256": "c06218eaabc39c754a7601c49aa18973b5df654ba69ad2f56d7507b77c610806",
+    "bytes": 43707,
+    "sha256": "e7a7ba137e3cc678a827f35f994cf0d2fa2cf38294732ae161c6b85f6dd2d6a7",
     "assets": 2,
     "blueprintVersion": 1,
     "exactSourceBytes": true,
@@ -74,14 +73,8 @@
     "previewEmbedsIdenticalBytes": true
   },
   "fireplaceArch": {
-    "shadowCasters": 16,
-    "innerLayerCasters": 3,
-    "archVoussoirs": 13,
-    "casting": "selective pass"
-  },
-  "mezzanineFloor": {
-    "shadowCasters": 89,
-    "upperLightOcclusion": "pass"
+    "shadowCasters": 384,
+    "casting": "pass"
   },
   "roofBeams": {
     "shadowCasters": 12,
