@@ -56,6 +56,31 @@ const cylinder = app.create('prim', {
 
 ```
 
+## Procedural trees
+
+Create trees with the EZ-Tree generator. The `preset` selects a built-in species and size; `seed` makes its shape repeatable. `options` accepts EZ-Tree's `bark`, `branch`, `leaves`, and `trellis` settings.
+
+```jsx
+const tree = app.create('tree', {
+  preset: 'Oak Small',
+  seed: 123,
+  options: {
+    leaves: { tint: 0x91b65a },
+    bark: { textured: false, tint: 0x76543a },
+  },
+})
+app.add(tree)
+```
+
+Edit nested options and call `generate()` to rebuild the tree:
+
+```jsx
+tree.options.branch.levels = 2
+tree.generate()
+```
+
+The Tree item in the Add palette includes a preset picker for Ash, Aspen, Oak, Pine, Bush 1–3, and Trellis, a manually editable seed with a Randomize Seed button, and an Advanced Mode JSON editor for all EZ-Tree parameters. See `docs/scripting/nodes/types/Tree.md` for the full preset list and options.
+
 ## Extrusion primitives
 
 `extrude` is a native `prim` type for turning one simple 2D polygon into a solid. The polygon is defined by `profile`, a list of finite `[x, y]` points in the primitive's local XY plane. The engine closes the polygon automatically, extrudes it along local Z by `depth`, and centers the resulting geometry on its bounds.

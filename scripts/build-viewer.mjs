@@ -27,6 +27,8 @@ const viewerBuildDir = path.join(rootDir, 'build/viewer')
     platform: 'browser',
     format: 'esm',
     bundle: true,
+    splitting: true,
+    chunkNames: 'chunks/[name]-[hash]',
     treeShaking: true,
     minify: false,
     sourcemap: 'inline',

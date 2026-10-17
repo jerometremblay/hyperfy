@@ -1691,6 +1691,15 @@ function AppField({ world, props, field, value, modify }) {
       />
     )
   }
+  if (field.type === 'randomize') {
+    return (
+      <FieldBtn
+        label={field.label}
+        hint={field.hint}
+        onClick={() => modify(field.target, Math.floor(Math.random() * 0x100000000))}
+      />
+    )
+  }
   if (field.type === 'curve') {
     return (
       <FieldCurve
