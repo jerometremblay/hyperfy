@@ -79,6 +79,13 @@ The primitive system includes an `extrude` type for turning a 2D polygon profile
 into a solid. Extrusions support depth, beveling, crease-angle smoothing, and
 the corresponding editor and physics behavior.
 
+### Procedural trees
+
+The Add palette Tree includes every EZ-Tree preset and an Advanced Mode JSON
+editor for all generator parameters. Scripts can also create seeded trees and
+adjust bark, branches, leaves, and trellis options. See the
+[tree node reference](docs/scripting/nodes/types/Tree.md).
+
 ### Private and shared browsers
 
 - **Private browser:** an interactive `webview` gives each user an independent

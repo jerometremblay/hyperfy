@@ -32,6 +32,8 @@ const clientHtmlDest = path.join(rootDir, 'build/public/index.html')
     platform: 'browser',
     format: 'esm',
     bundle: true,
+    splitting: true,
+    chunkNames: 'chunks/[name]-[hash]',
     treeShaking: true,
     minify: !dev,
     sourcemap: true,

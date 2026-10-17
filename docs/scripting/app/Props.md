@@ -183,3 +183,16 @@ Displays a button that when clicked, executes something in the running app.
   onClick: Function,
 }
 ```
+
+### Randomize
+
+A button that writes a random unsigned 32-bit integer to another app prop. The `key` identifies the UI field and `target` names the prop to update.
+
+```jsx
+{
+  type: 'randomize',
+  key: 'randomizeSeed',
+  target: 'seed',
+  label: 'Randomize Seed',
+}
+```
