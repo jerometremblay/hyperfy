@@ -1041,11 +1041,17 @@ function ActionPrompt({ world, visible }) {
   const [progress, setProgress] = useState(0)
   const [pointerLocked, setPointerLocked] = useState(world.controls.pointer.locked)
   const [buildMode, setBuildMode] = useState(world.builder.enabled)
+  const [pointerPosition, setPointerPosition] = useState(() => {
+    const position = world.controls.pointer.position
+    return { x: position.x, y: position.y }
+  })
 
   useEffect(() => {
     const onActionChange = () => {
       setAction(world.actions.current.node)
       setProgress(0)
+      const position = world.controls.pointer.position
+      setPointerPosition({ x: position.x, y: position.y })
     }
     world.actions.on('change', onActionChange)
     world.actions.on('progress', setProgress)
@@ -1059,11 +1065,27 @@ function ActionPrompt({ world, visible }) {
     }
   }, [world])
 
-  if (!visible || !action || (!pointerLocked && !isTouch) || buildMode) return null
+  useEffect(() => {
+    if (pointerLocked || isTouch || !action) return
+    const viewport = world.stage.viewport
+    if (!viewport) return
+    const onPointerMove = event => {
+      const rect = viewport.getBoundingClientRect()
+      setPointerPosition({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      })
+    }
+    window.addEventListener('pointermove', onPointerMove)
+    return () => window.removeEventListener('pointermove', onPointerMove)
+  }, [action, pointerLocked, world])
+
+  if (!visible || !action || buildMode) return null
 
   const prompt = getActionPrompt(world)
   const progressRatio = Math.max(0, Math.min(1, progress))
   const circumference = 56.55
+  const followsPointer = !pointerLocked && !isTouch
 
   return (
     <div
@@ -1071,8 +1093,8 @@ function ActionPrompt({ world, visible }) {
       aria-live='polite'
       css={css`
         position: absolute;
-        top: calc(50% + 0.5rem);
-        left: 50%;
+        top: ${followsPointer ? `${pointerPosition.y + 12}px` : 'calc(50% + 0.5rem)'};
+        left: ${followsPointer ? `${pointerPosition.x}px` : '50%'};
         transform: translateX(-50%);
         display: flex;
         align-items: center;

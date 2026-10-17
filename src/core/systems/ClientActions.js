@@ -32,6 +32,7 @@ export class ClientActions extends System {
   start() {
     this.action = createAction(this.world)
     this.btnDown = false
+    this.btnClick = false
     this.control = this.world.controls.bind({ priority: ControlPriorities.ACTION })
   }
 
@@ -64,25 +65,26 @@ export class ClientActions extends System {
       this.control.xrLeftTrigger.down ||
       this.control.xrRightTrigger.down ||
       this.control.xrLeftBtn1.down
+    // Script pointer handlers capture desktop clicks before this system sees them.
+    this.btnClick = !isTouch && !!this.control.mouseLeft?.pressed
 
     let hit = null
-    if (
-      !isXR &&
-      !this.world.builder?.enabled &&
-      (isTouch || this.control.pointer.locked) &&
-      this.world.stage.viewport
-    ) {
-      hit = this.world.stage.raycastReticle()[0]
+    if (!isXR && !this.world.builder?.enabled && this.world.stage.viewport) {
+      if (isTouch || this.control.pointer.locked) {
+        hit = this.world.stage.raycastReticle()[0]
+      } else {
+        hit = this.world.stage.raycastPointer(this.control.pointer.position)[0]
+      }
     }
     const targetEntity = hit?.getEntity?.() || hit?.node?.ctx?.entity
 
-    // Find the closest action when using XR. On desktop and touch, the reticle
-    // must hit an object in the action's app, close to that action's target.
+    // Find the closest action when using XR. On desktop and touch, the active
+    // pointer or reticle must hit the action's app near its target.
     let target = null
     let targetDistance = Infinity
     let targetOffset = Infinity
 
-    // Keep the selected target while it remains under the reticle, even when
+    // Keep the selected target while it remains under the pointer, even when
     // there are more actions than the per-frame search batch.
     if (this.current.node && !this.current.node.finished) {
       const node = this.current.node
@@ -188,6 +190,23 @@ function createAction(world) {
   let node = null
   let cancelled = false
 
+  const startAction = () => {
+    cancelled = false
+    try {
+      node._onStart()
+    } catch (err) {
+      console.error('action.onStart:', err)
+    }
+  }
+
+  const triggerAction = () => {
+    try {
+      node._onTrigger({ playerId: world.entities.player.data.id })
+    } catch (err) {
+      console.error('action.onTrigger:', err)
+    }
+  }
+
   return {
     start(_node) {
       // if (node) console.error('erm node already set')
@@ -234,14 +253,14 @@ function createAction(world) {
       } else if (mesh?.parent) {
         world.stage.scene.remove(mesh)
       }
-      if (world.actions.btnDown) {
+      if (world.actions.btnClick) {
+        if (node.progress === 0) startAction()
+        node.progress = 0
+        if (!world.xr.session) world.actions.emit('progress', 0)
+        triggerAction()
+      } else if (world.actions.btnDown) {
         if (node.progress === 0) {
-          cancelled = false
-          try {
-            node._onStart()
-          } catch (err) {
-            console.error('action.onStart:', err)
-          }
+          startAction()
         }
         node.progress += delta
         if (node.progress > node._duration) node.progress = node._duration
@@ -251,11 +270,7 @@ function createAction(world) {
         if (node.progress === node._duration) {
           node.progress = 0
           if (!world.xr.session) world.actions.emit('progress', 0)
-          try {
-            node._onTrigger({ playerId: world.entities.player.data.id })
-          } catch (err) {
-            console.error('action.onTrigger:', err)
-          }
+          triggerAction()
         }
       } else if (node.progress > 0) {
         if (!cancelled) {

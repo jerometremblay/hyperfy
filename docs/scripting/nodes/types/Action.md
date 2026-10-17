@@ -14,7 +14,7 @@ The distance in meters that the action should be displayed. The engine will only
 
 ### `.duration`: Number
 
-How long the player must hold down the interact button to trigger it, in seconds. Defaults to `0.5`
+How long the player must hold down the interact button to trigger it, in seconds. Defaults to `0.5`. On desktop, clicking the target triggers the action immediately. An explicit `onPointerDown` handler on the hit object takes precedence.
 
 ### `.onStart`: Function
 
@@ -22,7 +22,7 @@ The function to call when the interact button is first pressed.
 
 ### `.onTrigger`: Function
 
-The function to call when the interact button has been held down for the full `duration`.
+The function to call when the interact button has been held down for the full `duration`, or immediately after a desktop click.
 
 ### `.onCancel`: Function
 
