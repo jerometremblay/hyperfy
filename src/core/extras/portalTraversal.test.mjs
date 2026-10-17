@@ -145,6 +145,24 @@ test('feet can remain on destination stairs while the eye renders above the sour
   assert.equal(copies.mapCamera(), undefined)
 })
 
+test('projects the camera with the avatar head when the third-person lens is outside the portal', () => {
+  const { copies, player, camera, rig, source, destination } = fixture()
+  const head = new THREE.Matrix4().makeTranslation(10, 3.8, 0)
+  player.avatar.getBoneTransform = bone => (bone === 'head' ? head : null)
+  camera.position.x = 2
+  rig.updateMatrixWorld(true)
+  copies.update()
+
+  const original = rig.position.clone()
+  const transform = getPortalTransform(destination, source)
+  const restore = copies.mapCamera()
+
+  assert.equal(typeof restore, 'function')
+  assert.ok(rig.position.distanceTo(original.clone().applyMatrix4(transform)) < 1e-10)
+  restore()
+  assert.ok(rig.position.distanceTo(original) < 1e-10)
+})
+
 test('moving endpoints, removed players, avatar swaps and remote links release split representations', () => {
   const { copies, world, source, player, mesh } = fixture()
   const original = mesh.material

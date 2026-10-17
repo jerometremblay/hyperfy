@@ -6,6 +6,9 @@ import {
   overlapsPortal,
   supportsPortalTraversal,
 } from './portalTraversal'
+import { getAvatarEyePosition } from './avatarFocus'
+
+const cameraAnchor = new THREE.Vector3()
 
 /** Two draws of one animated skeleton; never a second player or physics actor. */
 export class PortalAvatars {
@@ -99,10 +102,13 @@ export class PortalAvatars {
     const copy = this.copies.get(player)
     if (!copy) return
     const camera = this.world.camera
-    const eye = camera.getWorldPosition(new THREE.Vector3())
-    if (copy.sourcePlane.distanceToPoint(eye) >= 0) return
-    const localEye = eye.clone().applyMatrix4(copy.source.matrixWorld.clone().invert())
-    if (Math.abs(localEye.x) > copy.source.width / 2 || Math.abs(localEye.y) > copy.source.height / 2) return
+    // Follow the projected head even when a third-person camera boom puts the
+    // lens outside a narrow aperture. Fall back to the lens before the avatar
+    // has a posed head transform.
+    const anchor = getAvatarEyePosition(player.avatar, cameraAnchor) || camera.getWorldPosition(cameraAnchor)
+    if (copy.sourcePlane.distanceToPoint(anchor) >= 0) return
+    const localAnchor = anchor.clone().applyMatrix4(copy.source.matrixWorld.clone().invert())
+    if (Math.abs(localAnchor.x) > copy.source.width / 2 || Math.abs(localAnchor.y) > copy.source.height / 2) return
     const rig = player.isXR ? player.xrRig : this.world.rig
     const position = rig.position.clone()
     const quaternion = rig.quaternion.clone()
