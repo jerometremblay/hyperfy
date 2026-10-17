@@ -6,6 +6,7 @@ import { Vector3, Quaternion, Euler, Matrix4 } from 'three'
 import { readPacket, writePacket } from '../../src/core/packets.js'
 
 const source = fs.readFileSync(new URL('./journal.js', import.meta.url), 'utf8')
+const NEWS_ORIGIN = 'https://hyperfy-news.jerometremblay.chatgpt.site'
 
 function fixture() {
   let now = 0
@@ -60,7 +61,11 @@ function fixture() {
         sent.push([packet[2], packet[3]])
       },
       control() {
-        return { camera: { position: new Vector3(0, 1.6, 1), quaternion: new Quaternion(), zoom: 0 } }
+        return {
+          camera: { position: new Vector3(0, 1.6, 1), quaternion: new Quaternion(), zoom: 0 },
+          escape: {},
+          keyE: {},
+        }
       },
     }
     const world = {
@@ -106,12 +111,39 @@ function fixture() {
   function deliver(client, packet) {
     client.events.get(packet[0])(structuredClone(packet[1]))
   }
+  function deliverManifest(client) {
+    client.get(`
+      receiveHtmlPageCount({
+        origin: NEWS_ORIGIN,
+        data: {
+          type: 'journal-page-count',
+          version: 1,
+          count: 6,
+          pageCount: 6,
+          pages: Array.from({ length: 6 }, (_, index) => ({
+            page: index + 1,
+            issuePage: index + 1,
+            url: '/?issue=2026-10-17&texture=1&page=' + (index + 1),
+          })),
+        },
+      })
+    `)
+  }
+  function acknowledgePageCount(server, ...clients) {
+    for (const client of clients) deliverManifest(client)
+    const countRequest = clients
+      .flatMap(client => client.sent)
+      .findLast(([event]) => event === 'journal:page-count')
+    server.events.get('journal:page-count')(countRequest?.[1] || { version: 1, count: 6 }, 'alice')
+    for (const client of clients) deliver(client, server.sent.at(-1))
+  }
   function open(server, ...clients) {
     server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
     for (const client of clients) deliver(client, server.sent.at(-1))
+    acknowledgePageCount(server, ...clients)
     advance(now + 0.7)
   }
-  return { runtime, advance, deliver, open }
+  return { runtime, advance, deliver, open, acknowledgePageCount }
 }
 
 test('server broadcasts a timestamped turn; delayed viewers animate the same phase and late joiners see the current spread', () => {
@@ -144,6 +176,42 @@ test('server broadcasts a timestamped turn; delayed viewers animate the same pha
     assert.equal(client.get('turn'), null)
   }
   assert.equal(f.runtime(false, 'bob', server.app.state).get('firstPage'), 3)
+})
+
+test('issue page clicks request turns only from the journal origin and in the clicked page direction', () => {
+  const f = fixture(),
+    server = f.runtime(true),
+    client = f.runtime(false)
+  f.open(server, client)
+
+  const rightPage = client.get('pageSurfaces[1].page')
+  assert.equal(rightPage.interactive, true)
+  assert.match(rightPage.src, /&embed=1&hyperfy=1$/)
+  assert.equal(typeof rightPage.onMessage, 'function')
+  for (const event of [
+    { origin: 'https://untrusted.example', data: { type: 'journal-page-click', version: 1, button: 0 } },
+    { origin: NEWS_ORIGIN, data: { type: 'journal-page-click', version: 2, button: 0 } },
+    { origin: NEWS_ORIGIN, data: { type: 'journal-page-click', version: 1, button: 1 } },
+  ]) {
+    rightPage.onMessage(event)
+  }
+  assert.equal(client.sent.some(([name]) => name === 'journal:turn-request'), false)
+
+  rightPage.onMessage({
+    origin: NEWS_ORIGIN,
+    data: { type: 'journal-page-click', version: 1, button: 0 },
+  })
+  assert.deepEqual(client.sent.findLast(([name]) => name === 'journal:turn-request')[1], { direction: 1 })
+
+  const back = fixture(),
+    backServer = back.runtime(true),
+    backClient = back.runtime(false)
+  back.open(backServer, backClient)
+  backClient.get('pageSurfaces[0].page.onMessage')({
+    origin: NEWS_ORIGIN,
+    data: { type: 'journal-page-click', version: 1, button: 0 },
+  })
+  assert.deepEqual(backClient.sent.findLast(([name]) => name === 'journal:turn-request')[1], { direction: -1 })
 })
 
 test('server enforces opener ownership, bounds, valid direction and one turn at a time', () => {
@@ -188,6 +256,8 @@ test('closing preserves the accepted spread and stale completion cannot interrup
   assert.equal(client.get('pendingTurn'), null)
   f.advance(1.0)
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.acknowledgePageCount(server, client)
   server.events.get('journal:turn-request')({ direction: 1 }, 'alice')
   const id = server.app.state.turn.id
   f.advance(1.4)
@@ -207,6 +277,7 @@ test('a builder move clearing app state does not create an undefined spread or c
   server.app.state = {}
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   f.deliver(client, server.sent.at(-1))
+  f.acknowledgePageCount(server, client)
   f.advance(2.1)
   server.events.get('journal:turn-request')({ direction: 1 }, 'alice')
   const packet = server.sent.at(-1)
@@ -227,6 +298,7 @@ test('moving after a completed turn preserves the server spread on reopening', (
   server.app.state = {}
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   assert.equal(server.app.state.firstPage, 3)
+  f.acknowledgePageCount(server)
   server.events.get('journal:turn-request')({ direction: 1 }, 'alice')
   assert.equal(server.app.state.firstPage, 5)
 })

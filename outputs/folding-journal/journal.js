@@ -9,6 +9,7 @@ const PAGE_HEIGHT = 0.01
 const LEFT_HINGE_HEIGHT = 0.04
 const TURN_HINGE_HEIGHT = PAGE_HEIGHT + 0.002
 const NEWS_ORIGIN = 'https://hyperfy-news.jerometremblay.chatgpt.site'
+const JOURNAL_BRIDGE_EVENTS = new Set(['click', 'keydown'])
 
 function group(parent, position = [0, 0, 0]) {
   const node = app.create('group', { position })
@@ -240,7 +241,7 @@ function receiveHtmlPageCount(event) {
     !message.pages.every(validManifestPage)
   ) return
 
-  const pageUrls = message.pages.map(entry => NEWS_ORIGIN + entry.url + '&embed=1')
+  const pageUrls = message.pages.map(entry => NEWS_ORIGIN + entry.url + '&embed=1&hyperfy=1')
   const sameManifest = latestHtmlPageUrls?.length === pageUrls.length &&
     latestHtmlPageUrls.every((url, index) => url === pageUrls[index])
   latestHtmlPageCount = message.count
@@ -262,6 +263,52 @@ function receiveHtmlPageCount(event) {
   maybeSendHtmlPageCount()
 }
 
+function receiveHtmlBridgeEvent(number, event) {
+  if (event?.origin !== NEWS_ORIGIN) return
+  const message = event.data
+  const generic = message?.channel === 'hyperfy-webview' &&
+    message.version === 1 &&
+    message.type === 'event'
+  const legacy = message?.version === 1
+  if (!generic && !legacy) return
+
+  const name = generic ? message.name :
+    message.type === 'journal-page-click' ? 'surface-click' :
+    message.type === 'journal-keydown' ? 'keydown' : null
+  if (generic && !JOURNAL_BRIDGE_EVENTS.has(name)) return
+  const detail = generic ? message.detail : message
+  const target = detail?.target
+
+  if (
+    (name === 'surface-click' && detail?.button === 0) ||
+    (name === 'click' && detail?.isTrusted === true && !detail.defaultPrevented && detail.button === 0 && !target?.isInteractive)
+  ) {
+    turnPage(number % 2 === 0 ? 1 : -1)
+    return
+  }
+
+  if (name !== 'keydown') return
+  if (detail?.key === 'Escape') {
+    if (typeof event.releaseFocus === 'function') {
+      event.releaseFocus()
+    } else {
+      // Older worlds do not yet provide WebView.releaseFocus(); rebuilding its
+      // existing surface drops iframe focus, then the next Escape reaches Controls.
+      const page = pageSurfaces[number - 1]?.page
+      const src = page?.src
+      if (src) {
+        page.src = ''
+        page.src = src
+      }
+    }
+    return
+  }
+  const isCloseKey = generic
+    ? detail?.code === 'KeyE' && !detail.altKey && !detail.ctrlKey && !detail.metaKey && !target?.isEditable
+    : detail?.key === 'KeyE'
+  if (isCloseKey) requestClose()
+}
+
 function createPageSurface(number) {
   const pivot = group(journalBody, [0, -10000, 0])
   const page = app.create('webview', {
@@ -272,16 +319,16 @@ function createPageSurface(number) {
     height: 0.828 * 1200,
     factor: 1,
     scale: [1 / 1200, 1 / 1200, 1 / 1200],
-    interactive: false,
+    interactive: true,
     doubleside: true,
     renderOrder: 1,
     rotation: [-PI / 2, 0, 0],
+    onMessage: world.isClient ? event => {
+      receiveHtmlBridgeEvent(number, event)
+    } : null,
   })
   pivot.add(page)
-  page.onPointerDown = event => {
-    event.stopPropagation()
-    turnPage(number % 2 === 0 ? 1 : -1)
-  }
+  page.onPointerDown = event => event.stopPropagation()
   pageSurfaces.push({ pivot, page, src: '' })
 }
 function ensurePageSurfaces(count = pageCount) {

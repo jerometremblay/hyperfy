@@ -282,7 +282,11 @@ export class WebView extends Node {
     if (!this._onMessage) return
     this.messageListener = event => {
       if (event.source !== iframe.contentWindow) return
-      this._onMessage?.({ data: event.data, origin: event.origin })
+      this._onMessage?.({
+        data: event.data,
+        origin: event.origin,
+        releaseFocus: () => iframe.blur(),
+      })
     }
     globalThis.addEventListener('message', this.messageListener)
   }
