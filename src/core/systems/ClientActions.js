@@ -6,6 +6,7 @@ import { isTouch } from '../../client/utils'
 import { clamp } from '../utils'
 
 const BATCH_SIZE = 500
+const ACTION_TARGET_RADIUS = 1
 const FORWARD = new THREE.Vector3(0, 0, 1)
 
 const v1 = new THREE.Vector3()
@@ -15,7 +16,6 @@ const v4 = new THREE.Vector3()
 const v5 = new THREE.Vector3()
 const q1 = new THREE.Quaternion()
 const e1 = new THREE.Euler(0, 0, 0, 'YXZ')
-const m1 = new THREE.Matrix4()
 
 export class ClientActions extends System {
   constructor(world) {
@@ -47,11 +47,14 @@ export class ClientActions extends System {
       this.current.node = null
       this.current.distance = Infinity
       this.action.stop()
+      this.emit('change', false)
+      this.emit('progress', 0)
     }
   }
 
   update(delta) {
-    const cameraPos = this.world.xr?.session
+    const isXR = !!this.world.xr?.session
+    const cameraPos = isXR
       ? this.world.camera.getWorldPosition(v5)
       : this.world.rig.position
 
@@ -62,40 +65,83 @@ export class ClientActions extends System {
       this.control.xrRightTrigger.down ||
       this.control.xrLeftBtn1.down
 
-    // clear current action if its no longer in distance
-    if (this.current.node) {
-      const distance = this.current.node.worldPos.distanceTo(cameraPos)
-      if (distance > this.current.node._distance) {
-        this.current.node = null
-        this.current.distance = Infinity
-        this.emit('change', false)
-        this.action.stop()
-      } else {
-        this.current.distance = distance
+    let hit = null
+    if (
+      !isXR &&
+      !this.world.builder?.enabled &&
+      (isTouch || this.control.pointer.locked) &&
+      this.world.stage.viewport
+    ) {
+      hit = this.world.stage.raycastReticle()[0]
+    }
+    const targetEntity = hit?.getEntity?.() || hit?.node?.ctx?.entity
+
+    // Find the closest action when using XR. On desktop and touch, the reticle
+    // must hit an object in the action's app, close to that action's target.
+    let target = null
+    let targetDistance = Infinity
+    let targetOffset = Infinity
+
+    // Keep the selected target while it remains under the reticle, even when
+    // there are more actions than the per-frame search batch.
+    if (this.current.node && !this.current.node.finished) {
+      const node = this.current.node
+      const distance = node.worldPos.distanceTo(cameraPos)
+      if (distance <= node._distance) {
+        if (isXR) {
+          target = node
+          targetDistance = distance
+        } else if (targetEntity && node.ctx?.entity === targetEntity && hit?.point) {
+          const offset = node.worldPos.distanceTo(hit.point)
+          if (offset <= ACTION_TARGET_RADIUS) {
+            target = node
+            targetDistance = distance
+            targetOffset = offset
+          }
+        }
       }
     }
 
-    // continually check nodes[] in batches to find the one that should be active
-    let didChange
     const size = Math.min(this.nodes.length, BATCH_SIZE)
     for (let i = 0; i < size; i++) {
       const idx = (this.cursor + i) % this.nodes.length
       const node = this.nodes[idx]
       if (node.finished) continue
-      if (this.current.node === node) continue
       const distance = node.worldPos.distanceTo(cameraPos)
-      if (distance <= node._distance && distance < this.current.distance) {
-        this.current.node = node
-        this.current.distance = distance
-        didChange = true
+      if (distance > node._distance) continue
+
+      if (isXR) {
+        if (distance < targetDistance) {
+          target = node
+          targetDistance = distance
+        }
+      } else if (targetEntity && node.ctx?.entity === targetEntity && hit?.point) {
+        const offset = node.worldPos.distanceTo(hit.point)
+        if (offset <= ACTION_TARGET_RADIUS && offset < targetOffset) {
+          target = node
+          targetDistance = distance
+          targetOffset = offset
+        }
       }
     }
     if (size) {
       this.cursor = (this.cursor + size) % this.nodes.length
     }
-    if (didChange) {
-      this.action.start(this.current.node)
-      this.emit('change', true)
+
+    if (this.current.node !== target) {
+      const hadCurrent = !!this.current.node
+      if (hadCurrent) this.action.stop()
+      this.current.node = target
+      this.current.distance = targetDistance
+      if (target) {
+        this.action.start(target)
+        this.emit('change', true)
+      } else if (hadCurrent) {
+        this.emit('change', false)
+        this.emit('progress', 0)
+      }
+    } else if (target) {
+      this.current.distance = targetDistance
     }
     this.action.update(delta)
   }
@@ -111,10 +157,12 @@ function createAction(world) {
   const widthPx = 300
   const heightPx = 44
   const pxToMeters = 0.01
-  const board = createBoard(widthPx, heightPx, pxToMeters, world)
+  let board = null
+  let mesh = null
 
   const draw = (label, ratio) => {
     // console.time('draw')
+    if (!board) board = createBoard(widthPx, heightPx, pxToMeters, world)
     const text = board.measureText(47, heightPx / 2, label, '#ffffff', 18, 400)
     const prompt = getActionPrompt(world)
     const pillWidth = 6 + 4 + 24 + 4 + 6 + 9 + text.width + 13
@@ -133,8 +181,6 @@ function createAction(world) {
     // console.timeEnd('draw')
   }
 
-  const mesh = board.getMesh()
-
   // debug
   // board.canvas.style = 'position:absolute; top:70px; left:30px; z-index:999; pointer-events:none; transform:scale(1); transform-origin:top left;' // prettier-ignore
   // document.body.appendChild(board.canvas)
@@ -148,19 +194,28 @@ function createAction(world) {
       node = _node
       world.actions.btnDown = false
       node.progress = 0
-      draw(node._label, node.progress / node._duration)
-      world.stage.scene.add(mesh)
+      if (world.xr.session) {
+        draw(node._label, node.progress / node._duration)
+        mesh = board.getMesh()
+        world.stage.scene.add(mesh)
+      } else {
+        world.actions.emit('progress', 0)
+      }
     },
     update(delta) {
       if (!node) return
-      let distance
       if (world.xr.session) {
+        if (!board) {
+          draw(node._label, node.progress / node._duration)
+          mesh = board.getMesh()
+        }
+        if (!mesh.parent) world.stage.scene.add(mesh)
         const pos = v1
         const qua = q1
         const sca = v2
         node.matrixWorld.decompose(pos, qua, sca)
         const camPosition = world.camera.getWorldPosition(v3)
-        distance = camPosition.distanceTo(pos)
+        const distance = camPosition.distanceTo(pos)
         v4.subVectors(camPosition, pos).normalize()
         qua.setFromUnitVectors(FORWARD, v4)
         e1.setFromQuaternion(qua)
@@ -169,21 +224,16 @@ function createAction(world) {
         mesh.position.copy(pos)
         mesh.quaternion.copy(qua)
         mesh.scale.copy(sca)
-      } else {
-        const camPosition = v3.setFromMatrixPosition(world.camera.matrixWorld)
-        mesh.position.setFromMatrixPosition(node.matrixWorld)
-        distance = camPosition.distanceTo(mesh.position)
-        mesh.quaternion.setFromRotationMatrix(world.camera.matrixWorld)
+        const worldToScreenFactor = world.graphics.worldToScreenFactor
+        const [minDistance, maxDistance] = [3, 5]
+        const clampedDistance = clamp(distance, minDistance, maxDistance)
+        // calculate scale factor based on the distance
+        let scaleFactor = worldToScreenFactor * clampedDistance * 100
+        scaleFactor *= 0.2 // shrink because its HUGE in VR
+        mesh.scale.setScalar(scaleFactor)
+      } else if (mesh?.parent) {
+        world.stage.scene.remove(mesh)
       }
-      const worldToScreenFactor = world.graphics.worldToScreenFactor
-      const [minDistance, maxDistance, baseScale = 1] = [3, 5, 1]
-      const clampedDistance = clamp(distance, minDistance, maxDistance)
-      // calculate scale factor based on the distance
-      // When distance is at min, scale is 1.0 (or some other base scale)
-      // When distance is at max, scale adjusts proportionally
-      let scaleFactor = baseScale * (worldToScreenFactor * clampedDistance) * 100
-      if (world.xr.session) scaleFactor *= 0.2 // shrink because its HUGE in VR
-      mesh.scale.setScalar(scaleFactor)
       if (world.actions.btnDown) {
         if (node.progress === 0) {
           cancelled = false
@@ -195,9 +245,12 @@ function createAction(world) {
         }
         node.progress += delta
         if (node.progress > node._duration) node.progress = node._duration
-        draw(node._label, node.progress / node._duration)
+        const progress = node._duration ? node.progress / node._duration : 1
+        if (world.xr.session) draw(node._label, progress)
+        else world.actions.emit('progress', progress)
         if (node.progress === node._duration) {
           node.progress = 0
+          if (!world.xr.session) world.actions.emit('progress', 0)
           try {
             node._onTrigger({ playerId: world.entities.player.data.id })
           } catch (err) {
@@ -215,12 +268,14 @@ function createAction(world) {
         }
         node.progress -= delta
         if (node.progress < 0) node.progress = 0
-        draw(node._label, node.progress / node._duration)
+        const progress = node._duration ? node.progress / node._duration : 0
+        if (world.xr.session) draw(node._label, progress)
+        else world.actions.emit('progress', progress)
       }
     },
     stop() {
       node = null
-      if (mesh.parent) {
+      if (mesh?.parent) {
         world.stage.scene.remove(mesh)
       }
     },

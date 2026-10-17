@@ -12,6 +12,7 @@ import { buttons, propToLabel } from '../../core/extras/buttons'
 import { cls, isTouch } from '../utils'
 import { uuid } from '../../core/utils'
 import { ControlPriorities } from '../../core/extras/ControlPriorities'
+import { getActionPrompt } from '../../core/systems/ClientActions'
 // import { AppsPane } from './AppsPane'
 // import { MenuMain } from './MenuMain'
 // import { MenuApp } from './MenuApp'
@@ -108,6 +109,7 @@ export function CoreUI({ world }) {
     >
       {disconnected && <Disconnected />}
       {!ui.reticleSuppressors && <Reticle world={world} />}
+      {ready && <ActionPrompt world={world} visible={!ui.reticleSuppressors && !xr} />}
       {<Toast world={world} />}
       {ready && <ActionsBlock world={world} />}
       {ready && <SittingPoseButton world={world} player={player} />}
@@ -1030,6 +1032,115 @@ function Reticle({ world }) {
       `}
     >
       <div className='reticle-item' />
+    </div>
+  )
+}
+
+function ActionPrompt({ world, visible }) {
+  const [action, setAction] = useState(() => world.actions.current.node)
+  const [progress, setProgress] = useState(0)
+  const [pointerLocked, setPointerLocked] = useState(world.controls.pointer.locked)
+  const [buildMode, setBuildMode] = useState(world.builder.enabled)
+
+  useEffect(() => {
+    const onActionChange = () => {
+      setAction(world.actions.current.node)
+      setProgress(0)
+    }
+    world.actions.on('change', onActionChange)
+    world.actions.on('progress', setProgress)
+    world.on('pointer-lock', setPointerLocked)
+    world.on('build-mode', setBuildMode)
+    return () => {
+      world.actions.off('change', onActionChange)
+      world.actions.off('progress', setProgress)
+      world.off('pointer-lock', setPointerLocked)
+      world.off('build-mode', setBuildMode)
+    }
+  }, [world])
+
+  if (!visible || !action || (!pointerLocked && !isTouch) || buildMode) return null
+
+  const prompt = getActionPrompt(world)
+  const progressRatio = Math.max(0, Math.min(1, progress))
+  const circumference = 56.55
+
+  return (
+    <div
+      className='action-prompt'
+      aria-live='polite'
+      css={css`
+        position: absolute;
+        top: calc(50% + 0.5rem);
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        max-width: min(50vw, 20rem);
+        padding: 0.3125rem 0.5625rem;
+        border-radius: 999px;
+        background: rgba(11, 10, 21, 0.97);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+        color: white;
+        font-size: 0.75rem;
+        line-height: 1;
+        pointer-events: none;
+        .action-prompt-key {
+          position: relative;
+          display: grid;
+          flex: none;
+          width: 1.125rem;
+          height: 1.125rem;
+          place-items: center;
+          font-size: 0.6875rem;
+          font-weight: 600;
+          svg {
+            position: absolute;
+            inset: 0;
+            overflow: visible;
+            transform: rotate(-90deg);
+          }
+          circle {
+            fill: none;
+            stroke-width: 2;
+          }
+          .track {
+            stroke: rgba(255, 255, 255, 0.35);
+          }
+          .progress {
+            stroke: white;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 40ms linear;
+          }
+          span {
+            position: relative;
+          }
+        }
+        .action-prompt-label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      `}
+    >
+      {prompt && (
+        <div className='action-prompt-key'>
+          <svg viewBox='0 0 24 24' aria-hidden='true'>
+            <circle className='track' cx='12' cy='12' r='9' />
+            <circle
+              className='progress'
+              cx='12'
+              cy='12'
+              r='9'
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - progressRatio)}
+            />
+          </svg>
+          <span>{prompt}</span>
+        </div>
+      )}
+      <span className='action-prompt-label'>{action.label}</span>
     </div>
   )
 }
