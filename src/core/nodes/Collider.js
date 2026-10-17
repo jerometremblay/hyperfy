@@ -114,6 +114,7 @@ export class Collider extends Node {
     // this._geometry = geometry
     PHYSX.destroy(geometry)
     this.needsRebuild = false
+    if (!this.ctx.portalCollisionProxy) this.ctx.world.physics.portalCollisions?.colliders.add(this)
   }
 
   commit(didMove) {
@@ -128,6 +129,10 @@ export class Collider extends Node {
   }
 
   unmount() {
+    if (!this.ctx.portalCollisionProxy) {
+      this.ctx.world.physics.portalCollisions?.remove(this)
+      this.ctx.world.physics.portalCollisions?.colliders.delete(this)
+    }
     // if (this.type === 'geometry' && pxMeshes[this.geometry.uuid]) {
     //   pxMeshes[this.geometry.uuid].release()
     //   delete pxMeshes[this.geometry.uuid]

@@ -16,6 +16,7 @@ import { System } from './System'
 import { updatePortalCamera } from '../extras/portalCamera'
 import { limitLightShadows } from '../extras/shadowBudget'
 import { getPortalArrival } from '../extras/portalArrival'
+import { PortalAvatars } from '../extras/PortalAvatars'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -52,6 +53,7 @@ export class ClientGraphics extends System {
     super(world)
     this.portals = new Set()
     this.renderingPortal = false
+    this.portalAvatars = new PortalAvatars(world)
   }
 
   async init({ viewport }) {
@@ -60,6 +62,7 @@ export class ClientGraphics extends System {
     this.height = this.viewport.offsetHeight
     this.aspect = this.width / this.height
     this.renderer = getRenderer()
+    this.renderer.localClippingEnabled = true
     this.renderer.setSize(this.width, this.height)
     this.renderer.setClearColor(0xffffff, 0)
     this.renderer.setPixelRatio(this.world.prefs.dpr)
@@ -141,6 +144,8 @@ export class ClientGraphics extends System {
   }
 
   render() {
+    this.portalAvatars.update()
+    const restoreCamera = this.portalAvatars.mapCamera()
     this.renderer.toneMappingExposure = this.world.environment?.renderExposure ?? 1
     const disabled = this.renderer.shadowMap.enabled
       ? limitLightShadows(
@@ -165,6 +170,7 @@ export class ClientGraphics extends System {
         this.composer.render()
       }
     } finally {
+      restoreCamera?.()
       this.renderer.toneMapping = toneMapping
       this.renderer.autoClear = autoClear
       for (const light of disabled) light.castShadow = true
@@ -185,10 +191,12 @@ export class ClientGraphics extends System {
     const uniforms = portal.mesh.material.uniforms
     const destination = portal.url
       ? this.world.portalPreviews?.get(portal)
-      : [...this.portals].find(item => item.portalId === portal.target && item !== portal)
+      : portal.getTraversalReturn?.() ||
+        [...this.portals].find(item => item.portalId === portal.target && item !== portal)
     const destinationWorld = destination?.world || this.world
-    uniforms.linked.value = !!destination && (!!portal.target || !!portal.url)
+    uniforms.linked.value = !!destination
     if (!uniforms.linked.value) return
+    if (!portal.url) portal.setStatus?.('')
 
     const renderer = this.renderer
     const view = portal.getView(eye)
@@ -274,7 +282,11 @@ export class ClientGraphics extends System {
       renderer.clear()
       if (SparkRenderer) SparkRenderer.sparkOverride = view.spark
       if (destinationWorld !== this.world) {
-        view.camera.matrixWorld.decompose(destinationWorld.rig.position, destinationWorld.rig.quaternion, destinationWorld.rig.scale)
+        view.camera.matrixWorld.decompose(
+          destinationWorld.rig.position,
+          destinationWorld.rig.quaternion,
+          destinationWorld.rig.scale
+        )
         destinationWorld.camera.projectionMatrix.copy(view.camera.projectionMatrix)
         destinationWorld.camera.matrixWorld.copy(view.camera.matrixWorld)
         destinationWorld.camera.matrixWorldInverse.copy(view.camera.matrixWorldInverse)
@@ -450,6 +462,7 @@ export class ClientGraphics extends System {
   }
 
   destroy() {
+    this.portalAvatars.destroy()
     this.resizer.disconnect()
     this.viewport.removeChild(this.renderer.domElement)
   }

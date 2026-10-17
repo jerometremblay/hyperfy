@@ -37,6 +37,37 @@ parameters and fragments remain intact. Older links
 without a pose use the default arrival direction. Remote crossing uses a page
 navigation, so the preview is not a seamless world transfer.
 
+## Straddling same-world portals
+
+Same-world links that preserve upright orientation and physical size support
+continuous crossings. The feet cross the actual doorway plane without an arrival
+offset, preserving momentum and body facing. A clipped visual copy of the same
+animated avatar remains at the other opening until the body clears it. Other
+players in the same world also see the split avatar.
+
+The viewpoint crosses independently of the feet. For a floor opening linked to a
+ceiling opening, the destination stairs can support the feet while the head and
+view remain above the source. Point the source's front upward and the exit's
+front downward. Nearby static box and triangle-mesh collision receives a temporary
+opening for the local character controller. Static collision on the far side is
+mapped into the passage, allowing the feet to climb onto its stairs before crossing.
+The rest of the floor and ceiling remains solid. Feet transfer during each controller
+movement step, without waiting for the next rendered frame.
+Configure both directions for normal return travel; while still straddling an
+exit, backing out also works without a configured return link.
+
+This uses one upright character controller and temporary scene-query geometry;
+the original simulation shapes remain intact for other physics bodies. Moving
+bodies, sphere colliders and convex collision hulls are not split across the opening.
+Portal pairs that rotate gravity or change physical size retain ordinary teleport
+arrival. Remote links retain their existing URL navigation and arrival behavior.
+
+Run `node scripts/test-portal-traversal.mjs` and open its printed URL for a real
+WebGL/VRM and PhysX fixture checking destination tread support with the head above
+the opening, climbing back through a solid ceiling, and collision outside the
+aperture. Physical headset walking and interactions across the opening still
+need in-world verification.
+
 ## Saved loading images
 
 In the **destination** portal's properties, click **Refresh arrival preview** to

@@ -4,6 +4,7 @@ import { portalFields } from '../extras/portalFields'
 import { checkPortalDestination } from '../extras/portalDestination'
 import { getPortalArrival, parsePortalPose } from '../extras/portalArrival'
 import { hashFile } from '../utils-client'
+import { getPortalTransform, isPortalMoving, supportsPortalTraversal } from '../extras/portalTraversal'
 
 function createView() {
   return {
@@ -130,6 +131,7 @@ export class Portal extends Node {
 
   commit(didMove) {
     if (didMove) {
+      this.ctx.world.physics?.portalCollisions?.clear()
       this.hasPreviousPosition = false
       this.inside = true
     }
@@ -143,6 +145,7 @@ export class Portal extends Node {
   }
 
   unmount() {
+    this.ctx.world.physics?.portalCollisions?.clear()
     this.cancelDestinationCheck()
     this.statusTexture?.dispose()
     this.statusTexture = null
@@ -299,11 +302,21 @@ export class Portal extends Node {
     if (this.url) {
       if (performance.now() >= this.nextDestinationCheck) this.checkRemoteDestination()
     } else {
-      const destination = [...this.ctx.world.graphics.portals].find(
-        portal => portal !== this && portal.portalId === this.target && !portal.ctx.entity?.data.mover
-      )
-      this.setStatus(this.target ? (destination ? '' : 'Destination portal not found') : 'No destination configured')
+      const destination =
+        this.getTraversalReturn() ||
+        [...this.ctx.world.graphics.portals].find(
+          portal => portal !== this && portal.portalId === this.target && !portal.ctx.entity?.data.mover
+        )
+      this.setStatus(destination ? '' : this.target ? 'Destination portal not found' : 'No destination configured')
     }
+  }
+
+  getTraversalReturn() {
+    const crossing = this.ctx.world.entities.player?.portalTraversal
+    const copy = this.ctx.world.graphics.portalAvatars?.copies.get(this.ctx.world.entities.player)
+    const source = crossing?.destination === this ? crossing.source : copy?.destination === this ? copy.source : null
+    if (!source?.mesh || isPortalMoving(source)) return null
+    return source
   }
 
   update() {
@@ -325,6 +338,7 @@ export class Portal extends Node {
       methods.setQueryParam(this.ctx.entity, 'portalPose', null)
       return
     }
+    if (this.updateTraversal(player)) return
     const inverse = new THREE.Matrix4().copy(this.matrixWorld).invert()
     const position = player.base.position.clone().applyMatrix4(inverse)
     let entryPosition = position
@@ -351,6 +365,53 @@ export class Portal extends Node {
     this.inside = inVolume
     this.previousPosition.copy(position)
     this.hasPreviousPosition = true
+  }
+
+  updateTraversal(player) {
+    if (this.url || isPortalMoving(this)) return false
+    const world = this.ctx.world
+    const inverse = new THREE.Matrix4().copy(this.matrixWorld).invert()
+    const position = player.base.position.clone().applyMatrix4(inverse)
+    const destination =
+      !this.url &&
+      (this.getTraversalReturn() ||
+        [...world.graphics.portals].find(
+          portal => portal !== this && portal.portalId === this.target && !isPortalMoving(portal)
+        ))
+    if (destination && player.crossPortal && supportsPortalTraversal(this, destination)) {
+      // Unlike remote travel, touching the doorway is not a crossing. Sample
+      // the actual feet-plane intersection, retaining the entire frame's motion.
+      if (
+        this.hasPreviousPosition &&
+        this.previousPosition.z * position.z < 0 &&
+        (this.doubleside || this.previousPosition.z > 0)
+      ) {
+        const fraction = this.previousPosition.z / (this.previousPosition.z - position.z)
+        const crossing = this.previousPosition.clone().lerp(position, fraction)
+        if (Math.abs(crossing.x) <= this.width / 2 && Math.abs(crossing.y) <= this.height / 2 + 0.1) {
+          player.crossPortal(getPortalTransform(this, destination))
+          player.portalTraversal = { source: this, destination }
+          for (const portal of world.graphics.portals) {
+            portal.hasPreviousPosition = false
+            portal.inside = true
+          }
+          // Seed the exit immediately so backing out works without a cooldown.
+          destination.previousPosition.copy(player.base.position).applyMatrix4(destination.matrixWorld.clone().invert())
+          destination.hasPreviousPosition = true
+          return true
+        }
+      }
+      // Retain the approach side while standing exactly on the plane.
+      if (position.z !== 0) {
+        this.previousPosition.copy(position)
+        this.hasPreviousPosition = true
+      } else {
+        this.previousPosition.x = position.x
+        this.previousPosition.y = position.y
+      }
+      return true
+    }
+    return false
   }
 
   travel(player, position, inverse) {

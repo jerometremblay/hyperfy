@@ -3,6 +3,7 @@ import { extendThreePhysX } from '../extras/extendThreePhysX'
 import { System } from './System'
 import { Layers } from '../extras/Layers'
 import { loadPhysX } from '../loadPhysX'
+import { PortalCollisions } from '../extras/PortalCollisions'
 
 const _raycastHit = {
   actor: null,
@@ -41,6 +42,7 @@ export class Physics extends System {
   constructor(world) {
     super(world)
     this.scene = null
+    this.portalCollisions = new PortalCollisions(world)
   }
 
   async init() {
@@ -315,6 +317,10 @@ export class Physics extends System {
       return true // for now ALL cct's collide
     }
     this.controllerFilters.mCCTFilterCallback = cctFilterCallback
+  }
+
+  destroy() {
+    this.portalCollisions.destroy()
   }
 
   start() {

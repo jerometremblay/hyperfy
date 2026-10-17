@@ -303,3 +303,50 @@ test('keeps the seated shoulder camera aligned and the first-person eye referenc
   PlayerLocal.prototype.lateUpdate.call(player, 1 / 60)
   assert.deepEqual(player.cam.position.toArray(), [0, 1.6, 0])
 })
+
+test('continuous portal travel preserves momentum, body facing, camera pitch and XR offsets', () => {
+  const rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2)
+  const transform = new THREE.Matrix4().compose(new THREE.Vector3(10, 3, 0), rotation, new THREE.Vector3(1, 1, 1))
+  const base = new THREE.Object3D()
+  base.position.set(0, -0.8, 0)
+  base.updateTransform = () => base.updateMatrixWorld(true)
+  const cam = new THREE.Object3D()
+  cam.rotation.reorder('YXZ')
+  cam.rotation.set(-0.4, 0.2, 0)
+  cam.position.set(0, 0.8, 0)
+  const camera = { position: cam.position.clone(), quaternion: cam.quaternion.clone() }
+  const messages = []
+  let teleported
+  const player = {
+    base,
+    controller: {
+      teleport: position => {
+        teleported = position.clone()
+      },
+    },
+    velocity: new THREE.Vector3(1, -2, 0),
+    moveDir: new THREE.Vector3(0, 0, -1),
+    flyDir: new THREE.Vector3(0, 0, -1),
+    gaze: new THREE.Vector3(0, 0, -1),
+    platform: { actor: {} },
+    grounded: true,
+    groundNormal: new THREE.Vector3(0, 1, 0),
+    cam,
+    control: { camera },
+    isXR: true,
+    xrRig: new THREE.Object3D(),
+    hmdLast: new THREE.Vector3(0.2, 0, 0),
+    world: { network: { send: (...args) => messages.push(args) } },
+    data: { id: 'player' },
+  }
+  PlayerLocal.prototype.crossPortal.call(player, transform)
+  assert.ok(teleported.distanceTo(new THREE.Vector3(10, 2.2, 0)) < 1e-10)
+  assert.ok(player.velocity.distanceTo(new THREE.Vector3(0, -2, -1)) < 1e-10)
+  assert.ok(Math.abs(cam.rotation.x + 0.4) < 1e-10)
+  assert.ok(camera.position.distanceTo(new THREE.Vector3(10, 3.8, 0)) < 1e-10)
+  assert.ok(player.hmdLast.distanceTo(new THREE.Vector3(0, 0, -0.2)) < 1e-10)
+  assert.equal(player.platform.actor, null)
+  assert.equal(player.grounded, false)
+  assert.equal(messages[0][0], 'entityModified')
+  assert.equal(messages[0][1].t, true)
+})

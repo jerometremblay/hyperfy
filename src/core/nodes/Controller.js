@@ -120,6 +120,7 @@ export class Controller extends Node {
   }
 
   unmount() {
+    if (this.ctx.world.entities?.player?.controller === this) this.ctx.world.physics.portalCollisions?.clear()
     if (this.mesh) {
       this.ctx.world.graphics.scene.remove(this.mesh)
     }
@@ -246,6 +247,9 @@ export class Controller extends Node {
     }
     this.position.copy(vec3)
     this.controller.setFootPosition(vec3.toPxExtVec3())
+    // A teleported CCT must not keep sweep contacts from its previous room.
+    this.controller.invalidateCache()
+    this.moveFlags = null
   }
 
   move(vec3, delta = 1 / 60) {
@@ -253,10 +257,27 @@ export class Controller extends Node {
       throw new Error('[controller] move expected Vector3')
     }
     if (!this.controller) return
+    const player = this.ctx.world.entities?.player
+    const local = player?.controller === this
+    const portals = local ? [...(this.ctx.world.graphics?.portals || [])] : []
+    if (local) {
+      player.base.position.copy(this.position)
+      for (const portal of portals) portal.updateTraversal(player)
+      this.ctx.world.physics.portalCollisions?.update(this, vec3)
+    }
     this.moveFlags = this.controller.move(vec3.toPxVec3(), 0, delta, this.ctx.world.physics.controllerFilters)
     // this.isGrounded = moveFlags.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_DOWN) // prettier-ignore
     const pos = this.controller.getFootPosition()
     this.position.copy(pos)
+    if (local) {
+      const previousTraversal = player.portalTraversal
+      player.base.position.copy(this.position)
+      for (const portal of portals) portal.updateTraversal(player)
+      if (player.portalTraversal !== previousTraversal) {
+        // The next ground probe must already see the destination's passage.
+        this.ctx.world.physics.portalCollisions?.update(this, new THREE.Vector3())
+      }
+    }
     this.didMove = true
   }
 

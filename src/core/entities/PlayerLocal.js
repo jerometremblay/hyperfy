@@ -1375,7 +1375,40 @@ export class PlayerLocal extends Entity {
     }
   }
 
+  crossPortal(transform) {
+    const rotation = new THREE.Quaternion().setFromRotationMatrix(transform)
+    const position = this.base.position.clone().applyMatrix4(transform)
+    this.controller.teleport(position)
+    this.base.position.copy(position)
+    this.base.quaternion.premultiply(rotation)
+    this.velocity.applyQuaternion(rotation)
+    this.moveDir.applyQuaternion(rotation)
+    this.flyDir.applyQuaternion(rotation)
+    this.gaze.applyQuaternion(rotation)
+    this.platform.actor = null
+    this.grounded = false
+    this.groundNormal.set(0, 1, 0)
+    this.cam.position.applyMatrix4(transform)
+    this.cam.quaternion.premultiply(rotation)
+    this.control.camera.position.applyMatrix4(transform)
+    this.control.camera.quaternion.premultiply(rotation)
+    if (this.isXR) {
+      this.xrRig.position.applyMatrix4(transform)
+      this.xrRig.quaternion.premultiply(rotation)
+      this.hmdLast.applyQuaternion(rotation)
+      this.xrRig.updateMatrixWorld(true)
+    }
+    this.base.updateTransform()
+    this.world.network.send('entityModified', {
+      id: this.data.id,
+      p: position.toArray(),
+      q: this.base.quaternion.toArray(),
+      t: true,
+    })
+  }
+
   teleport({ position, rotationY }) {
+    this.portalTraversal = null
     position = position.isVector3 ? position : new THREE.Vector3().fromArray(position)
     const hasRotation = isNumber(rotationY)
     // snap to position

@@ -258,16 +258,19 @@ export class Prim extends Node {
 
     // Create material with current properties
     const cache = this.ctx.world.isPreview ? (this.ctx.world.primMaterials ||= new Map()) : materialCache
-    const material = getMaterial({
-      // color: this._color,
-      // emissive: this._emissive,
-      // emissiveIntensity: this._emissiveIntensity,
-      metalness: this._metalness,
-      roughness: this._roughness,
-      opacity: quantizeOpacity(this._opacity), // reduce material variations
-      texture: this._texture ? this.ctx.world.resolveURL(this._texture) : null,
-      doubleside: this._doubleside,
-    }, cache)
+    const material = getMaterial(
+      {
+        // color: this._color,
+        // emissive: this._emissive,
+        // emissiveIntensity: this._emissiveIntensity,
+        metalness: this._metalness,
+        roughness: this._roughness,
+        opacity: quantizeOpacity(this._opacity), // reduce material variations
+        texture: this._texture ? this.ctx.world.resolveURL(this._texture) : null,
+        doubleside: this._doubleside,
+      },
+      cache
+    )
 
     // Get loader if available (client-side only)
     const loader = this.ctx.world.loader || null
@@ -311,7 +314,7 @@ export class Prim extends Node {
 
     // Create physics if enabled
     if (this._physics && !this.ctx.moving && !this.ctx.world.isPreview) {
-      this.mountPhysics(size)
+      this.mountPhysics(size, geometry)
     }
   }
 
@@ -330,7 +333,7 @@ export class Prim extends Node {
     }
   }
 
-  mountPhysics(size) {
+  mountPhysics(size, geometry) {
     if (!PHYSX) return
 
     const type = this._physics // 'static' | 'kinematic' | 'dynamic'
@@ -461,9 +464,16 @@ export class Prim extends Node {
 
     // Clean up
     PHYSX.destroy(pxGeometry)
+    if (type === 'static' && !trigger && ['environment', 'prop'].includes(this._layer)) {
+      this.portalCollisionGeometry = geometry
+      this.ctx.world.physics.portalCollisions?.colliders.add(this)
+    }
   }
 
   unmountPhysics() {
+    this.ctx?.world?.physics?.portalCollisions?.remove(this)
+    this.ctx?.world?.physics?.portalCollisions?.colliders.delete(this)
+    this.portalCollisionGeometry = null
     if (this.actor) {
       this.actorHandle?.destroy()
       this.actorHandle = null

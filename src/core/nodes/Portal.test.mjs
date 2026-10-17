@@ -816,3 +816,75 @@ test('shipped legacy portals use the configured URL for both status and native t
     entity.root.deactivate()
   }
 })
+
+test('continuous local crossing waits for the plane, preserves overshoot and immediately permits reversing through an unlinked exit', () => {
+  const ctx = context()
+  const destination = mounted({ portalId: 'exit', position: [10, 1.2, 0] }, ctx).portal
+  const source = mounted({ portalId: 'entry', target: 'exit' }, ctx).portal
+  const crossings = []
+  ctx.player.crossPortal = transform => {
+    crossings.push(transform)
+    ctx.player.base.position.applyMatrix4(transform)
+  }
+  ctx.player.base.position.set(0.2, 0, 1)
+  source.update()
+  ctx.player.base.position.z = 0.1
+  source.update()
+  assert.equal(crossings.length, 0, 'touching the former 0.3m trigger must not travel')
+  ctx.player.base.position.z = 0
+  source.update()
+  assert.equal(crossings.length, 0)
+  ctx.player.base.position.z = -0.05
+  source.update()
+  assert.equal(crossings.length, 1)
+  assert.ok(ctx.player.base.position.distanceTo(new THREE.Vector3(9.8, 0, 0.05)) < 1e-10)
+  destination.update()
+  assert.equal(crossings.length, 1)
+  assert.equal(destination.statusMessage, '')
+  ctx.player.base.position.z = -0.05
+  destination.update()
+  assert.equal(crossings.length, 2)
+  assert.ok(ctx.player.base.position.distanceTo(new THREE.Vector3(0.2, 0, 0.05)) < 1e-10)
+  assert.equal(ctx.teleports.length, 0)
+  source.deactivate()
+  destination.deactivate()
+})
+
+test('floor-to-ceiling traversal places the feet below the destination without pushing the head clear', () => {
+  const ctx = context()
+  const source = mounted(
+    { portalId: 'entry', target: 'exit', position: [0, 3, 0], rotation: [-Math.PI / 2, 0, 0], width: 3, height: 3 },
+    ctx
+  ).portal
+  const destination = mounted(
+    { portalId: 'exit', position: [10, 3, 0], rotation: [Math.PI / 2, 0, 0], width: 3, height: 3 },
+    ctx
+  ).portal
+  ctx.player.crossPortal = transform => ctx.player.base.position.applyMatrix4(transform)
+  ctx.player.base.position.set(0, 3.5, 0)
+  source.update()
+  ctx.player.base.position.y = 2.2
+  source.update()
+  assert.ok(ctx.player.base.position.distanceTo(new THREE.Vector3(10, 2.2, 0)) < 1e-10)
+  assert.ok(ctx.player.base.position.y + 1.6 > 3, 'head must remain beyond the exit plane')
+  assert.equal(ctx.teleports.length, 0)
+  source.deactivate()
+  destination.deactivate()
+})
+
+test('sliding along the exact plane and leaving outside the aperture does not cross', () => {
+  const ctx = context()
+  const source = mounted({ portalId: 'entry', target: 'exit' }, ctx).portal
+  const destination = mounted({ portalId: 'exit', position: [10, 1.2, 0] }, ctx).portal
+  ctx.player.crossPortal = () => assert.fail('crossed outside the opening')
+  ctx.player.base.position.set(0, 0, 0.2)
+  source.update()
+  ctx.player.base.position.set(0, 0, 0)
+  source.update()
+  ctx.player.base.position.set(3, 0, 0)
+  source.update()
+  ctx.player.base.position.set(3, 0, -0.2)
+  source.update()
+  source.deactivate()
+  destination.deactivate()
+})
