@@ -459,6 +459,7 @@ journalBody.add(action)
 let homePose = null
 let readingPose = app.state.readingPose || null
 const readingControl = world.isClient ? app.control() : null
+let suppressActionTrigger = false
 function requestToggle() {
   if (!world.isClient || world.isBuilding || app.isMoving) return
   const player = world.getPlayer()
@@ -477,6 +478,22 @@ function requestToggle() {
     eye = head ? new Vector3().setFromMatrixPosition(head) : readingControl.camera.position.clone()
   }
   app.send('journal:toggle', { eye: eye.toArray() })
+}
+function requestActionToggle() {
+  if (suppressActionTrigger) return
+  requestToggle()
+}
+function requestClose() {
+  if (!world.isClient || world.isBuilding || app.isMoving) return
+  const player = world.getPlayer()
+  if (!app.state.open || player?.id !== app.state.readerId) return
+  app.send('journal:toggle')
+  return true
+}
+function requestCloseFromE() {
+  const handled = requestClose()
+  if (handled) suppressActionTrigger = true
+  return handled
 }
 
 function captureHome() {
@@ -689,9 +706,12 @@ if (world.isServer) {
 }
 
 if (world.isClient) {
-  action.onTrigger = requestToggle
+  action.onTrigger = requestActionToggle
   frontCover.onPointerDown = requestToggle
   foldTab.onPointerDown = requestToggle
+  readingControl.escape.onPress = requestClose
+  readingControl.keyE.onPress = requestCloseFromE
+  readingControl.keyE.onRelease = () => { suppressActionTrigger = false }
   app.on('journal:pages', receivePages)
   app.on('journal:page-count', receivePageCount)
   app.on('journal:state', message => {
