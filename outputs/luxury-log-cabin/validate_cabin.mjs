@@ -14,10 +14,26 @@ const { nodes, visuals, events, configs, lights, handlers, detached, app, audit 
 assert(events.includes('update') && events.includes('doorState') && events.includes('destroy'))
 assert.equal(detached.length, audit.physicsEntries.length)
 assert.equal(lights.length, audit.interiorFixtures.length * 2 + audit.roofLights.length)
+assert(lights.every(light => !light.castShadow), 'Built-in house lights must not cast shadows')
 assert.equal(configs.filter(c => c.id.includes('sconce-backplate')).length, audit.interiorFixtures.length)
 assert.equal(audit.interiorFixtures.length, 4)
 assert.equal(audit.roofLights.length, 10)
 assert.equal(configs.filter(c => c.id.startsWith('exterior-lighting:') && c.type === 'cone').length, 0)
+assert(configs.filter(c => (c.opacity ?? 1) > 0).every(c => c.receiveShadow === true))
+const lightNodes = nodes.filter(node => node.name === 'light')
+const interiorSconces = lightNodes.filter(node => node.id.startsWith('interior-lighting:'))
+const roofSpots = lightNodes.filter(node => node.id.startsWith('exterior-lighting:'))
+assert.equal(interiorSconces.length, audit.interiorFixtures.length * 2)
+assert(interiorSconces.every(node => node.castShadow === false))
+assert.equal(roofSpots.length, audit.roofLights.length)
+assert(roofSpots.every(node => node.castShadow === false))
+const fireplacePrims = nodes.filter(node => node.id.startsWith('fireplace:'))
+assert(fireplacePrims.some(node => node.id.includes('arched-surround')))
+assert(fireplacePrims.some(node => node.id.includes('arch-voussoir')))
+assert(fireplacePrims.every(node => node.castShadow === true), 'Fireplace masonry must cast shadows')
+const rafterVisuals = visuals.filter(visual => visual.node.id.startsWith('roof-frame:rafter:'))
+assert(rafterVisuals.length > 0)
+assert(rafterVisuals.every(visual => visual.castShadow === true), 'Roof beams must cast shadows')
 for (const light of lights) {
   assert.equal(light.castShadow, false)
   const direction = light.target.position.clone().sub(light.position).normalize()
@@ -135,6 +151,7 @@ let packageChecks = null
 try {
   const bytes = await fs.readFile(packagePath), parsed = parseHyp(bytes)
   assert.equal(parsed.source, source)
+  assert.equal(parsed.header.blueprint.version, 1)
   for (const asset of parsed.assets) {
     const hash = createHash('sha256').update(asset.data).digest('hex')
     assert(asset.url.startsWith(`asset://${hash}.`))
@@ -147,6 +164,7 @@ try {
   }
   await executeSource(parsed.source)
   packageChecks = { bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), assets: parsed.assets.length,
+    blueprintVersion: parsed.header.blueprint.version,
     exactSourceBytes: true, geometryFreeBootstrap: true, canonicalScriptMime: true }
 } catch (error) { if (error.code !== 'ENOENT') throw error }
 const report = {
@@ -154,7 +172,10 @@ const report = {
   constructorsAndGeometry: 'Actual Prim, Group, Action and Light constructors; visible geometry mounted; PhysX simulation not performed',
   doors: { count: 5, animationAndColliderAnchorChecks: 'pass', serverAuthorityChecks: 'pass', liveInteraction: 'not tested' },
   collision: { roofPanels: 2, appTranslationSync: 'pass', physXSimulation: 'not performed' },
-  lighting: { interiorFixtures: audit.interiorFixtures.length, exteriorFixtures: audit.roofLights.length, spotlights: lights.length },
+  lighting: {
+    interiorFixtures: audit.interiorFixtures.length, exteriorFixtures: audit.roofLights.length,
+    spotlights: lights.length, builtInShadowCasting: false,
+  },
   primitiveCount: visuals.length, primitiveTypes: [...new Set(configs.map(c => c.type))],
   callbacks: events.length, detachedNodes: detached.length, physicsNodes: audit.physicsEntries.length, externalTexturesOrGeometry: 0,
   bounds: { min: bounds.min.toArray(), max: bounds.max.toArray() },
@@ -164,7 +185,9 @@ const report = {
     minimumOverheadClearanceMetres: stairHeadroom, endpointAndDirectionChecks: 'pass' },
   roof: { ridgeMetres: 9.8, wallEaveMetres: 6, pitchDegrees: Math.atan2(3.8, 9) * 180 / Math.PI, chimneyPenetration: 'open' },
   package: packageChecks,
-  liveWorldImport: 'Not performed; artifact creation does not alter the running world',
+  fireplaceArch: { shadowCasters: fireplacePrims.length, casting: 'pass' },
+  roofBeams: { shadowCasters: rafterVisuals.length, casting: 'pass' },
+  liveWorldImport: 'Not part of this validator; live replacement is documented in README',
 }
 await fs.writeFile(path.join(directory, 'validation_report.json'), JSON.stringify(report, null, 2) + '\n')
 console.log(JSON.stringify(report, null, 2))

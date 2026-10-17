@@ -24,6 +24,7 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     const authorization = request.headers.authorization || ''
     const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
     const writer = matches(token, writeToken)
+    request.agentWrite = writer
     if (!writer && !matches(token, readToken)) {
       return reply.code(401).header('WWW-Authenticate', 'Bearer').send({ error: 'Invalid agent token' })
     }
@@ -59,8 +60,8 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     if (data.scale?.some(value => value <= 0)) fail(400, 'Scale must be positive')
   }
   const routes = []
-  const route = (method, url, operationId, schema, handler) => {
-    routes.push({ method, url, operationId, schema })
+  const route = (method, url, operationId, schema, handler, successStatus) => {
+    routes.push({ method, url, operationId, schema, successStatus })
     fastify.route({
       method,
       url,
@@ -88,6 +89,16 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
   route('GET', '/entities', 'listEntities', {}, async () =>
     [...world.entities.items.values()].filter(item => item.isApp).map(item => item.serialize())
   )
+  route('GET', '/players', 'listPlayers', {}, async request => {
+    if (!request.agentWrite) fail(403, 'Write token required')
+    return [...world.entities.players.values()]
+      .filter(player => world.network.sockets.has(player.data.owner))
+      .map(player => ({
+        id: player.data.id,
+        name: player.data.name,
+        position: player.data.position,
+      }))
+  })
   route('GET', '/entities/:id', 'getEntity', { params }, async request => entity(request.params.id).serialize())
   route('POST', '/apps', 'createApp', { body: body(blueprintFields, ['name', 'model']) }, async (request, reply) => {
     await checkAssets(request.body)
@@ -168,6 +179,25 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     world.network.dirtyApps.add(item.data.id)
     return item.serialize()
   })
+  route(
+    'POST',
+    '/players/:id/teleport',
+    'teleportPlayer',
+    { params, body: body({ position: vector(3), rotationY: { type: 'number' } }, ['position']) },
+    async request => {
+      const target = world.entities.players.get(request.params.id)
+      if (!target?.isPlayer) fail(404, 'Player not found')
+      if (!world.network.sockets.has(target.data.owner)) fail(409, 'Player is not connected')
+      if (target.data.effect?.anchorId) fail(409, 'Player is seated')
+      const data = {
+        position: request.body.position,
+        ...(Object.hasOwn(request.body, 'rotationY') ? { rotationY: request.body.rotationY } : {}),
+      }
+      world.network.sendTo(target.data.owner, 'playerTeleport', data)
+      return { id: target.data.id, name: target.data.name, ...data }
+    },
+    200
+  )
   route('DELETE', '/entities/:id', 'deleteEntity', { params }, async (request, reply) => {
     const item = entity(request.params.id)
     if (item.data.mover || item.data.uploader) fail(409, 'Instance is being edited or uploaded')
@@ -211,7 +241,7 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
                   ? { requestBody: { required: true, content: { 'application/json': { schema: item.schema.body } } } }
                   : {}),
                 responses: {
-                  [item.method === 'POST' ? '201' : item.method === 'DELETE' ? '204' : '200']: {
+                  [item.successStatus || (item.method === 'POST' ? '201' : item.method === 'DELETE' ? '204' : '200')]: {
                     description: 'Success',
                   },
                   400: { description: 'Invalid request' },

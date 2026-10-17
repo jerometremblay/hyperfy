@@ -16,7 +16,8 @@
   "lighting": {
     "interiorFixtures": 4,
     "exteriorFixtures": 10,
-    "spotlights": 18
+    "spotlights": 18,
+    "builtInShadowCasting": false
   },
   "primitiveCount": 1624,
   "primitiveTypes": [
@@ -62,16 +63,25 @@
     "chimneyPenetration": "open"
   },
   "package": {
-    "bytes": 43702,
-    "sha256": "121c04ddaaa74d8ca63becd70ccb7d7eeb9777ba36a76e043c6baa17f9b95cf1",
+    "bytes": 43707,
+    "sha256": "e7a7ba137e3cc678a827f35f994cf0d2fa2cf38294732ae161c6b85f6dd2d6a7",
     "assets": 2,
+    "blueprintVersion": 1,
     "exactSourceBytes": true,
     "geometryFreeBootstrap": true,
     "canonicalScriptMime": true,
     "previewEmbedsIdenticalBytes": true
   },
-  "liveWorldImport": "Not performed; artifact creation does not alter the running world",
+  "fireplaceArch": {
+    "shadowCasters": 384,
+    "casting": "pass"
+  },
+  "roofBeams": {
+    "shadowCasters": 12,
+    "casting": "pass"
+  },
+  "liveWorldImport": "Not part of this validator; live replacement is documented in README",
   "visualInspection": {
-    "status": "Not repeated after lighting update; local-file browser access blocked by browser policy"
+    "status": "Live-world checks are separate from this local build; see README and lighting-optimization.md"
   }
 }

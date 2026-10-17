@@ -5,10 +5,10 @@
 
 const NEWS_URL = 'https://hyperfy-news.jerometremblay.chatgpt.site/'
 const PI = Math.PI
-const PAGE_COUNT = 6
 const PAGE_HEIGHT = 0.01
 const LEFT_HINGE_HEIGHT = 0.04
 const TURN_HINGE_HEIGHT = PAGE_HEIGHT + 0.002
+const NEWS_ORIGIN = 'https://hyperfy-news.jerometremblay.chatgpt.site'
 
 function group(parent, position = [0, 0, 0]) {
   const node = app.create('group', { position })
@@ -151,20 +151,53 @@ text(closedBackPrint, 'WORLD EDITION', 20, '#1f2730', 'bold')
 text(closedBackPrint, 'Technology • Culture • Worlds', 18, '#52514e')
 closedBlock.onPointerDown = () => requestToggle()
 
-// Preload all pages while opening; retain them through page turns.
-// Fully closing deactivates their WebViews.
+// The source sends no-store, so keep its iframes mounted while the journal is closed.
 const content = group(opened)
 content.active = false
 const pageSurfaces = []
 const TURN_DURATION = 0.65
-function validSpread(page) {
-  return Number.isInteger(page) && page >= 1 && page <= PAGE_COUNT - 1 && page % 2 === 1
+const MAX_PAGE_COUNT = 10000
+const MIN_PAGE_SURFACES = 2
+let pageCount = validPageCount(app.state.pageCount) ? app.state.pageCount : null
+let pageCountReady = pageCount !== null && app.state.pageCountReady === true
+let activePageSurfaceCount = MIN_PAGE_SURFACES
+let latestHtmlPageCount = null
+let latestHtmlPageUrls = null
+let reportedPageCount = null
+
+function validPageCount(count) {
+  return Number.isSafeInteger(count) && count >= 1 && count <= MAX_PAGE_COUNT
 }
-function validTurn(value) {
+function surfaceCountFor(count) {
+  return Math.max(MIN_PAGE_SURFACES, Math.ceil(count / 2) * 2)
+}
+function maxSpreadFirstPage(count) {
+  return surfaceCountFor(count) - 1
+}
+function clampSpread(page, count) {
+  if (!Number.isInteger(page) || page < 1) return 1
+  const firstPage = page % 2 === 1 ? page : page - 1
+  return Math.min(firstPage, maxSpreadFirstPage(count))
+}
+function validStoredSpread(page) {
+  return Number.isInteger(page) && page >= 1 && page <= MAX_PAGE_COUNT - 1 && page % 2 === 1
+}
+function validManifestPage(entry, index) {
+  if (entry?.page !== index + 1 || !Number.isSafeInteger(entry.issuePage) || entry.issuePage < 1) return false
+  const match = typeof entry.url === 'string'
+    ? entry.url.match(/^\/\?issue=[^&#]+&texture=1&page=([1-9]\d*)$/)
+    : null
+  return Boolean(match && Number(match[1]) === entry.issuePage)
+}
+function validSpread(page, count = pageCount) {
+  const maxPage = validPageCount(count) ? maxSpreadFirstPage(count) : activePageSurfaceCount - 1
+  return Number.isInteger(page) && page >= 1 && page <= maxPage && page % 2 === 1
+}
+function validTurn(value, count = pageCount) {
   return (
     value &&
-    validSpread(value.origin) &&
-    validSpread(value.destination) &&
+    validSpread(value.origin, count) &&
+    validSpread(value.destination, count) &&
     Math.abs(value.destination - value.origin) === 2 &&
     value.forward === value.destination > value.origin &&
     Number.isInteger(value.id) &&
@@ -174,16 +207,66 @@ function validTurn(value) {
 }
 let firstPage = validTurn(app.state.turn)
   ? app.state.turn.origin
-  : validSpread(app.state.firstPage)
+  : validStoredSpread(app.state.firstPage)
     ? app.state.firstPage
     : 1
 let turn = null
 let pendingTurn = null
-for (let number = 1; number <= PAGE_COUNT; number++) {
+
+function hasHtmlPageManifest() {
+  return latestHtmlPageCount !== null &&
+    latestHtmlPageUrls?.length === latestHtmlPageCount &&
+    pageCount === latestHtmlPageCount
+}
+
+function maybeSendHtmlPageCount() {
+  if (!app.state.open || world.getPlayer()?.id !== app.state.readerId) return
+  if (!hasHtmlPageManifest()) return
+  if (reportedPageCount === latestHtmlPageCount) return
+  reportedPageCount = latestHtmlPageCount
+  app.send('journal:page-count', { version: 1, count: latestHtmlPageCount })
+}
+
+function receiveHtmlPageCount(event) {
+  if (event?.origin !== NEWS_ORIGIN) return
+  const message = event.data
+  if (
+    message?.type !== 'journal-page-count' ||
+    message.version !== 1 ||
+    !validPageCount(message.count) ||
+    message.pageCount !== message.count ||
+    !Array.isArray(message.pages) ||
+    message.pages.length !== message.count ||
+    !message.pages.every(validManifestPage)
+  ) return
+
+  const pageUrls = message.pages.map(entry => NEWS_ORIGIN + entry.url + '&embed=1')
+  const sameManifest = latestHtmlPageUrls?.length === pageUrls.length &&
+    latestHtmlPageUrls.every((url, index) => url === pageUrls[index])
+  latestHtmlPageCount = message.count
+  latestHtmlPageUrls = pageUrls
+  if (!sameManifest) {
+    reportedPageCount = null
+    pageCountReady = false
+    app.state.pageCountReady = false
+  }
+  applyPageCount(message.count, sameManifest && pageCountReady && app.state.pageCount === message.count, app.state.firstPage)
+
+  for (let index = 0; index < pageSurfaces.length; index++) {
+    const surface = pageSurfaces[index]
+    const src = pageUrls[index] || ''
+    if (surface.src === src) continue
+    surface.src = src
+    surface.page.src = src
+  }
+  maybeSendHtmlPageCount()
+}
+
+function createPageSurface(number) {
   const pivot = group(journalBody, [0, -10000, 0])
   const page = app.create('webview', {
     space: 'world',
-    src: NEWS_URL + '?texture=1&page=' + number,
+    src: '',
     proxy: false,
     width: 0.611 * 1200,
     height: 0.828 * 1200,
@@ -199,8 +282,36 @@ for (let number = 1; number <= PAGE_COUNT; number++) {
     event.stopPropagation()
     turnPage(number % 2 === 0 ? 1 : -1)
   }
-  pageSurfaces.push({ pivot, page })
+  pageSurfaces.push({ pivot, page, src: '' })
 }
+function ensurePageSurfaces(count = pageCount) {
+  activePageSurfaceCount = validPageCount(count)
+    ? surfaceCountFor(count)
+    : Math.max(MIN_PAGE_SURFACES, firstPage + 1)
+  while (pageSurfaces.length < activePageSurfaceCount) createPageSurface(pageSurfaces.length + 1)
+}
+
+// One hidden wrapper reports the current all-editions page manifest. Individual
+// reading surfaces then load only their own issue page instead of nesting the
+// all-editions iframe set once per surface.
+const manifestPivot = group(journalBody, [0, -10000, 0])
+const manifest = app.create('webview', {
+  space: 'world',
+  src: NEWS_URL + '?texture=1&page=1',
+  proxy: false,
+  width: 0.611 * 1200,
+  height: 0.828 * 1200,
+  factor: 1,
+  scale: [1 / 1200, 1 / 1200, 1 / 1200],
+  interactive: false,
+  doubleside: true,
+  renderOrder: 1,
+  rotation: [-PI / 2, 0, 0],
+  onMessage: world.isClient ? receiveHtmlPageCount : null,
+})
+manifestPivot.add(manifest)
+ensurePageSurfaces()
+
 function parkPages() {
   for (const surface of pageSurfaces) {
     surface.page.renderOrder = 1
@@ -218,6 +329,19 @@ function showSpread() {
   parkPages()
   stationaryPage(firstPage, true)
   stationaryPage(firstPage + 1, false)
+}
+function applyPageCount(count, ready, currentFirstPage = app.state.firstPage) {
+  if (!validPageCount(count)) return false
+  pageCount = count
+  pageCountReady = ready
+  app.state.pageCount = count
+  app.state.pageCountReady = ready
+  firstPage = clampSpread(currentFirstPage ?? firstPage, count)
+  app.state.firstPage = firstPage
+  ensurePageSurfaces(count)
+  applyPaper(progress)
+  if (progress >= 0.9999 && target === 1 && !world.isBuilding && !turn) showSpread()
+  return true
 }
 function movingPage(number, angle, back) {
   const { pivot, page } = pageSurfaces[number - 1]
@@ -297,8 +421,18 @@ function receivePages(message) {
     if (progress >= 0.9999 && target === 1 && !world.isBuilding) showSpread()
   }
 }
+function receivePageCount(message) {
+  if (
+    message?.version !== 1 ||
+    message.pageCountReady !== true ||
+    !validPageCount(message.count) ||
+    !validSpread(message.firstPage, message.count)
+  ) return
+  if (!applyPageCount(message.count, true, message.firstPage)) return
+  receivePages({ firstPage: message.firstPage, turn: message.turn || null })
+}
 function turnPage(direction) {
-  if (world.isBuilding || app.isMoving || turn || pendingTurn || progress < 0.9999 || target !== 1) return
+  if (!pageCountReady || !hasHtmlPageManifest() || world.isBuilding || app.isMoving || turn || pendingTurn || progress < 0.9999 || target !== 1) return
   if (world.getPlayer()?.id !== app.state.readerId) return
   app.send('journal:turn-request', { direction })
 }
@@ -387,7 +521,6 @@ function applyPaper(t) {
   closedBook.active = fullyClosed
   opened.active = !fullyClosed
   folded.active = true
-  for (const surface of pageSurfaces) surface.pivot.active = !fullyClosed
   left.scale.set(1, 1, 1)
   right.scale.set(1, 1, 1)
   left.position.y = hingeHeight
@@ -396,15 +529,17 @@ function applyPaper(t) {
   content.active = t >= 0.9999
   if (!turn) {
     parkPages()
-    stationaryPage(firstPage + 1, false)
-    const { pivot, page } = pageSurfaces[firstPage - 1]
-    pivot.position.set(
-      Math.cos(angle) * -0.31 - Math.sin(angle) * PAGE_HEIGHT,
-      hingeHeight + Math.sin(angle) * -0.31 + Math.cos(angle) * PAGE_HEIGHT,
-      0
-    )
-    pivot.rotation.set(0, 0, angle)
-    page.rotation.set(-PI / 2, 0, 0)
+    if (!fullyClosed && pageSurfaces[firstPage - 1]) {
+      stationaryPage(firstPage + 1, false)
+      const { pivot, page } = pageSurfaces[firstPage - 1]
+      pivot.position.set(
+        Math.cos(angle) * -0.31 - Math.sin(angle) * PAGE_HEIGHT,
+        hingeHeight + Math.sin(angle) * -0.31 + Math.cos(angle) * PAGE_HEIGHT,
+        0
+      )
+      pivot.rotation.set(0, 0, angle)
+      page.rotation.set(-PI / 2, 0, 0)
+    }
   }
   if (t >= 0.9999 && pendingTurn && !turn) startSharedTurn(pendingTurn)
   action.label = target === 1 ? 'Fold journal' : 'Open journal'
@@ -430,7 +565,7 @@ function setOpen(isOpen, pose) {
   if (!isOpen && turn) finishTurn()
   target = isOpen ? 1 : 0
   if (target !== progress) {
-    // Opening reactivates all six page views; closing disables them at rest.
+    // Page WebViews stay mounted off-page while the journal is closed.
     content.active = false
     app.off('update', animate)
     app.on('update', animate)
@@ -442,22 +577,45 @@ applyPaper(progress)
 
 if (world.isServer) {
   if (typeof app.state.open !== 'boolean') app.state.open = false
+  if (!validPageCount(app.state.pageCount)) app.state.pageCount = null
+  app.state.pageCountReady = app.state.pageCountReady === true && validPageCount(app.state.pageCount)
   let lastFirstPage = validSpread(app.state.firstPage) ? app.state.firstPage : 1
   function ensurePageState() {
-    if (!validSpread(app.state.firstPage)) app.state.firstPage = lastFirstPage
+    const count = validPageCount(app.state.pageCount) ? app.state.pageCount : MAX_PAGE_COUNT
+    if (!validSpread(app.state.firstPage, count)) app.state.firstPage = clampSpread(lastFirstPage, count)
     lastFirstPage = app.state.firstPage
   }
   ensurePageState()
   let turnSequence = 0
   app.state.turn = null
-  app.on('journal:turn-request', (request, networkId) => {
+  app.on('journal:page-count', (request, networkId) => {
     const player = world.getPlayer(networkId)
     if (!player || !app.state.open || app.state.readerId !== player.id) return
+    if (request?.version !== 1 || !validPageCount(request.count)) return
+    if (!app.state.pageCountReady || app.state.pageCount !== request.count) {
+      app.state.pageCount = request.count
+      app.state.pageCountReady = true
+      app.state.firstPage = clampSpread(app.state.firstPage, request.count)
+      app.state.turn = null
+      lastFirstPage = app.state.firstPage
+      applyPageCount(request.count, true, app.state.firstPage)
+    }
+    app.send('journal:page-count', {
+      version: 1,
+      count: app.state.pageCount,
+      pageCountReady: true,
+      firstPage: app.state.firstPage,
+      turn: null,
+    })
+  })
+  app.on('journal:turn-request', (request, networkId) => {
+    const player = world.getPlayer(networkId)
+    if (!player || !app.state.open || !app.state.pageCountReady || app.state.readerId !== player.id) return
     ensurePageState()
     if (request?.direction !== 1 && request?.direction !== -1) return
     if (app.state.turn && world.getTime() < app.state.turn.startedAt + TURN_DURATION) return
     const origin = app.state.firstPage
-    const destination = Math.max(1, Math.min(PAGE_COUNT - 1, origin + request.direction * 2))
+    const destination = Math.max(1, Math.min(maxSpreadFirstPage(app.state.pageCount), origin + request.direction * 2))
     if (destination === origin) return
     const sharedTurn = {
       id: ++turnSequence,
@@ -482,7 +640,12 @@ if (world.isServer) {
     app.state.readerId = null
     app.state.readingPose = null
     app.state.turn = null
-    app.send('journal:state', { open: false, firstPage: app.state.firstPage })
+    app.send('journal:state', {
+      open: false,
+      firstPage: app.state.firstPage,
+      pageCount: app.state.pageCount,
+      pageCountReady: app.state.pageCountReady,
+    })
   }
   app.on('journal:toggle', (request, networkId) => {
     const player = world.getPlayer(networkId)
@@ -510,7 +673,15 @@ if (world.isServer) {
     app.state.open = true
     app.state.readerId = player.id
     app.state.readingPose = pose
-    app.send('journal:state', { open: true, pose, readerId: player.id, firstPage: app.state.firstPage })
+    app.state.pageCountReady = false
+    app.send('journal:state', {
+      open: true,
+      pose,
+      readerId: player.id,
+      firstPage: app.state.firstPage,
+      pageCount: app.state.pageCount,
+      pageCountReady: app.state.pageCountReady,
+    })
   })
   world.on('leave', event => {
     if (event.playerId === app.state.readerId) publishClosed()
@@ -522,10 +693,21 @@ if (world.isClient) {
   frontCover.onPointerDown = requestToggle
   foldTab.onPointerDown = requestToggle
   app.on('journal:pages', receivePages)
+  app.on('journal:page-count', receivePageCount)
   app.on('journal:state', message => {
     app.state.open = message.open
     app.state.readerId = message.readerId || null
     app.state.readingPose = message.pose || null
+    if (validPageCount(message.pageCount)) {
+      applyPageCount(message.pageCount, message.pageCountReady === true, message.firstPage)
+    } else {
+      pageCountReady = false
+      app.state.pageCountReady = false
+    }
+    if (message.open) {
+      if (message.pageCountReady !== true) reportedPageCount = null
+      maybeSendHtmlPageCount()
+    }
     if (Number.isInteger(message.firstPage)) receivePages({ firstPage: message.firstPage, turn: null })
     if (!world.isBuilding || !message.open) setOpen(message.open, message.pose)
   })
