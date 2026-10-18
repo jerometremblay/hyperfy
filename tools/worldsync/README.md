@@ -53,6 +53,31 @@ verify the live values. The current Agent API cannot upload changed non-JavaScri
 assets, so the command stops before changing the blueprint if one is required.
 It also refuses unmapped objects instead of guessing which live app they replace.
 
+## Upstream object updates
+
+Keep canonical objects in `tools/worldsync/catalog/objects/<key>` in the Hyperfy
+repository. Tracking records the repository, branch, and object path in that
+world object's `object.json`, along with a baseline snapshot. `check` and `update`
+read those settings from every tracked object's manifest, so they need no
+per-object source path arguments:
+
+```sh
+npm run worldsync -- upstream track --root ../hyperfy-world-jerome --object apps/hyperfy-news-folding-journal
+npm run worldsync -- upstream check --root ../hyperfy-world-jerome
+npm run worldsync -- upstream update --root ../hyperfy-world-jerome
+```
+
+Pass `--object <key>` to `check` or `update` to limit either command to one
+object. `track` uses the matching object in the Hyperfy catalog and saves the
+upstream base inside the world object directory. The configured repository and
+ref must match the Hyperfy checkout running `worldsync`; switch or update that
+checkout before checking for new upstream versions. `check` reports upstream
+changes, local edits, and merge conflicts without writing files. `update`
+performs a three-way merge, keeps local-only changes, and leaves an object
+unchanged when edits conflict or a changed file is binary. Updating source
+files does not deploy them to a live world; use the separate `diff` and
+`deploy` commands after reviewing an update.
+
 Generated bundles and HYP exports go under `tools/worldsync/dist/` in the source directory and are ignored by Git. `build` refuses external asset references by default. `--allow-external` keeps those references and marks the bundle nonportable; diagnostics show source paths and line numbers without printing URLs.
 
 Run the focused offline tests with:

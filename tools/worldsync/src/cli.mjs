@@ -9,6 +9,7 @@ import { importHyp, unpackObject } from './importer.mjs'
 import { packHyp } from './hyp-format.mjs'
 import { loadObject } from './object-source.mjs'
 import { deployObject, diffObjectDeployment } from './deployment.mjs'
+import { checkUpstream, trackUpstream, updateUpstream } from './upstream.mjs'
 import { ensureSafeDirectory, readBoundedFile, resolveContainedPath, resolveLocalReference } from './paths.mjs'
 
 function parseArgs(values) {
@@ -46,6 +47,8 @@ function printHelp() {
     '  verify --bundle <path>',
     '  diff --object <key> --profile <name>',
     '  deploy --object <key> --profile <name>',
+    '  upstream track --object <key>',
+    '  upstream check|update [--object <key>]',
     '',
     'Live scene capture and worker commands are not available in this phase.',
   ].join('\n'))
@@ -166,6 +169,54 @@ async function run() {
         ? `Deployed ${result.key} to live version ${result.version} (fields: ${result.fields.join(', ')})`
         : `${result.key} is already current (live version ${result.version})`
     )
+    return
+  }
+  if (command === 'upstream') {
+    const action = positional.shift()
+    if (!['track', 'check', 'update'].includes(action)) {
+      throw new Error('upstream requires track, check, or update')
+    }
+    if (action === 'track' && !options.object) {
+      throw new Error('upstream track requires --object')
+    }
+    const key = options.object ? assertKey(options.object, 'object key') : null
+    if (action === 'track') {
+      const result = await trackUpstream(root, key)
+      console.log('Tracking ' + result.key + ' from ' + result.repository + '#' + result.ref + ':' + result.path)
+      if (result.localChanges.length) console.log('Preserved local changes: ' + result.localChanges.join(', '))
+      return
+    }
+    const results = action === 'check'
+      ? await checkUpstream(root, key)
+      : await updateUpstream(root, key)
+    if (results.some(result => result.error || (result.conflicts && result.conflicts.length))) {
+      process.exitCode = 1
+    }
+    if (options.json) {
+      console.log(JSON.stringify(results, null, 2))
+    } else if (!results.length) {
+      console.log('No objects track an upstream')
+    } else {
+      for (const result of results) {
+        if (result.error) {
+          console.log(result.key + ': ERROR ' + result.error)
+          process.exitCode = 1
+          continue
+        }
+        if (action === 'check') {
+          console.log(result.sourceChanged
+            ? result.conflicts.length
+              ? `${result.key}: upstream changes conflict in ${result.conflicts.join(', ')}`
+              : `${result.key}: ${result.upstreamChanges.length} upstream change(s) can be merged; local changes: ${result.localChanges.length}`
+            : `${result.key}: upstream is current; local changes: ${result.localChanges.length}`)
+        } else {
+          console.log(result.updated
+            ? 'Updated ' + result.key + (result.files.length ? ' (changed files: ' + result.files.join(', ') + ')' : ' (upstream baseline advanced)')
+            : result.key + ' is already current')
+        }
+        if (result.conflicts && result.conflicts.length) process.exitCode = 1
+      }
+    }
     return
   }
   if (['status', 'capture', 'adopt'].includes(command)) {

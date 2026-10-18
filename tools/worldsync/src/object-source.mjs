@@ -27,6 +27,7 @@ const MANIFEST_FIELDS = new Set([
   'blueprint',
   'source',
   'extraAssets',
+  'upstream',
   'extensions',
 ])
 const ASSET_TYPES = new Set([
@@ -95,6 +96,55 @@ function validateBlueprint(blueprint, key) {
   }
 }
 
+function validateUpstream(upstream, key, sourcePath) {
+  if (!plainObject(upstream)) throw new Error(sourcePath + ' upstream must be an object')
+  const fields = new Set(['repository', 'ref', 'path', 'sourceFingerprint'])
+  if (Object.keys(upstream).some(field => !fields.has(field))) {
+    throw new Error(sourcePath + ' upstream has an unsupported field')
+  }
+  if (typeof upstream.repository !== 'string') {
+    throw new Error(sourcePath + ' upstream.repository must be an HTTPS Git repository URL')
+  }
+  let repository
+  try {
+    repository = new URL(upstream.repository)
+  } catch {
+    throw new Error(sourcePath + ' upstream.repository must be an HTTPS Git repository URL')
+  }
+  if (
+    repository.protocol !== 'https:' ||
+    repository.username ||
+    repository.password ||
+    repository.search ||
+    repository.hash
+  ) {
+    throw new Error(sourcePath + ' upstream.repository must be an HTTPS Git repository URL without credentials')
+  }
+  if (
+    typeof upstream.ref !== 'string' ||
+    !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(upstream.ref) ||
+    upstream.ref.includes('..') ||
+    upstream.ref.includes('//') ||
+    upstream.ref.endsWith('/') ||
+    upstream.ref.endsWith('.')
+  ) {
+    throw new Error(sourcePath + ' upstream.ref must be a safe branch or tag name')
+  }
+  if (
+    typeof upstream.path !== 'string' ||
+    upstream.path.includes('\\') ||
+    upstream.path.includes('\0') ||
+    upstream.path.startsWith('/') ||
+    upstream.path.split('/').some(part => !part || part === '.' || part === '..') ||
+    !upstream.path.endsWith('/objects/' + key) && upstream.path !== 'objects/' + key
+  ) {
+    throw new Error(sourcePath + ' upstream.path must point to this key under an objects/ directory')
+  }
+  if (typeof upstream.sourceFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(upstream.sourceFingerprint)) {
+    throw new Error(sourcePath + ' upstream.sourceFingerprint must be a SHA-256 digest')
+  }
+}
+
 export function validateObjectManifest(manifest, sourcePath = 'object.json') {
   if (!plainObject(manifest)) throw new Error(sourcePath + ' must contain a JSON object')
   for (const field of Object.keys(manifest)) {
@@ -105,6 +155,10 @@ export function validateObjectManifest(manifest, sourcePath = 'object.json') {
   if (!['files', 'hyp'].includes(manifest.mode)) throw new Error(sourcePath + ' mode must be files or hyp')
   if (manifest.role !== undefined && manifest.role !== 'environment') {
     throw new Error(sourcePath + ' role must be environment when present')
+  }
+  if (manifest.upstream !== undefined) {
+    if (manifest.mode !== 'files') throw new Error(sourcePath + ' upstream is supported only for files mode objects')
+    validateUpstream(manifest.upstream, manifest.key, sourcePath)
   }
   if (manifest.mode === 'files') {
     if (manifest.source !== undefined) throw new Error(sourcePath + ' files mode must not declare source')

@@ -14,6 +14,20 @@
     "assetType": {
       "enum": ["model", "avatar", "script", "texture", "audio", "video", "image", "hdr", "emote", "splat", "other"]
     },
+    "upstream": {
+      "type": "object",
+      "required": ["repository", "ref", "path", "sourceFingerprint"],
+      "properties": {
+        "repository": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "ref": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$" },
+        "path": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9._-]+/)*objects/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$"
+        },
+        "sourceFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    },
     "blueprint": {
       "type": "object",
       "required": ["name"],
@@ -56,6 +70,7 @@
         "schemaVersion": { "const": 1 },
         "key": { "$ref": "#/$defs/key" },
         "role": { "const": "environment" },
+        "upstream": { "$ref": "#/$defs/upstream" },
         "extensions": { "type": "object", "maxProperties": 0 }
       }
     },
@@ -96,7 +111,7 @@
             "mode": { "const": "hyp" },
             "source": { "type": "string", "pattern": "^\\./[^/].*\\.hyp$" }
           },
-          "not": { "anyOf": [{ "required": ["blueprint"] }, { "required": ["extraAssets"] }] },
+          "not": { "anyOf": [{ "required": ["blueprint"] }, { "required": ["extraAssets"] }, { "required": ["upstream"] }] },
           "unevaluatedProperties": false
         }
       ]
