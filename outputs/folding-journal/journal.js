@@ -226,6 +226,27 @@ function maybeSendHtmlPageCount() {
   app.send('journal:page-count', { version: 1, count: latestHtmlPageCount })
 }
 
+function releaseReadingFocus(number, event) {
+  if (typeof event.releaseFocus === 'function') {
+    event.releaseFocus()
+    return
+  }
+  // Older worlds do not yet provide WebView.releaseFocus(); rebuilding its
+  // existing surface drops iframe focus.
+  const page = pageSurfaces[number - 1]?.page
+  const src = page?.src
+  if (src) {
+    page.src = ''
+    page.src = src
+  }
+}
+
+function requestClose() {
+  if (!world.isClient || app.isMoving || !app.state.open) return
+  if (world.getPlayer()?.id !== app.state.readerId) return
+  app.send('journal:toggle')
+}
+
 function receiveHtmlPageCount(event) {
   if (event?.origin !== NEWS_ORIGIN) return
   const message = event.data
@@ -286,20 +307,20 @@ function receiveHtmlBridgeEvent(number, event) {
   }
 
   if (name !== 'keydown') return
-  if (detail?.key === 'Escape') {
-    if (typeof event.releaseFocus === 'function') {
-      event.releaseFocus()
-    } else {
-      // Older worlds do not yet provide WebView.releaseFocus(); rebuilding its
-      // existing surface drops iframe focus, then the next Escape reaches Controls.
-      const page = pageSurfaces[number - 1]?.page
-      const src = page?.src
-      if (src) {
-        page.src = ''
-        page.src = src
-      }
-    }
-  }
+  if (detail?.isTrusted !== true || detail.repeat || detail.isComposing) return
+  const escape = detail.key === 'Escape' || detail.code === 'Escape'
+  const keyE = detail.code === 'KeyE' ||
+    (typeof detail.key === 'string' && detail.key.toLowerCase() === 'e')
+  const unmodifiedE =
+    keyE &&
+    !detail.altKey &&
+    !detail.ctrlKey &&
+    !detail.metaKey &&
+    !detail.shiftKey &&
+    !target?.isEditable
+  if (!escape && !unmodifiedE) return
+  releaseReadingFocus(number, event)
+  requestClose()
 }
 
 function createPageSurface(number) {

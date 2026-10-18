@@ -214,6 +214,55 @@ test('issue page clicks request turns only from the journal origin and in the cl
   assert.deepEqual(backClient.sent.findLast(([name]) => name === 'journal:turn-request')[1], { direction: -1 })
 })
 
+test('focused page keyboard closes the journal with Escape or unmodified E', () => {
+  const f = fixture(),
+    server = f.runtime(true),
+    client = f.runtime(false)
+  f.open(server, client)
+  client.get('world.getPlayer().getBoneTransform = () => null')
+  const page = client.get('pageSurfaces[1].page')
+  let released = 0
+
+  function keydown(key, options = {}) {
+    page.onMessage({
+      origin: NEWS_ORIGIN,
+      data: {
+        channel: 'hyperfy-webview',
+        version: 1,
+        type: 'event',
+        name: 'keydown',
+        detail: {
+          key,
+          code: options.code || (key === 'Escape' ? 'Escape' : 'KeyE'),
+          isTrusted: true,
+          defaultPrevented: false,
+          repeat: false,
+          isComposing: false,
+          altKey: options.altKey || false,
+          ctrlKey: options.ctrlKey || false,
+          metaKey: options.metaKey || false,
+          shiftKey: options.shiftKey || false,
+          target: options.target || { isEditable: false },
+        },
+      },
+      releaseFocus() { released++ },
+    })
+  }
+
+  keydown('Escape', { target: { isEditable: true } })
+  keydown('e')
+  keydown('e', { target: { isEditable: true } })
+  keydown('e', { shiftKey: true })
+
+  const closeRequests = client.sent.filter(([name]) => name === 'journal:toggle')
+  assert.equal(closeRequests.length, 2)
+  assert.equal(released, 2)
+  for (const [, request] of closeRequests) {
+    server.events.get('journal:toggle')(request, 'alice')
+  }
+  assert.equal(server.app.state.open, false)
+})
+
 test('server enforces opener ownership, bounds, valid direction and one turn at a time', () => {
   const f = fixture(),
     server = f.runtime(true)
