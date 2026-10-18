@@ -1,4 +1,4 @@
-# Catalog night sky
+# Astronomical night sky
 
 The day/night environment displays 8,920 real stars down to apparent magnitude 6.5.
 Stars rotate with the world's latitude, longitude, and synchronized effective time,
@@ -8,7 +8,7 @@ the end of nautical twilight, and 6.5 at the end of astronomical twilight. They 
 near the horizon and disappear when the day/night cycle is off. The existing custom
 background sky then takes over.
 
-World settings includes a **Constellation Lines** toggle, off by default. When enabled,
+World settings include a **Constellation Lines** toggle, off by default. When enabled,
 faint connections highlight all 88 modern constellations. They share the star field's
 time/location transform, twilight fade, horizon masking, and portal/XR camera behavior.
 The toggle is saved and shared with the world using the existing builder-controlled
@@ -22,10 +22,43 @@ reduces brightness near the horizon. B-V indices produce approximate muted color
 Missing color indices use a neutral color.
 
 This is a J2000 fixed catalog with mean sidereal rotation, using UTC as an approximation
-to UT1. It omits precession, proper motion, nutation, refraction, light pollution,
-twinkling, and a Milky Way image. Atmospheric extinction and Moon-driven sky glow are
-approximate visibility cues, not a radiometric sky model. It is intended for a recognizable
-night sky, not precision astrometry.
+to UT1. The point-star catalog omits precession, proper motion, nutation, refraction,
+light pollution, and twinkling. Atmospheric extinction and Moon-driven sky glow are
+approximate visibility cues, not a radiometric sky model. It is intended for a
+recognizable night sky, not precision astrometry. The diffuse Milky Way separately
+responds to the light-pollution control described below.
+
+## Diffuse Milky Way
+
+The diffuse background uses NASA Goddard's `milkyway_2020_4k.exr`, a 4096 × 2048
+celestial-coordinate map built from Gaia DR2 and other star catalogs. The NASA map
+omits its bright Hipparcos and Tycho foreground stars, so it complements rather than
+duplicates Hyperfy's visible-star catalog. Its J2000 orientation shares the catalog's
+sidereal rotation: right ascension zero is centered, increases to the left, and
+declination increases toward the top.
+
+The image is converted offline to a 2048 × 1024 JPEG with linear-light RGB values and
+sampled as a linear texture inside the existing procedural sky shader. This adds no
+sky draw call and does not illuminate scene objects.
+Visibility fades through twilight, near the horizon, under Moon glow, and with the
+world's **Light Pollution** setting. **Sky Appearance** adjusts the map from a muted
+realistic baseline toward a brighter, more scenic presentation. Both settings are
+saved and shared with the world; their defaults are 30 and 15 respectively on a 0–100
+scale.
+
+The NASA map is a rendered star-density/color visualization, not an absolute
+radiometric sky model. Its diffuse texture provides the Milky Way band and dust-lane
+structure, but does not add a separate H-alpha nebula layer. The default display is
+intentionally subdued, and its appearance still depends on the device's tone mapping
+and headset display.
+
+Run `node scripts/build-diffuse-sky.mjs` to download the source from NASA and reproduce
+`src/client/public/milkyway.jpg`. The script verifies the source SHA-256 and requires
+`ffmpeg` for the resize and conversion. Credit: NASA/Goddard Space Flight Center
+Scientific Visualization Studio; Gaia DR2: ESA/Gaia/DPAC. NASA's media guidelines
+generally allow reuse of NASA content without a separate license, subject to proper
+credit and no implied NASA endorsement. The source map is linked from
+[NASA Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851/).
 
 ## Planets
 

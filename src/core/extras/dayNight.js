@@ -60,6 +60,7 @@ export function getWorldTime(settings, now = Date.now()) {
 
 export function isValidDayNightSetting(key, value) {
   if (key === 'dayNightCycle' || key === 'constellationLines') return typeof value === 'boolean'
+  if (key === 'skyAppearance' || key === 'lightPollution') return Number.isFinite(value) && value >= 0 && value <= 100
   if (key === 'timeZone') {
     if (typeof value !== 'string' || !value) return false
     try {

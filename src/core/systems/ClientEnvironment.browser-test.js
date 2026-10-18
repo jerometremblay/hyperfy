@@ -29,7 +29,10 @@ const world = {
   rig: new THREE.Object3D(),
   prefs: Object.assign(new EventEmitter(), { shadows: 'high' }),
   graphics: new EventEmitter(),
-  loader: { load: async () => new HDRLoader().loadAsync('/ambient.hdr') },
+  loader: {
+    load: (type, url) =>
+      type === 'hdr' ? new HDRLoader().loadAsync('/ambient.hdr') : new THREE.TextureLoader().loadAsync(url),
+  },
 }
 world.settings = new Settings(world)
 const env = new ClientEnvironment(world)

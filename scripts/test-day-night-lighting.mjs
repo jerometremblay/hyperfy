@@ -15,6 +15,7 @@ main{display:grid;grid-template-columns:440px 440px;gap:14px}p{margin:5px 0}pre{
 <script type="module" src="/test.js"></script>`
 const hdr = await readFile(new URL('../src/client/public/Clear_08_4pm_LDR.hdr', import.meta.url))
 const stars = await readFile(new URL('../src/client/public/stars.json', import.meta.url))
+const milkyWay = await readFile(new URL('../src/client/public/milkyway.jpg', import.meta.url))
 createServer((request, response) => {
   if (request.url === '/test.js') {
     response.setHeader('Content-Type', 'text/javascript')
@@ -24,6 +25,9 @@ createServer((request, response) => {
     response.end(stars)
   } else if (request.url === '/ambient.hdr') {
     response.end(hdr)
+  } else if (request.url === '/milkyway.jpg') {
+    response.setHeader('Content-Type', 'image/jpeg')
+    response.end(milkyWay)
   } else if (request.url === '/') {
     response.setHeader('Content-Type', 'text/html')
     response.end(html)

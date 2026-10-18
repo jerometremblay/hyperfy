@@ -10,6 +10,7 @@ const bundle = await build({
 })
 const catalog = await readFile(new URL('../src/client/public/stars.json', import.meta.url))
 const hdr = await readFile(new URL('../src/client/public/Clear_08_4pm_LDR.hdr', import.meta.url))
+const milkyWay = await readFile(new URL('../src/client/public/milkyway.jpg', import.meta.url))
 const html = `<!doctype html><meta charset="utf-8"><title>Night sky regression</title>
 <style>body{background:#151922;color:#eee;font:15px system-ui;margin:24px}
 main{display:grid;grid-template-columns:800px;gap:14px}p{margin:5px 0}pre{font-size:12px;white-space:pre-wrap}</style>
@@ -24,6 +25,9 @@ createServer((request, response) => {
     response.end(catalog)
   } else if (request.url === '/ambient.hdr') {
     response.end(hdr)
+  } else if (request.url === '/milkyway.jpg') {
+    response.setHeader('Content-Type', 'image/jpeg')
+    response.end(milkyWay)
   } else if (request.url === '/') {
     response.setHeader('Content-Type', 'text/html')
     response.end(html)

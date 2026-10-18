@@ -12,7 +12,7 @@ import { createStarField, loadStarCatalog } from '../extras/createStarField'
 import { setCelestialRotation } from '../extras/celestialRotation'
 import { getPlanetStates } from '../extras/planetPositions'
 import { createPlanets, updatePlanets } from '../extras/createPlanets'
-import { celestialTwilightShader, getNightProgress } from '../extras/celestialVisibility'
+import { celestialVisibilityShader, getNightProgress } from '../extras/celestialVisibility'
 
 const sunsetColor = new THREE.Color('#ffb16b')
 const moonDistance = 900
@@ -93,6 +93,7 @@ export class ClientEnvironment extends System {
     this.bgUrl = null
     this.hdrUrl = null
     this.solarSky = null
+    this.diffuseSkyPlaceholder = null
     this.solarDirection = new THREE.Vector3()
     this.celestialRotation = new THREE.Matrix3()
     this.eclipticPole = new THREE.Vector3()
@@ -168,8 +169,27 @@ export class ClientEnvironment extends System {
       // Scale only the sky, keeping sunlight and other emissive objects unchanged.
       this.solarSky.material.uniforms.showSunDisc.value = 0.001
       this.solarSky.material.uniforms.sunAltitude = { value: 0 }
+      this.diffuseSkyPlaceholder = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1)
+      this.diffuseSkyPlaceholder.needsUpdate = true
+      Object.assign(this.solarSky.material.uniforms, {
+        diffuseSkyMap: { value: this.diffuseSkyPlaceholder },
+        worldToCelestial: { value: new THREE.Matrix3() },
+        diffuseSkyAppearance: { value: 0.3 },
+        diffuseSkyLightPollution: { value: 0.15 },
+        diffuseMoonDirection: this.celestialVisibility.moonDirection,
+        diffuseMoonFraction: this.celestialVisibility.moonFraction,
+      })
       this.solarSky.material.fragmentShader =
-        'uniform float sunAltitude;\n' + celestialTwilightShader + this.solarSky.material.fragmentShader
+        `uniform float sunAltitude;
+         uniform sampler2D diffuseSkyMap;
+         uniform mat3 worldToCelestial;
+         uniform float diffuseSkyAppearance;
+         uniform float diffuseSkyLightPollution;
+         uniform vec3 diffuseMoonDirection;
+         uniform float diffuseMoonFraction;
+         ` +
+        celestialVisibilityShader +
+        this.solarSky.material.fragmentShader
       this.solarSky.material.fragmentShader = this.solarSky.material.fragmentShader.replace(
         '#include <tonemapping_fragment>',
         `
@@ -179,12 +199,54 @@ export class ClientEnvironment extends System {
           vec3 scatteringSky = max(gl_FragColor.rgb, vec3(0.0)) * 0.05;
           vec3 twilightSky = max(scatteringSky, vec3(0.012, 0.018, 0.035));
           gl_FragColor.rgb = mix(twilightSky, nightSky, nightProgress);
+
+          vec3 equatorialDirection = normalize(worldToCelestial * direction);
+          float rightAscension = atan(-equatorialDirection.z, equatorialDirection.x);
+          vec2 diffuseSkyUv = vec2(
+            fract(0.5 - rightAscension / (2.0 * pi)),
+            0.5 + asin(clamp(equatorialDirection.y, -1.0, 1.0)) / pi
+          );
+          vec3 diffuseSky = texture2D(diffuseSkyMap, diffuseSkyUv).rgb;
+          diffuseSky = max(diffuseSky - vec3(0.0008), vec3(0.0));
+          float diffuseLuminance = dot(diffuseSky, vec3(0.2126, 0.7152, 0.0722));
+          float diffuseSaturation = mix(0.08, 0.45, diffuseSkyAppearance);
+          diffuseSky = mix(vec3(diffuseLuminance), diffuseSky, diffuseSaturation);
+
+          float skyAltitude = getCelestialAltitude(direction);
+          float moonAltitude = getCelestialAltitude(diffuseMoonDirection);
+          float moonSeparation = acos(clamp(dot(direction, diffuseMoonDirection), -1.0, 1.0));
+          float moonGlow = diffuseMoonFraction * smoothstep(-5.0, 15.0, moonAltitude)
+            * (0.25 + 0.75 * exp(-pow(moonSeparation / 0.55, 2.0)));
+          float horizonTransmission = smoothstep(0.0, 6.0, skyAltitude)
+            * exp(-0.16 * getAtmosphericExtinction(skyAltitude));
+          float nightVisibility = nightProgress * nightProgress;
+          float pollutionVisibility = exp(-2.3 * diffuseSkyLightPollution);
+          float moonVisibility = 1.0 - 0.78 * moonGlow;
+          float appearanceGain = mix(0.55, 1.6, diffuseSkyAppearance);
+          float diffuseVisibility = nightVisibility * horizonTransmission
+            * pollutionVisibility * moonVisibility;
+          gl_FragColor.rgb += diffuseSky * (0.1 * appearanceGain * diffuseVisibility);
+
           gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.18, 0.6, 1.2), daylight * 0.8);
           #include <tonemapping_fragment>`
       )
       this.solarSky.visible = false
       this.solarSky.frustumCulled = false
       this.world.stage.scene.add(this.solarSky)
+
+      const diffuseSkyUrl = this.world.isPreview ? new URL('/milkyway.jpg', window.location.href).href : '/milkyway.jpg'
+      this.world.loader
+        .load('texture', diffuseSkyUrl)
+        .then(texture => {
+          if (this.destroyed) return
+          texture.colorSpace = THREE.LinearSRGBColorSpace
+          this.solarSky.material.uniforms.diffuseSkyMap.value = texture
+          this.diffuseSkyPlaceholder?.dispose()
+          this.diffuseSkyPlaceholder = null
+        })
+        .catch(error => {
+          if (!this.destroyed) console.warn('Unable to load diffuse night sky:', error)
+        })
 
       this.moon = createMoon()
       const moonUniforms = this.moon.material.uniforms
@@ -331,6 +393,10 @@ export class ClientEnvironment extends System {
     const state = getDayNightState(date, latitude, longitude)
     const nightProgress = getNightProgress(state.altitude)
     setCelestialRotation(this.celestialRotation, date, latitude, longitude)
+    const diffuseSkyUniforms = this.solarSky.material.uniforms
+    diffuseSkyUniforms.worldToCelestial.value.copy(this.celestialRotation).transpose()
+    diffuseSkyUniforms.diffuseSkyAppearance.value = this.world.settings.skyAppearance / 100
+    diffuseSkyUniforms.diffuseSkyLightPollution.value = this.world.settings.lightPollution / 100
     this.eclipticPole.copy(eclipticPoleEquatorial).applyMatrix3(this.celestialRotation).normalize()
     this.solarUpdatedAt = now
     this.renderExposure = state.renderExposure
@@ -458,6 +524,8 @@ export class ClientEnvironment extends System {
     if (
       changes.dayNightCycle ||
       changes.constellationLines ||
+      changes.skyAppearance ||
+      changes.lightPollution ||
       changes.latitude ||
       changes.longitude ||
       changes.timeOffset ||
@@ -473,6 +541,7 @@ export class ClientEnvironment extends System {
     this.world.prefs.off('change', this.onPrefsChange)
     this.world.settings.off('change', this.onSettingsChange)
     this.world.graphics.off('resize', this.onViewportResize)
+    this.diffuseSkyPlaceholder?.dispose()
     for (const sky of [this.sky, this.solarSky, this.moon, this.moonMarker, this.stars]) {
       if (!sky) continue
       sky.removeFromParent()
