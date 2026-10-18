@@ -6,8 +6,8 @@ import { DEFAULT_BORTLE_CLASS, celestialVisibilityShader, getCelestialVisibility
 const colors = ['#cbc4b7', '#fff2cc', '#e8a080', '#e9dac3', '#e6d4ac', '#b8e3e8', '#8aa8e8']
 // Ten degrees is wide enough to catch names that would collide along the ecliptic.
 const labelCollisionAngle = THREE.MathUtils.degToRad(10)
-// Label rows in the marker's 800-pixel angular reference.
-const labelOffsets = [0, -21, 21]
+// Parallel label rows in the marker's 800-pixel angular reference.
+const labelRowSpacing = 32
 
 export function createPlanets(
   visibilityUniforms = {
@@ -139,15 +139,27 @@ export function updatePlanets(group, states, visibilityUniforms, showNames, nigh
 
 function resolvePlanetLabelOffsets(planets, visible) {
   const offsets = planets.map(() => 0)
+  const assigned = planets.map(() => false)
   for (let i = 0; i < planets.length; i++) {
-    if (!visible[i]) continue
-    const used = new Set()
-    for (let j = 0; j < i; j++) {
-      if (visible[j] && planets[i].direction.value.angleTo(planets[j].direction.value) < labelCollisionAngle) {
-        used.add(offsets[j])
+    if (!visible[i] || assigned[i]) continue
+    const cluster = [i]
+    assigned[i] = true
+    for (let current = 0; current < cluster.length; current++) {
+      const index = cluster[current]
+      for (let j = 0; j < planets.length; j++) {
+        if (
+          visible[j] &&
+          !assigned[j] &&
+          planets[index].direction.value.angleTo(planets[j].direction.value) < labelCollisionAngle
+        ) {
+          cluster.push(j)
+          assigned[j] = true
+        }
       }
     }
-    offsets[i] = labelOffsets.find(offset => !used.has(offset)) ?? labelOffsets[1]
+    cluster.forEach((planetIndex, row) => {
+      offsets[planetIndex] = (row - (cluster.length - 1) / 2) * labelRowSpacing
+    })
   }
   return offsets
 }

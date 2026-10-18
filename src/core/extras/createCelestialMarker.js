@@ -25,18 +25,18 @@ const vertexShader = `
 function createNameTexture(name) {
   const canvas = document.createElement('canvas')
   canvas.width = 512
-  canvas.height = 128
+  canvas.height = 512
   const context = canvas.getContext('2d')
   context.strokeStyle = CELESTIAL_ANNOTATION_COLOR
   context.fillStyle = CELESTIAL_ANNOTATION_COLOR
   context.lineWidth = 2
   // Outline only: keep the center transparent so the planet sprite beneath it shows through.
   context.beginPath()
-  context.arc(40, 64, 24, 0, Math.PI * 2)
+  context.arc(40, 256, 24, 0, Math.PI * 2)
   context.stroke()
   context.font = '36px sans-serif'
   context.textBaseline = 'middle'
-  context.fillText(name, 80, 64)
+  context.fillText(name, 80, 256)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
@@ -52,7 +52,7 @@ export function createCelestialMarker(name, uniforms) {
         textOffset: { value: 0 },
         right: uniforms.right ?? { value: new THREE.Vector3() },
         up: uniforms.up ?? { value: new THREE.Vector3() },
-        extent: { value: new THREE.Vector2(128, 32).multiplyScalar(angularUnit) },
+        extent: { value: new THREE.Vector2(128, 128).multiplyScalar(angularUnit) },
         // The texture's circle is at x=40/512; align it with the celestial direction.
         offset: { value: new THREE.Vector2(108, 0).multiplyScalar(angularUnit) },
       },
@@ -69,8 +69,8 @@ export function createCelestialMarker(name, uniforms) {
         void main() {
           if (direction.y <= 0.0) discard;
           vec2 sampleUv = vUv;
-          // The marker plane spans 64 reference pixels vertically.
-          if (vUv.x > 0.14) sampleUv.y += textOffset / 64.0;
+          // The marker plane spans 256 reference pixels vertically.
+          if (vUv.x > 0.14) sampleUv.y += textOffset / 256.0;
           gl_FragColor = texture2D(map, sampleUv);
           gl_FragColor.a *= opacity * smoothstep(0.0, 0.035, direction.y) * ${CELESTIAL_ANNOTATION_OPACITY};
           #include <tonemapping_fragment>
