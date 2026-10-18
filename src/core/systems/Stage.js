@@ -155,6 +155,14 @@ export class Stage extends System {
     }
   }
 
+  releaseGeometry(geometry) {
+    for (const [id, model] of this.models) {
+      if (model.sourceGeometry !== geometry || model.items.length) continue
+      model.dispose()
+      this.models.delete(id)
+    }
+  }
+
   insertLinked({ geometry, material, uberShader, castShadow, receiveShadow, node, matrix }) {
     const id = `${geometry.uuid}/${material.uuid}/${uberShader}/${castShadow}/${receiveShadow}`
     if (!this.models.has(id)) {
@@ -190,7 +198,7 @@ export class Stage extends System {
       destroy: () => {
         this.scene.remove(mesh)
         this.octree.remove(sItem)
-        if (this.world.isPreview) material.dispose()
+        material.dispose()
       },
     }
   }
@@ -200,7 +208,17 @@ export class Stage extends System {
     let raw
     if (options.raw) {
       raw = options.raw.clone()
-      raw.onBeforeCompile = options.raw.onBeforeCompile
+      const sourceMaterial = options.raw
+      const sourceOnBeforeCompile = sourceMaterial.onBeforeCompile
+      raw.customProgramCacheKey = () => sourceMaterial.customProgramCacheKey()
+      raw.onBeforeCompile = (shader, renderer) => {
+        sourceOnBeforeCompile?.call(raw, shader, renderer)
+        raw.userData.shader = shader
+        sourceMaterial._compiledStageShaders ||= new Set()
+        sourceMaterial._compiledStageShaders.add(shader)
+        raw._sourceShaders ||= new Set()
+        raw._sourceShaders.add(shader)
+      }
     } else if (options.unlit) {
       raw = new THREE.MeshBasicMaterial({
         color: options.color || 'white',
@@ -241,6 +259,11 @@ export class Stage extends System {
     material.dispose = () => {
       raw.dispose()
       for (const texture of textures) texture.dispose()
+      if (options.raw && raw._sourceShaders) {
+        for (const shader of raw._sourceShaders) {
+          options.raw._compiledStageShaders?.delete(shader)
+        }
+      }
     }
     this.world.setupMaterial(raw)
     const proxy = {
@@ -653,6 +676,7 @@ class Model {
     material = stage.createMaterial({ raw: material })
 
     this.stage = stage
+    this.sourceGeometry = geometry
     this.geometry = geometry.clone() // important since uber shader needs unique buffer attributes
     this.material = material
     this.uberShader = uberShader
@@ -730,6 +754,13 @@ class Model {
       this.material.raw.defines.USE_UBER_SHADER = ''
       this.material.raw.needsUpdate = true
     }
+  }
+
+  dispose() {
+    this.stage.scene.remove(this.iMesh)
+    this.iMesh.dispose()
+    this.geometry.dispose()
+    this.material.dispose()
   }
 
   create(node, matrix) {
@@ -821,6 +852,13 @@ class Model {
     if (!this.dirty) return
     const size = this.iMesh.instanceMatrix.array.length / 16
     const count = this.items.length
+    if (!count) {
+      this.iMesh.count = 0
+      this.iMesh.boundingSphere = null
+      this.stage.scene.remove(this.iMesh)
+      this.dirty = false
+      return
+    }
     if (size < this.items.length) {
       const newSize = count + 100
       // console.log('increase', this.mesh.name, 'from', size, 'to', newSize)
@@ -838,11 +876,6 @@ class Model {
     this.iMesh.count = count
     // Three.js rebuilds the batch sphere lazily, using only active instances.
     this.iMesh.boundingSphere = null
-    if (this.iMesh.parent && !count) {
-      this.stage.scene.remove(this.iMesh)
-      this.dirty = false
-      return
-    }
     if (!this.iMesh.parent && count) {
       this.stage.scene.add(this.iMesh)
     }

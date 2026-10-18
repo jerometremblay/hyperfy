@@ -19,6 +19,10 @@ app.add(tree)
 
 The app origin is the tree's ground position. EZ-Tree output is scaled to fit Hyperfy's meter-scale worlds; position and adjust its size with the regular node properties.
 
+Trees use three geometry detail levels. The default switches are centered at 10 m and 25 m, with 5% hysteresis to prevent flicker; scaling a tree also scales those distances. Trees with the same preset, seed, and options share generated geometry and are batched by Stage. The far level does not cast shadows.
+
+Preset bark and leaf textures load by default. Explicit texture maps in custom options take precedence.
+
 Tree geometry is visual-only. Add a separate collider if players need to collide with the trunk.
 
 ## Properties
@@ -63,7 +67,7 @@ tree.generate()
 
 ### `.castShadow`: Boolean
 
-Whether the tree meshes cast shadows. Defaults to `true`.
+Whether the close and medium tree meshes cast shadows. The far level does not cast shadows to reduce distant shadow work. Defaults to `true`.
 
 ### `.receiveShadow`: Boolean
 

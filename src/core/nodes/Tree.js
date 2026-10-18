@@ -2,6 +2,9 @@ import * as THREE from '../extras/three'
 import { cloneDeep, isBoolean, isEqual, isNumber, isObject, isString } from 'lodash-es'
 
 import { Node } from './Node'
+import { Group } from './Group'
+import { LOD } from './LOD'
+import { Mesh } from './Mesh'
 import { getTextureBytesFromMaterial } from '../extras/getTextureBytesFromMaterial'
 import { getTrianglesFromGeometry } from '../extras/getTrianglesFromGeometry'
 
@@ -14,9 +17,33 @@ const defaults = {
 }
 
 const TREE_SCALE = 0.1
+const treeAssetsByWorld = new WeakMap()
 
 function isOptions(value) {
   return isObject(value) && !Array.isArray(value)
+}
+
+function normalizeOptions(value) {
+  if (Array.isArray(value)) return value.map(normalizeOptions)
+  if (!isOptions(value)) return value
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .map(key => [key, normalizeOptions(value[key])])
+  )
+}
+
+function getTreeAssetKey(preset, seed, options) {
+  return JSON.stringify({ preset, seed, options: normalizeOptions(options) })
+}
+
+function getWorldTreeAssets(world) {
+  let assets = treeAssetsByWorld.get(world)
+  if (!assets) {
+    assets = new Map()
+    treeAssetsByWorld.set(world, assets)
+  }
+  return assets
 }
 
 function disposeTree(tree) {
@@ -25,14 +52,138 @@ function disposeTree(tree) {
   const materials = new Set()
   tree.traverse(object => {
     if (object.geometry) geometries.add(object.geometry)
-    if (Array.isArray(object.material)) {
-      object.material.forEach(material => materials.add(material))
-    } else if (object.material) {
-      materials.add(object.material)
+    const objectMaterials = Array.isArray(object.material) ? object.material : [object.material]
+    for (const material of objectMaterials) {
+      if (!material) continue
+      materials.add(material)
     }
   })
   for (const geometry of geometries) geometry.dispose()
   for (const material of materials) material.dispose()
+}
+
+function createTreeAsset(Tree, preset, options, seed, key, applyTextureDefaults) {
+  let tree
+  let ownedTextures = []
+  try {
+    tree = new Tree()
+    tree.options.copy(preset)
+    tree.options.copy(options)
+    if (seed !== null) tree.options.seed = seed
+    ownedTextures = applyTextureDefaults(tree.options)
+    tree.generateLODs()
+    tree.updateMatrixWorld(true)
+
+    const meshes = []
+    tree.traverse(object => {
+      if (object.isMesh && object.geometry && object.material) {
+        meshes.push({ object, geometry: object.geometry, material: object.material })
+      }
+    })
+
+    return {
+      key,
+      tree,
+      meshes,
+      ownedTextures,
+      users: new Set(),
+      updateOwner: null,
+      elapsedTime: 0,
+    }
+  } catch (error) {
+    disposeTree(tree)
+    for (const texture of ownedTextures) texture.dispose()
+    throw error
+  }
+}
+
+function acquireTreeAsset(world, Tree, presetName, preset, options, seed, applyTextureDefaults, node) {
+  const key = getTreeAssetKey(presetName, seed, options)
+  const assets = getWorldTreeAssets(world)
+  let asset = assets.get(key)
+  if (!asset) {
+    asset = createTreeAsset(Tree, preset, options, seed, key, applyTextureDefaults)
+    assets.set(key, asset)
+  }
+  asset.users.add(node)
+  asset.updateOwner ||= node
+  return asset
+}
+
+function releaseTreeAsset(world, asset, node) {
+  if (!asset?.users.delete(node)) return
+  if (asset.updateOwner === node) {
+    asset.updateOwner = asset.users.values().next().value || null
+  }
+  if (asset.users.size) return
+
+  const assets = treeAssetsByWorld.get(world)
+  if (assets?.get(asset.key) === asset) assets.delete(asset.key)
+  for (const { geometry } of asset.meshes) {
+    world.stage.releaseGeometry(geometry)
+  }
+  disposeTree(asset.tree)
+  for (const texture of asset.ownedTextures) texture.dispose()
+}
+
+function makeTreeMeshNode(object, inverseTreeMatrix, options) {
+  const meshNode = new Mesh({
+    type: 'geometry',
+    geometry: object.geometry,
+    material: object.material,
+    linked: true,
+    castShadow: options.castShadow && object.castShadow,
+    receiveShadow: options.receiveShadow && object.receiveShadow,
+  })
+  const localMatrix = new THREE.Matrix4().multiplyMatrices(inverseTreeMatrix, object.matrixWorld)
+  localMatrix.decompose(meshNode.position, meshNode.quaternion, meshNode.scale)
+  return meshNode
+}
+
+function createTreeRuntime(asset, options) {
+  const tree = asset.tree
+  const levels = tree.lod?.levels || []
+  if (!levels.length) throw new Error('EZ-Tree did not generate LOD levels')
+
+  const runtime = new Group()
+  runtime.name = 'tree-runtime'
+  runtime.isTreeRuntime = true
+  runtime.scale.setScalar(TREE_SCALE)
+
+  const inverseTreeMatrix = tree.matrixWorld.clone().invert()
+  const lod = new LOD({ scaleAware: true })
+  for (let index = 0; index < levels.length; index++) {
+    const level = levels[index]
+    const nextLevel = levels[index + 1]
+    const group = new Group()
+    const isFarLevel = index === levels.length - 1 && levels.length > 1
+
+    for (const object of level.object.children) {
+      if (!object.isMesh || !object.geometry || !object.material) continue
+      group.add(
+        makeTreeMeshNode(object, inverseTreeMatrix, {
+          castShadow: options.castShadow && !isFarLevel,
+          receiveShadow: options.receiveShadow,
+        })
+      )
+    }
+
+    lod.insert(group, nextLevel?.distance ?? Infinity, nextLevel?.hysteresis ?? 0)
+  }
+  runtime.add(lod)
+
+  const levelObjects = new Set(levels.map(level => level.object))
+  for (const { object } of asset.meshes) {
+    if (levelObjects.has(object.parent)) continue
+    runtime.add(
+      makeTreeMeshNode(object, inverseTreeMatrix, {
+        castShadow: options.castShadow,
+        receiveShadow: options.receiveShadow,
+      })
+    )
+  }
+
+  return runtime
 }
 
 export class TreeNode extends Node {
@@ -61,13 +212,15 @@ export class TreeNode extends Node {
     if (!isBoolean(this._receiveShadow)) throw new Error('[tree] receiveShadow must be a boolean')
 
     this.tree = null
+    this.asset = null
+    this.runtime = null
     this.meshes = []
     this.generation = 0
-    this.elapsedTime = 0
     this.updateRegistered = false
     this.onUpdate = delta => {
-      this.elapsedTime += delta
-      this.tree?.update(this.elapsedTime)
+      if (!this.asset || this.asset.updateOwner !== this) return
+      this.asset.elapsedTime += delta
+      this.asset.tree.update(this.asset.elapsedTime)
     }
   }
 
@@ -79,9 +232,12 @@ export class TreeNode extends Node {
   }
 
   async loadTree(generation) {
-    let tree
+    let asset
     try {
-      const { Tree, TreePreset } = await import('@dgreenheck/ez-tree')
+      const [{ Tree, TreePreset }, { applyTreeTextureDefaults }] = await Promise.all([
+        import('../libs/ez-tree/index.js'),
+        import('../libs/ez-tree/textures.js'),
+      ])
       if (!this.mounted || generation !== this.generation) return
 
       const preset = TreePreset[this._preset]
@@ -89,66 +245,58 @@ export class TreeNode extends Node {
         throw new Error(`unknown preset "${this._preset}" (available: ${Object.keys(TreePreset).join(', ')})`)
       }
 
-      tree = new Tree()
-      tree.options.copy(preset)
-      tree.options.copy(this._options)
-      if (this._seed !== null) tree.options.seed = this._seed
-      tree.generate()
-      tree.updateMatrixWorld(true)
-
+      asset = acquireTreeAsset(
+        this.ctx.world,
+        Tree,
+        this._preset,
+        preset,
+        this._options,
+        this._seed,
+        applyTreeTextureDefaults,
+        this
+      )
       if (!this.mounted || generation !== this.generation) {
-        disposeTree(tree)
+        releaseTreeAsset(this.ctx.world, asset, this)
         return
       }
 
-      this.tree = tree
-      const inverseTreeMatrix = tree.matrixWorld.clone().invert()
-      const treeScaleMatrix = new THREE.Matrix4().makeScale(TREE_SCALE, TREE_SCALE, TREE_SCALE)
-      tree.traverse(object => {
-        if (!object.isMesh || !object.geometry || !object.material) return
-
-        const localMatrix = new THREE.Matrix4()
-          .multiplyMatrices(inverseTreeMatrix, object.matrixWorld)
-          .premultiply(treeScaleMatrix)
-        const matrix = new THREE.Matrix4().multiplyMatrices(this.matrixWorld, localMatrix)
-        const handle = this.ctx.world.stage.insert({
-          geometry: object.geometry,
-          material: object.material,
-          linked: false,
-          castShadow: this._castShadow && object.castShadow,
-          receiveShadow: this._receiveShadow && object.receiveShadow,
-          node: this,
-          matrix,
-        })
-        this.meshes.push({ geometry: object.geometry, material: object.material, localMatrix, matrix, handle })
+      const runtime = createTreeRuntime(asset, {
+        castShadow: this._castShadow,
+        receiveShadow: this._receiveShadow,
       })
+      this.asset = asset
+      this.tree = asset.tree
+      this.meshes = asset.meshes
+      this.runtime = runtime
+      this.add(runtime)
 
       if (!this.updateRegistered) {
         this.ctx.entity.on('update', this.onUpdate)
         this.updateRegistered = true
       }
     } catch (error) {
-      for (const mesh of this.meshes) mesh.handle.destroy()
-      this.meshes = []
-      disposeTree(tree)
-      this.tree = null
+      if (this.runtime?.parent === this) this.remove(this.runtime)
+      if (this.asset === asset) {
+        this.asset = null
+        this.tree = null
+        this.runtime = null
+        this.meshes = []
+      }
+      if (this.updateRegistered) {
+        this.ctx?.entity?.off('update', this.onUpdate)
+        this.updateRegistered = false
+      }
+      if (asset) releaseTreeAsset(this.ctx.world, asset, this)
       if (this.mounted && generation === this.generation) {
         console.error('[tree] failed to generate tree', error)
       }
     }
   }
 
-  commit(didMove) {
-    if (this.needsRebuild) {
-      this.unmount()
-      this.mount()
-      return
-    }
-    if (!didMove) return
-    for (const mesh of this.meshes) {
-      mesh.matrix.multiplyMatrices(this.matrixWorld, mesh.localMatrix)
-      mesh.handle.move(mesh.matrix)
-    }
+  commit() {
+    if (!this.needsRebuild) return
+    this.unmount()
+    this.mount()
   }
 
   unmount() {
@@ -157,11 +305,12 @@ export class TreeNode extends Node {
       this.ctx?.entity?.off('update', this.onUpdate)
       this.updateRegistered = false
     }
-    for (const mesh of this.meshes) mesh.handle.destroy()
-    this.meshes = []
-    disposeTree(this.tree)
+    if (this.runtime) this.remove(this.runtime)
+    if (this.asset) releaseTreeAsset(this.ctx.world, this.asset, this)
+    this.runtime = null
+    this.asset = null
     this.tree = null
-    this.elapsedTime = 0
+    this.meshes = []
   }
 
   applyStats(stats) {
@@ -178,12 +327,24 @@ export class TreeNode extends Node {
   }
 
   copy(source, recursive) {
-    super.copy(source, recursive)
+    const sourceChildren = source.children
+    source.children = sourceChildren.filter(child => !child.isTreeRuntime)
+    try {
+      super.copy(source, recursive)
+    } finally {
+      source.children = sourceChildren
+    }
     this._preset = source._preset
     this._seed = source._seed
     this._options = cloneDeep(source._options)
     this._castShadow = source._castShadow
     this._receiveShadow = source._receiveShadow
+    this.tree = null
+    this.asset = null
+    this.runtime = null
+    this.meshes = []
+    this.generation = 0
+    this.updateRegistered = false
     return this
   }
 
@@ -290,6 +451,11 @@ export class TreeNode extends Node {
         },
       }
       proxy = Object.defineProperties(proxy, Object.getOwnPropertyDescriptors(super.getProxy()))
+      Object.defineProperty(proxy, 'children', {
+        get() {
+          return self.children.filter(child => !child.isTreeRuntime).map(child => child.getProxy())
+        },
+      })
       this.proxy = proxy
     }
     return this.proxy

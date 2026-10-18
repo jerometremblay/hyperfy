@@ -21,8 +21,8 @@ export class LOD extends Node {
     this.lods = [] // [...{ node, maxDistance }]
   }
 
-  insert(node, maxDistance) {
-    this.lods.push({ node, maxDistance })
+  insert(node, maxDistance, hysteresis = 0) {
+    this.lods.push({ node, maxDistance, hysteresis })
     this.lods.sort((a, b) => a.maxDistance - b.maxDistance) // ascending
     node.active = false
     this.add(node)
@@ -46,7 +46,18 @@ export class LOD extends Node {
       const avgScale = (v2.x + v2.y + v2.z) / 3
       distance = distance / avgScale
     }
-    const lod = this.lods.find(lod => distance <= lod.maxDistance)
+    let lod = this.lods.find(lod => distance <= lod.maxDistance)
+    if (this.lod && lod !== this.lod) {
+      const currentIndex = this.lods.indexOf(this.lod)
+      const nextIndex = this.lods.indexOf(lod)
+      if (nextIndex > currentIndex) {
+        const switchDistance = this.lod.maxDistance * (1 + this.lod.hysteresis)
+        if (distance <= switchDistance) lod = this.lod
+      } else if (nextIndex >= 0 && nextIndex < currentIndex) {
+        const switchDistance = lod.maxDistance * (1 - lod.hysteresis)
+        if (distance >= switchDistance) lod = this.lod
+      }
+    }
     // if this lod hasnt change, stop here
     if (this.lod === lod) return
     // if we have a new lod, lets activate it immediately
@@ -72,9 +83,11 @@ export class LOD extends Node {
       const node = this.children.find(node => node.id === lod.node.id)
       node.active = false
       const maxDistance = lod.maxDistance
+      const hysteresis = lod.hysteresis ?? 0
       return {
         node,
         maxDistance,
+        hysteresis,
       }
     })
     return this
@@ -102,9 +115,9 @@ export class LOD extends Node {
         set scaleAware(value) {
           self.scaleAware = value
         },
-        insert(pNode, maxDistance) {
+        insert(pNode, maxDistance, hysteresis) {
           const node = getRef(pNode)
-          self.insert(node, maxDistance)
+          self.insert(node, maxDistance, hysteresis)
           return this
         },
       }
