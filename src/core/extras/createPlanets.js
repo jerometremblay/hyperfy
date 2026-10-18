@@ -1,7 +1,7 @@
 import * as THREE from './three'
 import { PLANET_NAMES } from './planetPositions'
 import { createCelestialMarker, updateCelestialMarker } from './createCelestialMarker'
-import { celestialVisibilityShader, getCelestialVisibility } from './celestialVisibility'
+import { DEFAULT_BORTLE_CLASS, celestialVisibilityShader, getCelestialVisibility } from './celestialVisibility'
 
 const colors = ['#cbc4b7', '#fff2cc', '#e8a080', '#e9dac3', '#e6d4ac', '#b8e3e8', '#8aa8e8']
 // Ten degrees is wide enough to catch names that would collide along the ecliptic.
@@ -14,6 +14,7 @@ export function createPlanets(
     sunDirection: { value: new THREE.Vector3(0, -1, 0) },
     moonDirection: { value: new THREE.Vector3(0, -1, 0) },
     moonFraction: { value: 0 },
+    bortleClass: { value: DEFAULT_BORTLE_CLASS },
   }
 ) {
   const group = new THREE.Group()
@@ -44,6 +45,7 @@ export function createPlanets(
           uniform vec3 sunDirection;
           uniform vec3 moonDirection;
           uniform float moonFraction;
+          uniform float bortleClass;
           uniform float magnitude;
           uniform float pixelScale;
           ${celestialVisibilityShader}
@@ -55,7 +57,7 @@ export function createPlanets(
             );
             vBrightness = clamp(2.5 * pow(10.0, -0.15 * apparentMagnitude), 0.0, 5.0);
             vVisibility = getMagnitudeVisibility(
-              magnitude, direction, sunDirection, moonDirection, moonFraction
+              magnitude, direction, sunDirection, moonDirection, moonFraction, bortleClass
             );
             gl_Position = projectionMatrix * vec4(mat3(viewMatrix) * direction, 0.0);
             gl_Position.z = gl_Position.w;
@@ -98,11 +100,19 @@ export function updatePlanets(group, states, visibilityUniforms, showNames, nigh
   const sunDirection = visibilityUniforms.sunDirection.value
   const moonDirection = visibilityUniforms.moonDirection.value
   const moonFraction = visibilityUniforms.moonFraction.value
+  const bortleClass = visibilityUniforms.bortleClass.value
   const right = new THREE.Vector3()
   const visibilities = states.map((state, i) => {
     const planet = group.planets[i]
     planet.direction.value.fromArray(state.direction)
-    return getCelestialVisibility(state.magnitude, planet.direction.value, sunDirection, moonDirection, moonFraction)
+    return getCelestialVisibility(
+      state.magnitude,
+      planet.direction.value,
+      sunDirection,
+      moonDirection,
+      moonFraction,
+      bortleClass
+    )
   })
   const labelVisible = visibilities.map(visibility => showNames && visibility * nightOpacity > 0.01)
   const textOffsets = resolvePlanetLabelOffsets(group.planets, labelVisible)

@@ -1,7 +1,7 @@
 # Real-time day–night cycle
 
 Open **World Settings** to configure **Day–Night Cycle**, **Constellation Lines**,
-**Latitude**, **Longitude**, and **World Time Zone** (default `America/Toronto`). Use a valid IANA timezone, such as
+**Bortle Class**, **Sky Appearance**, **Latitude**, **Longitude**, and **World Time Zone** (default `America/Toronto`). Use a valid IANA timezone, such as
 `Europe/Paris` or `Asia/Tokyo`, or `UTC`. This timezone controls how `/time` commands
 interpret hours; it does not change the geographic coordinates.
 The cycle is enabled by default, at latitude `45.75689615017221` and longitude
@@ -74,10 +74,19 @@ does not offer a phase or date selector.
 The cycle displays 8,920 catalog stars and seven planets: Mercury, Venus, Mars, Jupiter,
 Saturn, Uranus, and Neptune. Their bearings follow the world's latitude, longitude, and
 shared date/time, including `/time set` transitions. Stars and planet points emerge by
-apparent magnitude as twilight darkens. The faintest catalog
-stars are visible only under a dark sky. Each star's twilight contrast also depends on its
-altitude and distance from the Sun, so stars fade in at different times. Low objects fade
-from atmospheric extinction and disappear below the horizon.
+apparent magnitude as twilight darkens. The Milky Way texture remains hidden through
+bright twilight as sky glow overwhelms its contrast. Its visibility follows the rendered
+sky brightness and rises smoothly as the sky darkens; there is no fixed solar-altitude
+cutoff. Stars and planets use the same sky-glow estimate as a gradual limiting-magnitude
+penalty, so bright point sources can appear during twilight while faint stars wait for a
+darker sky. Constellation lines follow the diffuse contrast fade. Apparent magnitude,
+Bortle class, Moon glow, and horizon position further limit stars and planets.
+The **Bortle Class** setting runs from 1 (excellent dark-sky site) to 9
+(inner-city sky); higher classes hide the Milky Way and cap the limiting magnitude for
+faint stars and planets. It is an approximate visual control, not a calibrated brightness
+measurement. Each star's twilight contrast also depends on its altitude and distance
+from the Sun, so stars fade in at different times. Low objects fade from atmospheric
+extinction and disappear below the horizon.
 
 Enable **Constellation Lines** in World Settings to show faint connections for all 88
 modern constellations, plus a thin circle and name beside each visible planet. Circles and

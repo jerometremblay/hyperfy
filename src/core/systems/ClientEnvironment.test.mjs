@@ -214,6 +214,7 @@ test('invalid coordinates and cycle values cannot be stored or broadcast', () =>
     ['latitude', [-91, 91, NaN, Infinity, '45', null]],
     ['longitude', [-181, 181, NaN, -Infinity, '-74', null]],
     ['dayNightCycle', [1, 'true', null]],
+    ['bortleClass', [0, 10, 4.5, NaN, '4', null]],
     ['timeZone', ['not/a-zone', '', 0, null]],
     ['timeOffset', [Infinity, NaN, '1000', null, 1e20]],
     [
@@ -226,11 +227,38 @@ test('invalid coordinates and cycle values cannot be stored or broadcast', () =>
   assert.equal(settings.latitude, DEFAULT_LATITUDE)
   assert.equal(settings.longitude, DEFAULT_LONGITUDE)
   assert.equal(settings.dayNightCycle, true)
+  assert.equal(settings.bortleClass, 4)
   assert.deepEqual(messages, [])
   settings.deserialize({ latitude: 100, longitude: '0', dayNightCycle: 'off' })
   assert.equal(settings.latitude, DEFAULT_LATITUDE)
   assert.equal(settings.longitude, DEFAULT_LONGITUDE)
   assert.equal(settings.dayNightCycle, true)
+})
+
+test('Bortle class persists and legacy light-pollution settings migrate', () => {
+  const settings = new Settings({})
+  assert.equal(settings.bortleClass, 4)
+
+  settings.deserialize({ lightPollution: 15 })
+  assert.equal(settings.bortleClass, 2)
+
+  settings.set('bortleClass', 8)
+  const restored = new Settings({})
+  restored.deserialize(settings.serialize())
+  assert.equal(restored.bortleClass, 8)
+  assert.equal(settings.set('bortleClass', 4.5), false)
+})
+
+test('Bortle class updates the diffuse sky, stars, and planet visibility', async () => {
+  const { environment, world } = await createEnvironment()
+  world.settings.set('bortleClass', 8)
+  environment.onSettingsChange({ bortleClass: { value: 8 } })
+
+  assert.equal(environment.solarSky.material.uniforms.diffuseSkyBortleClass.value, 8)
+  assert.equal(environment.celestialVisibility.bortleClass.value, 8)
+  assert.equal(environment.stars.material.uniforms.bortleClass.value, 8)
+  assert.equal(environment.planets.planets[0].disc.material.uniforms.bortleClass.value, 8)
+  environment.destroy()
 })
 
 test('visible sun, shadows, and ambient light follow day and night; disabling restores app sky', async () => {

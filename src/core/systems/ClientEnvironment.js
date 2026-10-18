@@ -5,14 +5,18 @@ import { System } from './System'
 import { CSM } from '../libs/csm/CSM'
 import { isNumber, isString } from 'lodash-es'
 import { Sky as SolarSky } from 'three/addons/objects/Sky.js'
-import { getDayNightState, getWorldTime } from '../extras/dayNight'
+import { DEFAULT_BORTLE_CLASS, getDayNightState, getWorldTime } from '../extras/dayNight'
 import { createMoon } from '../extras/createMoon'
 import { createCelestialMarker, updateCelestialMarker } from '../extras/createCelestialMarker'
 import { createStarField, loadStarCatalog } from '../extras/createStarField'
 import { setCelestialRotation } from '../extras/celestialRotation'
 import { getPlanetStates } from '../extras/planetPositions'
 import { createPlanets, updatePlanets } from '../extras/createPlanets'
-import { celestialVisibilityShader, getNightProgress } from '../extras/celestialVisibility'
+import {
+  celestialVisibilityShader,
+  getConstellationLineOpacity,
+  getNightProgress,
+} from '../extras/celestialVisibility'
 
 const sunsetColor = new THREE.Color('#ffb16b')
 const moonDistance = 900
@@ -106,6 +110,7 @@ export class ClientEnvironment extends System {
       sunDirection: { value: new THREE.Vector3(0, -1, 0) },
       moonDirection: { value: new THREE.Vector3(0, -1, 0) },
       moonFraction: { value: 0 },
+      bortleClass: { value: DEFAULT_BORTLE_CLASS },
     }
     this.moonLight = null
     this.planets = null
@@ -175,7 +180,7 @@ export class ClientEnvironment extends System {
         diffuseSkyMap: { value: this.diffuseSkyPlaceholder },
         worldToCelestial: { value: new THREE.Matrix3() },
         diffuseSkyAppearance: { value: 0.3 },
-        diffuseSkyLightPollution: { value: 0.15 },
+        diffuseSkyBortleClass: { value: DEFAULT_BORTLE_CLASS },
         diffuseMoonDirection: this.celestialVisibility.moonDirection,
         diffuseMoonFraction: this.celestialVisibility.moonFraction,
       })
@@ -184,7 +189,7 @@ export class ClientEnvironment extends System {
          uniform sampler2D diffuseSkyMap;
          uniform mat3 worldToCelestial;
          uniform float diffuseSkyAppearance;
-         uniform float diffuseSkyLightPollution;
+         uniform float diffuseSkyBortleClass;
          uniform vec3 diffuseMoonDirection;
          uniform float diffuseMoonFraction;
          ` +
@@ -219,12 +224,14 @@ export class ClientEnvironment extends System {
             * (0.25 + 0.75 * exp(-pow(moonSeparation / 0.55, 2.0)));
           float horizonTransmission = smoothstep(0.0, 6.0, skyAltitude)
             * exp(-0.16 * getAtmosphericExtinction(skyAltitude));
-          float nightVisibility = nightProgress * nightProgress;
-          float pollutionVisibility = exp(-2.3 * diffuseSkyLightPollution);
+          float skyLuminance = dot(max(gl_FragColor.rgb, vec3(0.0)), vec3(0.2126, 0.7152, 0.0722));
+          float darkSkyLuminance = dot(nightSky, vec3(0.2126, 0.7152, 0.0722));
+          float nightVisibility = getMilkyWayVisibility(skyLuminance, darkSkyLuminance);
+          float bortleVisibility = getBortleDiffuseVisibility(diffuseSkyBortleClass);
           float moonVisibility = 1.0 - 0.78 * moonGlow;
           float appearanceGain = mix(0.55, 1.6, diffuseSkyAppearance);
           float diffuseVisibility = nightVisibility * horizonTransmission
-            * pollutionVisibility * moonVisibility;
+            * bortleVisibility * moonVisibility;
           gl_FragColor.rgb += diffuseSky * (0.1 * appearanceGain * diffuseVisibility);
 
           gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.18, 0.6, 1.2), daylight * 0.8);
@@ -396,7 +403,8 @@ export class ClientEnvironment extends System {
     const diffuseSkyUniforms = this.solarSky.material.uniforms
     diffuseSkyUniforms.worldToCelestial.value.copy(this.celestialRotation).transpose()
     diffuseSkyUniforms.diffuseSkyAppearance.value = this.world.settings.skyAppearance / 100
-    diffuseSkyUniforms.diffuseSkyLightPollution.value = this.world.settings.lightPollution / 100
+    diffuseSkyUniforms.diffuseSkyBortleClass.value = this.world.settings.bortleClass
+    this.celestialVisibility.bortleClass.value = this.world.settings.bortleClass
     this.eclipticPole.copy(eclipticPoleEquatorial).applyMatrix3(this.celestialRotation).normalize()
     this.solarUpdatedAt = now
     this.renderExposure = state.renderExposure
@@ -416,7 +424,7 @@ export class ClientEnvironment extends System {
     if (this.stars) {
       this.stars.material.uniforms.celestialRotation.value.copy(this.celestialRotation)
       this.stars.material.uniforms.opacity.value = 1
-      this.stars.material.uniforms.constellationOpacity.value = nightProgress
+      this.stars.material.uniforms.constellationOpacity.value = getConstellationLineOpacity(state.altitude)
       // Individual stars fade according to magnitude; skip the field once its
       // brightest catalog stars are below the solar glare limit.
       this.stars.visible = state.altitude < 1
@@ -525,7 +533,7 @@ export class ClientEnvironment extends System {
       changes.dayNightCycle ||
       changes.constellationLines ||
       changes.skyAppearance ||
-      changes.lightPollution ||
+      changes.bortleClass ||
       changes.latitude ||
       changes.longitude ||
       changes.timeOffset ||

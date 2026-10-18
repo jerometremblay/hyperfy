@@ -722,7 +722,7 @@ function World({ world, hidden }) {
   const [dayNightCycle, setDayNightCycle] = useState(world.settings.dayNightCycle)
   const [constellationLines, setConstellationLines] = useState(world.settings.constellationLines)
   const [skyAppearance, setSkyAppearance] = useState(world.settings.skyAppearance)
-  const [lightPollution, setLightPollution] = useState(world.settings.lightPollution)
+  const [bortleClass, setBortleClass] = useState(world.settings.bortleClass)
   const [latitude, setLatitude] = useState(world.settings.latitude)
   const [longitude, setLongitude] = useState(world.settings.longitude)
   const [timeZone, setTimeZone] = useState(world.settings.timeZone)
@@ -753,7 +753,7 @@ function World({ world, hidden }) {
       if (changes.dayNightCycle) setDayNightCycle(changes.dayNightCycle.value)
       if (changes.constellationLines) setConstellationLines(changes.constellationLines.value)
       if (changes.skyAppearance) setSkyAppearance(changes.skyAppearance.value)
-      if (changes.lightPollution) setLightPollution(changes.lightPollution.value)
+      if (changes.bortleClass) setBortleClass(changes.bortleClass.value)
       if (changes.latitude) setLatitude(changes.latitude.value)
       if (changes.longitude) setLongitude(changes.longitude.value)
       if (changes.timeZone) setTimeZone(changes.timeZone.value)
@@ -884,13 +884,13 @@ function World({ world, hidden }) {
             onChange={value => world.settings.set('skyAppearance', value, true)}
           />
           <FieldRange
-            label='Light Pollution'
-            hint='Reduce diffuse sky visibility to match brighter skies: 0 is a pristine dark sky and 100 is heavy urban light pollution.'
-            min={0}
-            max={100}
-            step={5}
-            value={lightPollution}
-            onChange={value => world.settings.set('lightPollution', value, true)}
+            label='Bortle Class'
+            hint='Approximate the sky darkness: class 1 is an excellent dark-sky site; class 9 is an inner-city sky. Higher classes hide the Milky Way and faint stars.'
+            min={1}
+            max={9}
+            step={1}
+            value={bortleClass}
+            onChange={value => world.settings.set('bortleClass', value, true)}
           />
           <FieldNumber
             label='Latitude'

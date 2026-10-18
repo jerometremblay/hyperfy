@@ -1,9 +1,10 @@
 import { getPosition, getMoonPosition, getMoonIllumination } from 'suncalc'
-import { getNightProgress } from './celestialVisibility'
+import { DEFAULT_BORTLE_CLASS, getNightProgress } from './celestialVisibility.js'
 
 export const DEFAULT_LATITUDE = 45.75689615017221
 export const DEFAULT_LONGITUDE = -74.01942099403277
 export const DEFAULT_TIME_ZONE = 'America/Toronto'
+export { DEFAULT_BORTLE_CLASS }
 export const TIME_PATTERN = /^([01]?\d|2[0-3])h([0-5]\d)$/
 export const TIME_TRANSITION_DURATION = 5000
 
@@ -60,7 +61,8 @@ export function getWorldTime(settings, now = Date.now()) {
 
 export function isValidDayNightSetting(key, value) {
   if (key === 'dayNightCycle' || key === 'constellationLines') return typeof value === 'boolean'
-  if (key === 'skyAppearance' || key === 'lightPollution') return Number.isFinite(value) && value >= 0 && value <= 100
+  if (key === 'skyAppearance') return Number.isFinite(value) && value >= 0 && value <= 100
+  if (key === 'bortleClass') return Number.isInteger(value) && value >= 1 && value <= 9
   if (key === 'timeZone') {
     if (typeof value !== 'string' || !value) return false
     try {

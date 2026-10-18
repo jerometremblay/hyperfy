@@ -4,6 +4,7 @@ import {
   DEFAULT_LATITUDE,
   DEFAULT_LONGITUDE,
   DEFAULT_TIME_ZONE,
+  DEFAULT_BORTLE_CLASS,
   isValidDayNightSetting,
   getWorldTime,
 } from '../extras/dayNight'
@@ -24,7 +25,7 @@ export class Settings extends System {
     this.dayNightCycle = true
     this.constellationLines = false
     this.skyAppearance = 30
-    this.lightPollution = 15
+    this.bortleClass = DEFAULT_BORTLE_CLASS
     this.latitude = DEFAULT_LATITUDE
     this.longitude = DEFAULT_LONGITUDE
     this.timeZone = DEFAULT_TIME_ZONE
@@ -55,7 +56,11 @@ export class Settings extends System {
     this.dayNightCycle = typeof data.dayNightCycle === 'boolean' ? data.dayNightCycle : true
     this.constellationLines = data.constellationLines === true
     this.skyAppearance = isValidDayNightSetting('skyAppearance', data.skyAppearance) ? data.skyAppearance : 30
-    this.lightPollution = isValidDayNightSetting('lightPollution', data.lightPollution) ? data.lightPollution : 15
+    this.bortleClass = isValidDayNightSetting('bortleClass', data.bortleClass)
+      ? data.bortleClass
+      : Number.isFinite(data.lightPollution) && data.lightPollution >= 0 && data.lightPollution <= 100
+        ? Math.round(1 + (data.lightPollution / 100) * 8)
+        : DEFAULT_BORTLE_CLASS
     this.latitude = isValidDayNightSetting('latitude', data.latitude) ? data.latitude : DEFAULT_LATITUDE
     this.longitude = isValidDayNightSetting('longitude', data.longitude) ? data.longitude : DEFAULT_LONGITUDE
     this.timeZone = isValidDayNightSetting('timeZone', data.timeZone) ? data.timeZone : DEFAULT_TIME_ZONE
@@ -74,7 +79,7 @@ export class Settings extends System {
       dayNightCycle: { value: this.dayNightCycle },
       constellationLines: { value: this.constellationLines },
       skyAppearance: { value: this.skyAppearance },
-      lightPollution: { value: this.lightPollution },
+      bortleClass: { value: this.bortleClass },
       latitude: { value: this.latitude },
       longitude: { value: this.longitude },
       timeZone: { value: this.timeZone },
@@ -97,7 +102,7 @@ export class Settings extends System {
       dayNightCycle: this.dayNightCycle,
       constellationLines: this.constellationLines,
       skyAppearance: this.skyAppearance,
-      lightPollution: this.lightPollution,
+      bortleClass: this.bortleClass,
       latitude: this.latitude,
       longitude: this.longitude,
       timeZone: this.timeZone,

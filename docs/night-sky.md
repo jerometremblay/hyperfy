@@ -3,30 +3,37 @@
 The day/night environment displays 8,920 real stars down to apparent magnitude 6.5.
 Stars rotate with the world's latitude, longitude, and synchronized effective time,
 including time offsets and transitions. Their visibility follows apparent magnitude
-and Sun altitude: the limiting magnitude reaches 1 at the end of civil twilight, 4 at
-the end of nautical twilight, and 6.5 at the end of astronomical twilight. They fade
-near the horizon and disappear when the day/night cycle is off. The existing custom
-background sky then takes over.
+and a limiting magnitude adjusted by sky glow from the procedural sky's twilight
+luminance. Bright stars remain visible through twilight while fainter stars emerge as
+the sky darkens. The diffuse Milky Way uses a stricter smooth contrast fade, so it
+remains hidden while twilight washes out its broad structure. The magnitude limit
+reaches 1 at the end of civil twilight, 4 at the end of nautical twilight, and 6.5 at
+the end of astronomical twilight. The world's
+**Bortle Class** also limits faint-object visibility, approximately using the midpoint
+of each class's naked-eye limiting-magnitude range. Classes 1 through 9 run from
+excellent dark-sky sites to inner-city skies. Objects fade near the horizon and
+disappear when the day/night cycle is off. The existing custom background sky then
+takes over.
 
 World settings include a **Constellation Lines** toggle, off by default. When enabled,
 faint connections highlight all 88 modern constellations. They share the star field's
-time/location transform, twilight fade, horizon masking, and portal/XR camera behavior.
+time/location transform, sky-contrast fade, horizon masking, and portal/XR camera
+behavior.
 The toggle is saved and shared with the world using the existing builder-controlled
 settings workflow. Custom sky mode hides the lines along with the stars.
 
 Positions are directions at infinity in the active camera, including each XR eye and
 portal view. Geometry and the Moon cover the stars. Apparent magnitude determines
 brightness and point size; the dynamic range is compressed for display. The visibility
-limit changes with twilight and Moon illumination. A Kasten–Young air-mass approximation
-reduces brightness near the horizon. B-V indices produce approximate muted colors.
-Missing color indices use a neutral color.
+limit changes with twilight, Bortle class, and Moon illumination. A Kasten–Young
+air-mass approximation reduces brightness near the horizon. B-V indices produce
+approximate muted colors. Missing color indices use a neutral color.
 
 This is a J2000 fixed catalog with mean sidereal rotation, using UTC as an approximation
 to UT1. The point-star catalog omits precession, proper motion, nutation, refraction,
-light pollution, and twinkling. Atmospheric extinction and Moon-driven sky glow are
-approximate visibility cues, not a radiometric sky model. It is intended for a
-recognizable night sky, not precision astrometry. The diffuse Milky Way separately
-responds to the light-pollution control described below.
+directional light pollution, and twinkling. Atmospheric extinction, Bortle-class limits,
+and Moon-driven sky glow are approximate visibility cues, not a radiometric sky model.
+It is intended for a recognizable night sky, not precision astrometry.
 
 ## Diffuse Milky Way
 
@@ -39,18 +46,26 @@ declination increases toward the top.
 
 The image is converted offline to a 2048 × 1024 JPEG with linear-light RGB values and
 sampled as a linear texture inside the existing procedural sky shader. This adds no
-sky draw call and does not illuminate scene objects.
-Visibility fades through twilight, near the horizon, under Moon glow, and with the
-world's **Light Pollution** setting. **Sky Appearance** adjusts the map from a muted
-realistic baseline toward a brighter, more scenic presentation. Both settings are
-saved and shared with the world; their defaults are 30 and 15 respectively on a 0–100
-scale.
+sky draw call and does not illuminate scene objects. Twilight sky glow suppresses the
+map while the rendered background is too bright for its diffuse contrast. Visibility
+follows the background luminance smoothly, then dims near the horizon and under Moon
+glow. It has no fixed solar-altitude cutoff, so it responds to the actual sky brightness
+produced by the environment shader.
+
+The world's **Bortle Class** setting reduces the map's contrast and caps faint-star
+visibility. The Milky Way is suppressed by class 7, where it is normally invisible to
+the naked eye. Class 1 is the darkest setting and class 9 the brightest. The default is
+class 4. **Sky Appearance** remains an artistic adjustment from a muted baseline to a
+brighter, more scenic presentation, with a default of 30 on its 0–100 scale.
 
 The NASA map is a rendered star-density/color visualization, not an absolute
-radiometric sky model. Its diffuse texture provides the Milky Way band and dust-lane
-structure, but does not add a separate H-alpha nebula layer. The default display is
-intentionally subdued, and its appearance still depends on the device's tone mapping
-and headset display.
+radiometric sky model. Bortle Class is a qualitative visual approximation, not a
+calibrated sky-brightness measurement; the renderer does not synthesize urban light
+domes or physically calibrated skyglow. The diffuse texture provides the Milky Way
+band and dust-lane structure, but does not add a separate H-alpha nebula layer. The
+default display is intentionally subdued, and its appearance still depends on the
+device's tone mapping and headset display. The class descriptions follow
+[John Bortle's nine-level dark-sky scale](https://skyandtelescope.org/astronomy-resources/light-pollution-and-astronomy-the-bortle-dark-sky-scale/).
 
 Run `node scripts/build-diffuse-sky.mjs` to download the source from NASA and reproduce
 `src/client/public/milkyway.jpg`. The script verifies the source SHA-256 and requires
@@ -71,8 +86,9 @@ The Sun/Moon implementation remains the existing SunCalc implementation.
 
 Planet positions update on the environment's existing one-second cadence and every frame
 during time transitions. Planet point size and brightness follow apparent magnitude, using
-the star rendering curve. Their visibility changes with twilight and Moon glow; atmospheric
-extinction dims objects near the horizon.
+the star rendering curve. Sky glow lowers the point-source limiting magnitude, so bright
+planets can appear before the diffuse Milky Way while dimmer objects wait for darker sky.
+Bortle class, Moon glow, and horizon extinction further limit visibility.
 
 With **Constellation Lines** enabled, visible planets show a thin circle and their name
 to the right during the night. These are scene-rendered annotations, so they work in XR

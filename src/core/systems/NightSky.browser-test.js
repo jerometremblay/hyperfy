@@ -78,6 +78,13 @@ function difference(a, b, threshold = 3) {
   }
   return pixels
 }
+function differenceEnergy(a, b) {
+  let energy = 0
+  for (let i = 0; i < a.length; i += 4) {
+    energy += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2])
+  }
+  return energy / (width * height * 3)
+}
 function check(label, pass, details = {}) {
   values.push({ label, pass, ...details })
 }
@@ -94,6 +101,106 @@ env.stars.visible = false
 const without = read()
 const catalogPixels = difference(night, without)
 check('Shipped catalog renders above the real sky', catalogPixels > 150, { catalogPixels })
+
+// Test the diffuse Milky Way through the actual sky shader. A constant test
+// texture makes the gate independent of the map's celestial orientation.
+const skyUniforms = env.solarSky.material.uniforms
+const savedSkyState = {
+  map: skyUniforms.diffuseSkyMap.value,
+  sunAltitude: skyUniforms.sunAltitude.value,
+  appearance: skyUniforms.diffuseSkyAppearance.value,
+  bortleClass: skyUniforms.diffuseSkyBortleClass.value,
+  moonVisible: env.moon.visible,
+  planetsVisible: env.planets.visible,
+}
+const diffuseTestMap = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat)
+const emptyDiffuseMap = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat)
+for (const texture of [diffuseTestMap, emptyDiffuseMap]) {
+  texture.colorSpace = THREE.LinearSRGBColorSpace
+  texture.needsUpdate = true
+}
+skyUniforms.diffuseSkyMap.value = diffuseTestMap
+skyUniforms.diffuseSkyAppearance.value = 1
+skyUniforms.diffuseSkyBortleClass.value = 1
+env.moon.visible = false
+env.planets.visible = false
+function diffuseMapSignal(sunAltitude, bortleClass = 1) {
+  skyUniforms.sunAltitude.value = sunAltitude
+  skyUniforms.diffuseSkyBortleClass.value = bortleClass
+  const withMap = read()
+  skyUniforms.diffuseSkyMap.value = emptyDiffuseMap
+  const withoutMap = read()
+  skyUniforms.diffuseSkyMap.value = diffuseTestMap
+  return {
+    pixels: difference(withMap, withoutMap),
+    energy: differenceEnergy(withMap, withoutMap),
+  }
+}
+const milkyWayVisibilityCurve = [-6, -10, -12, -14, -15, -16, -16.5, -17, -17.5, -18, -19].map(sunAltitude => ({
+  sunAltitude,
+  ...diffuseMapSignal(sunAltitude),
+}))
+const brightTwilightDiffusePixels = milkyWayVisibilityCurve[0].pixels
+const deepNightDiffusePixels = milkyWayVisibilityCurve.at(-1).pixels
+const deepNightDiffuseEnergy = milkyWayVisibilityCurve.at(-1).energy
+const urbanDiffusePixels = diffuseMapSignal(-20, 7).pixels
+check(
+  'Bright twilight hides the Milky Way map',
+  milkyWayVisibilityCurve[0].pixels === 0 && milkyWayVisibilityCurve[2].pixels === 0,
+  { brightTwilightDiffusePixels, nauticalTwilightDiffusePixels: milkyWayVisibilityCurve[2].pixels }
+)
+const visibilityRisesAsTheSkyDarkens = milkyWayVisibilityCurve.every(
+  (sample, index) => index === 0 || sample.energy + 0.1 >= milkyWayVisibilityCurve[index - 1].energy
+)
+const visibilityFadesThroughAnIntermediateLevel = milkyWayVisibilityCurve.some(
+  sample => sample.energy > 0 && sample.energy < deepNightDiffuseEnergy && sample.pixels > 0
+)
+check(
+  'Milky Way visibility follows rendered sky brightness',
+  visibilityRisesAsTheSkyDarkens && visibilityFadesThroughAnIntermediateLevel,
+  { milkyWayVisibilityCurve, visibilityFadesThroughAnIntermediateLevel }
+)
+check('Milky Way is visible under a dark sky', deepNightDiffusePixels > 0, { deepNightDiffusePixels })
+check('Bortle class 7 suppresses the Milky Way map', urbanDiffusePixels === 0, { urbanDiffusePixels })
+const starSunDirection = env.stars.material.uniforms.sunDirection.value
+const savedStarSunDirection = starSunDirection.clone()
+const twilightStarPixelCounts = [-12, -15].map(sunAltitude => {
+  const elevation = (sunAltitude * Math.PI) / 180
+  starSunDirection.set(0, Math.sin(elevation), -Math.cos(elevation))
+  env.stars.visible = true
+  const withStars = read()
+  env.stars.visible = false
+  const withoutStars = read()
+  return difference(withStars, withoutStars)
+})
+starSunDirection.copy(savedStarSunDirection)
+env.stars.visible = true
+check(
+  'Early stars emerge during twilight while the Milky Way remains hidden',
+  twilightStarPixelCounts[0] > 0 &&
+    twilightStarPixelCounts[1] > twilightStarPixelCounts[0] &&
+    milkyWayVisibilityCurve[2].pixels === 0 &&
+    milkyWayVisibilityCurve[4].pixels === 0,
+  {
+    milkyWayTwilightPixels: [milkyWayVisibilityCurve[2].pixels, milkyWayVisibilityCurve[4].pixels],
+    twilightStarPixelCounts,
+  }
+)
+skyUniforms.diffuseSkyMap.value = savedSkyState.map
+skyUniforms.sunAltitude.value = savedSkyState.sunAltitude
+skyUniforms.diffuseSkyAppearance.value = savedSkyState.appearance
+skyUniforms.diffuseSkyBortleClass.value = savedSkyState.bortleClass
+env.moon.visible = savedSkyState.moonVisible
+env.planets.visible = savedSkyState.planetsVisible
+diffuseTestMap.dispose()
+emptyDiffuseMap.dispose()
+document.querySelector('pre').textContent = JSON.stringify(
+  { pass: values.every(value => value.pass), values, errors },
+  null,
+  2
+)
+await new Promise(requestAnimationFrame)
+
 env.stars.visible = true
 world.settings.set('constellationLines', true)
 env.onSettingsChange({ constellationLines: { value: true } })

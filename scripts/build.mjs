@@ -12,8 +12,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.join(dirname, '../')
 const buildDir = path.join(rootDir, 'build')
 
-// await fs.emptyDir(buildDir)
-await fs.emptyDir(path.join(buildDir, 'public'))
+if (!dev) {
+  await fs.emptyDir(path.join(buildDir, 'public'))
+}
 
 /**
  * Build Client

@@ -1,7 +1,7 @@
 import * as THREE from './three'
 import { celestialDirection } from './celestialRotation'
 import { createConstellationLines } from './createConstellationLines'
-import { celestialVisibilityShader } from './celestialVisibility'
+import { DEFAULT_BORTLE_CLASS, celestialVisibilityShader } from './celestialVisibility'
 
 let catalogPromise
 
@@ -47,6 +47,7 @@ export function createStarField(
     sunDirection: { value: new THREE.Vector3(0, -1, 0) },
     moonDirection: { value: new THREE.Vector3(0, -1, 0) },
     moonFraction: { value: 0 },
+    bortleClass: { value: DEFAULT_BORTLE_CLASS },
   }
 ) {
   const positions = new Float32Array(stars.length * 3)
@@ -87,6 +88,7 @@ export function createStarField(
       uniform vec3 sunDirection;
       uniform vec3 moonDirection;
       uniform float moonFraction;
+      uniform float bortleClass;
       attribute float magnitude;
       ${celestialVisibilityShader}
       varying vec3 vColor;
@@ -98,7 +100,7 @@ export function createStarField(
           magnitude, direction, sunDirection, moonDirection, moonFraction
         );
         vVisibility = getStarVisibility(
-          magnitude, direction, sunDirection, moonDirection, moonFraction
+          magnitude, direction, sunDirection, moonDirection, moonFraction, bortleClass
         );
         vColor = color;
         // Compress the photometric range for a visible, small star image.
