@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jerometremblay.github.io/hyperfy/schemas/object.schema.json",
+  "title": "Hyperfy object source",
+  "oneOf": [
+    { "$ref": "#/$defs/filesObject" },
+    { "$ref": "#/$defs/hypObject" }
+  ],
+  "$defs": {
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$"
+    },
+    "assetType": {
+      "enum": ["model", "avatar", "script", "texture", "audio", "video", "image", "hdr", "emote", "splat", "other"]
+    },
+    "blueprint": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "desc": { "type": ["string", "null"], "maxLength": 4096 },
+        "model": { "type": ["string", "null"] },
+        "script": { "type": ["string", "null"] },
+        "props": { "type": "object" },
+        "image": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["type", "name", "url"],
+              "properties": {
+                "type": { "type": "string" },
+                "name": { "type": "string" },
+                "url": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "author": { "type": ["string", "null"] },
+        "url": { "type": ["string", "null"] },
+        "preload": { "type": "boolean" },
+        "public": { "type": "boolean" },
+        "locked": { "type": "boolean" },
+        "unique": { "type": "boolean" },
+        "frozen": { "type": "boolean" },
+        "disabled": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "common": {
+      "type": "object",
+      "required": ["schemaVersion", "key", "mode"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "key": { "$ref": "#/$defs/key" },
+        "role": { "const": "environment" },
+        "extensions": { "type": "object", "maxProperties": 0 }
+      }
+    },
+    "filesObject": {
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "type": "object",
+          "required": ["blueprint"],
+          "properties": {
+            "mode": { "const": "files" },
+            "blueprint": { "$ref": "#/$defs/blueprint" },
+            "extraAssets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["file", "type"],
+                "properties": {
+                  "file": { "type": "string", "pattern": "^file:\\./[^/].*$" },
+                  "type": { "$ref": "#/$defs/assetType" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "not": { "required": ["source"] },
+          "unevaluatedProperties": false
+        }
+      ]
+    },
+    "hypObject": {
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "type": "object",
+          "required": ["source"],
+          "properties": {
+            "mode": { "const": "hyp" },
+            "source": { "type": "string", "pattern": "^\\./[^/].*\\.hyp$" }
+          },
+          "not": { "anyOf": [{ "required": ["blueprint"] }, { "required": ["extraAssets"] }] },
+          "unevaluatedProperties": false
+        }
+      ]
+    }
+  }
+}

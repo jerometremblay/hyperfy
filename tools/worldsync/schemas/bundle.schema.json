@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jerometremblay.github.io/hyperfy/schemas/bundle.schema.json",
+  "title": "Hyperfy world bundle manifest",
+  "type": "object",
+  "required": ["format", "schemaVersion", "toolVersion", "engineCompatibility", "sceneKey", "portability", "payloads"],
+  "properties": {
+    "format": { "const": "hyperfy-world" },
+    "schemaVersion": { "const": 1 },
+    "toolVersion": { "type": "string" },
+    "engineCompatibility": {
+      "type": "object",
+      "required": ["engine", "version"],
+      "properties": {
+        "engine": { "const": "Hyperfy" },
+        "version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "sceneKey": { "$ref": "scene.schema.json#/$defs/sceneKey" },
+    "portability": {
+      "type": "object",
+      "required": ["isPortable", "externalDependencies"],
+      "properties": {
+        "isPortable": { "type": "boolean" },
+        "externalDependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": { "path": { "type": "string" } },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "payloads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "size"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "size": { "type": "integer", "minimum": 1 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

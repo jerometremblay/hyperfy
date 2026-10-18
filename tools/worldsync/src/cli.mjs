@@ -1,0 +1,158 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { buildWorldBundle, verifyWorldBundle } from './bundle.mjs'
+import { compileProject, compileSingleObject } from './compiler.mjs'
+import { assertKey } from './canonical.mjs'
+import { importHyp, unpackObject } from './importer.mjs'
+import { packHyp } from './hyp-format.mjs'
+import { loadObject } from './object-source.mjs'
+import { ensureSafeDirectory, readBoundedFile, resolveContainedPath, resolveLocalReference } from './paths.mjs'
+
+function parseArgs(values) {
+  const options = {}
+  const positional = []
+  for (let index = 0; index < values.length; index++) {
+    const value = values[index]
+    if (!value.startsWith('--')) {
+      positional.push(value)
+      continue
+    }
+    const name = value.slice(2)
+    if (['extract', 'keep-original', 'include-hyp', 'allow-external', 'json', 'help'].includes(name)) {
+      options[name] = true
+      continue
+    }
+    const next = values[index + 1]
+    if (!next || next.startsWith('--')) throw new Error('Missing value for --' + name)
+    options[name] = next
+    index++
+  }
+  return { options, positional }
+}
+
+function printHelp() {
+  console.log([
+    'Hyperfy world source tools',
+    '',
+    'Implemented offline commands:',
+    '  validate --scene <key>',
+    '  build --scene <key> [--include-hyp] [--allow-external] [--output <path>]',
+    '  import <file.hyp> --key <key> [--extract] [--keep-original]',
+    '  unpack --object <key> [--keep-original]',
+    '  export-hyp --object <key> [--output <path>]',
+    '  verify --bundle <path>',
+    '',
+    'Live status, deploy, capture, and worker commands are not available in this phase.',
+  ].join('\n'))
+}
+
+async function writeOutput(root, outputPath, defaultPath, bytes) {
+  const selected = outputPath || defaultPath
+  const destination = resolveContainedPath(root, root, selected, 'output path')
+  await ensureSafeDirectory(root, path.dirname(destination), 'output directory')
+  try {
+    const current = await fs.lstat(destination)
+    if (current.isSymbolicLink() || !current.isFile()) {
+      throw new Error('output path must be a regular file and not a symbolic link')
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+  await fs.writeFile(destination, bytes)
+  return destination
+}
+
+async function run() {
+  const { options, positional } = parseArgs(process.argv.slice(2))
+  const command = positional.shift()
+  const root = path.resolve(options.root || process.cwd())
+  if (!command || command === 'help' || command === '--help' || options.help) return printHelp()
+  if (command === 'validate') {
+    if (!options.scene) throw new Error('validate requires --scene')
+    const compiled = await compileProject(root, options.scene)
+    const result = {
+      scene: compiled.scene.sceneKey,
+      objects: compiled.objects.length,
+      instances: compiled.scene.instances.length,
+      assets: compiled.assets.length,
+      warnings: compiled.warnings,
+    }
+    console.log(options.json ? JSON.stringify(result, null, 2) : JSON.stringify(result))
+    return
+  }
+  if (command === 'build') {
+    if (!options.scene) throw new Error('build requires --scene')
+    const compiled = await compileProject(root, options.scene)
+    const bundle = buildWorldBundle(compiled, {
+      includeHyp: !!options['include-hyp'],
+      allowExternal: !!options['allow-external'],
+    })
+    const destination = await writeOutput(
+      root,
+      options.output,
+      path.join('tools', 'worldsync', 'dist', options.scene + '.hworld'),
+      bundle
+    )
+    const portability = compiled.warnings.some(warning => warning.code === 'external-asset')
+      ? ', nonportable external dependencies=' + compiled.warnings.filter(warning => warning.code === 'external-asset').length
+      : ', portable'
+    console.log('Built ' + path.relative(root, destination) + ' (' + bundle.byteLength + ' bytes' + portability + ')')
+    return
+  }
+  if (command === 'verify') {
+    if (!options.bundle) throw new Error('verify requires --bundle')
+    const bundlePath = path.resolve(root, options.bundle)
+    const bundle = await readBoundedFile(bundlePath, { maxBytes: 1024 * 1024 * 1024, label: options.bundle })
+    const result = verifyWorldBundle(bundle)
+    console.log(options.json ? JSON.stringify(result, null, 2) : 'Bundle verified: ' + result.manifest.sceneKey)
+    return
+  }
+  if (command === 'import') {
+    const input = positional.shift()
+    if (!input || !options.key) throw new Error('import requires a .hyp path and --key')
+    const result = await importHyp(root, input, assertKey(options.key, 'object key'), {
+      extract: !!options.extract,
+      keepOriginal: !!options['keep-original'],
+    })
+    console.log('Imported ' + result.key + ' as mode ' + result.mode)
+    return
+  }
+  if (command === 'unpack') {
+    if (!options.object) throw new Error('unpack requires --object')
+    const result = await unpackObject(root, options.object, { keepOriginal: !!options['keep-original'] })
+    console.log('Unpacked ' + result.key + ' to editable source files')
+    return
+  }
+  if (command === 'export-hyp') {
+    if (!options.object) throw new Error('export-hyp requires --object')
+    const key = assertKey(options.object, 'object key')
+    const source = await loadObject(root, key)
+    let bytes
+    let detail
+    if (source.manifest.mode === 'hyp') {
+      const original = await resolveLocalReference(root, source.objectDir, source.manifest.source, 'legacy .hyp source')
+      bytes = await readBoundedFile(original.absolutePath, { label: original.relativePath })
+      detail = 'Copied original HYP unchanged'
+    } else {
+      const compiled = await compileSingleObject(root, key)
+      bytes = packHyp(compiled.blueprint, compiled.assets)
+      detail = 'Exported a deterministic native HYP package'
+    }
+    const outputPath = options.output || path.join('tools', 'worldsync', 'dist', 'objects', options.object + '.hyp')
+    const destination = await writeOutput(root, outputPath, outputPath, bytes)
+    console.log(detail + ' to ' + path.relative(root, destination))
+    return
+  }
+  if (['status', 'diff', 'capture', 'deploy', 'adopt'].includes(command)) {
+    throw new Error(command + ' requires the engine snapshot/deployment bridge, which is not implemented yet')
+  }
+  printHelp()
+  throw new Error('Unknown command: ' + command)
+}
+
+run().catch(error => {
+  console.error('worldsync: ' + error.message)
+  process.exitCode = 1
+})

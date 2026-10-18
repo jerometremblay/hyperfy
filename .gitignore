@@ -6,6 +6,7 @@ localstorage.json
 .notes/
 node_modules/
 build/
+tools/worldsync/dist/
 /world*
 .claude/
 .obsidian
