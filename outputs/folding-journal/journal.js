@@ -126,7 +126,6 @@ text(backPrint, 'HYPERFY NEWS', 40, '#a22a2e', 'bold')
 text(backPrint, 'WORLD EDITION', 20, '#1f2730', 'bold')
 text(backPrint, 'Technology • Culture • Worlds', 18, '#52514e')
 text(backPrint, 'hyperfy-news.jerometremblay.chatgpt.site', 14, '#52514e')
-backCover.onPointerDown = () => requestToggle()
 
 // Fully closed: one solid volume replaces the separated animated leaf layers.
 const closedBook = group(journalBody)
@@ -150,7 +149,6 @@ closedBook.add(closedBackPrint)
 text(closedBackPrint, 'HYPERFY NEWS', 40, '#a22a2e', 'bold')
 text(closedBackPrint, 'WORLD EDITION', 20, '#1f2730', 'bold')
 text(closedBackPrint, 'Technology • Culture • Worlds', 18, '#52514e')
-closedBlock.onPointerDown = () => requestToggle()
 
 // The source sends no-store, so keep its iframes mounted while the journal is closed.
 const content = group(opened)
@@ -301,12 +299,7 @@ function receiveHtmlBridgeEvent(number, event) {
         page.src = src
       }
     }
-    return
   }
-  const isCloseKey = generic
-    ? detail?.code === 'KeyE' && !detail.altKey && !detail.ctrlKey && !detail.metaKey && !target?.isEditable
-    : detail?.key === 'KeyE'
-  if (isCloseKey) requestClose()
 }
 
 function createPageSurface(number) {
@@ -387,7 +380,7 @@ function applyPageCount(count, ready, currentFirstPage = app.state.firstPage) {
   app.state.firstPage = firstPage
   ensurePageSurfaces(count)
   applyPaper(progress)
-  if (progress >= 0.9999 && target === 1 && !world.isBuilding && !turn) showSpread()
+  if (progress >= 0.9999 && target === 1 && !turn) showSpread()
   return true
 }
 function movingPage(number, angle, back) {
@@ -439,7 +432,7 @@ function animateTurn() {
 }
 function startSharedTurn(sharedTurn) {
   if (!validTurn(sharedTurn)) return
-  if (!app.state.open || world.isBuilding) {
+  if (!app.state.open) {
     firstPage = sharedTurn.destination
     return
   }
@@ -465,7 +458,7 @@ function receivePages(message) {
     app.off('update', animateTurn)
     turn = null
     firstPage = message.firstPage
-    if (progress >= 0.9999 && target === 1 && !world.isBuilding) showSpread()
+    if (progress >= 0.9999 && target === 1) showSpread()
   }
 }
 function receivePageCount(message) {
@@ -479,7 +472,7 @@ function receivePageCount(message) {
   receivePages({ firstPage: message.firstPage, turn: message.turn || null })
 }
 function turnPage(direction) {
-  if (!pageCountReady || !hasHtmlPageManifest() || world.isBuilding || app.isMoving || turn || pendingTurn || progress < 0.9999 || target !== 1) return
+  if (!pageCountReady || !hasHtmlPageManifest() || app.isMoving || turn || pendingTurn || progress < 0.9999 || target !== 1) return
   if (world.getPlayer()?.id !== app.state.readerId) return
   app.send('journal:turn-request', { direction })
 }
@@ -506,9 +499,8 @@ journalBody.add(action)
 let homePose = null
 let readingPose = app.state.readingPose || null
 const readingControl = world.isClient ? app.control() : null
-let suppressActionTrigger = false
 function requestToggle() {
-  if (!world.isClient || world.isBuilding || app.isMoving) return
+  if (!world.isClient || app.isMoving) return
   const player = world.getPlayer()
   if (!player) return
   // Bone transform results share a scratch matrix: copy each position immediately.
@@ -526,23 +518,6 @@ function requestToggle() {
   }
   app.send('journal:toggle', { eye: eye.toArray() })
 }
-function requestActionToggle() {
-  if (suppressActionTrigger) return
-  requestToggle()
-}
-function requestClose() {
-  if (!world.isClient || world.isBuilding || app.isMoving) return
-  const player = world.getPlayer()
-  if (!app.state.open || player?.id !== app.state.readerId) return
-  app.send('journal:toggle')
-  return true
-}
-function requestCloseFromE() {
-  const handled = requestClose()
-  if (handled) suppressActionTrigger = true
-  return handled
-}
-
 function captureHome() {
   if (!homePose)
     homePose = {
@@ -753,12 +728,7 @@ if (world.isServer) {
 }
 
 if (world.isClient) {
-  action.onTrigger = requestActionToggle
-  frontCover.onPointerDown = requestToggle
-  foldTab.onPointerDown = requestToggle
-  readingControl.escape.onPress = requestClose
-  readingControl.keyE.onPress = requestCloseFromE
-  readingControl.keyE.onRelease = () => { suppressActionTrigger = false }
+  action.onTrigger = requestToggle
   app.on('journal:pages', receivePages)
   app.on('journal:page-count', receivePageCount)
   app.on('journal:state', message => {
@@ -776,23 +746,8 @@ if (world.isClient) {
       maybeSendHtmlPageCount()
     }
     if (Number.isInteger(message.firstPage)) receivePages({ firstPage: message.firstPage, turn: null })
-    if (!world.isBuilding || !message.open) setOpen(message.open, message.pose)
+    setOpen(message.open, message.pose)
   })
-  function setEditing(enabled) {
-    action.active = !enabled
-    if (!enabled) return
-    pendingTurn = null
-    if (turn) finishTurn()
-    app.off('update', animate)
-    progress = 0
-    target = 0
-    applyPaper(0)
-    const player = world.getPlayer()
-    if (app.state.open && app.state.readerId === player?.id) {
-      app.send('journal:toggle')
-    }
-  }
-  world.on('build-mode', setEditing)
-  if (world.isBuilding) setEditing(true)
-  else if (app.state.open && app.state.turn) startSharedTurn(app.state.turn)
+  // Opening and folding use the shared action target in build mode too.
+  if (app.state.open && app.state.turn) startSharedTurn(app.state.turn)
 }

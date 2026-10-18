@@ -1080,7 +1080,7 @@ function ActionPrompt({ world, visible }) {
     return () => window.removeEventListener('pointermove', onPointerMove)
   }, [action, pointerLocked, world])
 
-  if (!visible || !action || buildMode) return null
+  if (!visible || !action || (buildMode && (isTouch || world.xr?.session || pointerLocked))) return null
 
   const prompt = getActionPrompt(world)
   const progressRatio = Math.max(0, Math.min(1, progress))

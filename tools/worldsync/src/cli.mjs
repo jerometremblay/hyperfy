@@ -8,6 +8,7 @@ import { assertKey } from './canonical.mjs'
 import { importHyp, unpackObject } from './importer.mjs'
 import { packHyp } from './hyp-format.mjs'
 import { loadObject } from './object-source.mjs'
+import { deployObject, diffObjectDeployment } from './deployment.mjs'
 import { ensureSafeDirectory, readBoundedFile, resolveContainedPath, resolveLocalReference } from './paths.mjs'
 
 function parseArgs(values) {
@@ -43,8 +44,10 @@ function printHelp() {
     '  unpack --object <key> [--keep-original]',
     '  export-hyp --object <key> [--output <path>]',
     '  verify --bundle <path>',
+    '  diff --object <key> --profile <name>',
+    '  deploy --object <key> --profile <name>',
     '',
-    'Live status, deploy, capture, and worker commands are not available in this phase.',
+    'Live scene capture and worker commands are not available in this phase.',
   ].join('\n'))
 }
 
@@ -145,8 +148,28 @@ async function run() {
     console.log(detail + ' to ' + path.relative(root, destination))
     return
   }
-  if (['status', 'diff', 'capture', 'deploy', 'adopt'].includes(command)) {
-    throw new Error(command + ' requires the engine snapshot/deployment bridge, which is not implemented yet')
+  if (command === 'diff') {
+    if (!options.object) throw new Error('diff requires --object')
+    const result = await diffObjectDeployment(root, options.object, options.profile)
+    console.log(
+      result.fields.length
+        ? `${result.key}: live version ${result.version}; changed fields: ${result.fields.join(', ')}`
+        : `${result.key}: no changes (live version ${result.version})`
+    )
+    return
+  }
+  if (command === 'deploy') {
+    if (!options.object) throw new Error('deploy requires --object')
+    const result = await deployObject(root, options.object, options.profile)
+    console.log(
+      result.updated
+        ? `Deployed ${result.key} to live version ${result.version} (fields: ${result.fields.join(', ')})`
+        : `${result.key} is already current (live version ${result.version})`
+    )
+    return
+  }
+  if (['status', 'capture', 'adopt'].includes(command)) {
+    throw new Error(command + ' is not implemented yet')
   }
   printHelp()
   throw new Error('Unknown command: ' + command)

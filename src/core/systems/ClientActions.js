@@ -55,6 +55,9 @@ export class ClientActions extends System {
 
   update(delta) {
     const isXR = !!this.world.xr?.session
+    const isBuilderMouseHover =
+      this.world.builder?.enabled && !isXR && !isTouch && !this.control.pointer.locked
+    const canTarget = !this.world.builder?.enabled || isBuilderMouseHover
     const cameraPos = isXR
       ? this.world.camera.getWorldPosition(v5)
       : this.world.rig.position
@@ -69,7 +72,7 @@ export class ClientActions extends System {
     this.btnClick = !isTouch && !!this.control.mouseLeft?.pressed
 
     let hit = null
-    if (!isXR && !this.world.builder?.enabled && this.world.stage.viewport) {
+    if (canTarget && !isXR && this.world.stage.viewport) {
       if (isTouch || this.control.pointer.locked) {
         hit = this.world.stage.raycastReticle()[0]
       } else {
@@ -86,7 +89,7 @@ export class ClientActions extends System {
 
     // Keep the selected target while it remains under the pointer, even when
     // there are more actions than the per-frame search batch.
-    if (this.current.node && !this.current.node.finished) {
+    if (canTarget && this.current.node && !this.current.node.finished) {
       const node = this.current.node
       const distance = node.worldPos.distanceTo(cameraPos)
       if (distance <= node._distance) {
@@ -104,7 +107,7 @@ export class ClientActions extends System {
       }
     }
 
-    const size = Math.min(this.nodes.length, BATCH_SIZE)
+    const size = canTarget ? Math.min(this.nodes.length, BATCH_SIZE) : 0
     for (let i = 0; i < size; i++) {
       const idx = (this.cursor + i) % this.nodes.length
       const node = this.nodes[idx]

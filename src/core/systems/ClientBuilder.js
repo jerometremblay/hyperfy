@@ -82,6 +82,8 @@ export class ClientBuilder extends System {
   start() {
     this.control = this.world.controls.bind({ priority: ControlPriorities.BUILDER })
     this.control.mouseLeft.onPress = () => {
+      // Let an action under the free cursor receive the click before entering pointer lock.
+      if (!this.control.pointer.locked && this.world.actions?.current?.node) return false
       // pointer lock requires user-gesture in safari
       // so this can't be done during update cycle
       if (!this.control.pointer.locked) {
