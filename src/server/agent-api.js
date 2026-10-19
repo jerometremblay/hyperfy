@@ -1,18 +1,56 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
+import { isEqual } from 'lodash-es'
 
 const vector = length => ({ type: 'array', items: { type: 'number' }, minItems: length, maxItems: length })
 const transform = { position: vector(3), quaternion: vector(4), scale: vector(3), pinned: { type: 'boolean' } }
 const asset = { type: 'string', pattern: '^asset://[a-f0-9]{64}\\.[a-z0-9]+$' }
+const externalAsset = { type: 'string', pattern: '^[Hh][Tt][Tt][Pp][Ss]?://' }
+const sourceAsset = { anyOf: [asset, externalAsset] }
+const optionalString = { anyOf: [{ type: 'string' }, { type: 'null' }] }
+const descriptor = {
+  anyOf: [
+    { type: 'object', properties: { type: { type: 'string' }, name: { type: 'string' }, url: sourceAsset }, required: ['url'] },
+    { type: 'null' },
+  ],
+}
 const blueprintFields = {
   name: { type: 'string', maxLength: 256 },
-  desc: { type: 'string', maxLength: 4096 },
-  model: { anyOf: [asset, { const: 'script-only' }] },
-  script: { anyOf: [asset, { type: 'null' }] },
-  props: { type: 'object' },
+  desc: { anyOf: [{ type: 'string', maxLength: 4096 }, { type: 'null' }] },
+  model: { anyOf: [sourceAsset, { const: 'script-only' }, { type: 'null' }] },
+  script: { anyOf: [sourceAsset, { type: 'null' }] },
+  image: descriptor,
+  author: optionalString,
+  url: optionalString,
+  props: { anyOf: [{ type: 'object' }, { type: 'null' }] },
+  preload: { type: 'boolean' },
+  public: { type: 'boolean' },
+  locked: { type: 'boolean' },
+  unique: { type: 'boolean' },
+  frozen: { type: 'boolean' },
   disabled: { type: 'boolean' },
 }
 const body = (properties, required = []) => ({ type: 'object', additionalProperties: false, properties, required })
 const params = body({ id: { type: 'string', minLength: 1 } }, ['id'])
+const uuid = { type: 'string', pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' }
+const spawn = {
+  type: 'object',
+  additionalProperties: false,
+  properties: { position: vector(3), quaternion: vector(4) },
+  required: ['position', 'quaternion'],
+}
+const settingsFields = {
+  title: { anyOf: [{ type: 'string', maxLength: 256 }, { type: 'null' }] },
+  desc: { anyOf: [{ type: 'string', maxLength: 4096 }, { type: 'null' }] },
+  image: descriptor,
+  avatar: descriptor,
+  dayNightCycle: { type: 'boolean' },
+  constellationLines: { type: 'boolean' },
+  skyAppearance: { type: 'number', minimum: 0, maximum: 100 },
+  bortleClass: { type: 'integer', minimum: 1, maximum: 9 },
+  latitude: { type: 'number', minimum: -90, maximum: 90 },
+  longitude: { type: 'number', minimum: -180, maximum: 180 },
+  timeZone: { type: 'string', minLength: 1 },
+}
 
 // One registration per running world. Tokens are never exposed through public envs.
 export async function agentAPI(fastify, { world, assets, readToken, writeToken }) {
@@ -48,10 +86,21 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
       fail(409, 'Scene instance is protected')
     return value
   }
+  const hasOtherInstance = (blueprintId, excludedId) =>
+    [...world.entities.items.values()].some(
+      item => item.isApp && item.data.blueprint === blueprintId && item.data.id !== excludedId
+    )
   const checkAssets = async data => {
-    for (const field of ['model', 'script']) {
-      const url = data[field]
-      if (url && url !== 'script-only' && !(await assets.exists(url.slice(8)))) fail(400, `${field} asset not found`)
+    const urls = new Set()
+    const visit = value => {
+      if (typeof value === 'string' && value.startsWith('asset://')) urls.add(value)
+      else if (Array.isArray(value)) value.forEach(visit)
+      else if (value && typeof value === 'object') Object.values(value).forEach(visit)
+    }
+    visit(data)
+    for (const url of urls) {
+      if (!/^asset:\/\/[a-f0-9]{64}\.[a-z0-9]+$/.test(url)) fail(400, 'Invalid asset URL')
+      if (!(await assets.exists(url.slice(8)))) fail(400, 'Asset not found: ' + url)
     }
   }
   const checkTransform = data => {
@@ -80,6 +129,7 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
   }
   route('GET', '/world', 'getWorld', {}, async () => ({
     settings: world.settings.serialize(),
+    spawn: world.network.spawn,
     apps: world.blueprints.items.size,
     entities: world.entities.items.size,
     players: world.entities.players.size,
@@ -100,8 +150,9 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
       }))
   })
   route('GET', '/entities/:id', 'getEntity', { params }, async request => entity(request.params.id).serialize())
-  route('POST', '/apps', 'createApp', { body: body(blueprintFields, ['name', 'model']) }, async (request, reply) => {
+  route('POST', '/apps', 'createApp', { body: body({ id: uuid, ...blueprintFields }, ['name', 'model']) }, async (request, reply) => {
     await checkAssets(request.body)
+    const { id: requestedId, ...fields } = request.body
     const data = {
       image: null,
       author: null,
@@ -113,11 +164,19 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
       public: false,
       locked: false,
       unique: false,
+      frozen: false,
       scene: false,
       disabled: false,
-      ...request.body,
-      id: randomUUID(),
+      ...fields,
+      id: requestedId || randomUUID(),
       version: 0,
+    }
+    if (data.id === '$scene') fail(409, 'The protected scene blueprint cannot be created as an app')
+    const existing = world.blueprints.get(data.id)
+    if (existing) {
+      const same = Object.keys(blueprintFields).every(key => isEqual(existing[key], data[key]))
+      if (existing.scene || !same) fail(409, 'App blueprint id already exists')
+      return reply.code(200).send(existing)
     }
     world.blueprints.add(data)
     world.network.send('blueprintAdded', data)
@@ -142,22 +201,84 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     }
   )
   route(
+    'PATCH',
+    '/world/scene',
+    'updateSceneBlueprint',
+    { body: body({ ...blueprintFields, version: { type: 'integer', minimum: 0 } }, ['version']) },
+    async request => {
+      const current = world.blueprints.get('$scene')
+      if (!current?.scene) fail(404, 'Protected scene blueprint not found')
+      const currentVersion = Number.isInteger(current.version) && current.version >= 0 ? current.version : 0
+      if (request.body.version !== currentVersion) fail(409, 'Scene blueprint version changed; fetch it again')
+      const fields = { ...request.body }
+      delete fields.version
+      await checkAssets(fields)
+      const data = { ...fields, id: '$scene', version: currentVersion + 1, scene: true }
+      world.blueprints.modify(data)
+      world.network.send('blueprintModified', data)
+      world.network.dirtyBlueprints.add(data.id)
+      return world.blueprints.get('$scene')
+    }
+  )
+  route(
+    'PATCH',
+    '/world',
+    'updateWorld',
+    { body: body({ settings: body(settingsFields), spawn }) },
+    async request => {
+      const settings = request.body.settings || {}
+      await checkAssets(settings)
+      if (settings.timeZone) {
+        try {
+          new Intl.DateTimeFormat('en', { timeZone: settings.timeZone })
+        } catch {
+          fail(400, 'Invalid timeZone')
+        }
+      }
+      if (request.body.spawn) checkTransform({ ...request.body.spawn, scale: [1, 1, 1] })
+      for (const [key, value] of Object.entries(settings)) {
+        if (world.settings.set(key, value, true) === false) fail(400, 'Invalid setting: ' + key)
+      }
+      if (Object.keys(settings).length) await world.network.saveSettings()
+      if (request.body.spawn) await world.network.setSpawn(request.body.spawn)
+      return { settings: world.settings.serialize(), spawn: world.network.spawn }
+    }
+  )
+  route(
     'POST',
     '/entities',
     'createEntity',
-    { body: body({ blueprint: { type: 'string' }, ...transform }, ['blueprint']) },
+    { body: body({ id: uuid, blueprint: { type: 'string' }, ...transform }, ['blueprint']) },
     async (request, reply) => {
       const blueprint = app(request.body.blueprint)
-      if (blueprint.scene || blueprint.unique || blueprint.id === '$scene')
-        fail(409, 'Cannot instantiate scene or unique blueprint')
+      if (blueprint.scene || blueprint.id === '$scene') fail(409, 'Cannot instantiate the protected scene blueprint')
       checkTransform(request.body)
-      const data = {
+      const requestedId = request.body.id
+      if (blueprint.unique && hasOtherInstance(blueprint.id, requestedId)) {
+        fail(409, 'Unique blueprint already has another app instance')
+      }
+      const desired = {
         position: [0, 0, 0],
         quaternion: [0, 0, 0, 1],
         scale: [1, 1, 1],
         pinned: false,
         ...request.body,
-        id: randomUUID(),
+      }
+      const existing = requestedId && world.entities.get(requestedId)
+      if (existing) {
+        const same = ['blueprint', 'position', 'quaternion', 'scale', 'pinned'].every(key =>
+          isEqual(existing.data[key], desired[key])
+        )
+        if (!existing.isApp || !same) fail(409, 'App instance id already exists')
+        return reply.code(200).send(existing.serialize())
+      }
+      const data = {
+        position: [0, 0, 0],
+        quaternion: [0, 0, 0, 1],
+        scale: [1, 1, 1],
+        pinned: false,
+        ...desired,
+        id: requestedId || randomUUID(),
         type: 'app',
         mover: null,
         uploader: null,
@@ -169,16 +290,30 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
       return reply.code(201).send(created.serialize())
     }
   )
-  route('PATCH', '/entities/:id', 'updateEntity', { params, body: body(transform) }, async request => {
-    const item = entity(request.params.id)
-    if (item.data.mover || item.data.uploader) fail(409, 'Instance is being edited or uploaded')
-    checkTransform(request.body)
-    const changes = { ...request.body, id: item.data.id }
-    item.modify(changes)
-    world.network.send('entityModified', changes)
-    world.network.dirtyApps.add(item.data.id)
-    return item.serialize()
-  })
+  route(
+    'PATCH',
+    '/entities/:id',
+    'updateEntity',
+    { params, body: body({ blueprint: { type: 'string' }, ...transform }) },
+    async request => {
+      const item = entity(request.params.id)
+      if (item.data.mover || item.data.uploader) fail(409, 'Instance is being edited or uploaded')
+      checkTransform(request.body)
+      if (Object.hasOwn(request.body, 'blueprint')) {
+        const blueprint = app(request.body.blueprint)
+        if (blueprint.scene || blueprint.id === '$scene') fail(409, 'Cannot assign the protected scene blueprint')
+        if (blueprint.unique && hasOtherInstance(blueprint.id, item.data.id)) {
+          fail(409, 'Unique blueprint already has another app instance')
+        }
+      }
+      const changes = { ...request.body, id: item.data.id }
+      if (changes.blueprint && changes.blueprint !== item.data.blueprint) changes.state = {}
+      item.modify(changes)
+      world.network.send('entityModified', changes)
+      world.network.dirtyApps.add(item.data.id)
+      return item.serialize()
+    }
+  )
   route(
     'POST',
     '/players/:id/teleport',
@@ -208,6 +343,29 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
   })
   route(
     'POST',
+    '/assets',
+    'uploadAsset',
+    {},
+    async (request, reply) => {
+      const part = await request.file({ limits: { files: 1, fileSize: 256 * 1024 * 1024 } })
+      if (!part) fail(400, 'Asset file is required')
+      const match = /^([a-f0-9]{64})[.]([a-z0-9]+)$/.exec(part.filename)
+      if (!match) fail(400, 'Asset filename must be a content hash and extension')
+      let bytes
+      try {
+        bytes = await part.toBuffer()
+      } catch {
+        fail(413, 'Asset exceeds the 256 MiB upload limit')
+      }
+      if (createHash('sha256').update(bytes).digest('hex') !== match[1]) {
+        fail(400, 'Asset content hash does not match its filename')
+      }
+      await assets.upload(new File([bytes], part.filename, { type: part.mimetype || 'application/octet-stream' }))
+      return reply.code(201).send({ url: 'asset://' + part.filename })
+    }
+  )
+  route(
+    'POST',
     '/scripts',
     'uploadScript',
     { body: body({ source: { type: 'string', maxLength: 262144 } }, ['source']) },
@@ -234,6 +392,22 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
               item.method.toLowerCase(),
               {
                 operationId: item.operationId,
+                ...(item.url === '/assets'
+                  ? {
+                      requestBody: {
+                        required: true,
+                        content: {
+                          'multipart/form-data': {
+                            schema: {
+                              type: 'object',
+                              properties: { file: { type: 'string', format: 'binary' } },
+                              required: ['file'],
+                            },
+                          },
+                        },
+                      },
+                    }
+                  : {}),
                 ...(item.schema.params
                   ? { parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }] }
                   : {}),

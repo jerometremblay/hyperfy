@@ -41,7 +41,10 @@ export class Portal extends Node {
   mount() {
     this.needsRebuild = false
     const world = this.ctx.world
-    if (!this.portalId) this.portalId = this.ctx.entity?.data.id || this.id
+    if (!this.portalId) {
+      const props = this.appConfig ? this.ctx.entity?.blueprint?.props : null
+      this.portalId = props?.portalId || this.ctx.entity?.data.id || this.id
+    }
     if (this.appConfig && this.ctx.entity) {
       const entity = this.ctx.entity
       const props = entity.blueprint.props

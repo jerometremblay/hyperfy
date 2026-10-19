@@ -8,7 +8,7 @@ import { assertKey } from './canonical.mjs'
 import { importHyp, unpackObject } from './importer.mjs'
 import { packHyp } from './hyp-format.mjs'
 import { loadObject } from './object-source.mjs'
-import { deployObject, diffObjectDeployment } from './deployment.mjs'
+import { bootstrapWorld, deployObject, diffObjectDeployment } from './deployment.mjs'
 import { checkUpstream, trackUpstream, updateUpstream } from './upstream.mjs'
 import { ensureSafeDirectory, readBoundedFile, resolveContainedPath, resolveLocalReference } from './paths.mjs'
 
@@ -22,7 +22,7 @@ function parseArgs(values) {
       continue
     }
     const name = value.slice(2)
-    if (['extract', 'keep-original', 'include-hyp', 'allow-external', 'json', 'help'].includes(name)) {
+    if (['extract', 'keep-original', 'include-hyp', 'allow-external', 'dry-run', 'json', 'help'].includes(name)) {
       options[name] = true
       continue
     }
@@ -38,7 +38,7 @@ function printHelp() {
   console.log([
     'Hyperfy world source tools',
     '',
-    'Implemented offline commands:',
+    'Implemented commands:',
     '  validate --scene <key>',
     '  build --scene <key> [--include-hyp] [--allow-external] [--output <path>]',
     '  import <file.hyp> --key <key> [--extract] [--keep-original]',
@@ -47,6 +47,7 @@ function printHelp() {
     '  verify --bundle <path>',
     '  diff --object <key> --profile <name>',
     '  deploy --object <key> --profile <name>',
+    '  bootstrap --scene <key> --profile <name> [--allow-external] [--dry-run]',
     '  upstream track --object <key>',
     '  upstream check|update [--object <key>]',
     '',
@@ -169,6 +170,25 @@ async function run() {
         ? `Deployed ${result.key} to live version ${result.version} (fields: ${result.fields.join(', ')})`
         : `${result.key} is already current (live version ${result.version})`
     )
+    return
+  }
+  if (command === 'bootstrap') {
+    if (!options.scene || !options.profile) throw new Error('bootstrap requires --scene and --profile')
+    const result = await bootstrapWorld(root, options.scene, options.profile, {
+      allowExternal: !!options['allow-external'],
+      dryRun: !!options['dry-run'],
+    })
+    if (options.json) {
+      console.log(JSON.stringify({ dryRun: !!options['dry-run'], ...result }, null, 2))
+    } else {
+      console.log(
+        `${options['dry-run'] ? 'Bootstrap plan' : 'Bootstrapped'} ${result.sceneKey} on ${result.profile}: ` +
+          `${result.createBlueprints} blueprint(s) to create, ${result.updateBlueprints} to update, ` +
+          `${result.createInstances} instance(s) to create, ${result.updateInstances} to update, ` +
+          `${result.updateSettings} setting(s) to update${result.updateSpawn ? ', spawn to update' : ''}; ` +
+          `${result.assets} asset(s), ${result.warnings} external reference warning(s)`
+      )
+    }
     return
   }
   if (command === 'upstream') {

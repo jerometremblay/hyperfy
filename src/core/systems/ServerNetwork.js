@@ -229,6 +229,15 @@ export class ServerNetwork extends System {
       })
   }
 
+  setSpawn = async spawn => {
+    this.spawn = { position: spawn.position.slice(), quaternion: spawn.quaternion.slice() }
+    const value = JSON.stringify(this.spawn)
+    await this.db('config')
+      .insert({ key: 'spawn', value })
+      .onConflict('key')
+      .merge({ value })
+  }
+
   getPortalSpawn(portalId, portalPose) {
     if (typeof portalId !== 'string' || !portalId || portalId.length > 256) return null
     let portal
@@ -753,22 +762,12 @@ export class ServerNetwork extends System {
     }
     const player = socket.player
     if (op === 'set') {
-      this.spawn = { position: player.data.position.slice(), quaternion: player.data.quaternion.slice() }
+      await this.setSpawn({ position: player.data.position, quaternion: player.data.quaternion })
     } else if (op === 'clear') {
-      this.spawn = { position: [0, 0, 0], quaternion: [0, 0, 0, 1] }
+      await this.setSpawn({ position: [0, 0, 0], quaternion: [0, 0, 0, 1] })
     } else {
       return
     }
-    const data = JSON.stringify(this.spawn)
-    await this.db('config')
-      .insert({
-        key: 'spawn',
-        value: data,
-      })
-      .onConflict('key')
-      .merge({
-        value: data,
-      })
     socket.send('chatAdded', {
       id: uuid(),
       from: null,

@@ -44,11 +44,11 @@ function validateSettings(settings, sceneKey) {
     delete settings.description
   }
   delete settings.schemaVersion
-  if (settings.title !== undefined && settings.title !== null && typeof settings.title !== 'string') {
-    throw new Error('settings.title must be a string or null')
+  if (settings.title !== undefined && settings.title !== null && (typeof settings.title !== 'string' || settings.title.length > 256)) {
+    throw new Error('settings.title must be a string of at most 256 characters or null')
   }
-  if (settings.desc !== undefined && settings.desc !== null && typeof settings.desc !== 'string') {
-    throw new Error('settings.desc must be a string or null')
+  if (settings.desc !== undefined && settings.desc !== null && (typeof settings.desc !== 'string' || settings.desc.length > 4096)) {
+    throw new Error('settings.desc must be a string of at most 4096 characters or null')
   }
   if (settings.latitude !== undefined && (!Number.isFinite(settings.latitude) || Math.abs(settings.latitude) > 90)) {
     throw new Error('settings.latitude must be between -90 and 90')
@@ -62,13 +62,21 @@ function validateSettings(settings, sceneKey) {
   if (settings.constellationLines !== undefined && typeof settings.constellationLines !== 'boolean') {
     throw new Error('settings.constellationLines must be a boolean')
   }
-  if (settings.timeZone !== undefined && settings.timeZone !== null && typeof settings.timeZone !== 'string') {
-    throw new Error('settings.timeZone must be a string or null')
-  }
-  for (const field of ['skyAppearance', 'bortleClass']) {
-    if (settings[field] !== undefined && !Number.isFinite(settings[field])) {
-      throw new Error('settings.' + field + ' must be a finite number')
+  if (settings.timeZone !== undefined) {
+    if (typeof settings.timeZone !== 'string' || !settings.timeZone) {
+      throw new Error('settings.timeZone must be a non-empty IANA time zone')
     }
+    try {
+      new Intl.DateTimeFormat('en', { timeZone: settings.timeZone })
+    } catch {
+      throw new Error('settings.timeZone must be a valid IANA time zone')
+    }
+  }
+  if (settings.skyAppearance !== undefined && (!Number.isFinite(settings.skyAppearance) || settings.skyAppearance < 0 || settings.skyAppearance > 100)) {
+    throw new Error('settings.skyAppearance must be between 0 and 100')
+  }
+  if (settings.bortleClass !== undefined && (!Number.isInteger(settings.bortleClass) || settings.bortleClass < 1 || settings.bortleClass > 9)) {
+    throw new Error('settings.bortleClass must be an integer between 1 and 9')
   }
   if (settings.spawn !== undefined) {
     if (

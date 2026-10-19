@@ -19,7 +19,9 @@ npm run worldsync -- export-hyp --root ../hyperfy-world-jerome --object props/my
 
 `diff` and `deploy` use the Hyperfy Agent API to compare or update one existing
 app blueprint. They require a `worldsync.config.json` profile with `apiUrl` and
-`writeTokenEnv`, plus a matching `.worldsync/bootstrap-map.json` blueprint ID.
+`writeTokenEnv`, plus a matching destination map. Bootstrap writes one map per
+profile at `.worldsync/destinations/<profile>.json`; older
+`.worldsync/bootstrap-map.json` files remain supported by `diff` and `deploy`.
 Keep the bearer token in an environment variable; do not put it in the source
 repository. The CLI also loads the Hyperfy checkout's local `.env` files when the
 configured token variable is not already exported. Remote profiles must use
@@ -45,13 +47,34 @@ npm run worldsync -- diff --root ../hyperfy-world-jerome --object apps/hyperfy-n
 npm run worldsync -- deploy --root ../hyperfy-world-jerome --object apps/hyperfy-news-folding-journal --profile online-world
 ```
 
-The command updates only the mapped app blueprint fields `name`, `desc`,
-`model`, `script`, `props`, and `disabled`; it leaves placements, world settings,
-and the protected environment blueprint alone. It uses the API's version check,
-uploads changed `.js` assets through `/scripts`, and reads the blueprint back to
-verify the live values. The current Agent API cannot upload changed non-JavaScript
-assets, so the command stops before changing the blueprint if one is required.
-It also refuses unmapped objects instead of guessing which live app they replace.
+The command updates mapped app blueprint fields and uploads referenced,
+content-addressed assets before applying the version-checked change. It reads the
+blueprint back to verify the live values. It refuses unmapped objects instead
+of guessing which live app they replace.
+
+## Live world bootstrap
+
+`bootstrap` creates or updates a source scene on a destination world. It uploads
+compiled assets, creates source app blueprints, updates the protected `$scene`
+environment when the source declares one, applies portable world settings and
+spawn, then creates or updates keyed scene placements. IDs are stable for a
+profile and source key, so a failed run can resume without creating duplicates.
+
+```sh
+npm run worldsync -- bootstrap --root ../hyperfy-world-jerome --scene local-world --profile local-3334 --dry-run
+npm run worldsync -- bootstrap --root ../hyperfy-world-jerome --scene local-world --profile local-3334 --allow-external
+```
+
+Use a separate profile for each destination. The first run accepts a fresh
+world containing its built-in `$scene` baseline and ignores unplaced app
+blueprints. Later runs accept resources recorded in that profile's map and
+refuse unrelated app placements. Bootstrap does not delete resources removed
+from the source. The map is written before the first live mutation so the
+command can resume after an interruption. `--dry-run` reads the target and
+reports planned changes without writing the map or changing the world. External
+URLs require `--allow-external` and remain references to their original hosts.
+Uploaded assets are limited to 256 MiB each by the Agent API. Unique blueprints may have one scene placement;
+use separate source objects when placements need independent unique blueprints.
 
 ## Upstream object updates
 
@@ -94,4 +117,5 @@ npm run test:worldsync
 - `scenes/<key>/settings.json` contains only portable settings; private and transient settings are excluded.
 - `schemas/` defines the current object, scene, settings and bundle formats.
 
-The compiler does not execute app scripts. Full scene capture, placement reconciliation, and the in-world Git worker are not available yet.
+The compiler does not execute app scripts. Live scene capture and the in-world
+Git worker are not available yet.
