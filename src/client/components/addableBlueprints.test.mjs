@@ -1,34 +1,32 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { getAddableBlueprints } from './addableBlueprints.js'
+import { getServerProvidedBlueprints } from './addableBlueprints.js'
 
-test('includes installed world blueprints in the add catalog', () => {
+test('lists server collection blueprints without adding installed world blueprints', () => {
   const builtIn = { id: 'model', name: 'Model' }
-  const spiralClimb = { id: 'spiral-climb-prototype', name: 'Spiral Climb' }
+  const serverProvided = { id: 'tree', name: 'Tree' }
 
   const world = {
     collections: {
-      get(id) {
-        assert.equal(id, 'default')
-        return { blueprints: [builtIn] }
+      serialize() {
+        return [
+          { id: 'default', blueprints: [builtIn] },
+          { id: 'nature', blueprints: [serverProvided] },
+        ]
       },
     },
     blueprints: {
       serialize() {
         return [
-          builtIn,
-          spiralClimb,
-          { id: '$scene', scene: true },
-          { id: 'disabled-app', disabled: true },
-          { id: 'old-prompt-box', props: { promptBox: true } },
+          { id: 'installed-in-world', name: 'World Object' },
         ]
       },
     },
   }
 
   assert.deepEqual(
-    getAddableBlueprints(world).map(blueprint => blueprint.id),
-    ['model', 'spiral-climb-prototype']
+    getServerProvidedBlueprints(world).map(blueprint => blueprint.id),
+    ['model', 'tree']
   )
 })

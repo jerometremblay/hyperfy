@@ -60,7 +60,7 @@ import { storage } from '../../core/storage'
 import { ScriptEditor } from './ScriptEditor'
 import { NodeHierarchy } from './NodeHierarchy'
 import { AppsList } from './AppsList'
-import { getAddableBlueprints } from './addableBlueprints'
+import { getServerProvidedBlueprints } from './addableBlueprints'
 import { DEG2RAD, RAD2DEG } from '../../core/extras/general'
 import * as THREE from '../../core/extras/three'
 import { isTouch } from '../utils'
@@ -1059,8 +1059,8 @@ function Apps({ world, hidden }) {
 }
 
 function Add({ world, hidden }) {
-  // The default collection provides built-ins; installed world blueprints are added too.
-  const blueprints = getAddableBlueprints(world)
+  // Server collections are the curated object catalog.
+  const blueprints = getServerProvidedBlueprints(world)
   const [creatingPromptBox, setCreatingPromptBox] = useState(false)
   const [promptBoxError, setPromptBoxError] = useState('')
   const span = 4
