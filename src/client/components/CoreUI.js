@@ -1,5 +1,5 @@
 import { css } from '@firebolt-dev/css'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronUpIcon, LoaderIcon, MessageSquareTextIcon, RefreshCwIcon, SendHorizonalIcon } from 'lucide-react'
 import moment from 'moment'
 
@@ -352,30 +352,41 @@ function Chat({ world }) {
   const inputRef = useRef()
   const [msg, setMsg] = useState('')
   const [active, setActive] = useState(false)
+  const [activeSince, setActiveSince] = useState(null)
+  const [closedAt, setClosedAt] = useState(null)
+  const openChat = useCallback(() => {
+    setActiveSince(Date.now())
+    setActive(true)
+  }, [])
+  const closeChat = useCallback(() => {
+    setClosedAt(Date.now())
+    setActive(false)
+  }, [])
   useEffect(() => {
     const onToggle = () => {
-      setActive(value => !value)
+      if (active) closeChat()
+      else openChat()
     }
     world.on('sidebar-chat-toggle', onToggle)
     return () => {
       world.off('sidebar-chat-toggle', onToggle)
     }
-  }, [])
+  }, [active, closeChat, openChat, world])
   useEffect(() => {
     const control = world.controls.bind({ priority: ControlPriorities.CORE_UI })
     control.slash.onPress = () => {
-      if (!active) setActive(true)
+      if (!active) openChat()
     }
     control.enter.onPress = () => {
-      if (!active) setActive(true)
+      if (!active) openChat()
     }
     control.mouseLeft.onPress = () => {
       if (control.pointer.locked && active) {
-        setActive(false)
+        closeChat()
       }
     }
     return () => control.release()
-  }, [active])
+  }, [active, closeChat, openChat, world])
   useEffect(() => {
     if (active) {
       inputRef.current.focus()
@@ -384,12 +395,9 @@ function Chat({ world }) {
     }
   }, [active])
   const send = async e => {
-    if (world.controls.pointer.locked) {
-      setTimeout(() => setActive(false), 10)
-    }
     if (!msg) {
       e.preventDefault()
-      return setActive(false)
+      return closeChat()
     }
     setMsg('')
     // check for commands
@@ -399,11 +407,6 @@ function Chat({ world }) {
     }
     // otherwise post it
     world.chat.send(msg)
-    if (isTouch) {
-      // setActive(false)
-      e.target.blur()
-      setTimeout(() => setActive(false), 10)
-    }
   }
   return (
     <div
@@ -480,13 +483,13 @@ function Chat({ world }) {
     >
       <div className='mainchat-msgs'>
         {isTouch && !active && <MiniMessages world={world} />}
-        {(!isTouch || active) && <Messages world={world} active={active} />}
+        {(!isTouch || active) && (
+          <Messages world={world} active={active} activeSince={activeSince} closedAt={closedAt} />
+        )}
       </div>
       <div
         className='mainchat-btn'
-        onClick={() => {
-          setActive(true)
-        }}
+        onClick={openChat}
       >
         <MessageSquareTextIcon size='1.125rem' />
       </div>
@@ -500,7 +503,7 @@ function Chat({ world }) {
           onChange={e => setMsg(e.target.value)}
           onKeyDown={e => {
             if (e.code === 'Escape') {
-              setActive(false)
+              closeChat()
             }
             // meta quest 3 isn't spec complaint and instead has e.code = '' and e.key = 'Enter'
             // spec says e.code should be a key code and e.key should be the text output of the key eg 'b', 'B', and '\n'
@@ -508,9 +511,9 @@ function Chat({ world }) {
               send(e)
             }
           }}
-          onBlur={e => {
-            if (!isTouch) {
-              setActive(false)
+          onBlur={() => {
+            if (!isTouch && active) {
+              closeChat()
             }
           }}
         />
@@ -524,8 +527,26 @@ function Chat({ world }) {
   )
 }
 
+const CHAT_MESSAGE_LIFETIME = 60 * 1000
+const CHAT_MESSAGE_FADE_DURATION = 5 * 1000
+const CHAT_MESSAGE_FADE_START = CHAT_MESSAGE_LIFETIME - CHAT_MESSAGE_FADE_DURATION
+
+function getMessageTiming(msg, active, activeSince, closedAt) {
+  const createdAt = Date.parse(msg.createdAt)
+  if (!Number.isFinite(createdAt)) return null
+  const startAt = active && activeSince ? Math.max(createdAt, activeSince) : createdAt
+  let fadeAt = startAt + CHAT_MESSAGE_FADE_START
+  let expiresAt = startAt + CHAT_MESSAGE_LIFETIME
+  if (!active && closedAt && createdAt <= closedAt) {
+    fadeAt = Math.max(fadeAt, closedAt)
+    expiresAt = Math.max(expiresAt, fadeAt + CHAT_MESSAGE_FADE_DURATION)
+  }
+  return { fadeAt, expiresAt }
+}
+
 function MiniMessages({ world }) {
   const [msg, setMsg] = useState(null)
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     let init
     return world.chat.subscribe(msgs => {
@@ -539,26 +560,61 @@ function MiniMessages({ world }) {
     })
   }, [])
   useEffect(() => {
-    const timerId = setTimeout(() => {
-      setMsg(null)
-    }, 4000)
-    return () => clearTimeout(timerId)
+    if (!msg) return
+    const createdAt = Date.parse(msg.createdAt)
+    if (!Number.isFinite(createdAt)) return
+    const fadeAt = createdAt + CHAT_MESSAGE_FADE_START
+    const expiresAt = createdAt + CHAT_MESSAGE_LIFETIME
+    const currentTime = Date.now()
+    setNow(currentTime)
+    const fadeTimerId = setTimeout(() => setNow(Date.now()), Math.max(fadeAt - currentTime, 0))
+    const expiryTimerId = setTimeout(() => setMsg(null), Math.max(expiresAt - currentTime, 0))
+    return () => {
+      clearTimeout(fadeTimerId)
+      clearTimeout(expiryTimerId)
+    }
   }, [msg])
   if (!msg) return null
-  return <Message msg={msg} />
+  const createdAt = Date.parse(msg.createdAt)
+  const age = now - createdAt
+  if (!Number.isFinite(createdAt) || age >= CHAT_MESSAGE_LIFETIME) return null
+  return (
+    <Message
+      msg={msg}
+      fading={age >= CHAT_MESSAGE_FADE_START}
+    />
+  )
 }
 
 const MESSAGES_REFRESH_RATE = 30 // every x seconds
 
-function Messages({ world, active }) {
+function Messages({ world, active, activeSince, closedAt }) {
   const initRef = useRef()
   const contentRef = useRef()
   const spacerRef = useRef()
   // const [now, setNow] = useState(() => moment())
   const [msgs, setMsgs] = useState([])
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     return world.chat.subscribe(setMsgs)
   }, [])
+  useEffect(() => {
+    setNow(Date.now())
+  }, [active, activeSince, closedAt, msgs])
+  useEffect(() => {
+    const nextChange = msgs.reduce((next, msg) => {
+      const timing = getMessageTiming(msg, active, activeSince, closedAt)
+      if (!timing) return next
+      const nextMessageChange = timing.fadeAt > now ? timing.fadeAt : timing.expiresAt
+      if (nextMessageChange > now) {
+        return Math.min(next, nextMessageChange)
+      }
+      return next
+    }, Infinity)
+    if (!Number.isFinite(nextChange)) return
+    const timerId = setTimeout(() => setNow(Date.now()), Math.max(nextChange - Date.now(), 0))
+    return () => clearTimeout(timerId)
+  }, [active, activeSince, closedAt, msgs, now])
   // useEffect(() => {
   //   let timerId
   //   const updateNow = () => {
@@ -597,6 +653,10 @@ function Messages({ world, active }) {
       observer.disconnect()
     }
   }, [])
+  const visibleMsgs = msgs.filter(msg => {
+    const timing = getMessageTiming(msg, active, activeSince, closedAt)
+    return timing && timing.expiresAt > now
+  })
   return (
     <div
       ref={contentRef}
@@ -622,14 +682,21 @@ function Messages({ world, active }) {
       `}
     >
       <div className='messages-spacer' ref={spacerRef} />
-      {msgs.map(msg => (
-        <Message key={msg.id} msg={msg} /*now={now}*/ />
-      ))}
+      {visibleMsgs.map(msg => {
+        const timing = getMessageTiming(msg, active, activeSince, closedAt)
+        return (
+          <Message
+            key={msg.id}
+            msg={msg}
+            fading={now >= timing.fadeAt}
+          />
+        )
+      })}
     </div>
   )
 }
 
-function Message({ msg, now }) {
+function Message({ msg, fading = false }) {
   // const timeAgo = useMemo(() => {
   //   const createdAt = moment(msg.createdAt)
   //   const age = now.diff(createdAt, 'seconds')
@@ -647,6 +714,10 @@ function Message({ msg, now }) {
   return (
     <div
       className='message'
+      style={{
+        opacity: fading ? 0 : 1,
+        transition: `opacity ${CHAT_MESSAGE_FADE_DURATION}ms linear`,
+      }}
       css={css`
         padding: 0.25rem 0;
         line-height: 1.4;
