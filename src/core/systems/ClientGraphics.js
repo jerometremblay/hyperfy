@@ -17,6 +17,7 @@ import { updatePortalCamera } from '../extras/portalCamera'
 import { limitLightShadows } from '../extras/shadowBudget'
 import { getPortalArrival } from '../extras/portalArrival'
 import { PortalAvatars } from '../extras/PortalAvatars'
+import { PhotoCapture } from '../extras/PhotoCapture'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -51,6 +52,7 @@ function getRenderer() {
 export class ClientGraphics extends System {
   constructor(world) {
     super(world)
+    this.photos = new PhotoCapture(this)
     this.portals = new Set()
     this.renderingPortal = false
     this.portalAvatars = new PortalAvatars(world)
@@ -377,6 +379,7 @@ export class ClientGraphics extends System {
   }
 
   commit() {
+    this.photos.process()
     this.render()
   }
 
@@ -462,6 +465,7 @@ export class ClientGraphics extends System {
   }
 
   destroy() {
+    this.photos.destroy()
     this.portalAvatars.destroy()
     this.resizer.disconnect()
     this.viewport.removeChild(this.renderer.domElement)

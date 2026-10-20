@@ -191,6 +191,13 @@ export class Stage extends System {
     this.octree.insert(sItem)
     return {
       material: material.proxy,
+      hideForPhoto: () => {
+        const visible = mesh.visible
+        mesh.visible = false
+        return () => {
+          mesh.visible = visible
+        }
+      },
       move: matrix => {
         mesh.matrixWorld.copy(matrix)
         this.octree.move(sItem)
@@ -786,6 +793,16 @@ class Model {
     this.stage.octree.insert(sItem)
     return {
       material: this.material.proxy,
+      hideForPhoto: () => {
+        const matrix = new THREE.Matrix4()
+        this.iMesh.getMatrixAt(item.idx, matrix)
+        this.iMesh.setMatrixAt(item.idx, new THREE.Matrix4().makeScale(0, 0, 0))
+        this.iMesh.instanceMatrix.needsUpdate = true
+        return () => {
+          this.iMesh.setMatrixAt(item.idx, matrix)
+          this.iMesh.instanceMatrix.needsUpdate = true
+        }
+      },
       move: matrix => {
         this.move(item, matrix)
         this.stage.octree.move(sItem)

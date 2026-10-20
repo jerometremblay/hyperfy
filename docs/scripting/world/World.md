@@ -100,3 +100,65 @@ Sets a query parameter in the browsers url
 ### `.open(url: string, newTab: ?Boolean)`
 
 Opens a link, defaults to new tab.
+
+### `.capturePhoto(options)`: Promise<{ url, width, height }>
+
+Client-only. Takes a JPEG of the current 3D scene from a world-space camera pose,
+then uploads it to the world's normal asset store. The returned `asset://<sha256>.jpg`
+URL works with image nodes on every client. Camera forward is local **−Z**.
+
+```js
+if (world.isClient) {
+  const { url } = await world.capturePhoto({
+    position: new Vector3(0, 1.6, 3),
+    quaternion: new Quaternion(), // looks toward −Z
+    fov: 50,
+    width: 512,
+    height: 512,
+  })
+  const image = app.create('image', { src: url, height: 1 })
+  app.add(image)
+  app.send('photo', { url })
+}
+
+// Persist on the server; clients cannot write world storage.
+if (world.isServer) {
+  app.on('photo', ({ url }) => {
+    if (/^asset:\/\/[0-9a-f]{64}\.jpg$/.test(url)) world.set('booth.latest', { url })
+  })
+}
+```
+
+`position` (Vector3) and `quaternion` (Quaternion) are required and copied when called.
+Optional settings:
+
+| Option | Default | Limits |
+| --- | --- | --- |
+| `width`, `height` | 512 | Rounded and clamped to 64–1024 pixels |
+| `fov` | 50 | Vertical degrees, clamped to 1–179 |
+| `near`, `far` | 0.05, 50 | 0.01–1000 and 0.02–10000; far must exceed near |
+| `format` | `'jpeg'` | Only JPEG is supported |
+| `quality` | 0.85 | Clamped to 0–1 |
+| `hide` | `[]` | Nodes owned by this app; their descendants are hidden during the render |
+
+Captures include loaded avatars (including the local head in first person), meshes,
+prims, lights, sky and world-space UI. They exclude browser overlays, nametags,
+chat bubbles, action prompts and builder controls. CSS/HTML surfaces are not WebGL
+content and cannot be photographed. Photos use ACES tone mapping, world exposure and
+sRGB output; viewport bloom, ambient occlusion and antialiasing effects are omitted.
+Remote portal views use their most recently rendered textures.
+
+At most one photo is rendered per graphics frame, with up to eight pending calls per
+client. Encoding and uploads are asynchronous. Invalid options, rendering errors,
+failed uploads and queue overflow reject the promise; handle these with `try/catch`.
+Like `world.load`, callbacks are suppressed after the calling app is destroyed.
+
+JPEG uploads are limited to 1 MB and 20 attempts per minute per IP address (including
+ordinary JPEG asset uploads). Clients sharing an IP share that allowance. The upload
+route has no socket identity; this limit does not require a new authentication protocol.
+Reduce dimensions or quality if an encoded photo exceeds the size limit.
+
+Photos are content-addressed assets, not database records. Share URLs through app
+state/events as usual. Save retained URLs with server-side `world.set`; the asset
+cleaner preserves `asset://` values nested anywhere in `storage.json`. Unsaved photos
+may be removed by cleaning. As with other assets, anyone with the URL can view them.

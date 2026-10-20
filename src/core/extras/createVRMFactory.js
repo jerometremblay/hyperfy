@@ -977,6 +977,12 @@ export function createVRMFactory(glb, setupMaterial) {
       }
       firstPersonActive = active
       updateFirstPersonVisibility()
+      if (!hasFirstPersonMeshes) {
+        // The skeleton is detached from the scene and may skip its normal update.
+        // Camera-only renders need the restored head matrices immediately.
+        rootBone.updateMatrixWorld(true)
+        THREE.Skeleton.prototype.update.call(skeleton)
+      }
     }
 
     const setHandTrackingPose = pose => {

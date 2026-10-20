@@ -20,6 +20,7 @@ import { assets } from './assets'
 import { agentAPI } from './agent-api'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
+import { PhotoUploadLimits, isJPEGUpload, validatePhoto, MAX_PHOTO_BYTES } from './photoUploads'
 import { BrowserCapture } from './BrowserCapture'
 import { proxyWebViewRequest } from './WebViewProxy'
 import { getPortalStatus, getPortalLoadingImage } from './portalStatus'
@@ -108,7 +109,7 @@ await collections.init({ rootDir, worldDir })
 const db = await getDB({ worldDir })
 
 // init cleaner
-await cleaner.init({ db })
+await cleaner.init({ db, worldDir })
 
 // init storage
 const storage = new Storage(path.join(worldDir, '/storage.json'))
@@ -249,8 +250,13 @@ fastify.get('/env.js', async (req, reply) => {
   reply.type('application/javascript').send(envsCode)
 })
 
+const photoUploadLimits = new PhotoUploadLimits()
+
 fastify.post('/api/upload', async (req, reply) => {
   const mp = await req.file()
+  if (!mp) return reply.code(400).send({ error: 'File required' })
+  const photo = isJPEGUpload(mp)
+  if (photo) photoUploadLimits.take(req.ip)
   
   // Check if this is a binary file that needs special handling
   const ext = mp.filename.split('.').pop()?.toLowerCase()
@@ -258,13 +264,19 @@ fastify.post('/api/upload', async (req, reply) => {
   
   // collect into buffer with proper binary handling
   const chunks = []
+  let bytes = 0
   for await (const chunk of mp.file) {
+    bytes += chunk.length
+    if (photo && bytes > MAX_PHOTO_BYTES) {
+      return reply.code(413).send({ error: 'JPEG upload exceeds 1 MB' })
+    }
     chunks.push(chunk)
   }
   if (mp.file.truncated) {
     throw new fastify.multipartErrors.RequestFileTooLargeError()
   }
   const buffer = Buffer.concat(chunks)
+  if (photo) validatePhoto(buffer)
   
   // Set correct MIME type for binary formats
   let mimeType = mp.mimetype || 'application/octet-stream'

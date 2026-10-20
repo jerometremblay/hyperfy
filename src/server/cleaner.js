@@ -1,3 +1,5 @@
+import fs from 'fs-extra'
+import path from 'path'
 import { assets } from './assets'
 import { collections } from './collections'
 
@@ -6,7 +8,7 @@ class Cleaner {
     // ...
   }
 
-  async init({ db }) {
+  async init({ db, worldDir }) {
     const clean = process.env.CLEAN === 'true' || process.env.CLEAN === 'dryrun'
     if (!clean) return console.log('[clean] skipped')
     const dryrun = process.env.CLEAN === 'dryrun'
@@ -29,6 +31,14 @@ class Cleaner {
     }
     // track a list of assets to keep
     const assetsToKeep = new Set()
+    // Read before deleting anything. Corrupt/unreadable storage must abort cleaning.
+    let storage
+    try {
+      storage = await fs.readJson(path.join(worldDir, 'storage.json'))
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+    }
+    collectStorageAssets(storage, assetsToKeep)
     // keep all user equipped vrms
     const userRows = await db('users').select('avatar')
     for (const user of userRows) {
@@ -98,6 +108,17 @@ class Cleaner {
       }
     }
     console.log('[clean] complete')
+  }
+}
+
+export function collectStorageAssets(value, assetsToKeep) {
+  const pending = [value]
+  while (pending.length) {
+    const item = pending.pop()
+    if (typeof item === 'string' && item.startsWith('asset://')) assetsToKeep.add(item.slice(8))
+    else if (item && typeof item === 'object') {
+      for (const value of Object.values(item)) pending.push(value)
+    }
   }
 }
 

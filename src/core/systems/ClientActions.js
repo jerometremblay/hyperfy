@@ -211,6 +211,7 @@ function createAction(world) {
   }
 
   return {
+    getMesh: () => mesh,
     start(_node) {
       // if (node) console.error('erm node already set')
       node = _node

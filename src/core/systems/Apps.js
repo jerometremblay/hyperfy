@@ -212,6 +212,21 @@ export class Apps extends System {
           console.warn('[world.open] URL redirection only works on client side')
         }
       },
+      capturePhoto(entity, options) {
+        if (!world.network.isClient) return Promise.reject(new Error('capturePhoto is client-only'))
+        const hook = entity.getDeadHook()
+        return new Promise((resolve, reject) => {
+          if (hook.dead) return
+          world.graphics.photos.capture(entity, options, hook).then(
+            photo => {
+              if (!hook.dead) resolve(photo)
+            },
+            err => {
+              if (!hook.dead) reject(err)
+            }
+          )
+        })
+      },
       load(entity, type, url) {
         return new Promise(async (resolve, reject) => {
           const hook = entity.getDeadHook()
