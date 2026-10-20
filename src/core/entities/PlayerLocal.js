@@ -25,12 +25,15 @@ const POINTER_LOOK_SPEED = 0.1
 const PAN_LOOK_SPEED = 0.4
 const XR_TURN_SPEED = 90 // degrees per second at full stick
 const ZOOM_SPEED = 2
-const MIN_ZOOM = 0
 const MAX_ZOOM = 8
 const STICK_OUTER_RADIUS = 50
 const STICK_INNER_RADIUS = 25
 const DEFAULT_CAM_HEIGHT = 1.2
-const FIRST_PERSON_ZOOM = 0.3
+const THIRD_PERSON_MIN_ZOOM = 0.3
+const FIRST_PERSON_SCROLL_DELAY = 0.3
+const CAMERA_DEFAULT_NEAR = 0.2
+const CAMERA_CLOSE_NEAR = 0.05
+const CAMERA_NEAR_BLEND_RANGE = 0.5
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -115,6 +118,7 @@ export class PlayerLocal extends Entity {
     this.moving = false
 
     this.firstPerson = false
+    this.lastZoomAt = -Infinity
 
     this.lastJumpAt = 0
     this.flying = false
@@ -1035,23 +1039,32 @@ export class PlayerLocal extends Entity {
       this.cam.rotation.x = clamp(this.cam.rotation.x, -89 * DEG2RAD, 89 * DEG2RAD)
     }
 
-    // zoom camera if scrolling wheel
+    // Zoom to the closest third-person view before a further inward scroll enters first person.
     if (!xr) {
-      this.cam.zoom += -this.control.scrollDelta.value * ZOOM_SPEED * delta
-      this.cam.zoom = clamp(this.cam.zoom, MIN_ZOOM, MAX_ZOOM)
-    }
-
-    // transition in and out of first person
-    if (this.cam.zoom < FIRST_PERSON_ZOOM && !this.firstPerson) {
-      this.cam.zoom = 0
-      this.firstPerson = true
-      if (this.avatar) this.avatar.visible = true
-      this.avatar?.setFirstPerson(true)
-    } else if (this.cam.zoom > 0 && this.firstPerson) {
-      this.cam.zoom = FIRST_PERSON_ZOOM
-      this.firstPerson = false
-      this.avatar?.setFirstPerson(false)
-      if (this.avatar) this.avatar.visible = true
+      const zoomDelta = -this.control.scrollDelta.value * ZOOM_SPEED * delta
+      if (zoomDelta !== 0) {
+        const now = this.world.time
+        if (this.firstPerson) {
+          if (zoomDelta > 0) {
+            this.cam.zoom = THIRD_PERSON_MIN_ZOOM
+            this.firstPerson = false
+            this.avatar?.setFirstPerson(false)
+            if (this.avatar) this.avatar.visible = true
+          }
+        } else if (
+          zoomDelta < 0 &&
+          this.cam.zoom <= THIRD_PERSON_MIN_ZOOM &&
+          now - this.lastZoomAt >= FIRST_PERSON_SCROLL_DELAY
+        ) {
+          this.cam.zoom = 0
+          this.firstPerson = true
+          if (this.avatar) this.avatar.visible = true
+          this.avatar?.setFirstPerson(true)
+        } else {
+          this.cam.zoom = clamp(this.cam.zoom + zoomDelta, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
+        }
+        this.lastZoomAt = now
+      }
     }
 
     // stick movement threshold
@@ -1368,6 +1381,16 @@ export class PlayerLocal extends Entity {
     } else {
       // otherwise interpolate camera towards target
       simpleCamLerp(this.world, this.control.camera, this.cam, delta)
+      const nearBlend = clamp(
+        (this.control.camera.zoom - THIRD_PERSON_MIN_ZOOM) / CAMERA_NEAR_BLEND_RANGE,
+        0,
+        1
+      )
+      const near = CAMERA_CLOSE_NEAR + (CAMERA_DEFAULT_NEAR - CAMERA_CLOSE_NEAR) * nearBlend
+      if (this.world.camera.near !== near) {
+        this.world.camera.near = near
+        this.world.camera.updateProjectionMatrix()
+      }
     }
     if (this.avatar) {
       const matrix = this.avatar.getBoneTransform('head')
