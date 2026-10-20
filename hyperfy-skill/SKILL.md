@@ -22,8 +22,9 @@ Use this skill when the user asks to create, edit, diagnose, package, or preview
 11. Package JavaScript assets using Hyperfy's canonical script convention for the target runtime. For v0.16.0, create the `.js` file with MIME `text/plain`, hash the exact bytes with SHA-256, and use `asset://<sha256>.js`.
 12. Extract the just-created `.hyp` and verify every asset byte-for-byte. Recompute SHA-256 and assert that each `asset://<hash>.<ext>` URL matches the packaged bytes.
 13. Generate the interactive preview from the **exact packaged `.hyp` bytes**, not from a separate scene reconstruction. Confirm that the selected viewer implements every primitive type used, including `extrude`.
-14. Run the validation/self-test suite. For dense primitive scenes, also assert that there are no unintended `update`/`fixedUpdate` handlers, detached world nodes, or physics rebuild loops.
-15. Deliver the `.hyp`, source `.js`, and exact-package preview. Include the validation report when useful.
+14. Perform the **Mandatory geometric and visual validation** below on the exact-package preview. Syntax, runtime, and package validation do not replace this audit. If any geometry changes, rebuild the package and preview and repeat the audit.
+15. Run the validation/self-test suite. For dense primitive scenes, also assert that there are no unintended `update`/`fixedUpdate` handlers, detached world nodes, or physics rebuild loops.
+16. Deliver the `.hyp`, source `.js`, and exact-package preview. Include the validation report when useful.
 
 When sitting interaction is requested, read [docs/sitting.md](docs/sitting.md) before defining furniture anchors, actions, occupancy, or cleanup. Apply the sitting validation pass below in the target runtime.
 
@@ -152,19 +153,26 @@ beamBetween(a, b, thickness, color)
 
 The helper should own all Euler math.
 
-## Orientation validation pass
+## Structural orientation checks
 
-Before final packaging, perform a dedicated orientation audit in addition to syntax/runtime validation:
+The mandatory geometric audit below covers all generated objects. When structural members are present, also check for these failure modes:
 
-1. **Endpoint test:** for every endpoint-derived helper, mathematically transform local `[-L/2,+L/2]` Y endpoints and assert they coincide with requested world endpoints within a small tolerance.
-2. **Canonical views:** inspect front, back, left, right, top, and one isometric view. An isometric view alone can hide reversed slopes.
-3. **Symmetry check:** mirrored structural members should land on mirrored anchors, not merely have visually opposite angle values.
-4. **Stair check:** treads, stringers, and handrails must all progress in the same run direction.
-5. **Taper check:** upper tower/gantry anchors move toward the intended center when the design tapers inward.
-6. **Overrun check:** diagonal members should use the actual endpoint distance as their length unless deliberate overlap is specified.
-7. **Temporary debug markers:** if orientation is uncertain, add small differently colored spheres at `a` and `b` in the preview, validate, then remove them from the final source.
+1. **Symmetry:** mirrored members should land on mirrored anchors, not merely have visually opposite angle values.
+2. **Stairs:** treads, stringers, and handrails must all progress in the same run direction.
+3. **Taper:** upper tower/gantry anchors move toward the intended center when the design tapers inward.
+4. **Overrun:** diagonal members should use the actual endpoint distance as their length unless deliberate overlap is specified.
+5. **Temporary debug markers:** if orientation is uncertain, add small differently colored spheres at `a` and `b` in the preview, validate, then remove them from the final source.
 
-When the generated object contains many diagonals, treat this orientation audit as mandatory.
+## Mandatory geometric and visual validation
+
+Every generated object must pass this audit before delivery. Follow the detailed checks in [docs/orientation.md](docs/orientation.md) and use the preview generated from the exact packaged `.hyp` bytes. Syntax checks, constructor checks, package hashes, and a passing self-test are not substitutes. If the viewer cannot render a primitive or represent the target runtime's geometry, inspect the object in a compatible renderer or the target runtime instead.
+
+1. **Readable surfaces:** Explicitly identify the intended viewing direction for every sign, display, label, and decorative surface that carries directional artwork or text. Text must read left-to-right from that side. Do not assume increasing world X is screen-right; verify the orientation of individual glyphs as well as character order.
+2. **Sloped elements:** Define beams, rails, braces, trim, and other inclined structural members with two endpoints. Derive rotations with the canonical orientation helpers; do not infer Euler-angle signs manually. Numerically verify that the transformed local endpoints coincide with the intended endpoints.
+3. **Shared surface coordinates:** For inclined screens, signs, panels, and their decorations, use one local coordinate system and outward normal for the whole surface assembly. Place frames, lettering, buttons, artwork, and other details relative to the same plane. Prefer a parent group when the assembly shares a rotation.
+4. **Physical visibility:** Do not put screens, windows, openings, or recessed decorations behind opaque structural geometry. Build actual gaps in surrounding structure where an opening is intended. Check that surface details are visible and correctly offset from their supporting plane.
+5. **Visual inspection:** Inspect front, back, left, right, top, and isometric views. Check text orientation, slopes, surface normals, occlusion, intersections, offsets, and structural alignment. Correct visible errors before packaging the final artifact.
+6. **Numerical orientation tests:** For every endpoint-derived element, compare transformed endpoints with target coordinates within an appropriate tolerance. For every inclined surface, verify that the transformed top and bottom edges have the intended relative depth. Any failed check is a generation failure; correct it and repeat the audit.
 
 ## Physics discipline
 

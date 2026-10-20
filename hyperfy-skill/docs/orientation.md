@@ -2,6 +2,30 @@
 
 This document expands the orientation rules in `SKILL.md`.
 
+## Readable faces and shared surface coordinates
+
+For every sign, display, label, or directional decoration, state which side is intended for viewing and which way its outward normal points. Define a local surface frame with an origin, a screen-right axis, a screen-up axis, and an outward normal. Do not infer screen-right from world `+X`; derive it from the chosen viewing direction and the surface transform.
+
+Build the panel, frame, lettering, buttons, and artwork in that same local frame. For an inclined assembly, parent the parts under a group with the shared rotation, and position each part relative to the supporting plane and its outward normal. Inspect the surface from its intended viewing side and verify individual glyphs: the word may be in the correct character order while each glyph is mirrored or rotated.
+
+## Inclined surfaces and visibility
+
+Give every inclined structural member two intended endpoints and use the canonical helpers in `templates/orientation_helpers.js` to derive its transform. Do not hand-adjust Euler signs. Transform the member's local endpoints back into world coordinates and compare them with the requested endpoint coordinates. If the member has different ends or end-specific details, verify the directed start/end mapping as well as the undirected segment.
+
+For a sloped screen, sign, or panel, define its top and bottom edges in its local surface frame. Transform both edges and compare their depths along the design's intended depth axis; the top-to-bottom depth difference must have the expected direction and magnitude. A visual check from an isometric angle alone is not enough.
+
+Openings must be gaps in surrounding opaque geometry. Do not place a window, screen, or recessed decoration behind a solid wall, beam, or trim piece and rely on its material or depth to make it visible. Check that surface details sit just off their support plane without being obscured or intersecting it.
+
+## Geometric acceptance pass
+
+Use the exact-package preview when it supports the generated primitives; otherwise use a compatible renderer or the target runtime. Inspect the object from the front, back, left, right, top, and an isometric view. Check text and glyph orientation from the intended side, face normals, slopes, openings, offsets, intersections, and structural alignment. Correct every visible issue, rebuild the package and preview, and repeat the checks before delivery.
+
+For numeric checks:
+
+- For each endpoint-derived beam, rail, brace, or trim piece, transform local `[-L/2,+L/2]` endpoints and compare them with the target endpoints within a small tolerance. Match direction too when end identity matters.
+- For each inclined surface, transform top- and bottom-edge endpoints (or centers) and verify their relative depth along the intended depth axis.
+- Treat any failed numerical check or visible geometric error as a failed generation. Syntax and package validation do not waive these checks.
+
 ## Why endpoint-derived geometry is safer
 
 Euler-angle sign choices are easy to get wrong when a scene contains multiple faces, mirrored parts, stairs, or tapered frames. Instead of asking “which sign should this angle have?”, define where the member begins and ends.

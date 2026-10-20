@@ -1,6 +1,10 @@
-# hyperfy-hyp-app-authoring 2.4.4
+# hyperfy-hyp-app-authoring 2.4.5
 
 Generic ChatGPT → Hyperfy primitive JavaScript → `.hyp` → exact-package preview workflow.
+
+## 2.4.5 mandatory geometric and visual validation
+
+Every generated object must pass a geometric and visual audit before delivery. Inspect front, back, left, right, top, and isometric views; verify readable surfaces, endpoint-derived members, inclined surface coordinates, physical visibility, and numeric alignment. See [docs/orientation.md](docs/orientation.md).
 
 ## 2.4.4 live-world Agent API guidance
 

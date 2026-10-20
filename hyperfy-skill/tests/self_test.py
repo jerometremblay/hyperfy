@@ -109,7 +109,7 @@ def main():
         test_orientation_helpers(tmp)
         test_smoke_rejects_invalid_prim_properties(tmp)
         test_pack_preview_roundtrip(tmp)
-    print('hyperfy-hyp-app-authoring 2.4.2 self-test: PASS')
+    print('hyperfy-hyp-app-authoring 2.4.5 self-test: PASS')
 
 
 if __name__ == '__main__':
