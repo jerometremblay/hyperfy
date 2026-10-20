@@ -48,6 +48,7 @@ export class Collider extends Node {
   }
 
   mount() {
+    this.needsRebuild = false
     if (this.ctx.world.isPreview) return
     let geometry
     let pmesh
@@ -113,7 +114,6 @@ export class Collider extends Node {
     // console.log('geometry', geometry)
     // this._geometry = geometry
     PHYSX.destroy(geometry)
-    this.needsRebuild = false
     if (!this.ctx.portalCollisionProxy) this.ctx.world.physics.portalCollisions?.colliders.add(this)
   }
 
@@ -130,8 +130,9 @@ export class Collider extends Node {
 
   unmount() {
     if (!this.ctx.portalCollisionProxy) {
-      this.ctx.world.physics.portalCollisions?.remove(this)
-      this.ctx.world.physics.portalCollisions?.colliders.delete(this)
+      const portalCollisions = this.ctx.world.physics?.portalCollisions
+      portalCollisions?.remove(this)
+      portalCollisions?.colliders.delete(this)
     }
     // if (this.type === 'geometry' && pxMeshes[this.geometry.uuid]) {
     //   pxMeshes[this.geometry.uuid].release()
