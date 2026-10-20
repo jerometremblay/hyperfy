@@ -76,6 +76,22 @@ URLs require `--allow-external` and remain references to their original hosts.
 Uploaded assets are limited to 256 MiB each by the Agent API. Unique blueprints may have one scene placement;
 use separate source objects when placements need independent unique blueprints.
 
+## Live world capture
+
+`capture` reads one server snapshot and writes a backup into the source repository. It captures every app blueprint, the protected `$scene` environment, portable settings and spawn, persistent app placements, referenced assets, and all saved seat poses and styles. It writes editable object files when exact extraction succeeds, and uses native HYP source when it cannot recover editable files exactly. Capture assigns stable logical keys from runtime IDs and saves the mappings under `.worldsync/captures/<profile>.json`; it does not match resources by name or position.
+
+Capture defaults to a dry run. Add `--write` to write the listed files. Use `--bootstrap` for the first capture only, when no profile or legacy worldsync map exists; it initializes mappings from the live world and selects live values as the initial source. It writes no data to the live world. If source files and live state both changed since the last capture, it reports a conflict and stops. `--resolve live` explicitly selects the live version for those conflicts; dirty Git files are still protected. Removed live resources remain in source because the Agent API does not provide deletion tombstones. Seat-pose records preserve source user IDs, avatar URLs, profile IDs, and source anchor IDs. Anchor identity mapping is only metadata; destination identity reconciliation is not part of capture.
+
+```sh
+npm run worldsync -- capture --root ../hyperfy-world-jerome --scene local-world --profile local-3333 --dry-run
+npm run worldsync -- capture --root ../hyperfy-world-jerome --scene local-world --profile local-3333 --bootstrap --dry-run
+npm run worldsync -- capture --root ../hyperfy-world-jerome --scene local-world --profile local-3333 --write
+npm run worldsync -- capture --root ../hyperfy-world-jerome --scene local-world --profile local-3333 --write --exclude-seat-poses
+npm run worldsync -- capture --root ../hyperfy-world-jerome --scene local-world --profile local-3333 --propose
+```
+
+The capture API requires the profile's write token. Seat-pose data is included by default; `--exclude-seat-poses` omits it from that capture and leaves any existing seat-pose backup file untouched. `--propose` captures in a temporary worktree based on the remote default branch, creates a signed commit and opens a pull request. It requires `gh`, the `jerometremblay-bot` GitHub login, the configured signing key, and an `origin` remote with push access.
+
 ## Upstream object updates
 
 Keep canonical objects in `tools/worldsync/catalog/objects/<key>` in the Hyperfy
@@ -117,5 +133,7 @@ npm run test:worldsync
 - `scenes/<key>/settings.json` contains only portable settings; private and transient settings are excluded.
 - `schemas/` defines the current object, scene, settings and bundle formats.
 
-The compiler does not execute app scripts. Live scene capture and the in-world
-Git worker are not available yet.
+The compiler does not execute app scripts. The in-world Git worker is not
+available yet. See
+[`docs/world-sync/CAPTURE_REQUIREMENTS.md`](../../docs/world-sync/CAPTURE_REQUIREMENTS.md)
+for capture requirements, including selected Pose Editor data.

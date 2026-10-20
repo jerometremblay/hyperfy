@@ -70,9 +70,9 @@ At the inspected revision, the Agent API also exposes write-protected player ins
 - **R05 Multi-world:** Multiple named scenes and world profiles, with isolated development/staging/production mappings and credentials only from local environment/secret store.
 - **R06 Direct deployment:** Do **not** require generating intermediate `.hyp` files to deploy source-mode objects. Upload hashed assets and upsert blueprints/entities over authenticated API.
 - **R07 Portable bundle:** Generate deterministic `.hworld` from resolved source and layout; clean-room deployment works without access to original source repository or runtime asset server.
-- **R08 Bidirectional capture:** Capture live transforms, additions/deletions, blueprint props/scripts/models, environment/settings as scoped; use native source update when lossless, legacy HYP fallback when not.
+- **R08 Bidirectional capture:** Capture all persistent live content, blueprint props/scripts/models, environment/settings, and all seat-pose data by default. An explicit exclusion option may omit seat-pose data. Use native source update when lossless and legacy HYP fallback when not.
 - **R09 Identity:** Persist reliable `repoId/sceneKey/objectKey/instanceKey` ↔ per-world runtime ID mapping. Never identity-match by name or position.
-- **R10 Ownership:** Do not silently claim, move, delete, or edit objects unmanaged by this repository. Adoption must be explicit.
+- **R10 Ownership:** Capture all persistent live content into the backup. Deployment must not silently claim, move, delete, or edit live objects that the repository does not manage.
 - **R11 Concurrency:** Use frozen server snapshots and three-way comparison to last acknowledged baseline; refuse destructive stale writes and unsafe merge.
 - **R12 In-world save:** Authorized in-world capture request, durable status, trusted Git worker and PR review; no client-side repository secrets.
 - **R13 Safety/operations:** Preflight/dry-run, scoped access, audit trail, resumable deploy, verification after save/restart, rollback plan and independent DB/asset backups.
@@ -81,12 +81,12 @@ At the inspected revision, the Agent API also exposes write-protected player ins
 ### Exclusions / explicit limitations for v1
 
 - Do not reverse-engineer a Blender file, CAD construction history, or generator prompt from a `.glb` embedded in `.hyp`. A `.hyp` may be losslessly **unpacked**, but this does not restore authoring history.
-- Do not capture chat, player accounts, permissions, avatars, seating preferences, ephemeral `app.state`, network ownership, animation frames, transient physics, browser capture contents, or scripting runtime internal nodes.
+- Do not capture chat, player accounts, permissions, avatar files, ephemeral `app.state`, network ownership, animation frames, transient physics, browser capture contents, or scripting runtime internal nodes.
 - Do not automatically rewrite arbitrary JavaScript string literals containing URLs or asset hashes; use declared dependencies/blueprint props. Warn on untracked dynamic dependencies.
 - Do not require app-level per-instance `props`: current props are blueprint-wide. Separate object definitions or a later explicitly designed engine extension are needed for differing per-instance configurations.
 - Do not promise byte-for-byte deterministic *native `.hyp`* across engine changes unless output canonicalization is fully controlled and tested. Deterministic outputs for a given compiler version and unchanged input **are required**.
 - Do not silently publish live-world changes to the protected default branch. Capture creates a proposal; merge remains reviewed.
-- Do not treat Git history as operational disaster recovery for user data, full databases or S3/local asset stores.
+- Do not treat Git history as operational disaster recovery for user data, full databases or S3/local asset stores. Captured seat-pose data is part of the world source backup, not a full user-data backup.
 
 ## 3. New `hyperfy-world` repository layout
 
@@ -190,7 +190,7 @@ Example `worldsync.config.json`:
     "production": { "agentApiUrl": "https://example.invalid/api/agent", "scene": "camp" }
   },
   "capture": {
-    "unmanaged": "review",
+    "captureNewResources": true,
     "includeSettings": true,
     "includeEnvironment": true,
     "excludeRuntimeState": true
@@ -485,12 +485,12 @@ Track two different concepts:
 
 A pending PR must not advance the deployed baseline. Store enough immutable base manifest/compiled-object fingerprints to perform three-way merge even when files have moved or LFS content changed. Do not rely solely on `source_commit` if the object was not yet committed at bootstrap.
 
-Track a monotonically increasing **authored-world revision**, incremented for meaningful server-authoritative changes to persistent app placements/blueprints and approved settings/environment. Player joins, frame ticks, transient physics and ephemeral `app.state` must not increment it. Increment on both builder-websocket and Agent API mutations. A snapshot must represent one coherent revision. Handle pending asynchronous builds/uploads: either wait until stable or mark object noncapturable.
+Track a monotonically increasing **authored-world revision**, incremented for meaningful server-authoritative changes to persistent app placements/blueprints, approved settings/environment, and saved seat-pose records/styles. Player joins, frame ticks, transient physics and ephemeral `app.state` must not increment it. Increment on both builder-websocket and Agent API mutations. A snapshot must represent one coherent revision. Handle pending asynchronous builds/uploads: either wait until stable or mark object noncapturable.
 
 ### 5.4 Ownership and lifecycle
 
 - Managed resource removed live: keep a tombstone until deletion has been reviewed and captured/deployed; otherwise disappearance might be mistaken for an object never present.
-- Unknown live object: **unmanaged**, left alone by deploy; offered for explicit adoption during capture with a suggested human key.
+- New persistent live object: capture it with a new logical key. During deploy, leave unrelated target objects unchanged.
 - An object may have zero placements. Its editable definition must remain versioned; its managed compiled assets must remain retained while referenced by managed definitions.
 - A deleted instance must not cause a reused instance key to silently point to another runtime entity. An accidental old mapping to a different runtime object is a conflict.
 - Source edit to one object updates its mapped blueprint and intentionally rebuilds its linked instances; plan must report those affected instances. A placement-only edit must *not* repack HYP or change the blueprint.
@@ -543,7 +543,7 @@ POST   /api/agent/capture-requests/:id/complete # trusted worker completion
 
 **Suggested contracts:**
 
-- `snapshot` returns `{worldId, revision, capturedAt, settings, spawn, environment, blueprints, entities, managed}`; entities exclude players and transient internal node graphs; each referenced blueprint is present. Managed/tombstone rows are included. A snapshot represents one authoritative tick/revision, not independently queried asynchronous arrays.
+- `snapshot` returns `{worldId, revision, capturedAt, settings, spawn, environment, blueprints, entities, managed, seatPoseData}`; entities exclude players and transient internal node graphs; each referenced blueprint is present. The `seatPoseData` field includes all `seatPose:`, `seatPoseProfile:`, and `seatPoseStyles:` records when the caller has capture permission. It does not expose other storage keys. Managed/tombstone rows are included. A snapshot represents one authoritative tick/revision, not independently queried asynchronous arrays.
 - `assets/:filename` accepts only `^[0-9a-f]{64}\.[a-z0-9]+$`, verifies digest against bytes, handles streaming/backpressure/limits and MIME. Reject symlink/path escape. Do not make general `/api/upload` an alternate unprotected worldsync write path.
 - `deploy/plan` consumes compiled **object definitions** (or references to previously uploaded, verified content), desired layout, mapping scope, base revision/hash, target world ID. It returns an immutable plan ID/hash, creates/updates/deletes, warnings and affected linked instances; it performs **no mutations**.
 - `deploy/apply` requires plan ID, hash, expected world revision and explicit approval for deletes/reset/scene replacement. It revalidates preconditions immediately before mutation, journals operations and returns durable status. If one operation fails, it never records the full baseline as successful.
@@ -592,6 +592,7 @@ worldsync deploy --world development --scene camp --dry-run
 worldsync deploy --world development --scene camp --apply --plan-id <id> --confirm <hash>
 worldsync capture --world production --scene camp --dry-run
 worldsync capture --world production --scene camp --write
+worldsync capture --world production --scene camp --exclude-seat-poses --dry-run
 worldsync capture --world production --scene camp --propose
 worldsync deploy --bundle dist/camp.hworld --world development --dry-run
 ```
@@ -601,7 +602,7 @@ Rules:
 - `validate`, `build`, `import`, `unpack`, `export-hyp` are offline; they must not contact a runtime unless explicitly passed a remote source resolution option.
 - `capture --dry-run`, `diff`, `status`, `deploy --dry-run` are read-only. `capture --write` modifies *local checkout only*, never silently commits/pushes. `capture --propose` creates an isolated worktree/branch and PR after validations and merges.
 - `--apply` and validated plan/confirmation are required for runtime mutations. Never infer production profile from hostname/last used token. The CLI must print exact world ID, scene key, action counts, affected object keys/instances and destructive operations.
-- The initial bootstrap may create authored source files and legacy HYP files **only in a staged workspace** until its adoption plan is reviewed. A dirty checkout must not be overwritten without explicit conflict resolution.
+- Capture shall include new persistent resources without a separate adoption request. The initial bootstrap may use a staged workspace to protect the source repository. A dirty checkout must not be overwritten without explicit conflict resolution.
 - Return distinct nonzero statuses for invalid source, missing dependency, stale plan, concurrent edit, permission error, partial deployment and merge conflict. Emit machine-readable JSON reports via `--json` without exposing secrets.
 - Reuse Node `fetch`, `node:crypto`, safe `fs/promises`, `node:test`; use a small bounded tested ZIP implementation. Expose dependency-injected adapters for transport, clock, hash, filesystem and Git so tests do not touch production.
 
@@ -620,10 +621,10 @@ Because the existing live world has random runtime blueprint/entity UUIDs and no
 
 1. Take a **real operational backup** of its DB and asset store (SQLite-aware backup or PostgreSQL tooling; S3 versioned backup if applicable).
 2. Capture one consistent snapshot with all currently placed non-player apps, special `$scene`, selected settings/spawn, and their referenced assets. Inventory shared blueprints, scripts, legacy models, orphan assets, inactive drag/upload and missing dependencies. Do not mutate the world.
-3. Assign human-reviewable `objectKey` per unique blueprint and `instanceKey` per persistent app entity, with collision-safe suggestions. Group chairs sharing one blueprint. Do not infer identity from spatial proximity after bootstrap.
+3. Assign a unique `objectKey` per unique blueprint and an `instanceKey` per persistent app entity. Capture each resource without a separate adoption request. Group chairs that share one blueprint. Do not infer identity from spatial proximity after bootstrap.
 4. Prefer `mode: files` **when blueprint data and asset bytes are fully recoverable**: extract authored JS verbatim, models and textures verbatim, write typed local refs and verify compile parity. If fidelity cannot be established or dependencies are ambiguous, use `mode: hyp` as an exact package fallback and flag it for possible later extraction. Never invent missing source.
 5. Generate `scenes/camp/scene.json`, settings and environment object; stage the result in a new worktree. Validate/build without changing Git HEAD or production.
-6. Present explicit adoption proposal for all managed candidate runtime IDs and any unsupported/excluded content. Record mapping *only after* approval and successful saved Git baseline. Existing unmanaged player additions remain unclaimed.
+6. Assign a unique logical key to each persistent resource that has no mapping. Include the resource in the backup without a separate adoption request. Show new keys in the capture report. Review the source diff before it is written.
 7. Deploy Git scene to disposable `development` world, verify count/placement, script behavior, portal pairs, collisions, lights and settings. Repeat capture there; except intentional runtime IDs, output must be semantically identical and Git-clean.
 8. Begin normal production synchronization **after** staging verification and review, not merely after writing the first manifest.
 
@@ -637,8 +638,8 @@ This section is essential: the live runtime knows **compiled blueprints + hashed
 |---|---|
 | Move/rotate/scale existing managed chair | Change **only** that entry's transform in `scenes/camp/scene.json`. Do not rewrite any script, model, source JSON, or `.hyp`. |
 | Pin/unpin managed item | Change only `pinned`. |
-| Place/duplicate new object using an already managed blueprint | Offer explicit adoption as a **new instance** using existing object key. |
-| Import/place new unknown `.hyp` | Offer a new object + instance; by default preserve it as `mode: hyp`, optionally extract to loose source. |
+| Place/duplicate new object using an already managed blueprint | Capture it as a **new instance** with a unique instance key and the existing object key. |
+| Import/place new unknown `.hyp` | Capture a new object + instance; preserve it as `mode: hyp` by default, with optional extraction to loose source. |
 | Delete managed instance | Propose removing its instance entry; retain tombstone until review. Other instances of shared blueprint stay. |
 | Change managed blueprint `props` | Edit only the corresponding fields in `object.json` if they can be faithfully mapped. Reuse local `file:` refs rather than replacing them with resolved hashes. |
 | Change blueprint JavaScript through builder/updating an imported HYP | Download new script asset; safely update `script.js` **only after three-way content check**. If current source diverged, conflict rather than replace. |
@@ -647,7 +648,7 @@ This section is essential: the live runtime knows **compiled blueprints + hashed
 | Change allowed world settings or spawn | Update `settings.json` only when enabled in capture policy. |
 | Change `$scene` environment | Update environment source or legacy HYP using same object-source rules; not via regular instance list. |
 | Script creates procedural walls, portal mesh or animated internal nodes | Capture enclosing blueprint/source, **not** generated node graph or transient transforms. |
-| Physics moves an object in a transient frame / player moves avatar / sits in seat | Exclude unless a separately defined authored persistence mechanism explicitly saves the relevant state. |
+| Physics moves an object in a transient frame / player moves avatar / saves a seat pose | Exclude transient movement and avatar transforms. Capture saved seat-pose records and styles. |
 
 **Important**: `blueprint.props` are blueprint-wide in current Hyperfy. Never create an instance-only change to props that the engine cannot represent. If editing a copied chair created an independent blueprint, capture it as a new object/relinked entity, not as a change to all other chairs.
 
@@ -698,7 +699,7 @@ This is the pivotal correctness requirement:
 4. **Model/image replacement:** download verified bytes and use binary three-way semantics. Keep original file if same content and only path/name differs. If content changed only in live, stage new binary; if both sides changed, report conflict and preserve both versions for manual choice, not destructive overwrite.
 5. **Legacy `.hyp` changes:** when the only canonical source is `original.hyp`, re-export the full app as HYP (with complete dependencies) and compare **semantic compiled fingerprints** first. If changed, stage new `.hyp` bytes; apply binary merge rules. Unchanged compiled content must not change tracked HYP even if its export bytes could be normalized differently.
 6. **Unknown or structurally changed blueprint:** if source mapping can no longer be reconstructed safely (e.g., new nested unsupported asset descriptor or a script-referenced dynamic asset), generate a conflict/proposed new object or legacy HYP fallback **for review**. Do not degrade a `mode: files` object silently to `mode: hyp` and erase authored code.
-7. **New live object:** import as HYP source by default, with explicit choice to extract to loose files. Assign an immutable logical key only after adoption approval; all instances referencing the same live blueprint must share one logical object key.
+7. **New live object:** import as HYP source by default, with optional extraction to loose files. Assign an immutable logical key during capture. All instances that reference the same live blueprint shall share one logical object key.
 8. **Optional source-only information:** keep comments, authoring notes, test fixtures, project files (e.g. Blender sources) and other assets not present in runtime untouched. Snapshot export must not infer they were deleted.
 
 Capture must maintain a detailed list of **faithful**, **partial**, and **unrecoverable** changes. If any required dependency is missing, do not produce a falsely complete bundle or PR claiming clean replay. `--allow-incomplete` may generate a diagnostic proposal, but cannot mark a world deployable.
@@ -706,9 +707,9 @@ Capture must maintain a detailed list of **faithful**, **partial**, and **unreco
 ### 8.4 Consistent snapshot, normalization and review algorithm
 
 1. Resolve `repoId`, `sceneKey`, target world profile, last deployed baseline and mapping. Acquire consistent server-authoritative snapshot at one `worldRevision`, including special environment, settings/spawn and resource tombstones.
-2. Ensure managed entities are not mid-drag or mid-upload; exclude players and volatile fields. Treat unknown entities separately and do not auto-adopt.
+2. Ensure entities are not mid-drag or mid-upload. Exclude player entities and volatile fields. Capture every persistent entity, including entities without an existing mapping.
 3. For each **distinct** referenced blueprint, normalize its fields and fetch only assets whose content differs from known local/baseline hashes. Verify every fetched byte digest and size.
-4. Resolve runtime fields to logical object keys and instance keys via managed mapping. Match each live compiled asset to its original source binding using the baseline compilation record. Use exact hashes rather than filenames/name matching.
+4. Resolve runtime fields to logical object keys and instance keys through saved mappings. Assign a new key to every persistent resource without a mapping. Match each live compiled asset to its original source binding using the baseline compilation record. Use exact hashes rather than filenames or names.
 5. Derive desired changes to `scene.json`, editable `object.json`, source scripts, models, textures, and HYP-only sources. Do not reserialize unaffected files. Optionally derive changes to `settings.json` and environment object.
 6. Compare a fresh revision/snapshot token or confirm a snapshot lease to ensure no necessary resource was modified while reading assets. If stale, report/retry under bounded policy; state captured revision explicitly.
 7. Perform three-way merge of `B` = deployed baseline, `G` = current Git branch, `W` = live snapshot normalized to source semantics. Generate machine-readable change/conflict report.
@@ -733,7 +734,7 @@ For each `instanceKey` and field, each object property, and each source file (or
 | Both change same model/texture or HYP-only source | Binary conflict; never invent a merged asset. |
 | Git deleted instance, live moved it | Conflict. |
 | Live deleted managed instance, Git unchanged | Propose deletion, subject to explicit review. |
-| New unmanaged object appears | Offer adoption, not automatic inclusion. |
+| New persistent object appears | Capture it with a new logical key. Do not claim a different object in the deployment target. |
 | Live blueprint changed while Git moved only an instance | Merge safely: keep placement and update object source as appropriate. |
 
 Compare quaternion `q` and `-q` as equivalent, and numeric transform noise within documented tolerances. When determining **semantic** blueprint equality, ignore transient runtime ID/version but not authored flags, props or dependency hashes. Surface conflicts with object/instance key, field/path, baseline, Git and live values plus `use-live`, `use-git`, `manual` strategies. Do not fabricate per-edit authorship when the engine has no reliable audit record.
@@ -755,7 +756,7 @@ Loose source changes:
 Legacy HYP changes:
   objects/antiques/clock/original.hyp (compiled blueprint changed)
 
-Unmanaged additions proposed: 1 (awaiting adoption)
+New resources captured: 1 (new logical keys assigned)
 Managed deletions proposed: 0
 Conflicts: 0
 Generated .hyp artifacts changed in Git: 0
@@ -770,7 +771,7 @@ Provide an in-world workflow **and** an administrator's equivalent CLI. A player
 ### 9.1 UI and permission model
 
 - Add a **Save scene to Git** command/control to the builder/admin UI, visible to authorized users. Prefer an explicit `worldsync:capture` permission/capability; admin-only is acceptable for first secure iteration.
-- Show currently managed scene, selected scope (`managed only`; `include unclaimed objects for review`; optionally settings/environment), captured revision policy and confirmation. Selecting unmanaged objects **does not** auto-adopt them.
+- Show the scene, capture scope, captured revision, and planned source changes. Capture all persistent scene content and all seat-pose data by default. Show an unchecked-by-default option to exclude all seat-pose data. Do not require separate approval for each new resource.
 - Send an authenticated client request using established network packet conventions. Server validates actor from the live socket and actual permissions; never trusts browser-supplied user IDs, token contents or arbitrary repo paths.
 - Server writes durable request with unique request ID, actor, scene, scope and intended revision/time. Immediately return queued state; do **not** claim the PR exists yet.
 - UI displays `queued → capturing → validating → reviewing → proposed / conflicts / failed`, and a link to PR/report once the trusted worker has completed. A player disconnect does not cancel an accepted request.
@@ -814,7 +815,7 @@ Before the in-world worker is ready, `worldsync capture --world production --sce
 - Asset upload succeeds, blueprint update fails: keep immutable uploaded asset; journal failure, replan/resume safely, do not advance baseline.
 - Blueprint modified in builder after preflight: return `409`, show drift; never overwrite without a newer explicit plan.
 - Chair currently being dragged: block that instance, never capture its transient mover pose or reset it midway.
-- User deletes a managed chair, another user places a new identical one: tombstone + unmanaged candidate; do not guess it's the same chair by position/model.
+- User deletes a managed chair, another user places a new identical one: capture a tombstone and assign a new logical key to the new chair. Do not reuse the deleted chair's key by position or model.
 - Save-to-Git worker crashes: lease expires, next worker resumes idempotently, no duplicate PR/branch.
 - Source `.js` changed in Git and player uploaded a different script: conflict, preserve both versions, require manual merge/choice.
 - Imported HYP contains a new model referenced by hashed URL but payload is absent: fail portability validation before source registration or runtime mutation.
@@ -866,10 +867,10 @@ Use `node:test` for the new CLI plus adjacent `*.test.mjs` in the engine. Tests 
 | T16 | Deploy same scene twice | No new entities/blueprints, no unintended rebuilds or uploads. |
 | T17 | Change only one chair position in Git | Only that entity changes; no source/HYP asset rewrite. |
 | T18 | Change one shared chair's `script.js` | All linked instances intentionally receive one updated blueprint. |
-| T19 | Existing unmanaged furniture near identical managed chair | Unmanaged furniture not edited, deleted or claimed. |
+| T19 | Existing unrelated furniture in the deployment target | Deployment does not edit, delete, or claim the target furniture. |
 | T20 | Live builder moves managed chair, then capture | Only `scenes/.../scene.json` changes. |
 | T21 | Live builder pins an object, then capture | Only instance `pinned` changes. |
-| T22 | Live builder duplicates managed chair | Unmanaged adoption candidate; after approval distinct stable instance key; reused object source. |
+| T22 | Live builder duplicates managed chair | Capture the new instance with a distinct stable key; reuse the existing object source. |
 | T23 | Live builder imports unknown HYP | Proposed HYP-only new object + instance; optional later extraction. |
 | T24 | Live builder deletes managed object | Tombstone retained; capture proposes deletion, no unrelated changes. |
 | T25 | Live blueprint prop changes on files-mode object | Source JSON patched, existing local file refs retained. |
@@ -879,7 +880,7 @@ Use `node:test` for the new CLI plus adjacent `*.test.mjs` in the engine. Tests 
 | T29 | Live legacy HYP changes | Original HYP proposed only when compiled semantic content changed. |
 | T30 | Missing hashed asset during capture | Capture fails/diagnostic incomplete; never claims successful bundle. |
 | T31 | Capture unchanged live world twice | Second capture produces no tracked file diff. |
-| T32 | Capture runtime player/seat pose/transient physics/state changes only | No authored Git changes. |
+| T32 | Capture all user seat-pose changes and transient player/physics state | Save seat-pose changes; do not capture player entities or transient state. |
 | T33 | Live blueprint/source and Git placement change independently | Three-way merge retains both compatible changes. |
 | T34 | Live chair move conflicts with Git chair move | Machine-readable three-way conflict; no overwrite. |
 | T35 | Builder changes entity during deploy preflight | Apply detects stale precondition and refuses unsafe mutation. |
@@ -914,7 +915,7 @@ Use `node:test` for the new CLI plus adjacent `*.test.mjs` in the engine. Tests 
 
 - Extend authenticated bounded asset read/write and server snapshot/revision; add managed mapping migrations and preservation rules.
 - Implement read-only initial inventory/bootstrap of existing cabin, with lossless loose-source extraction where possible and HYP-only fallback where necessary.
-- Build adoption plan and explicit mapping registration; stage Git writes safely.
+- Build the source mapping automatically during capture. Keep target-side adoption explicit. Stage Git writes safely.
 - **Gate:** T19, T23, T30, T38, T45; actual-world bootstrap export validated before any production adoption.
 
 ### Phase C — Idempotent live deployment
@@ -926,7 +927,7 @@ Use `node:test` for the new CLI plus adjacent `*.test.mjs` in the engine. Tests 
 
 ### Phase D — Source-aware live capture and Git reconciliation
 
-- Implement inverse asset/source mapping, exact byte fetching, source file patches, JS text merge, binary/HYP conflicts, tombstones and unmanaged adoption review.
+- Implement inverse asset/source mapping, exact byte fetching, source file patches, JS text merge, binary/HYP conflicts, tombstones, and automatic keys for new persistent resources.
 - Implement `capture --dry-run`, `--write`, and `--propose` with safe local worktree/Git operations and semantic compare.
 - Demonstrate moving furniture changes only `scene.json`; demonstrate script and props edits update **loose source**, not generated HYP.
 - **Gate:** T20–T34, T42, T46–T47. Clean round-trip produces no tracked diff.
@@ -951,7 +952,7 @@ Codex must author the following docs in the **new repository**:
 - `docs/AUTHORING.md` — loose source object creation, typed `file:` refs, `extraAssets`, script-only examples, shared props constraints, legacy HYP import/extract, publishing standalone HYP.
 - `docs/SCHEMAS.md` — exact JSON schema with compatibility version and examples, source/bundle fingerprints and canonicalization rules.
 - `docs/DEPLOYMENT.md` — profiles, direct asset/blueprint deployment, dry-run/reconcile/reset, plan hashing and apply confirmation, failure/recovery, source/HYP/bundle distinctions.
-- `docs/CAPTURE.md` — live capture, provenance, source-safe three-way merge, adoption, tombstones, conflict UX, PR lifecycle and review/merge/deployed-baseline distinction.
+- `docs/CAPTURE.md` — live capture, provenance, source-safe three-way merge, adoption, tombstones, conflict UX, PR lifecycle and review/merge/deployed-baseline distinction. It shall follow the engine-side requirements in [`docs/world-sync/CAPTURE_REQUIREMENTS.md`](CAPTURE_REQUIREMENTS.md).
 - `docs/SECURITY.md` — read/write/worker scopes, upload limits, path/zip validation, secret handling, SSRF prevention, audit events and untrusted script handling.
 - `docs/OPERATIONS.md` — initial cabin backup + adoption, staging test, rollback, worker troubleshooting, token rotation, GitHub App/PR setup, CI/LFS setup, DB/S3 backup independence.
 
@@ -962,9 +963,9 @@ Codex must author the following docs in the **new repository**:
 - Validate and size-bound every HYP/ZIP, binary asset and JSON request. Prevent decompression bombs, path traversal, symlink escapes, hash substitution, URL-based SSRF and arbitrary subprocess command interpolation.
 - Reject accidental prod writes based on mismatched world ID/scene key, not only a human-readable URL. Require explicit apply/confirm for destructive changes.
 - Never run HYP-contained JavaScript in the CLI, worker, importer or tests outside normal isolated engine execution fixtures.
-- Keep capture/audit records private by default and scrub player personal data. Do not disclose real-world coordinates or privately configured server URLs in public capture PRs without review.
+- Keep repositories that contain seat-pose backups private by default. Preserve source user IDs and avatar URLs in the backup. Keep these values out of logs and public capture reports. Do not disclose real-world coordinates or privately configured server URLs in public capture PRs without review.
 
-**Recovery distinction:** Git replays a desired **managed scene**, not runtime user-state backups. Provide SQLite online backup/consistent PostgreSQL backup and S3/local asset copy/versioning runbooks. Backups should be taken before the initial adoption or engine migrations.
+**Recovery distinction:** Git can restore the captured scene and seat-pose records. It does not replace full runtime backups of accounts, permissions, databases, or asset stores. Provide SQLite online backup/consistent PostgreSQL backup and S3/local asset copy/versioning runbooks. Backups should be taken before the initial capture or engine migrations.
 
 ## 15. Codex change review checklist
 

@@ -14,6 +14,7 @@ With neither set, the routes do not exist. A read token allows GET requests. A w
 | Method | Path under `/api/agent` | Operation |
 | --- | --- | --- |
 | GET | `/world` | Settings and counts |
+| GET | `/snapshot` | One consistent world snapshot and revision (write token required); includes seat-pose storage keys by default, or omit them with `?excludeSeatPoses=true` |
 | GET | `/apps` | All app blueprints |
 | GET | `/apps/:id` | Blueprint, properties and script asset URL |
 | POST | `/apps` | Create a blueprint; requires `name`, `model` |
@@ -26,6 +27,7 @@ With neither set, the routes do not exist. A read token allows GET requests. A w
 | GET | `/players` | List connected players (write token required) |
 | POST | `/players/:id/teleport` | Teleport a connected player (write token required) |
 | POST | `/scripts` | Upload JavaScript source through existing local/S3 storage |
+| GET | `/assets/:filename` | Read one content-addressed or built-in asset, up to 256 MiB |
 | GET | `/openapi.json` | Authenticated OpenAPI schema |
 
 Blueprints define apps; entities are placed instances. Creating a blueprint does not place it in the world. Editing a blueprint rebuilds **every instance sharing it**. `props` replaces the entire properties object, so fetch and merge it before updating. Supply the version returned by GET; a stale version returns 409. Successful updates increment the version. Scene blueprints/instances are protected from edits; unique blueprints cannot be instantiated through this API. Instance moves/removals return 409 while a builder is moving or uploading them.
@@ -62,6 +64,8 @@ A script-only app must create its own visible nodes. To rotate a visible model, 
 For a REST-capable ChatGPT integration, download `/api/agent/openapi.json`, change its relative `servers[0].url` to your externally reachable HTTPS URL ending in `/api/agent`, and configure bearer authentication in the client. Providing this API does not automatically give an ordinary chat access to it. The schema can also serve as the contract for a later thin MCP adapter.
 
 Mutations broadcast immediately and enter Hyperfy's existing periodic persistence queues. A successful response does not mean the next database save has completed. Script upload returns its content-addressed URL; source is retrieved through the existing asset URL, not included in blueprint inspection. As with UI edits, removal has no API undo operation. Back up valuable worlds before agent editing.
+
+The snapshot route reads the server's in-memory app, blueprint, settings, spawn, and storage state in one request. It excludes players and transient app state. The write token acts as the capture permission. Its optional seat-pose section contains only `seatPose:`, `seatPoseProfile:`, and `seatPoseStyles:` storage entries. Asset reads verify content-addressed hashes, allow simple built-in filenames, and reject assets larger than 256 MiB.
 
 Verification:
 

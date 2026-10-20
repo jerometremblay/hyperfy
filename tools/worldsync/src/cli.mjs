@@ -9,6 +9,8 @@ import { importHyp, unpackObject } from './importer.mjs'
 import { packHyp } from './hyp-format.mjs'
 import { loadObject } from './object-source.mjs'
 import { bootstrapWorld, deployObject, diffObjectDeployment } from './deployment.mjs'
+import { captureWorld } from './capture.mjs'
+import { proposeCapture } from './propose-capture.mjs'
 import { checkUpstream, trackUpstream, updateUpstream } from './upstream.mjs'
 import { ensureSafeDirectory, readBoundedFile, resolveContainedPath, resolveLocalReference } from './paths.mjs'
 
@@ -22,7 +24,12 @@ function parseArgs(values) {
       continue
     }
     const name = value.slice(2)
-    if (['extract', 'keep-original', 'include-hyp', 'allow-external', 'dry-run', 'json', 'help'].includes(name)) {
+    if (
+      [
+        'extract', 'keep-original', 'include-hyp', 'allow-external', 'dry-run', 'write',
+        'bootstrap', 'propose', 'exclude-seat-poses', 'json', 'help',
+      ].includes(name)
+    ) {
       options[name] = true
       continue
     }
@@ -48,10 +55,12 @@ function printHelp() {
     '  diff --object <key> --profile <name>',
     '  deploy --object <key> --profile <name>',
     '  bootstrap --scene <key> --profile <name> [--allow-external] [--dry-run]',
+    '  capture --scene <key> --profile <name> [--dry-run|--write|--propose] [--bootstrap] [--exclude-seat-poses] [--resolve live]',
     '  upstream track --object <key>',
     '  upstream check|update [--object <key>]',
     '',
-    'Live scene capture and worker commands are not available in this phase.',
+    'capture defaults to a dry run. Use --write to save the backup into the source repository.',
+    'Use --propose to create a signed capture branch and pull request.',
   ].join('\n'))
 }
 
@@ -191,6 +200,63 @@ async function run() {
     }
     return
   }
+  if (command === 'capture') {
+    if (!options.scene || !options.profile) throw new Error('capture requires --scene and --profile')
+    if (options.propose && (options.write || options['dry-run'])) {
+      throw new Error('capture --propose cannot be combined with --write or --dry-run')
+    }
+    const captureOptions = {
+      write: !!options.write,
+      dryRun: !!options['dry-run'],
+      excludeSeatPoses: !!options['exclude-seat-poses'],
+      resolve: options.resolve || null,
+      bootstrap: !!options.bootstrap,
+    }
+    const result = options.propose
+      ? await proposeCapture(root, options.scene, options.profile, captureOptions)
+      : await captureWorld(root, options.scene, options.profile, captureOptions)
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2))
+    } else {
+      const action = result.proposal?.url
+        ? 'Proposed'
+        : result.dryRun
+          ? 'Capture plan'
+          : result.written
+            ? 'Captured'
+            : 'Capture not written'
+      console.log(
+        `${action} ${result.sceneKey} from ${result.profile}` +
+          `${result.bootstrapped ? ' (bootstrap)' : ''}, revision ${result.revision}: ` +
+          `${result.blueprints} blueprint(s), ${result.objectsCaptured} object source(s) saved, ` +
+          `${result.objectsPreserved} preserved, ${result.instances} placement(s), ${result.assets} asset(s), ` +
+          (result.seatPosesExcluded ? 'seat poses excluded' : `${result.seatPoseRecords} seat-pose record(s)`) +
+          `; ${result.files.length} file(s) planned`
+      )
+      if (result.proposal?.url) console.log('Proposal: ' + result.proposal.url)
+      else if (result.proposalReason) console.log(result.proposalReason)
+      for (const file of result.files) console.log('File: ' + file)
+      for (const conflict of result.conflicts) {
+        console.log(`Conflict ${conflict.resource} ${conflict.key}: ${conflict.reason}`)
+      }
+      for (const object of result.objectModes) {
+        if (object.mode === 'hyp') {
+          console.log(
+            `Saved ${object.key} as native HYP because exact editable extraction was unavailable` +
+              (object.fallbackReason ? ` (${object.fallbackReason})` : '')
+          )
+        }
+      }
+      for (const anchorId of result.unresolvedAnchors) {
+        console.log('Unresolved seat-pose anchor: ' + anchorId)
+      }
+      for (const key of result.unmappedSourceInstances) {
+        console.log('Preserved source placement without a runtime mapping: ' + key)
+      }
+    }
+    if (result.conflicts.length && options.resolve !== 'live' && !options.bootstrap) process.exitCode = 1
+    return
+  }
   if (command === 'upstream') {
     const action = positional.shift()
     if (!['track', 'check', 'update'].includes(action)) {
@@ -239,7 +305,7 @@ async function run() {
     }
     return
   }
-  if (['status', 'capture', 'adopt'].includes(command)) {
+  if (['status', 'adopt'].includes(command)) {
     throw new Error(command + ' is not implemented yet')
   }
   printHelp()

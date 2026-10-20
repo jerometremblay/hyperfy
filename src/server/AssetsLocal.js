@@ -35,6 +35,23 @@ export class AssetsLocal {
     return exists
   }
 
+  async read(filename) {
+    if (!/^[a-z0-9_-]+\.[a-z0-9]+$/.test(filename)) return null
+    const filePath = path.join(this.dir, filename)
+    let stat
+    try {
+      stat = await fs.lstat(filePath)
+    } catch (error) {
+      if (error.code === 'ENOENT') return null
+      throw error
+    }
+    if (!stat.isFile() || stat.isSymbolicLink()) return null
+    if (stat.size > 256 * 1024 * 1024) throw new Error('Asset exceeds the 256 MiB read limit')
+    const bytes = await fs.readFile(filePath)
+    if (bytes.byteLength !== stat.size) throw new Error('Asset changed while it was being read')
+    return bytes
+  }
+
   async list() {
     const assets = new Set()
     const files = fs.readdirSync(this.dir)

@@ -31,6 +31,7 @@ const blueprintFields = {
 }
 const body = (properties, required = []) => ({ type: 'object', additionalProperties: false, properties, required })
 const params = body({ id: { type: 'string', minLength: 1 } }, ['id'])
+const assetParams = body({ filename: { type: 'string', pattern: '^[a-z0-9_-]+\\.[a-z0-9]+$' } }, ['filename'])
 const uuid = { type: 'string', pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' }
 const spawn = {
   type: 'object',
@@ -134,6 +135,54 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     entities: world.entities.items.size,
     players: world.entities.players.size,
   }))
+  route(
+    'GET',
+    '/snapshot',
+    'getWorldSnapshot',
+    {
+      querystring: {
+        type: 'object',
+        additionalProperties: false,
+        properties: { excludeSeatPoses: { type: 'boolean' } },
+      },
+    },
+    async request => {
+      if (!request.agentWrite) fail(403, 'Capture requires the write token')
+      const blueprints = world.blueprints.serialize().map(value => structuredClone(value))
+      blueprints.sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))
+      const entities = [...world.entities.items.values()]
+        .filter(item => item.isApp)
+        .map(item => {
+          if (item.data.mover || item.data.uploader) {
+            fail(409, 'World snapshot is unavailable while an app is being moved or uploaded')
+          }
+          const { id, blueprint, position, quaternion, scale, pinned } = item.data
+          return { id, blueprint, position: [...position], quaternion: [...quaternion], scale: [...scale], pinned }
+        })
+        .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))
+      const snapshot = {
+        schemaVersion: 1,
+        world: {
+          settings: structuredClone(world.settings.serialize()),
+          spawn: structuredClone(world.network.spawn),
+        },
+        blueprints,
+        entities,
+      }
+      if (!request.query.excludeSeatPoses) {
+        const data = world.storage?.data || {}
+        const entries = Object.fromEntries(
+          Object.keys(data)
+            .filter(key => key.startsWith('seatPose:') || key.startsWith('seatPoseProfile:') || key.startsWith('seatPoseStyles:'))
+            .sort()
+            .map(key => [key, structuredClone(data[key])])
+        )
+        snapshot.seatPoseData = { entries }
+      }
+      snapshot.revision = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')
+      return snapshot
+    }
+  )
   route('GET', '/apps', 'listApps', {}, async () => world.blueprints.serialize())
   route('GET', '/apps/:id', 'getApp', { params }, async request => app(request.params.id))
   route('GET', '/entities', 'listEntities', {}, async () =>
@@ -365,6 +414,23 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     }
   )
   route(
+    'GET',
+    '/assets/:filename',
+    'getAsset',
+    { params: assetParams },
+    async (request, reply) => {
+      const { filename } = request.params
+      const bytes = await assets.read(filename)
+      if (!bytes) fail(404, 'Asset not found')
+      if (bytes.byteLength > 256 * 1024 * 1024) fail(413, 'Asset exceeds the 256 MiB read limit')
+      const match = /^([a-f0-9]{64})\.[a-z0-9]+$/.exec(filename)
+      if (match && createHash('sha256').update(bytes).digest('hex') !== match[1]) {
+        fail(409, 'Stored asset content hash does not match its filename')
+      }
+      return reply.type('application/octet-stream').header('Cache-Control', 'no-store').send(bytes)
+    }
+  )
+  route(
     'POST',
     '/scripts',
     'uploadScript',
@@ -384,7 +450,7 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } } },
     paths: Object.fromEntries(
       [...new Set(routes.map(item => item.url))].map(url => [
-        url.replace(':id', '{id}'),
+        url.replace(/:([^/]+)/g, '{$1}'),
         Object.fromEntries(
           routes
             .filter(item => item.url === url)
@@ -409,7 +475,34 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
                     }
                   : {}),
                 ...(item.schema.params
-                  ? { parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }] }
+                  ? {
+                      parameters: Object.entries(item.schema.params.properties).map(([name, schema]) => ({
+                        name,
+                        in: 'path',
+                        required: item.schema.params.required?.includes(name) || false,
+                        schema,
+                      })),
+                    }
+                  : {}),
+                ...(item.schema.querystring
+                  ? {
+                      parameters: [
+                        ...(item.schema.params
+                          ? Object.entries(item.schema.params.properties).map(([name, schema]) => ({
+                              name,
+                              in: 'path',
+                              required: item.schema.params.required?.includes(name) || false,
+                              schema,
+                            }))
+                          : []),
+                        ...Object.entries(item.schema.querystring.properties).map(([name, schema]) => ({
+                          name,
+                          in: 'query',
+                          required: item.schema.querystring.required?.includes(name) || false,
+                          schema,
+                        })),
+                      ],
+                    }
                   : {}),
                 ...(item.schema.body
                   ? { requestBody: { required: true, content: { 'application/json': { schema: item.schema.body } } } }

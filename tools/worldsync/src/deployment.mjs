@@ -20,7 +20,7 @@ async function readJson(file, label) {
   }
 }
 
-async function loadProfile(root, profileName) {
+export async function loadProfile(root, profileName) {
   if (!profileName) throw new Error('deployment requires --profile')
   assertKey(profileName, 'profile name')
   const configPath = path.join(root, 'worldsync.config.json')
@@ -62,9 +62,9 @@ async function loadProfile(root, profileName) {
   }
 }
 
-function makeClient(profile) {
+export function makeClient(profile) {
   return {
-    async request(endpoint, { method = 'GET', json, file } = {}) {
+    async request(endpoint, { method = 'GET', json, file, responseType } = {}) {
       let response
       const headers = { authorization: 'Bearer ' + profile.token }
       let requestBody
@@ -82,10 +82,16 @@ function makeClient(profile) {
           method,
           headers,
           ...(requestBody === undefined ? {} : { body: requestBody }),
-          signal: AbortSignal.timeout(file ? 300000 : 30000),
+          signal: AbortSignal.timeout(file || responseType === 'bytes' ? 300000 : 30000),
         })
       } catch (error) {
         throw new Error('Agent API request failed: ' + error.message)
+      }
+      if (responseType === 'bytes' && response.ok) {
+        return {
+          bytes: Buffer.from(await response.arrayBuffer()),
+          contentType: response.headers.get('content-type') || 'application/octet-stream',
+        }
       }
       const text = await response.text()
       let data = null
@@ -100,6 +106,9 @@ function makeClient(profile) {
         throw new Error(`Agent API request failed (${response.status}): ${data?.error || response.statusText}`)
       }
       return data
+    },
+    async requestBytes(endpoint) {
+      return this.request(endpoint, { responseType: 'bytes' })
     },
     async uploadAsset(asset) {
       const uploaded = await this.request('/assets', { method: 'POST', file: asset })

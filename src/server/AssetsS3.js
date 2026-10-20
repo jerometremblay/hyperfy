@@ -1,6 +1,7 @@
 import {
   PutObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
   ListObjectsV2Command,
   DeleteObjectsCommand,
   S3Client,
@@ -222,6 +223,27 @@ export class AssetsS3 {
     } catch (error) {
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
         return false
+      }
+      throw error
+    }
+  }
+
+  async read(filename) {
+    if (!/^[a-z0-9_-]+\.[a-z0-9]+$/.test(filename)) return null
+    try {
+      const response = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucketName, Key: this.getKey(filename) })
+      )
+      if (response.ContentLength > 256 * 1024 * 1024) {
+        response.Body?.destroy?.()
+        throw new Error('Asset exceeds the 256 MiB read limit')
+      }
+      const bytes = Buffer.from(await response.Body.transformToByteArray())
+      if (bytes.byteLength > 256 * 1024 * 1024) throw new Error('Asset exceeds the 256 MiB read limit')
+      return bytes
+    } catch (error) {
+      if (error.name === 'NoSuchKey' || error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+        return null
       }
       throw error
     }
