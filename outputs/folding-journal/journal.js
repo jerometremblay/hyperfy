@@ -163,6 +163,8 @@ let activePageSurfaceCount = MIN_PAGE_SURFACES
 let latestHtmlPageCount = null
 let latestHtmlPageUrls = null
 let reportedPageCount = null
+let manifestPending = false
+let manifestRequest = 0
 
 function validPageCount(count) {
   return Number.isSafeInteger(count) && count >= 1 && count <= MAX_PAGE_COUNT
@@ -213,7 +215,7 @@ let turn = null
 let pendingTurn = null
 
 function hasHtmlPageManifest() {
-  return latestHtmlPageCount !== null &&
+  return !manifestPending && latestHtmlPageCount !== null &&
     latestHtmlPageUrls?.length === latestHtmlPageCount &&
     pageCount === latestHtmlPageCount
 }
@@ -260,6 +262,7 @@ function receiveHtmlPageCount(event) {
     !message.pages.every(validManifestPage)
   ) return
 
+  manifestPending = false
   const pageUrls = message.pages.map(entry => NEWS_ORIGIN + entry.url + '&embed=1&hyperfy=1')
   const sameManifest = latestHtmlPageUrls?.length === pageUrls.length &&
     latestHtmlPageUrls.every((url, index) => url === pageUrls[index])
@@ -377,6 +380,22 @@ const manifest = app.create('webview', {
   onMessage: world.isClient ? receiveHtmlPageCount : null,
 })
 manifestPivot.add(manifest)
+
+function refreshManifest(attempt = 0) {
+  if (!world.isClient) return
+  manifestPending = true
+  pageCountReady = false
+  app.state.pageCountReady = false
+  reportedPageCount = null
+  const request = ++manifestRequest
+  // Changing src rebuilds just the manifest iframe; reading pages stay mounted.
+  manifest.src = NEWS_URL + '?texture=1&page=1&journalRefresh=' + Date.now() + '-' + request
+  // An edition iframe can fail before the wrapper reports its manifest. Retry
+  // that load instead of leaving this instance permanently unable to turn.
+  if (attempt < 2) setTimeout(() => {
+    if (app.state.open && manifestPending && manifestRequest === request) refreshManifest(attempt + 1)
+  }, 30000)
+}
 ensurePageSurfaces()
 
 function parkPages() {
@@ -759,6 +778,7 @@ if (world.isClient) {
   app.on('journal:pages', receivePages)
   app.on('journal:page-count', receivePageCount)
   app.on('journal:state', message => {
+    const opening = message.open && !app.state.open
     app.state.open = message.open
     app.state.readerId = message.readerId || null
     app.state.readingPose = message.pose || null
@@ -768,6 +788,7 @@ if (world.isClient) {
       pageCountReady = false
       app.state.pageCountReady = false
     }
+    if (opening) refreshManifest()
     if (message.open) {
       if (message.pageCountReady !== true) reportedPageCount = null
       maybeSendHtmlPageCount()
@@ -775,6 +796,7 @@ if (world.isClient) {
     if (Number.isInteger(message.firstPage)) receivePages({ firstPage: message.firstPage, turn: null })
     setOpen(message.open, message.pose)
   })
+  if (app.state.open) refreshManifest()
   // Opening and folding use the shared action target in build mode too.
   if (app.state.open && app.state.turn) startSharedTurn(app.state.turn)
 }

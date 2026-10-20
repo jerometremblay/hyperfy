@@ -177,13 +177,25 @@ export class WebView extends Node {
         this.ctx.world.controls &&
         !/iPhone|iPad|iPod|Android/i.test(globalThis.navigator?.userAgent || '')
 
+      if (this._interactive && isDesktop) {
+        this.pointerLockListener = locked => {
+          if (!locked) return
+          this.objectCSS.interacting = false
+          iframe.style.pointerEvents = 'none'
+          iframe.blur()
+        }
+        this.ctx.world.on('pointer-lock', this.pointerLockListener)
+        this.objectCSS.interacting = false
+        this.pointerLockListener(this.ctx.world.controls.pointer.locked)
+      }
+
       if (this._interactive && !isDesktop) {
         iframe.style.pointerEvents = 'auto'
       }
 
       if (this._interactive) {
         inner.addEventListener('mouseenter', () => {
-          if (isDesktop) {
+          if (isDesktop && !this.ctx.world.controls.pointer.locked) {
             this.objectCSS.interacting = true
             iframe.style.pointerEvents = 'auto'
           }
@@ -250,6 +262,10 @@ export class WebView extends Node {
   }
 
   unbuild() {
+    if (this.pointerLockListener) {
+      this.ctx.world.off('pointer-lock', this.pointerLockListener)
+      this.pointerLockListener = null
+    }
     if (this.messageListener) {
       globalThis.removeEventListener('message', this.messageListener)
       this.messageListener = null

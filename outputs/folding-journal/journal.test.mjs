@@ -4,8 +4,9 @@ import vm from 'node:vm'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
-import { Vector3, Quaternion, Euler, Matrix4 } from 'three'
+import { Vector3, Quaternion, Euler, Matrix4, BoxGeometry, MeshBasicMaterial, Raycaster } from 'three'
 import { readPacket, writePacket } from '../../src/core/packets.js'
+import { parseHyp } from '../../tools/worldsync/src/hyp-format.mjs'
 
 const source = fs.readFileSync(new URL('./journal.js', import.meta.url), 'utf8')
 const NEWS_ORIGIN = 'https://hyperfy-news.jerometremblay.chatgpt.site'
@@ -18,6 +19,18 @@ const pointerBundle = await build({
 })
 const { ClientPointer } = await import(
   `data:text/javascript;base64,${Buffer.from(pointerBundle.outputFiles[0].contents).toString('base64')}`
+)
+
+const webviewBundle = await build({
+  stdin: { contents: `
+    export { WebView } from './src/core/nodes/WebView.js'
+    export { Node, getRef } from './src/core/nodes/Node.js'
+    export { LooseOctree } from './src/core/extras/LooseOctree.js'
+  `, resolveDir: fileURLToPath(new URL('../../', import.meta.url)) },
+  bundle: true, format: 'esm', platform: 'node', write: false,
+})
+const { WebView, Node, getRef, LooseOctree } = await import(
+  `data:text/javascript;base64,${Buffer.from(webviewBundle.outputFiles[0].contents).toString('base64')}`
 )
 
 function fixture() {
@@ -33,18 +46,51 @@ function fixture() {
     },
     bob: { id: 'bob', position: new Vector3(1, 0, 1), quaternion: new Quaternion(), height: 1.7, headToHeight: 0.1 },
   }
-  function runtime(server, localId = 'alice', state = { open: false }) {
+  function runtime(server, localId = 'alice', state = { open: false }, realWebViews = false) {
     const events = new Map(),
       worldEvents = new Map(),
       updates = new Set(),
       timers = [],
-      sent = []
+      sent = [],
+      webviews = []
+    const stage = {
+      dirtyNodes: new Set(), scene: { add() {}, remove() {} },
+      octree: new LooseOctree({ center: new Vector3(), size: 10 }),
+    }
+    const root = new Node()
+    const nodeWorld = { stage, network: { isServer: server }, controls: {
+      pointer: { locked: true }, unlockPointer() { throw new Error('unexpected pointer unlock') },
+    } }
+    if (realWebViews) root.activate({ world: nodeWorld })
     const app = {
       state: structuredClone(state),
-      position: new Vector3(),
-      quaternion: new Quaternion(),
-      scale: new Vector3(1, 1, 1),
+      position: realWebViews ? root.position : new Vector3(),
+      quaternion: realWebViews ? root.quaternion : new Quaternion(),
+      scale: realWebViews ? root.scale : new Vector3(1, 1, 1),
       create(type, data = {}) {
+        if (realWebViews) {
+          const node = type === 'webview' ? new WebView(data) : new Node(data)
+          if (type === 'webview') {
+            // Exercise real mounting, movement and raycasting without browser DOM.
+            const buildWorld = node.buildWorld
+            node.buildWorld = function () {
+              const src = this._src
+              this._src = ''
+              buildWorld.call(this)
+              this._src = src
+            }
+            webviews.push(node)
+          } else if (type === 'prim') {
+            node.mount = function () {
+              this.sItem = { matrix: this.matrixWorld, geometry: new BoxGeometry(...data.size),
+                material: new MeshBasicMaterial(), node: this }
+              stage.octree.insert(this.sItem)
+            }
+            node.commit = function (moved) { if (moved) stage.octree.move(this.sItem) }
+            node.unmount = function () { stage.octree.remove(this.sItem) }
+          }
+          return node.getProxy()
+        }
         return {
           ...data,
           type,
@@ -53,12 +99,13 @@ function fixture() {
           rotation: new Euler().fromArray(data.rotation || [0, 0, 0]),
           scale: new Vector3().fromArray(data.scale || [1, 1, 1]),
           add(child) {
-            child.parent = this
+            if (!child._isRef) child.parent = this
           },
         }
       },
       add(child) {
-        child.parent = this
+        if (realWebViews) root.add(getRef(child))
+        else child.parent = this
       },
       on(event, fn) {
         if (event === 'update') updates.add(fn)
@@ -95,6 +142,7 @@ function fixture() {
       Vector3,
       Quaternion,
       Matrix4,
+      Date,
       setTimeout: (fn, milliseconds) => timers.push({ fn, at: now + milliseconds / 1000 }),
     })
     vm.runInContext(source, context)
@@ -102,6 +150,9 @@ function fixture() {
       app,
       world,
       sent,
+      webviews,
+      stage,
+      root,
       events,
       timers,
       updates,
@@ -119,24 +170,26 @@ function fixture() {
         timer.fn()
       }
       for (const fn of [...runtime.updates]) fn(dt)
+      for (const node of runtime.stage.dirtyNodes) node.clean()
+      runtime.stage.dirtyNodes.clear()
     }
   }
   function deliver(client, packet) {
     client.events.get(packet[0])(structuredClone(packet[1]))
   }
-  function deliverManifest(client) {
+  function deliverManifest(client, count = 6, issue = '2026-10-17') {
     client.get(`
       receiveHtmlPageCount({
         origin: NEWS_ORIGIN,
         data: {
           type: 'journal-page-count',
           version: 1,
-          count: 6,
-          pageCount: 6,
-          pages: Array.from({ length: 6 }, (_, index) => ({
+          count: ${count},
+          pageCount: ${count},
+          pages: Array.from({ length: ${count} }, (_, index) => ({
             page: index + 1,
             issuePage: index + 1,
-            url: '/?issue=2026-10-17&texture=1&page=' + (index + 1),
+            url: '/?issue=${issue}&texture=1&page=' + (index + 1),
           })),
         },
       })
@@ -156,7 +209,7 @@ function fixture() {
     acknowledgePageCount(server, ...clients)
     advance(now + 0.7)
   }
-  return { runtime, advance, deliver, open, acknowledgePageCount }
+  return { runtime, advance, deliver, open, acknowledgePageCount, deliverManifest }
 }
 
 test('server broadcasts a timestamped turn; delayed viewers animate the same phase and late joiners see the current spread', () => {
@@ -469,4 +522,162 @@ test('current posed head is used when eye bones are absent, and invalid eye requ
   }
   server.events.get('journal:toggle')(client.sent.at(-1)[1], 'alice')
   assert.equal(server.app.state.open, true)
+})
+
+
+test('every opening actively reloads the manifest and waits for fresh pages before acknowledging', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  f.open(server, client)
+  const oldSource = client.get('manifest.src')
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(1.4)
+  client.sent.length = 0
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.notEqual(client.get('manifest.src'), oldSource, 'reopen must make a new HTTP request')
+  assert.equal(client.sent.some(([name]) => name === 'journal:page-count'), false, 'cached manifest must not enable turns')
+  f.acknowledgePageCount(server, client)
+  f.advance(2.1)
+  assert.equal(client.get('pageCountReady'), true)
+  client.get('turnPage(1)')
+  assert.equal(client.sent.at(-1)[0], 'journal:turn-request')
+})
+
+test('a new instance whose manifest failed can recover on reopening without delete/undo', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(0.7)
+  const failedSource = client.get('manifest.src')
+  client.get('turnPage(1)')
+  assert.equal(client.sent.length, 0, 'no valid manifest has arrived')
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(1.4)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.notEqual(client.get('manifest.src'), failedSource)
+  f.acknowledgePageCount(server, client)
+  f.advance(2.1)
+  client.get('readingControl.pointer.locked = true')
+  client.get('pageSurfaces[1].page.onPointerDown')({ button: 'left', stopPropagation() {} })
+  assert.equal(client.sent.at(-1)[0], 'journal:turn-request')
+})
+
+test('camera clicks use the real WebView script proxy without invoking its default unlock', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false, 'alice', { open: false }, true)
+  f.open(server, client)
+  client.get('readingControl.pointer.locked = true')
+  const page = client.webviews[2] // manifest, then left and right pages
+  client.sent.length = 0
+  const pointer = new ClientPointer({ stage: { raycastReticle: () => [{ node: page }] } })
+  pointer.control = {
+    pointer: client.get('readingControl.pointer'), xrLeftTrigger: { value: 0 },
+    xrRightTrigger: { value: 0 }, mouseLeft: { pressed: true }, mouseRight: {},
+  }
+  pointer.update(0)
+  assert.deepEqual(client.sent, [['journal:turn-request', { direction: 1 }]])
+})
+
+
+test('fresh manifests replace issue URLs even when the release has the same page count', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  f.open(server, client)
+  const page = client.get('pageSurfaces[1].page')
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(1.4)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.deliverManifest(client, 6, '2026-10-20')
+  assert.equal(client.get('pageSurfaces[1].page'), page, 'reading node remains mounted')
+  assert.match(page.src, /issue=2026-10-20/)
+  assert.equal(client.get('pageCountReady'), false)
+  server.events.get('journal:page-count')(client.sent.at(-1)[1], 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.equal(client.get('pageCountReady'), true)
+})
+
+test('new releases expand the page surfaces and accepted server bounds', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  f.open(server, client)
+  f.deliverManifest(client, 9, '2026-10-20')
+  server.events.get('journal:page-count')(client.sent.at(-1)[1], 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.equal(server.app.state.pageCount, 9)
+  assert.equal(client.get('pageSurfaces.length'), 10)
+  assert.match(client.get('pageSurfaces[8].page.src'), /issue=2026-10-20.*page=9/)
+  assert.equal(client.get('pageSurfaces[9].page.src'), '')
+})
+
+test('manifest loads retry while open, stop after success, and are bounded on failure', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  const firstSource = client.get('manifest.src')
+  f.advance(30)
+  const retrySource = client.get('manifest.src')
+  assert.notEqual(retrySource, firstSource)
+  f.acknowledgePageCount(server, client)
+  f.advance(60)
+  assert.equal(client.get('manifest.src'), retrySource)
+
+  const failed = fixture(), failedServer = failed.runtime(true), failedClient = failed.runtime(false)
+  failedServer.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  failed.deliver(failedClient, failedServer.sent.at(-1))
+  failed.advance(30)
+  failed.advance(60)
+  const lastSource = failedClient.get('manifest.src')
+  failed.advance(90)
+  assert.equal(failedClient.get('manifest.src'), lastSource)
+  assert.equal(failedClient.get('manifestRequest'), 3)
+})
+
+test('closed instances cancel pending manifest retries and late joiners refresh an open journal', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  const joining = f.runtime(false, 'alice', server.app.state)
+  assert.equal(joining.get('manifestRequest'), 1)
+  assert.equal(joining.get('manifestPending'), true)
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  const source = client.get('manifest.src')
+  f.advance(30)
+  assert.equal(client.get('manifest.src'), source)
+})
+
+
+test('readable pages remain the nearest reticle target after instance placement and repeated turns', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false, 'alice', { open: false }, true)
+  f.open(server, client)
+  client.get('readingControl.pointer.locked = true')
+  for (const direction of [1, 1, -1, -1, 1]) {
+    const number = client.get('firstPage') + (direction === 1 ? 1 : 0)
+    const page = getRef(client.get(`pageSurfaces[${number - 1}].page`))
+    const position = new Vector3().setFromMatrixPosition(page.matrixWorld)
+    const normal = new Vector3(0, 0, 1).transformDirection(page.matrixWorld)
+    const ray = new Raycaster(position.clone().addScaledVector(normal, 0.5), normal.negate())
+    const hits = client.stage.octree.raycast(ray)
+    assert.equal(hits[0]?.node, page, 'paper geometry must not intercept readable pages')
+    const pointer = new ClientPointer({ stage: { raycastReticle: () => hits } })
+    pointer.control = {
+      pointer: client.get('readingControl.pointer'), xrLeftTrigger: { value: 0 },
+      xrRightTrigger: { value: 0 }, mouseLeft: { pressed: true }, mouseRight: {},
+    }
+    pointer.update(0)
+    server.events.get('journal:turn-request')(client.sent.at(-1)[1], 'alice')
+    f.deliver(client, server.sent.at(-1))
+    f.advance(client.get('world.getTime()') + 0.7)
+    f.deliver(client, server.sent.at(-1))
+  }
+})
+
+
+test('the default journal package and worldsync catalog contain the reviewed script', () => {
+  const catalog = fs.readFileSync(new URL('../../tools/worldsync/catalog/objects/apps/hyperfy-news-folding-journal/script.js', import.meta.url), 'utf8')
+  assert.equal(catalog, source)
+  const { blueprint, assets } = parseHyp(fs.readFileSync(new URL('../../src/world/collections/default/HyperfyJournal.hyp', import.meta.url)))
+  assert.equal(Buffer.from(assets.find(asset => asset.url === blueprint.script).bytes).toString(), source)
 })
