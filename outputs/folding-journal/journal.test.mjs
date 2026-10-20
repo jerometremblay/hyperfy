@@ -2,11 +2,23 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import vm from 'node:vm'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
+import { build } from 'esbuild'
 import { Vector3, Quaternion, Euler, Matrix4 } from 'three'
 import { readPacket, writePacket } from '../../src/core/packets.js'
 
 const source = fs.readFileSync(new URL('./journal.js', import.meta.url), 'utf8')
 const NEWS_ORIGIN = 'https://hyperfy-news.jerometremblay.chatgpt.site'
+const pointerBundle = await build({
+  entryPoints: [fileURLToPath(new URL('../../src/core/systems/ClientPointer.js', import.meta.url))],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  write: false,
+})
+const { ClientPointer } = await import(
+  `data:text/javascript;base64,${Buffer.from(pointerBundle.outputFiles[0].contents).toString('base64')}`
+)
 
 function fixture() {
   let now = 0
@@ -65,6 +77,7 @@ function fixture() {
           camera: { position: new Vector3(0, 1.6, 1), quaternion: new Quaternion(), zoom: 0 },
           escape: {},
           keyE: {},
+          pointer: { locked: false },
         }
       },
     }
@@ -212,6 +225,50 @@ test('issue page clicks request turns only from the journal origin and in the cl
     data: { type: 'journal-page-click', version: 1, button: 0 },
   })
   assert.deepEqual(backClient.sent.findLast(([name]) => name === 'journal:turn-request')[1], { direction: -1 })
+})
+
+test('camera-linked reticle clicks turn either page through the 3D pointer', () => {
+  for (const [index, direction] of [[1, 1], [0, -1]]) {
+    const f = fixture(),
+      server = f.runtime(true),
+      client = f.runtime(false)
+    f.open(server, client)
+    // Start in the middle so both directions are accepted by the real server handler.
+    server.events.get('journal:turn-request')({ direction: 1 }, 'alice')
+    f.deliver(client, server.sent.at(-1))
+    f.advance(1.4)
+    f.deliver(client, server.sent.at(-1))
+    client.get('readingControl.pointer.locked = true')
+    const hit = { node: client.get(`pageSurfaces[${index + 2}].page`) }
+    const pointer = new ClientPointer({ stage: { raycastReticle: () => [hit] } })
+    pointer.control = {
+      pointer: client.get('readingControl.pointer'),
+      xrLeftTrigger: { value: 0 },
+      xrRightTrigger: { value: 0 },
+      mouseLeft: { pressed: true },
+      mouseRight: {},
+    }
+    client.sent.length = 0
+    pointer.update(0)
+    assert.deepEqual(client.sent, [['journal:turn-request', { direction }]])
+    server.events.get('journal:turn-request')(client.sent[0][1], 'alice')
+    assert.equal(server.app.state.firstPage, 3 + direction * 2)
+    assert.equal(pointer.control.pointer.locked, true)
+  }
+})
+
+test('3D page presses leave free-cursor clicks to the iframe and ignore other mouse buttons', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false)
+  f.open(server, client)
+  const page = client.get('pageSurfaces[1].page')
+  let stopped = 0
+  const press = button => page.onPointerDown({ button, stopPropagation() { stopped++ } })
+  client.sent.length = 0
+  press('left')
+  client.get('readingControl.pointer.locked = true')
+  press('right')
+  assert.equal(stopped, 2)
+  assert.deepEqual(client.sent, [])
 })
 
 test('focused page keyboard closes the journal with Escape or unmodified E', () => {

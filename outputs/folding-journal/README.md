@@ -19,10 +19,12 @@ The journal requests `click` and `keyboard`; the bridge reports every click-like
 
 The bridge defaults to `click` and `keyboard`; set `data-hyperfy-events="click"` on pages where relaying key names is not wanted. Keyboard messages include the pressed key, so they can reveal typing even though the bridge never sends field values. Additional categories are `pointer`, `pointermove`, `wheel`, `scroll`, `focus`, `form`, `dragdrop`, and `media`. `pointermove` and `scroll` are coalesced to at most one message per animation frame. Form messages omit field values. Pages that want to share app-specific state can call `window.HyperfyWebViewBridge.emit(name, detail)` with small JSON data; the receiving app must explicitly validate and handle that event. Do not send the `window` object or raw DOM nodes.
 
+When the cursor is linked to the camera, primary clicks on a page turn it directly through the 3D reticle handler, keeping pointer lock active. Free-cursor clicks continue through the iframe bridge so links remain usable.
+
 Run the multiplayer script checks:
 
 ```sh
 node --test outputs/folding-journal/journal.test.mjs
 ```
 
-These exercise independent server/client script runtimes, delayed packets, late joins, ownership, boundaries, rapid clicks, closing, and stale completion timers. They do not replace visual testing in a live multiplayer session.
+These exercise independent server/client script runtimes, reticle page clicks through ClientPointer, delayed packets, late joins, ownership, boundaries, rapid clicks, closing, and stale completion timers. They do not replace visual testing in a live multiplayer session.

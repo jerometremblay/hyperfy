@@ -342,7 +342,13 @@ function createPageSurface(number) {
     } : null,
   })
   pivot.add(page)
-  page.onPointerDown = event => event.stopPropagation()
+  page.onPointerDown = event => {
+    event.stopPropagation()
+    // Locked clicks reach the 3D reticle, not the iframe's browser event bridge.
+    if (readingControl?.pointer.locked && event.button === 'left') {
+      turnPage(number % 2 === 0 ? 1 : -1)
+    }
+  }
   pageSurfaces.push({ pivot, page, src: '' })
 }
 function ensurePageSurfaces(count = pageCount) {
