@@ -1,6 +1,7 @@
 import * as THREE from '../extras/three'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { VRMLoaderPlugin } from '@pixiv/three-vrm'
 
 import { System } from './System'
@@ -34,6 +35,8 @@ export class ClientLoader extends System {
     this.rgbeLoader = new HDRLoader()
     this.texLoader = new TextureLoader()
     this.gltfLoader = new GLTFLoader()
+    this.dracoLoader = new DRACOLoader().setDecoderPath('/draco/')
+    this.gltfLoader.setDRACOLoader(this.dracoLoader)
     this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))
     this.preloadItems = []
   }
@@ -435,6 +438,7 @@ export class ClientLoader extends System {
 
   destroy() {
     this.destroyed = true
+    this.dracoLoader.dispose()
     if (this.world.isPreview) {
       for (const result of this.results.values()) result?.dispose?.()
     }

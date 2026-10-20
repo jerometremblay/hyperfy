@@ -3,7 +3,8 @@
 World Portal can show a live destination on another updated Hyperfy instance.
 Configure its destination world URL and portal ID as before. An empty portal ID
 previews the destination spawn. Crossing still navigates to the destination URL.
-Older worlds remain valid travel destinations but do not supply a 3D preview.
+Vanilla worlds use a saved 3D preview captured through a brief anonymous join.
+The destination does not need this fork or its custom preview endpoint.
 
 ## Set up a portal link
 
@@ -91,7 +92,7 @@ The portal properties expose **Preview resolution** (256, 512, 1024, or Max) and
 XR. Higher settings render more destination scene passes; begin with defaults.
 
 Both worlds must run the updated engine for live remote previews and the arrival
-pose handoff. Rebuild and refresh both clients after updating. To run multiple
+pose handoff. Vanilla worlds instead use the daily snapshot fallback described below. Rebuild and refresh both clients after updating. To run multiple
 instances from one checkout, see [named world profiles](deployment.md#named-worlds-from-one-checkout).
 Each server needs its own port and world data directory.
 
@@ -122,6 +123,38 @@ The scene uses the destination's synchronized world clock, location, daylight cy
 time offset and transitions. Sky apps provide its HDR, fog and fixed sunlight settings.
 App lights also render. Remote shadows, remote voice/audio, CSS WebViews and nested
 portal previews are omitted. These omissions do not affect ordinary destination travel.
+
+## Vanilla worlds and Hyperfy v1
+
+When a destination has no versioned preview endpoint, the source server joins it
+with a fresh anonymous connection, saves its first snapshot, and immediately
+closes the connection. No user credentials are reused, no voice session is joined,
+and player records, chat, authentication tokens and admin configuration are discarded.
+The join briefly appears as a guest at the destination, as an ordinary anonymous visit does.
+
+Snapshots are shared across viewers and persisted in the source world's
+`portal-snapshots/` directory. The first access after 24 hours refreshes them;
+unused destinations are not polled. Refresh failures retain the last successful
+snapshot and are also limited to one attempt per 24 hours. The client replaces
+an active snapshot after 24 hours, and releases unused replica scenes normally.
+Only destinations with a portal placed in the source world can request a capture.
+
+Vanilla v2 uses its public `env.js` and ordinary binary snapshot protocol.
+Hyperfy v1 at `hyperfy.io` uses the public world/server discovery and guest join
+protocol, including a shard in the supplied URL. Its models, images, VRMs,
+grabbable models and sky are converted to current native nodes. Old custom app
+scripts, mirrors and interactions are not converted. Draco models use the bundled
+Three.js decoder. Vanilla worlds without daylight settings retain their fixed sky
+and lighting rather than inheriting this fork's day/night defaults.
+
+The preview is centered at destination spawn, with empty **Destination portal ID**.
+It excludes distant apps once their complete geometry bounds are known (50 metres),
+retaining overlapping large models, global sky/light providers and unknown bounds.
+Vanilla sends a whole-world snapshot; geometry must load before bounds can be
+checked. Asset URLs still reference the destination, so this is a saved scene
+snapshot, not an offline copy of every asset. Existing preview script restrictions
+still apply; apps depending on a local player or interactive initialization may
+render incompletely. Crossing navigates to the original destination URL.
 
 ## Region and lifecycle
 

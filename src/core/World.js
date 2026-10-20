@@ -211,7 +211,7 @@ export class World extends EventEmitter {
   resolveURL(url, allowLocal) {
     if (!url) return url
     url = url.trim()
-    if (url.startsWith('blob')) {
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
       return url
     }
     if (url.startsWith('asset://')) {

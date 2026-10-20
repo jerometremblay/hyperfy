@@ -303,6 +303,11 @@ export class Portal extends Node {
 
   refreshDestinationStatus() {
     if (this.url) {
+      if (this.ctx.world.portalPreviews?.get(this)?.world.network.frozen) {
+        this.destinationError = ''
+        this.setStatus('')
+        return
+      }
       if (performance.now() >= this.nextDestinationCheck) this.checkRemoteDestination()
     } else {
       const destination =

@@ -144,3 +144,18 @@ test('preview applies app state, live events, removals and independent time with
   world.network.ws = null
   world.destroy()
 })
+
+test('saved vanilla snapshot needs no socket and retains fixed daylight when settings omit the fork clock', () => {
+  const world = fixture()
+  const data = snapshot()
+  data.settings = {}
+  world.network.init({ snapshot: data })
+  assert.equal(world.network.frozen, true)
+  assert.equal(world.network.ready, true)
+  assert.equal(world.network.ws, null)
+  assert.equal(world.settings.dayNightCycle, false)
+  assert.equal(world.resolveURL('data:text/javascript,hello'), 'data:text/javascript,hello')
+  world.network.preFixedUpdate()
+  world.network.setSubscriptions([''])
+  world.destroy()
+})

@@ -11,7 +11,12 @@ export class PreviewNetwork extends ClientNetwork {
     this.revision = 0
   }
 
-  init({ wsUrl }) {
+  init({ wsUrl, snapshot }) {
+    if (snapshot) {
+      this.frozen = true
+      this.apply(snapshot)
+      return
+    }
     this.readyDeadline = performance.now() + 5000
     this.ws = new WebSocket(wsUrl)
     this.ws.addEventListener('open', this.subscribe)
@@ -21,6 +26,7 @@ export class PreviewNetwork extends ClientNetwork {
   }
 
   setSubscriptions(ids) {
+    if (this.frozen) return
     this.portalIds = [...new Set(ids)]
     this.subscribe()
   }
@@ -40,6 +46,7 @@ export class PreviewNetwork extends ClientNetwork {
 
   preFixedUpdate() {
     this.flush()
+    if (this.frozen) return
     const now = performance.now()
     if (!this.ready && now > this.readyDeadline) {
       this.error = 'Remote preview timed out'
@@ -83,7 +90,7 @@ export class PreviewNetwork extends ClientNetwork {
     this.endpoints = new Map(
       Object.entries(data.endpoints).map(([id, matrix]) => [id, new THREE.Matrix4().fromArray(matrix)])
     )
-    this.world.settings.deserialize(data.settings)
+    this.world.settings.deserialize(this.frozen ? { dayNightCycle: false, ...data.settings } : data.settings)
     for (const blueprint of data.blueprints) {
       if (this.world.blueprints.get(blueprint.id)) this.world.blueprints.modify(blueprint)
       else this.world.blueprints.add(blueprint)

@@ -24,6 +24,7 @@ import { BrowserCapture } from './BrowserCapture'
 import { proxyWebViewRequest } from './WebViewProxy'
 import { getPortalStatus, getPortalLoadingImage } from './portalStatus'
 import { PortalPreviews, PORTAL_PREVIEW_VERSION } from './PortalPreviews'
+import { VanillaPortalSnapshots } from './VanillaPortalSnapshots'
 import { appHasBrowserSource } from '../core/utils/browser'
 
 const execAsync = promisify(exec)
@@ -32,6 +33,7 @@ const rootDir = path.join(__dirname, '../')
 const worldDir = path.join(rootDir, process.env.WORLD)
 const port = process.env.PORT
 const browserCapture = new BrowserCapture()
+const vanillaPortalSnapshots = new VanillaPortalSnapshots(path.join(worldDir, 'portal-snapshots'))
 
 // check envs
 if (!process.env.WORLD) {
@@ -398,6 +400,44 @@ fastify.get('/api/portal-status', async request => ({
     apiUrl: process.env.PUBLIC_API_URL,
   },
 }))
+
+fastify.get('/api/portal-snapshot', async (request, reply) => {
+  // Only destinations actually placed in this world may initiate anonymous joins.
+  const normalize = value => {
+    const url = new URL(value)
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
+      throw new Error('Invalid destination')
+    url.search = ''
+    url.hash = ''
+    url.pathname = url.pathname.replace(/\/$/, '')
+    return url.href
+  }
+  let destination
+  try {
+    destination = normalize(request.query?.url)
+  } catch {
+    return reply.code(400).send({ error: 'Invalid destination' })
+  }
+  const allowed = [...world.entities.items.values()].some(entity => {
+    if (!entity.isApp) return false
+    let found = false
+    const inspect = node => {
+      if (node.name !== 'portal' || !node.url) return
+      try {
+        if (normalize(node.url) === destination) found = true
+      } catch {}
+    }
+    entity.root?.traverse(inspect)
+    for (const node of entity.worldNodes || []) node.traverse(inspect)
+    return found
+  })
+  if (!allowed) return reply.code(403).send({ error: 'Destination has no portal in this world' })
+  try {
+    return await vanillaPortalSnapshots.get(destination)
+  } catch (error) {
+    return reply.code(502).send({ error: error.message })
+  }
+})
 
 fastify.get('/health', async (request, reply) => {
   try {

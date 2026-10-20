@@ -51,7 +51,7 @@ export class ClientPortalPreviews extends System {
         entry.remote = null
         scheduleRetry(entry, now)
       }
-      if (!entry.remote && !entry.loading && now >= entry.retryAt) this.load(entry)
+      if ((!entry.remote || now >= entry.refreshAt) && !entry.loading && now >= entry.retryAt) this.load(entry)
       if (entry.remote) {
         if (entry.remote.network.ready) entry.retryCount = 0
         const subscriptions = JSON.stringify(ids)
@@ -60,6 +60,7 @@ export class ClientPortalPreviews extends System {
           entry.subscriptions = subscriptions
         }
         entry.remote.tick(now)
+        if (entry.remote.network.frozen) this.cullSnapshot(entry.remote)
         for (const portal of portals) {
           const matrix = entry.remote.network.endpoints.get(portal.target)
           if (matrix && entry.remote.network.ready) {
@@ -88,23 +89,38 @@ export class ClientPortalPreviews extends System {
     entry.error = ''
     const controller = new AbortController()
     entry.controller = controller
-    const timeout = setTimeout(() => controller.abort(), 5000)
+    // Bound the complete capture too; legacy discovery can require several requests.
+    const timeout = setTimeout(() => controller.abort(), 70000)
     let remote
     try {
       const url = new URL(entry.key)
       url.pathname = `${url.pathname.replace(/\/$/, '')}/api/portal-status`
-      const response = await fetch(url.href, { credentials: 'omit', signal: controller.signal })
-      if (!response.ok) throw new Error('Remote preview unavailable')
-      const status = await response.json()
-      if (status.preview?.version !== 1) throw new Error('Remote world does not support previews')
-      const wsUrl = new URL(status.preview.wsUrl)
-      if (!['ws:', 'wss:'].includes(wsUrl.protocol)) throw new Error('Invalid remote preview address')
+      let status
+      try {
+        const response = await fetch(url.href, {
+          credentials: 'omit',
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]),
+        })
+        if (response.ok) status = await response.json()
+      } catch {
+        if (controller.signal.aborted) throw new Error('Remote preview cancelled')
+      }
+      let snapshot, wsUrl
+      if (status?.preview?.version === 1) {
+        wsUrl = new URL(status.preview.wsUrl)
+        if (!['ws:', 'wss:'].includes(wsUrl.protocol)) throw new Error('Invalid remote preview address')
+      } else {
+        const snapshotURL = `${this.world.network.apiUrl}/portal-snapshot?url=${encodeURIComponent(entry.key)}`
+        const response = await fetch(snapshotURL, { credentials: 'omit', signal: controller.signal })
+        if (!response.ok) throw new Error('Remote snapshot unavailable')
+        snapshot = await response.json()
+      }
       remote = createPreviewWorld(this.world, entry.key)
       // Root-relative environment resources belong to the destination host.
       const baseEnvironment = {
         model: null,
         bg: null,
-        hdr: new URL('/Clear_08_4pm_LDR.hdr', entry.key).href,
+        hdr: new URL('/Clear_08_4pm_LDR.hdr', snapshot ? globalThis.location?.href || entry.key : entry.key).href,
         sunDirection: new THREE.Vector3(-1, -2, -2).normalize(),
         rotationY: 0,
         sunIntensity: 1,
@@ -113,13 +129,17 @@ export class ClientPortalPreviews extends System {
         fogFar: null,
         fogColor: null,
       }
-      await remote.init({ wsUrl: wsUrl.href, baseEnvironment, storage: new Map() })
+      await remote.init({ wsUrl: wsUrl?.href, snapshot, baseEnvironment, storage: new Map() })
       if (this.destroyed || controller.signal.aborted || this.worlds.get(entry.key) !== entry) {
         remote.destroy()
         return
       }
-      remote.network.apiUrl = status.preview.apiUrl
+      remote.network.apiUrl = status?.preview?.apiUrl
+      entry.remote?.destroy()
       entry.remote = remote
+      entry.refreshAt = snapshot
+        ? performance.now() + Math.max(60000, (snapshot.refreshAt || Date.now() + 24 * 60 * 60 * 1000) - Date.now())
+        : Infinity
       entry.endpoints = new Map()
       entry.subscriptions = null
       entry.error = ''
@@ -135,6 +155,36 @@ export class ClientPortalPreviews extends System {
 
   get(portal) {
     return this.destinations.get(portal)
+  }
+
+  cullSnapshot(remote) {
+    if (performance.now() < (remote.nextSnapshotCull || 0)) return
+    remote.nextSnapshotCull = performance.now() + 1000
+    const matrix = remote.network.endpoints.get('')
+    if (!matrix) return
+    const center = new THREE.Vector3().setFromMatrixPosition(matrix)
+    const bounded = new Set(),
+      nearby = new Set()
+    const visit = node => {
+      for (const item of node.items) {
+        const entity = item.getEntity?.()
+        if (!entity?.isApp) continue
+        bounded.add(entity)
+        if (center.distanceTo(item.sphere.center) <= 50 + item.sphere.radius) nearby.add(entity)
+      }
+      for (const child of node.children) visit(child)
+    }
+    if (remote.stage.octree?.root) visit(remote.stage.octree.root)
+    for (const entity of bounded) {
+      if (nearby.has(entity)) continue
+      let global = false
+      const inspect = node => {
+        if (node.name === 'sky' || node.name === 'light') global = true
+      }
+      entity.root?.traverse(inspect)
+      for (const node of entity.worldNodes || []) node.traverse(inspect)
+      if (!global) remote.entities.remove(entity.data.id)
+    }
   }
 
   destroy() {

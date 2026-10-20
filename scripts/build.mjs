@@ -58,6 +58,10 @@ const clientHtmlDest = path.join(rootDir, 'build/public/index.html')
         setup(build) {
           build.onEnd(async result => {
             // copy over public files
+            await fs.copy(
+              path.join(rootDir, 'node_modules/three/examples/jsm/libs/draco/gltf'),
+              path.join(clientBuildDir, 'draco')
+            )
             await fs.copy(clientPublicDir, clientBuildDir)
             // copy physx wasm to public
             const physxWasmSrc = path.join(rootDir, 'src/core/physx-js-webidl.wasm')
