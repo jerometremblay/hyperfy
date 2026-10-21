@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pac-Man Arcade</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; color: #ffe600; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: monospace; }
+    main { width: 100%; min-height: 0; flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+    canvas { width: 100%; max-height: 100%; object-fit: contain; outline: none; cursor: pointer; }
+    #hint { position: absolute; bottom: 3%; background: #000e; padding: 8px 12px; font-size: clamp(12px, 2.6vw, 24px); text-align: center; pointer-events: none; }
+    footer { flex: none; text-align: center; padding: 6px; font-size: clamp(10px, 2.2vw, 20px); line-height: 1.5; }
+    a { color: #929292; font-size: .75em; }
+  </style>
+</head>
+<body>
+  <main>
+    <canvas id="canvas" width="960" height="640" tabindex="0" aria-label="Pac-Man game. Click to play, WASD to move, Space to pause, Escape to leave."></canvas>
+    <div id="hint" role="status">Loading Pac-Man…</div>
+  </main>
+  <footer>W A S D · MOVE &nbsp; SPACE · PAUSE &nbsp; ESC · LEAVE<br>
+    <a href="https://github.com/mumuy/pacman" target="_blank" rel="noopener">Pac-Man by HaoLe Zheng / passer-by.com · MIT</a>
+  </footer>
+  <script src="./vendor/game.js"></script>
+  <script src="./vendor/pacman.js"></script>
+  <script src="./arcade.js"></script>
+</body>
+</html>

@@ -123,6 +123,25 @@ A switch field with many options
 }
 ```
 
+### Select
+
+A dropdown field for choosing one value from a list.
+
+```jsx
+{
+  type: 'select',
+  key: String,           // the key on `props` to set this value
+  label: String,         // the label for the dropdown
+  options: [
+    {
+      label: String,     // the option shown in the dropdown
+      value: String,     // the value to set on the props when selected
+    }
+  ],
+  initial: String,       // the initial value to set if not configured
+}
+```
+
 ### File
 
 A file field for selecting and uploading additional assets that can be used by your app.

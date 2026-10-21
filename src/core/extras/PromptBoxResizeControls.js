@@ -125,6 +125,14 @@ export class PromptBoxResizeControls {
     if (!this.drag) return
     if (this.viewport.hasPointerCapture(this.drag.pointerId)) this.viewport.releasePointerCapture(this.drag.pointerId)
     this.drag = null
+    // Save the final face drag before a blueprint edit rebuilds the app.
+    const transform = {
+      position: this.app.root.position.toArray(),
+      quaternion: this.app.root.quaternion.toArray(),
+      scale: this.app.root.scale.toArray(),
+    }
+    this.app.modify(transform)
+    this.world.network.send('entityModified', { id: this.app.data.id, ...transform })
     event.stopImmediatePropagation()
   }
 

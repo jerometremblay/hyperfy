@@ -602,6 +602,55 @@ export function MenuItemSwitch({ label, hint, options, value, onChange }) {
   )
 }
 
+export function MenuItemSelect({ label, hint, options = [], value, onChange }) {
+  const setHint = useContext(MenuContext)
+  return (
+    <label
+      className='menuitemselect'
+      css={css`
+        display: flex;
+        align-items: center;
+        min-height: 2.5rem;
+        padding: 0 0.875rem;
+        gap: 0.75rem;
+        .menuitemselect-label {
+          flex: 1;
+          min-width: 0;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+        select {
+          max-width: 13rem;
+          min-width: 7rem;
+          padding: 0.25rem 0.4rem;
+          color: white;
+          background: #191b1f;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 0.25rem;
+          font: inherit;
+          cursor: pointer;
+        }
+        option {
+          color: #111;
+        }
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+      `}
+      onPointerEnter={() => setHint(hint)}
+      onPointerLeave={() => setHint(null)}
+    >
+      <span className='menuitemselect-label'>{label}</span>
+      <select aria-label={label} value={value} onChange={e => onChange(e.target.value)}>
+        {options.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 export function MenuItemCurve({ label, hint, x, xRange, y, yMin, yMax, value, onChange }) {
   const setHint = useContext(MenuContext)
   const curve = useMemo(() => new Curve().deserialize(value || '0,0.5,0,0|1,0.5,0,0'), [value])

@@ -93,7 +93,7 @@ function validateSettings(settings, sceneKey) {
   }
   for (const field of ['image', 'avatar']) {
     const value = settings[field]
-    if (value !== undefined && (!isObject(value) || typeof value.url !== 'string')) {
+    if (value !== undefined && value !== null && (!isObject(value) || typeof value.url !== 'string')) {
       throw new Error('settings.' + field + ' must be an asset descriptor with a url')
     }
   }

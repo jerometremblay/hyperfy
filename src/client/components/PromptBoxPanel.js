@@ -61,6 +61,7 @@ export function PromptBoxPanel({ world, app, blueprint }) {
     const bp = world.blueprints.get(app.data.blueprint)
     if (!world.builder.canBuild() || bp.id !== blueprint.id || !isPromptBox(bp)) return
     if (prompt === bp.props.prompt) return
+    if (world.builder.selected === app) world.builder.select(null)
     const change = { id: bp.id, version: bp.version + 1, props: { ...bp.props, prompt } }
     world.blueprints.modify(change)
     world.network.send('blueprintModified', change)

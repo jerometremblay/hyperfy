@@ -1,0 +1,21 @@
+{
+  "id": "qvd9yxCHYg",
+  "version": 3,
+  "name": "PAC-MAN 1980 Arcade Cabinet",
+  "image": null,
+  "author": "OpenAI",
+  "url": null,
+  "desc": "Corrected vintage Pac-Man arcade machine with true recessed sloping CRT, correctly oriented marquee text, 3D extruded sides and endpoint-aligned trim. Playable Pac-Man by HaoLe Zheng (MIT). Click CRT; WASD move, Space pause, Escape leave.",
+  "model": "script-only",
+  "script": "asset://430108ccffb33668194e52d3855d67eb472dbd5c288a72b88449237ea95ec5ff.js",
+  "props": {
+    "promptBoxRequestId": "RKKib34hIn",
+    "promptBoxTargetEntityId": "lrtr77gRDH"
+  },
+  "preload": false,
+  "public": false,
+  "locked": false,
+  "unique": true,
+  "disabled": false,
+  "scene": false
+}

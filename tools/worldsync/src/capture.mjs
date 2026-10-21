@@ -520,10 +520,11 @@ function dirtyRepositoryPaths(root) {
   return { rootPrefix, paths }
 }
 
-function checkDirtyTargets(root, files) {
+function checkDirtyTargets(root, files, managedStateFile) {
   const repository = dirtyRepositoryPaths(root)
   if (!repository) return
   const targets = [...files.keys()]
+  const managed = new Set([managedStateFile])
   const ignored = targets.filter(target => {
     const result = spawnSync('git', ['-C', root, 'check-ignore', '--quiet', '--', target], {
       encoding: 'utf8',
@@ -535,7 +536,7 @@ function checkDirtyTargets(root, files) {
     return result.status === 0
   })
   const conflicts = targets.filter(target =>
-    ignored.includes(target) ||
+    (ignored.includes(target) && !managed.has(target)) ||
     repository.paths.some(item => {
       const repositoryTarget = path.posix.join(repository.rootPrefix, target)
       return item === repositoryTarget || item.startsWith(repositoryTarget + '/') || repositoryTarget.startsWith(item + '/')
@@ -631,7 +632,6 @@ export async function captureWorld(root, sceneKey, profileName, {
 
   const { map, captureRelative } = await loadMappings(root, profileName, profile.apiUrl, sceneKey, bootstrap)
   const sourceScene = await loadSourceScene(root, sceneKey)
-  const initialEntityKeys = new Set(Object.keys(map.entities))
   const sourceObjects = await discoverObjects(root)
   const sourceObjectsByKey = new Map(sourceObjects.map(item => [item.manifest.key, item]))
   const compiled = sourceScene ? await compileProject(root, sceneKey) : null
@@ -649,6 +649,7 @@ export async function captureWorld(root, sceneKey, profileName, {
     ...sourceObjectsByKey.keys(),
   ])
   const blueprintKeyById = new Map()
+  const environmentObjectKeys = new Set()
   for (const blueprint of snapshot.blueprints) {
     if (typeof blueprint.id !== 'string' || !blueprint.id || typeof blueprint.name !== 'string') {
       throw new Error('Live world snapshot contains an invalid blueprint')
@@ -672,6 +673,7 @@ export async function captureWorld(root, sceneKey, profileName, {
     }
     map.blueprints[key] = blueprint.id
     blueprintKeyById.set(blueprint.id, key)
+    if (blueprint.id === '$scene' || blueprint.scene === true) environmentObjectKeys.add(key)
   }
   for (const key of blueprintKeyById.values()) {
     if (sourceObjectsByKey.has(key) && !compiledObjects.has(key)) {
@@ -687,14 +689,24 @@ export async function captureWorld(root, sceneKey, profileName, {
   ])
   const liveInstances = new Map()
   const captureEntityMap = {}
+  const environmentEntityKeys = new Set()
   for (const entity of snapshot.entities) {
-    if (
-      typeof entity.id !== 'string' || !entity.id || !blueprintKeyById.has(entity.blueprint) ||
-      !Array.isArray(entity.position) || !Array.isArray(entity.quaternion) || !Array.isArray(entity.scale) ||
-      typeof entity.pinned !== 'boolean'
-    ) {
+    if (typeof entity.id !== 'string' || !entity.id || !blueprintKeyById.has(entity.blueprint)) {
       throw new Error('Live world snapshot contains an invalid app instance')
     }
+    const objectKey = blueprintKeyById.get(entity.blueprint)
+    if (environmentObjectKeys.has(objectKey)) {
+      const key = entityKeys.get(entity.id)
+      if (key) {
+        environmentEntityKeys.add(key)
+        delete map.entities[key]
+      }
+      continue
+    }
+    if (
+      !Array.isArray(entity.position) || !Array.isArray(entity.quaternion) || !Array.isArray(entity.scale) ||
+      typeof entity.pinned !== 'boolean'
+    ) throw new Error('Live world snapshot contains an invalid app instance')
     const key = entityKeys.get(entity.id) || allocateKey(contentKey('instance', entity.id), occupiedEntityKeys)
     occupiedEntityKeys.add(key)
     assertKey(key, 'captured instance key')
@@ -769,12 +781,20 @@ export async function captureWorld(root, sceneKey, profileName, {
   }
 
   const localInstances = new Map((sourceScene?.scene.instances || []).map(instance => [instance.key, instance]))
-  const unmappedSourceInstances = [...localInstances.keys()].filter(key => !initialEntityKeys.has(key))
   const instanceBaselines = { ...(map.baseline.instances || {}) }
+  for (const key of environmentEntityKeys) delete instanceBaselines[key]
+  const initialEntityKeys = new Set(Object.keys(map.entities))
+  const unmappedSourceInstances = [...localInstances.entries()]
+    .filter(([key, instance]) => !initialEntityKeys.has(key) && !environmentObjectKeys.has(instance.object))
+    .map(([key]) => key)
   const mergedInstances = new Map()
   for (const key of new Set([...localInstances.keys(), ...liveInstances.keys(), ...Object.keys(instanceBaselines)])) {
     const local = localInstances.get(key) || null
     const live = liveInstances.get(key) || null
+    if (local && environmentObjectKeys.has(local.object)) {
+      delete instanceBaselines[key]
+      continue
+    }
     const baseline = instanceBaselines[key]
     const merged = mergeValue({
       key,
@@ -936,7 +956,7 @@ export async function captureWorld(root, sceneKey, profileName, {
   }
 
   if (conflicts.length && conflictResolution !== 'live') return plan
-  checkDirtyTargets(root, writes)
+  checkDirtyTargets(root, writes, captureRelative)
   if (!effectiveDryRun) {
     await writeFiles(root, writes)
     plan.written = true

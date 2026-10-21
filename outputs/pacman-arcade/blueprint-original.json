@@ -1,0 +1,21 @@
+{
+  "id": "qvd9yxCHYg",
+  "version": 0,
+  "name": "PAC-MAN 1980 Arcade Cabinet",
+  "image": null,
+  "author": "OpenAI",
+  "url": null,
+  "desc": "Corrected vintage Pac-Man arcade machine with true recessed sloping CRT, correctly oriented marquee text, 3D extruded sides and endpoint-aligned trim.",
+  "model": "script-only",
+  "script": "asset://57ab70d5b55065b824ecdaf79200f651e9d92e53663a60ecc21e8af5c366819a.js",
+  "props": {
+    "promptBoxRequestId": "RKKib34hIn",
+    "promptBoxTargetEntityId": "lrtr77gRDH"
+  },
+  "preload": false,
+  "public": false,
+  "locked": false,
+  "unique": true,
+  "disabled": false,
+  "scene": false
+}

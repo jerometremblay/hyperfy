@@ -1676,6 +1676,17 @@ function AppField({ world, props, field, value, modify }) {
       />
     )
   }
+  if (field.type === 'select') {
+    return (
+      <FieldSelect
+        label={field.label}
+        hint={field.hint}
+        options={field.options}
+        value={value}
+        onChange={value => modify(field.key, value)}
+      />
+    )
+  }
   if (field.type === 'dropdown') {
     // deprecated, same as switch
     return (

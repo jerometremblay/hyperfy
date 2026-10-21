@@ -54,6 +54,14 @@ export class Light extends Node {
     }
 
     this.light.castShadow = !this.ctx.world.isPreview && this._castShadow
+    if (this._type === 'point' && this._castShadow) {
+      // Point lights default to a 0.5–500 m shadow camera. Match it to the
+      // light's range so nearby geometry is inside the frustum at useful depth precision.
+      const camera = this.light.shadow.camera
+      camera.near = 0.05
+      if (this._distance > 0) camera.far = Math.max(camera.near + 0.1, this._distance)
+      camera.updateProjectionMatrix()
+    }
 
     if (this._type === 'directional' || this._type === 'spot') {
       this.ctx.world.stage.scene.add(this.light.target)

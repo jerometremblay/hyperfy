@@ -8,6 +8,7 @@ import {
   MenuItemFileBtn,
   MenuItemNumber,
   MenuItemRange,
+  MenuItemSelect,
   MenuItemSwitch,
   MenuItemText,
   MenuItemTextarea,
@@ -236,6 +237,17 @@ function MenuItemField({ world, props, field, value, modify }) {
   if (field.type === 'switch') {
     return (
       <MenuItemSwitch
+        label={field.label}
+        hint={field.hint}
+        options={field.options}
+        value={value}
+        onChange={value => modify(field.key, value)}
+      />
+    )
+  }
+  if (field.type === 'select') {
+    return (
+      <MenuItemSelect
         label={field.label}
         hint={field.hint}
         options={field.options}
