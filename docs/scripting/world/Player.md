@@ -170,3 +170,20 @@ locally from the existing speaking status.
 Desktop keys **1–5** toggle happy, angry, sad, relaxed, and surprised respectively,
 clearing the previous expression. Higher-priority controls take precedence, and shortcuts
 are disabled in build mode, in VR, and while typing in chat or another input.
+
+### .setCamera({ target, zoom = 0.3, duration = 0 })
+
+Sets the local desktop player's normal camera once, looking at a world-space
+Vector3 target. Zoom is clamped to the native third-person range (minimum 0.3 m).
+This exits first-person mode and updates the native shoulder view without moving
+the player or capturing input. Normal mouse look, zoom and collision continue;
+the target is not tracked afterward. Returns false for remote players, servers,
+XR or invalid target/zoom values.
+
+```js
+world.getPlayer().setCamera({ target: new Vector3(2, 0.8, 1), zoom: 0.3 })
+```
+
+Set `duration` in seconds (up to 2) for an eased return from the currently visible
+view. Normal player input and native camera collision remain active during the
+transition. Teleporting or crossing a portal cancels the transition.

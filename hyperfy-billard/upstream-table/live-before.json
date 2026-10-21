@@ -1,0 +1,46 @@
+{
+  "blueprint": {
+    "id": "YwfF8lHqTK",
+    "version": 18,
+    "name": "Classic 8 ft Pool Table",
+    "model": "script-only",
+    "script": "asset://c0580f94afe7a99e4f004048bdc8208308f3ae013ae3cad7686a9fd1b83ff7f4.js",
+    "props": {
+      "castShadows": true,
+      "promptBoxRequestId": "vbfGQmNv0x",
+      "promptBoxTargetEntityId": "PMPL83pUPI",
+      "receiveShadows": true,
+      "decorativeBalls": false,
+      "poolChannel": "classic-8-ft-pool-table"
+    },
+    "unique": true,
+    "scene": false,
+    "disabled": false,
+    "locked": false,
+    "frozen": false,
+    "preload": false,
+    "image": null,
+    "public": false
+  },
+  "entity": {
+    "id": "PMPL83pUPI",
+    "blueprint": "YwfF8lHqTK",
+    "position": [
+      30.960234256474347,
+      0.12096717663691105,
+      7.376745806627403
+    ],
+    "quaternion": [
+      0,
+      -0.9914448613738104,
+      0,
+      -0.1305261922200516
+    ],
+    "scale": [
+      1.036734693877551,
+      1,
+      1.0507194244604319
+    ],
+    "pinned": false
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "tableKey": "apps/classic-8-ft-pool-table",
+  "tableEntityId": "PMPL83pUPI",
+  "tableBlueprintId": "YwfF8lHqTK",
+  "channel": "classic-8-ft-pool-table",
+  "clothHeight": 0.708,
+  "modelScale": [
+    1.036734693877551,
+    1,
+    1.0507194244604319
+  ],
+  "overlayPosition": [
+    30.960234256474347,
+    0.828967176636911,
+    7.376745806627403
+  ],
+  "overlayQuaternion": [
+    0,
+    -0.9914448613738104,
+    0,
+    -0.1305261922200516
+  ],
+  "gameProps": {
+    "tableSize": "8",
+    "showSurface": false,
+    "playChannel": "classic-8-ft-pool-table"
+  }
+}

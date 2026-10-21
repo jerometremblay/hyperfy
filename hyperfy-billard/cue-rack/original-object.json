@@ -1,0 +1,24 @@
+{
+  "blueprint": {
+    "author": "OpenAI",
+    "desc": "Wall-mounted hardwood pool-cue rack, four 1.47 m cues, E pickup and X return, multiplayer synchronized.",
+    "disabled": false,
+    "frozen": false,
+    "image": null,
+    "locked": false,
+    "model": "script-only",
+    "name": "Wall Pool Cue Rack — Four Returning Cues",
+    "preload": false,
+    "props": {
+      "promptBoxRequestId": "M2Qzasuh09",
+      "promptBoxTargetEntityId": "rpM98Yhyxy"
+    },
+    "public": false,
+    "script": "file:./script.js",
+    "unique": true,
+    "url": null
+  },
+  "key": "app-ad9a35e5852a2887",
+  "mode": "files",
+  "schemaVersion": 1
+}

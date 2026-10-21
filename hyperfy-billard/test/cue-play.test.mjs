@@ -1,0 +1,125 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import * as THREE from 'three'
+import { harness, player, physics, root } from './helpers.mjs'
+const source = await readFile(`${root}cue-rack/rack.js`, 'utf8')
+function setup() {
+  const players = [player('alice', 'socket-a'), player('bob', 'socket-b')]
+  const bus = {}
+  const rack = harness({ server: true, source, players, bus })
+  const game = harness({ server: true, players, bus })
+  return { players, rack, game }
+}
+test('only a real held rack cue permits claims; pickup/drop use the transport sender', () => {
+  const { players, rack, game } = setup()
+  const claim = () => game.emit('pool:claim', { heldCue: true, playerId: 'alice' }, 'socket-a')
+  claim()
+  assert.equal(game.app.state.pool.owner, null)
+  rack.emit('take-cue', { slot: 0, playerId: 'alice' }, 'forged')
+  assert.equal(rack.app.state.holders[0], null)
+  players[0].position.x = 10
+  rack.emit('take-cue', { slot: 0 }, 'socket-a')
+  assert.equal(rack.app.state.holders[0], null)
+  players[0].position.x = 0
+  rack.emit('take-cue', { slot: 0, playerId: 'bob' }, 'socket-a')
+  assert.equal(rack.app.state.holders[0], 'alice')
+  rack.emit('take-cue', { slot: 1 }, 'socket-a')
+  assert.equal(rack.app.state.holders[1], null)
+  rack.emit('drop-cue', { slot: 0, playerId: 'alice' }, 'socket-b')
+  assert.equal(rack.app.state.holders[0], 'alice')
+  claim()
+  assert.equal(game.app.state.pool.owner, 'alice')
+  rack.emit('drop-cue', { slot: 0 }, 'socket-a')
+  assert.equal(game.app.state.pool.owner, null)
+  const shots = game.app.state.pool.shots
+  game.emit('pool:shoot', { seq: game.app.state.pool.seq, angle: 0, speed: 5 }, 'socket-a')
+  assert.equal(game.app.state.pool.shots, shots)
+})
+test('low camera stays behind the ball and the physical cue points through the selected contact', () => {
+  for (const angle of [0, Math.PI / 2, Math.PI, -Math.PI / 2, 0.37]) {
+    const ball = new THREE.Vector3(0.4, physics.BALL_RADIUS, 0.2)
+    const forward = new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle))
+    const pose = physics.shotPose([0.4, -0.2, 0], angle)
+    assert.ok(pose.cameraPosition.clone().sub(ball).dot(forward) < -0.679)
+    assert.ok(Math.abs(pose.cameraPosition.y - ball.y - 0.14) < 1e-10)
+    const look = new THREE.Vector3(0, 0, -1).applyQuaternion(pose.cameraQuaternion)
+    assert.ok(look.distanceTo(ball.clone().sub(pose.cameraPosition).normalize()) < 1e-10)
+    const cueForward = new THREE.Vector3(0, 1, 0).applyQuaternion(pose.cueQuaternion)
+    assert.ok(cueForward.dot(forward) > 0.998)
+    const tip = pose.cuePosition.clone().addScaledVector(cueForward, 0.735)
+    assert.ok(Math.abs(tip.distanceTo(ball) - physics.BALL_RADIUS - 0.012) < 1e-10)
+    assert.ok(new THREE.Vector3().crossVectors(ball.clone().sub(tip), cueForward).length() < 1e-10)
+  }
+})
+test('the held cue aligns for shooter and late observer, then returns to hand on strike', () => {
+  const { players, rack, game } = setup()
+  rack.emit('take-cue', { slot: 0 }, 'socket-a')
+  const clientBus = {}
+  const clientRack = harness({ source, players, bus: clientBus, state: structuredClone(rack.app.state) })
+  const client = harness({ players, bus: clientBus, state: structuredClone(game.app.state) })
+  game.app.deliver = (event, body) => client.emit(event, body)
+  client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
+  client.created.find(n => n.name === 'action').onTrigger()
+  client.emit('update', 1 / 60)
+  clientRack.emit('update', 1 / 60)
+  const cue = clientRack.created.filter(n => n.name === 'group')[0]
+  const pose = physics.shotPose(game.app.state.pool.balls[0].p, game.app.state.aim.angle)
+  assert.ok(cue.position.distanceTo(pose.cuePosition.clone().add(client.app.position)) < 1e-8)
+  assert.ok(cue.quaternion.angleTo(pose.cueQuaternion) < 1e-7)
+  const observerBus = {}
+  const observerRack = harness({ source, players: [players[1], players[0]], bus: observerBus, state: structuredClone(rack.app.state) })
+  const observer = harness({ players: [players[1], players[0]], bus: observerBus, state: structuredClone(game.app.state) })
+  observer.emit('update', 1 / 60)
+  observerRack.emit('update', 1 / 60)
+  const remoteCue = observerRack.created.filter(n => n.name === 'group')[0]
+  assert.ok(remoteCue.position.distanceTo(cue.position) < 1e-8)
+  assert.equal(observer.activeControl, null)
+  const aiming = client.control
+  aiming.space.onPress()
+  assert.equal(aiming.camera.write, false)
+  assert.equal(client.activeControl, null)
+  assert.equal(game.app.state.pool.owner, null)
+  assert.equal(game.app.state.pool.shots, 1)
+  clientRack.emit('update', 1 / 60)
+  assert.ok(cue.position.distanceTo(pose.cuePosition.clone().add(client.app.position)) > 0.1)
+  // The cue is still held, and no trajectory-line primitive exists.
+  assert.equal(rack.app.state.holders[0], 'alice')
+  assert.equal(client.created.some(n => n.name === 'prim' && n.emissiveIntensity > 0), false)
+})
+test('all game controls release immediately without waiting for a server response', () => {
+  const { players, rack, game } = setup()
+  rack.emit('take-cue', { slot: 0 }, 'socket-a')
+  const client = harness({ players, state: structuredClone(game.app.state) })
+  client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
+  game.app.deliver = (event, body) => client.emit(event, body)
+  client.created.find(n => n.name === 'action').onTrigger()
+  client.emit('update', 1 / 60)
+  const aiming = client.control
+  client.app.deliver = () => {} // Network response held back.
+  aiming.space.onPress()
+  assert.equal(aiming.camera.write, false)
+  assert.equal(client.activeControl, null)
+  assert.equal(client.created.find(n => n.name === 'ui').active, false)
+})
+test('aim packets do not stale the next shot; dropping a cue cancels active aiming', () => {
+  const { players, rack, game } = setup()
+  rack.emit('take-cue', { slot: 0 }, 'socket-a')
+  game.emit('pool:claim', { angle: 0 }, 'socket-a')
+  const seq = game.app.state.pool.seq
+  game.emit('pool:aim', { angle: 0.5, side: 0, top: 0 }, 'socket-a')
+  assert.equal(game.app.state.pool.seq, seq)
+  game.emit('pool:shoot', { seq, angle: 0.5, speed: 2.5 }, 'socket-a')
+  assert.equal(game.app.state.pool.shots, 1)
+  for (let i = 0; i < 1200; i++) game.emit('update', 1 / 60)
+  const client = harness({ players, state: structuredClone(game.app.state) })
+  client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
+  game.app.deliver = (event, body) => client.emit(event, body)
+  client.created.find(n => n.name === 'action').onTrigger()
+  const aiming = client.control
+  assert.equal(aiming.camera.write, true)
+  rack.emit('drop-cue', { slot: 0 }, 'socket-a')
+  assert.equal(aiming.camera.write, false)
+  assert.equal(game.app.state.pool.owner, null)
+  assert.equal(client.activeControl, null)
+})

@@ -126,3 +126,9 @@ The [in-world sidebar](docs/xr-sidebar.md) opens within arm's reach with the lef
 Menu button (Y if reserved), or by touching the Menu button beside your left
 wrist. Point with a tracked hand and pinch, or use controller triggers, to interact
 with the existing sidebar, with Recenter and scrolling controls on the panel.
+
+## Billiards
+
+[Hyperfy Billard](./hyperfy-billard/README.md) adds in-world pool using physics and
+table artwork adapted from the original [tailuge/billiards](https://github.com/tailuge/billiards)
+project. See the project README for setup, controls and attribution.

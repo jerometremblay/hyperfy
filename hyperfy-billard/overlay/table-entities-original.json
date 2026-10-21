@@ -1,0 +1,27 @@
+[
+  {
+    "id": "PMPL83pUPI",
+    "type": "app",
+    "blueprint": "YwfF8lHqTK",
+    "position": [
+      30.960234256474347,
+      0.12096717663691105,
+      7.376745806627403
+    ],
+    "quaternion": [
+      0,
+      -0.9914448613738104,
+      0,
+      -0.1305261922200516
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "mover": null,
+    "uploader": null,
+    "pinned": true,
+    "state": {}
+  }
+]

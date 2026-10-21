@@ -62,6 +62,10 @@ export function createPlayerProxy(entity, player) {
     get destroyed() {
       return !!player.destroyed
     },
+    setCamera(options) {
+      if (!world.network.isClient || player.data.owner !== world.network.id) return false
+      return player.setCamera(options)
+    },
     teleport(position, rotationY) {
       if (player.data.owner === world.network.id) {
         // if player is local we can set directly

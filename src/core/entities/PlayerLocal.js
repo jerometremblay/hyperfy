@@ -1380,7 +1380,24 @@ export class PlayerLocal extends Entity {
       // this.control.camera.quaternion.copy(this.cam.quaternion)
     } else {
       // otherwise interpolate camera towards target
-      simpleCamLerp(this.world, this.control.camera, this.cam, delta)
+      let target = this.cam
+      const transition = this.cameraTransition
+      if (transition) {
+        transition.elapsed = Math.min(transition.duration, transition.elapsed + delta)
+        if (transition.duration - transition.elapsed < 1e-8) transition.elapsed = transition.duration
+        const t = transition.elapsed / transition.duration
+        const ease = t * t * (3 - 2 * t)
+        target = {
+          position: this.base.position.clone().add(transition.offset).lerp(this.cam.position, ease),
+          quaternion: transition.quaternion.clone().slerp(this.cam.quaternion, ease),
+          zoom: transition.zoom + (this.cam.zoom - transition.zoom) * ease,
+        }
+        // Apply the eased pose exactly; keep native collision checks on every frame.
+        this.control.camera.quaternion.copy(target.quaternion)
+        this.control.camera.zoom = target.zoom
+        if (t === 1) this.cameraTransition = null
+      }
+      simpleCamLerp(this.world, this.control.camera, target, delta)
       const nearBlend = clamp(
         (this.control.camera.zoom - THIRD_PERSON_MIN_ZOOM) / CAMERA_NEAR_BLEND_RANGE,
         0,
@@ -1399,6 +1416,7 @@ export class PlayerLocal extends Entity {
   }
 
   crossPortal(transform) {
+    this.cameraTransition = null
     const rotation = new THREE.Quaternion().setFromRotationMatrix(transform)
     const position = this.base.position.clone().applyMatrix4(transform)
     this.controller.teleport(position)
@@ -1430,7 +1448,42 @@ export class PlayerLocal extends Entity {
     })
   }
 
+  // Set the native view once; ordinary player input and collision remain active.
+  setCamera({ target, zoom = THIRD_PERSON_MIN_ZOOM, duration = 0 } = {}) {
+    if (this.isXR || !target || ![target.x, target.y, target.z, zoom, duration].every(Number.isFinite) || duration < 0) return false
+    this.cameraTransition = duration > 0 ? {
+      elapsed: 0, duration: Math.min(duration, 2),
+      offset: this.world.rig.position.clone().sub(this.base.position),
+      quaternion: this.world.rig.quaternion.clone(), zoom: this.world.camera.position.z,
+    } : null
+    this.firstPerson = false
+    this.avatar?.setFirstPerson(false)
+    if (this.avatar) this.avatar.visible = true
+    this.cam.zoom = clamp(zoom, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
+    const eye = this.base.position.clone().add(new THREE.Vector3(0, this.camHeight, 0))
+    const rotation = new THREE.Euler(0, 0, 0, 'YXZ')
+    const quaternion = new THREE.Quaternion()
+    const pivot = new THREE.Vector3()
+    // Account for the native shoulder offset and zoom when looking at the target.
+    for (let i = 0; i < 12; i++) {
+      pivot.copy(eye).add(new THREE.Vector3(Math.cos(rotation.y), 0, -Math.sin(rotation.y)).multiplyScalar(0.3))
+      const view = pivot.clone().add(new THREE.Vector3(0, 0, this.cam.zoom).applyQuaternion(quaternion))
+      const look = new THREE.Vector3().subVectors(target, view)
+      rotation.set(Math.atan2(look.y, Math.hypot(look.x, look.z)), Math.atan2(-look.x, -look.z), 0, 'YXZ')
+      quaternion.setFromEuler(rotation)
+    }
+    this.cam.position.copy(pivot)
+    this.cam.quaternion.copy(quaternion)
+    if (!this.cameraTransition) {
+      this.control.camera.position.copy(pivot)
+      this.control.camera.quaternion.copy(quaternion)
+      this.control.camera.zoom = this.cam.zoom
+    }
+    return true
+  }
+
   teleport({ position, rotationY }) {
+    this.cameraTransition = null
     this.portalTraversal = null
     position = position.isVector3 ? position : new THREE.Vector3().fromArray(position)
     const hasRotation = isNumber(rotationY)

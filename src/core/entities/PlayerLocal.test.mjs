@@ -220,6 +220,7 @@ test('keeps the seated shoulder camera aligned and the first-person eye referenc
     world: {
       xr: { session: null },
       physics: { sweep: () => null },
+      camera: new THREE.PerspectiveCamera(),
     },
     isXR: false,
     firstPerson: false,
@@ -349,4 +350,83 @@ test('continuous portal travel preserves momentum, body facing, camera pitch and
   assert.equal(player.grounded, false)
   assert.equal(messages[0][0], 'entityModified')
   assert.equal(messages[0][1].t, true)
+})
+
+test('camera handoff replaces distant zoom and aims the native shoulder view at a world target', () => {
+  for (const yaw of [0, 0.8, -2.5]) {
+    const position = new THREE.Vector3(4, 0.12, 7)
+    const target = position.clone().add(new THREE.Vector3(2, 0.73, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw))
+    const player = {
+      isXR: false, base: { position }, camHeight: 1.7, firstPerson: true,
+      cam: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 8 },
+      control: { camera: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 8 } },
+      avatar: { visible: false, setFirstPerson(value) { this.firstPerson = value } },
+    }
+    assert.equal(PlayerLocal.prototype.setCamera.call(player, { target, zoom: 0.3 }), true)
+    assert.equal(player.cam.zoom, 0.3)
+    assert.equal(player.control.camera.zoom, 0.3)
+    assert.equal(player.firstPerson, false)
+    assert.equal(player.avatar.firstPerson, false)
+    const view = player.control.camera
+    const cameraPosition = view.position.clone().add(new THREE.Vector3(0, 0, view.zoom).applyQuaternion(view.quaternion))
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(view.quaternion)
+    assert.ok(forward.distanceTo(target.clone().sub(cameraPosition).normalize()) < 1e-7)
+    assert.equal(position.y, 0.12, 'handoff never moves the player')
+    // A moving ball cannot keep turning the camera: the target is consumed once.
+    const orientation = player.cam.quaternion.clone()
+    target.x += 10
+    assert.ok(player.cam.quaternion.equals(orientation))
+  }
+})
+
+test('camera handoff rejects XR and invalid targets without changing the view', () => {
+  const cam = { zoom: 4 }
+  assert.equal(PlayerLocal.prototype.setCamera.call({ isXR: true, cam }, { target: new THREE.Vector3(), zoom: 0.3 }), false)
+  for (const options of [undefined, { target: { x: NaN, y: 1, z: 2 } }, { target: new THREE.Vector3(), zoom: Infinity }])
+    assert.equal(PlayerLocal.prototype.setCamera.call({ cam }, options), false)
+  assert.equal(cam.zoom, 4)
+})
+
+test('animated camera handoff eases from the aiming pose, follows walking and retains collision', () => {
+  globalThis.PHYSX = { PxSphereGeometry: class {} }
+  for (const fps of [30, 60, 144]) {
+    const rig = new THREE.Object3D()
+    rig.position.set(-0.68, 0.97, 0)
+    rig.rotation.set(-0.2, -Math.PI / 2, 0, 'YXZ')
+    const camera = new THREE.PerspectiveCamera()
+    camera.position.z = 0
+    let hit = null
+    const player = {
+      isXR: false, base: { position: new THREE.Vector3(-1.8, 0.12, 0) },
+      camHeight: 1.7, getAnchorMatrix: () => null,
+      cam: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 8 },
+      control: { camera: { position: rig.position.clone(), quaternion: rig.quaternion.clone(), zoom: 0 } },
+      world: { rig, camera, physics: { sweep: () => hit } },
+    }
+    const start = rig.position.clone(), startRotation = rig.quaternion.clone()
+    PlayerLocal.prototype.setCamera.call(player, { target: new THREE.Vector3(0, 0.85, 0), zoom: 0.3, duration: 0.45 })
+    assert.ok(player.control.camera.position.equals(start), 'request must not snap the view')
+    assert.ok(player.control.camera.quaternion.equals(startRotation))
+    let middle = false
+    for (let i = 0; i < Math.ceil(fps * 0.45); i++) {
+      // Normal movement continues while the transition is running.
+      player.base.position.x += 0.01
+      PlayerLocal.prototype.lateUpdate.call(player, 1 / fps)
+      const elapsed = Math.min(0.45, (i + 1) / fps)
+      const t = elapsed / 0.45, ease = t * t * (3 - 2 * t)
+      const expected = start.clone().add(new THREE.Vector3((i + 1) * 0.01, 0, 0)).lerp(player.cam.position, ease)
+      assert.ok(player.control.camera.position.distanceTo(expected) < 1e-7)
+      assert.ok(Math.abs(player.control.camera.zoom - 0.3 * ease) < 1e-7)
+      if (t > 0.3 && t < 0.7) middle = true
+    }
+    assert.ok(middle)
+    assert.equal(player.cameraTransition, null)
+    assert.ok(player.control.camera.position.distanceTo(player.cam.position) < 1e-7)
+    assert.ok(Math.abs(player.control.camera.zoom - 0.3) < 1e-7)
+    // Start another return with an obstruction: collision still clamps zoom.
+    PlayerLocal.prototype.setCamera.call(player, { target: new THREE.Vector3(0, 0.85, 0), duration: 0.45 })
+    hit = { distance: 0.05 }
+    PlayerLocal.prototype.lateUpdate.call(player, 0.3)
+    assert.equal(player.control.camera.zoom, 0.05)
+  }
 })
