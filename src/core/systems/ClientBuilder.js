@@ -81,6 +81,30 @@ export class ClientBuilder extends System {
 
   start() {
     this.control = this.world.controls.bind({ priority: ControlPriorities.BUILDER })
+    this.control.keyR.onPress = () => {
+      if (
+        !this.enabled ||
+        this.control.pointer.locked ||
+        this.world.entities.player?.isXR ||
+        this.control.metaLeft.down ||
+        this.control.controlLeft.down
+      ) {
+        return
+      }
+      if (this.pendingDuplicate) return true
+      const entity = this.selected || this._getClosestEntityAtCursor()
+      if (!entity?.isApp || entity.blueprint.scene) return
+
+      const pendingDuplicate = { entity, ready: false }
+      this.pendingDuplicate = pendingDuplicate
+      this.justPointerLocked = true
+      this.control.pointer.lock().then(locked => {
+        if (this.pendingDuplicate !== pendingDuplicate) return
+        if (locked) pendingDuplicate.ready = true
+        else this.pendingDuplicate = null
+      })
+      return true
+    }
     this.control.mouseLeft.onPress = () => {
       // Let an action under the free cursor receive the click before entering pointer lock.
       if (!this.control.pointer.locked && this.world.actions?.current?.node) return false
@@ -414,7 +438,12 @@ export class ClientBuilder extends System {
     }
     // duplicate
     let duplicate
-    if (this.xrMenu?.copy) {
+    let duplicateEntity
+    if (this.pendingDuplicate?.ready && this.beam.active) {
+      duplicate = true
+      duplicateEntity = this.pendingDuplicate.entity
+      this.pendingDuplicate = null
+    } else if (this.xrMenu?.copy) {
       this.xrMenu.copy = false
       duplicate = true
     } else if (
@@ -427,7 +456,7 @@ export class ClientBuilder extends System {
       duplicate = true
     }
     if (duplicate) {
-      const entity = this.selected || this._getClosestEntityAtBeam()
+      const entity = duplicateEntity || this.selected || this._getClosestEntityAtBeam()
       if (entity?.isApp && !entity.blueprint.scene) {
         let blueprintId = entity.data.blueprint
         // if unique, we also duplicate the blueprint.

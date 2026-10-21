@@ -918,7 +918,7 @@ function createPointer(controls, control, prop) {
       return controls.pointer.locked
     },
     lock() {
-      controls.lockPointer()
+      return controls.lockPointer()
     },
     unlock() {
       controls.unlockPointer()
