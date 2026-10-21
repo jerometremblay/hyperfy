@@ -1,5 +1,10 @@
 # Astronomical night sky
 
+The procedural atmosphere includes a [full-hemisphere twilight model](twilight-sky.md)
+with a solar twilight arch, purple light, Earth's shadow, and the Belt of Venus.
+That document describes the approximation, its limits, verification, and scientific
+source credits.
+
 The day/night environment displays 8,920 real stars down to apparent magnitude 6.5.
 Stars rotate with the world's latitude, longitude, and synchronized effective time,
 including time offsets and transitions. Their visibility follows apparent magnitude

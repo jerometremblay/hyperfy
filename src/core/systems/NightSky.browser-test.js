@@ -8,6 +8,7 @@ import { createStarField } from '../extras/createStarField'
 import { updateCelestialMarker } from '../extras/createCelestialMarker'
 import { ClientGraphics } from './ClientGraphics'
 import { Portal } from '../nodes/Portal'
+import { testTwilightSky } from '../extras/twilightSky.browser-test'
 
 const width = 800,
   height = 500
@@ -22,6 +23,7 @@ const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(60, width / height, 0.2, 1200)
 const world = {
   network: { getServerTime: () => now },
+  entities: { player: null },
   stage: { scene },
   camera,
   rig: new THREE.Object3D(),
@@ -94,6 +96,7 @@ function aim(direction) {
   camera.updateMatrixWorld()
   env.lateUpdate()
 }
+testTwilightSky(renderer, check, photo)
 aim(new THREE.Vector3(0, 0.55, -1))
 const night = read()
 photo('Shipped catalog · looking north · direct/XR tone mapping')

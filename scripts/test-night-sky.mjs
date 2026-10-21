@@ -13,7 +13,8 @@ const hdr = await readFile(new URL('../src/client/public/Clear_08_4pm_LDR.hdr', 
 const milkyWay = await readFile(new URL('../src/client/public/milkyway.jpg', import.meta.url))
 const html = `<!doctype html><meta charset="utf-8"><title>Night sky regression</title>
 <style>body{background:#151922;color:#eee;font:15px system-ui;margin:24px}
-main{display:grid;grid-template-columns:800px;gap:14px}p{margin:5px 0}pre{font-size:12px;white-space:pre-wrap}</style>
+main{display:grid;max-width:800px;gap:14px}img{max-width:100%}p{margin:5px 0}
+pre{font-size:12px;white-space:pre-wrap;max-height:240px;overflow:auto}</style>
 <h1>Catalog night sky · WebGL checks</h1><pre>Rendering…</pre><main></main>
 <script type="module" src="/test.js"></script>`
 createServer((request, response) => {

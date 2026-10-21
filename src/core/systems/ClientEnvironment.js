@@ -12,6 +12,7 @@ import { createStarField, loadStarCatalog } from '../extras/createStarField'
 import { setCelestialRotation } from '../extras/celestialRotation'
 import { getPlanetStates } from '../extras/planetPositions'
 import { createPlanets, updatePlanets } from '../extras/createPlanets'
+import { twilightSkyShader } from '../extras/twilightSky'
 import {
   celestialVisibilityShader,
   getConstellationLineOpacity,
@@ -194,16 +195,17 @@ export class ClientEnvironment extends System {
          uniform float diffuseMoonFraction;
          ` +
         celestialVisibilityShader +
+        twilightSkyShader +
         this.solarSky.material.fragmentShader
       this.solarSky.material.fragmentShader = this.solarSky.material.fragmentShader.replace(
         '#include <tonemapping_fragment>',
         `
-          float nightProgress = getNightProgress(sunAltitude);
           float daylight = smoothstep(-1.5, 6.0, sunAltitude);
           vec3 nightSky = vec3(0.0015, 0.002, 0.006);
           vec3 scatteringSky = max(gl_FragColor.rgb, vec3(0.0)) * 0.05;
-          vec3 twilightSky = max(scatteringSky, vec3(0.012, 0.018, 0.035));
-          gl_FragColor.rgb = mix(twilightSky, nightSky, nightProgress);
+          vec3 twilightSky = getTwilightSky(direction, vSunDirection, sunAltitude);
+          vec3 daytimeSky = mix(scatteringSky, vec3(0.18, 0.6, 1.2), daylight * 0.8);
+          gl_FragColor.rgb = mix(twilightSky, daytimeSky, daylight);
 
           vec3 equatorialDirection = normalize(worldToCelestial * direction);
           float rightAscension = atan(-equatorialDirection.z, equatorialDirection.x);
@@ -234,7 +236,6 @@ export class ClientEnvironment extends System {
             * bortleVisibility * moonVisibility;
           gl_FragColor.rgb += diffuseSky * (0.1 * appearanceGain * diffuseVisibility);
 
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.18, 0.6, 1.2), daylight * 0.8);
           #include <tonemapping_fragment>`
       )
       this.solarSky.visible = false

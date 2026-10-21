@@ -82,6 +82,7 @@ test('disposing a world while the catalog loads never attaches late GPU resource
     prefs: Object.assign(new EventEmitter(), { shadows: 'none' }),
     graphics: new EventEmitter(),
     network: { getServerTime: () => Date.now() },
+    loader: { load: async () => new THREE.Texture() },
   }
   world.settings = new Settings(world)
   const environment = new ClientEnvironment(world)
