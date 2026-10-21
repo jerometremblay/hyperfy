@@ -14,6 +14,39 @@ const { ClientGraphics } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`
 )
 
+test('background commits skip scene rendering and resume when visible, while XR keeps rendering', () => {
+  const previousDocument = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  const document = { hidden: true }
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: document })
+  try {
+    const graphics = new ClientGraphics({ stage: { scene: new THREE.Scene() }, camera: new THREE.PerspectiveCamera() })
+    let renders = 0
+    let photos = 0
+    graphics.photos.process = () => photos++
+    graphics.renderer = {
+      shadowMap: { enabled: false },
+      xr: { isPresenting: false },
+      render() {
+        renders++
+      },
+    }
+    graphics.usePostprocessing = false
+    graphics.commit()
+    assert.equal(renders, 0)
+    assert.equal(photos, 1)
+    document.hidden = false
+    graphics.commit()
+    assert.equal(renders, 1)
+    document.hidden = true
+    graphics.renderer.xr.isPresenting = true
+    graphics.commit()
+    assert.equal(renders, 2)
+  } finally {
+    if (previousDocument) Object.defineProperty(globalThis, 'document', previousDocument)
+    else delete globalThis.document
+  }
+})
+
 for (const mode of ['direct', 'composer', 'xr', 'exception']) {
   test(`${mode} rendering applies the shadow budget and restores requested flags and tone mapping`, () => {
     const scene = new THREE.Scene()

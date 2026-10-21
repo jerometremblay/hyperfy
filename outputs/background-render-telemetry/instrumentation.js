@@ -1,0 +1,12 @@
+(() => {
+const w=window.world, g=w.graphics, r=g.renderer, gl=r.getContext();
+const ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+const originals={pre:w.preTick,post:w.postTick,render:g.render};
+let current=null, pending=[], depth=0, tickStart=0, tickOwner=null;
+function poll(){const disjoint=ext&&gl.getParameter(ext.GPU_DISJOINT_EXT); pending=pending.filter(p=>{if(disjoint){p.owner.disjoint++;gl.deleteQuery(p.q);return false;}if(gl.getQueryParameter(p.q,gl.QUERY_RESULT_AVAILABLE)){p.owner.gpuMs+=gl.getQueryParameter(p.q,gl.QUERY_RESULT)/1e6;p.owner.gpuSamples++;gl.deleteQuery(p.q);return false;}return true;});}
+w.preTick=function(...args){poll();tickOwner=current;tickStart=performance.now();return originals.pre.apply(this,args);};
+w.postTick=function(...args){const result=originals.post.apply(this,args);if(tickOwner){tickOwner.ticks++;tickOwner.tickMs+=performance.now()-tickStart;}return result;};
+g.render=function(...args){const owner=current;let q=null;if(owner){owner.renderPasses++;if(depth===0&&ext&&!gl.getQuery(ext.TIME_ELAPSED_EXT,gl.CURRENT_QUERY)){q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);}}depth++;try{return originals.render.apply(this,args);}finally{depth--;if(q){gl.endQuery(ext.TIME_ELAPSED_EXT);pending.push({q,owner});}}};
+const draws={};for(const name of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced']){draws[name]=gl[name];gl[name]=function(...args){if(current)current.drawCalls++;return draws[name].apply(this,args);};}
+window.__hyperfyTelemetry={begin(label){poll();current={label,start:performance.now(),hiddenStart:document.hidden,ticks:0,tickMs:0,renderPasses:0,drawCalls:0,gpuMs:0,gpuSamples:0,disjoint:0};return {label,hidden:document.hidden,viewport:[innerWidth,innerHeight],prefs:{dpr:w.prefs.dpr,shadows:w.prefs.shadows,postprocessing:w.prefs.postprocessing,ao:w.prefs.ao,bloom:w.prefs.bloom,stats:w.prefs.stats},camera:w.camera.position.toArray()};},end(){poll();const result={...current,seconds:(performance.now()-current.start)/1000,hiddenEnd:document.hidden,pendingGpuQueries:pending.filter(p=>p.owner===current).length};current=null;return result;},cleanup(){current=null;w.preTick=originals.pre;w.postTick=originals.post;g.render=originals.render;for(const name in draws)gl[name]=draws[name];for(const p of pending)gl.deleteQuery(p.q);delete window.__hyperfyTelemetry;}};
+return {installed:true,gpuTimer:!!ext};})();

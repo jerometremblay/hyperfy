@@ -146,6 +146,7 @@ export class ClientGraphics extends System {
   }
 
   render() {
+    if (typeof document !== 'undefined' && document.hidden && !this.renderer.xr.isPresenting) return
     this.portalAvatars.update()
     const restoreCamera = this.portalAvatars.mapCamera()
     this.renderer.toneMappingExposure = this.world.environment?.renderExposure ?? 1
