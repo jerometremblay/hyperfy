@@ -11,6 +11,7 @@ import { hashFile } from '../utils-client'
 import { uuid } from '../utils'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { importApp } from '../extras/appTools'
+import { PublishedObjectClient } from '../extras/PublishedObjectClient'
 import { DEG2RAD, RAD2DEG } from '../extras/general'
 import { createNode } from '../extras/createNode'
 import { detectBuilderFileType, detectSplatFormat } from '../utils/splatFormats'
@@ -64,6 +65,7 @@ export class ClientBuilder extends System {
     this.xrMenuTimer = 0
 
     this.undos = []
+    this.published = new PublishedObjectClient(world)
     this.promptBoxes = new PromptBoxWorkflow(world)
 
     this.dropTarget = null
@@ -508,6 +510,7 @@ export class ClientBuilder extends System {
           uploader: null,
           pinned: false,
           state: {},
+          ...(entity.data.published ? { published: cloneDeep(entity.data.published) } : {}),
         }
         const dup = this.world.entities.add(data, true)
         this.select(dup)
@@ -699,6 +702,16 @@ export class ClientBuilder extends System {
   }
 
   undo() {
+    const pending = this.undos.at(-1)
+    if (pending?.name === 'published-update') {
+      if (this.undoingPublished) return
+      this.undoingPublished = true
+      return this.published.undo(pending).then(() => {
+        const index = this.undos.indexOf(pending)
+        if (index !== -1) this.undos.splice(index, 1)
+      }).catch(error => this.world.emit('toast', `Undo blocked: ${error.message}`))
+        .finally(() => { this.undoingPublished = false })
+    }
     const undo = this.undos.pop()
     if (!undo) return
     if (this.selected) this.select(null)
@@ -787,6 +800,7 @@ export class ClientBuilder extends System {
   }
 
   select(app) {
+    if (app?.publishedInstalling) return
     // do nothing if unchanged
     if (this.selected === app) return
     // deselect existing

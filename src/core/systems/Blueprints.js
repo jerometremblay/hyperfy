@@ -30,6 +30,8 @@ export class Blueprints extends System {
   }
 
   modify(data) {
+    if ([...this.world.entities.items.values()].some(app => app.publishedInstalling && app.data.blueprint === data.id))
+      return false
     const blueprint = this.items.get(data.id)
     const modified = {
       ...blueprint,

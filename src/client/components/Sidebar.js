@@ -1,3 +1,4 @@
+import { PublishedSource, ImportFromURL } from './PublishedSource'
 import { css } from '@firebolt-dev/css'
 import { MenuIcon, MicIcon, MicOffIcon, SettingsIcon, VRIcon } from './Icons'
 import {
@@ -1147,6 +1148,7 @@ function Add({ world, hidden }) {
           <div className='add-title'>Add</div>
         </div>
         <div className='add-content noscrollbar'>
+          <ImportFromURL world={world} />
           <UndoPromptBox world={world} />
           {promptBoxError && <p role='alert'>{promptBoxError}</p>}
           <div className='add-items'>
@@ -1202,10 +1204,15 @@ function App({ world, hidden }) {
   useEffect(() => {
     window.app = app
     const onModify = bp => {
-      if (bp.id === blueprint.id) setBlueprint(bp)
+      if (bp.id === app.data.blueprint) setBlueprint(bp)
     }
+    const onApp = changed => {
+      if (changed === app) setBlueprint(world.blueprints.get(app.data.blueprint))
+    }
+    world.on('appChanged', onApp)
     world.blueprints.on('modify', onModify)
     return () => {
+      world.off('appChanged', onApp)
       world.blueprints.off('modify', onModify)
     }
   }, [])
@@ -1442,6 +1449,7 @@ function App({ world, hidden }) {
           </div>
         )}
         <div className='app-content noscrollbar'>
+          {!blueprint.scene && <PublishedSource key={app.data.id} world={world} app={app} />}
           {replaceError && (
             <p role='alert' style={{ padding: '0.5rem 1rem' }}>
               {replaceError}

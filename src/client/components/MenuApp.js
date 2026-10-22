@@ -1,3 +1,4 @@
+import { PublishedSource } from './PublishedSource'
 import { useEffect, useMemo, useState } from 'react'
 import {
   Menu,
@@ -28,10 +29,15 @@ export function MenuApp({ world, app, blur }) {
   useEffect(() => {
     window.app = app
     const onModify = bp => {
-      if (bp.id === blueprint.id) setBlueprint(bp)
+      if (bp.id === app.data.blueprint) setBlueprint(bp)
     }
+    const onApp = changed => {
+      if (changed === app) setBlueprint(world.blueprints.get(app.data.blueprint))
+    }
+    world.on('appChanged', onApp)
     world.blueprints.on('modify', onModify)
     return () => {
+      world.off('appChanged', onApp)
       world.blueprints.off('modify', onModify)
     }
   }, [])
@@ -111,6 +117,7 @@ function MenuAppIndex({ world, app, blueprint, pop, push }) {
   }
   return (
     <>
+      {!blueprint.scene && <PublishedSource key={app.data.id} world={world} app={app} />}
       <MenuItemFields world={world} app={app} blueprint={blueprint} />
       {app.fields?.length > 0 && <MenuLine />}
       {!frozen && (

@@ -202,7 +202,10 @@ export class ClientNetwork extends System {
   onEntityModified = data => {
     const entity = this.world.entities.get(data.id)
     if (!entity) return console.error('onEntityModified: no entity found', data)
-    entity.modify(data)
+    Promise.resolve(entity.modify(data)).then(() => {
+      if (entity.isApp) this.world.emit('appChanged', entity)
+      if (entity.data.published && (entity.scriptError || entity.loadError)) this.world.emit('toast', 'Published object failed to load on this client. Reconnect to retry, or ask a builder to Undo.')
+    }).catch(error => console.error('entity update failed', error))
   }
 
   onEntityEvent = event => {
