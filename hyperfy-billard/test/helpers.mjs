@@ -35,9 +35,10 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     created = [],
     sent = [],
     audioPlays = []
+  let actionPrompts = []
   let released = 0
   let control = null, activeControl = null
-  const pointer = { delta: new THREE.Vector3(), locked: false,
+  const pointer = { coords: new THREE.Vector3(0.5, 0.5, 0), position: new THREE.Vector3(), delta: new THREE.Vector3(), locked: false,
     lock() { this.locked = true }, unlock() { this.locked = false } }
   const app = {
     position: new THREE.Vector3(0, 0.762, 0),
@@ -75,15 +76,16 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     control() {
       control?.release()
       let done = false
-      control = new Proxy(
+      const boundControl = new Proxy(
         {
           camera: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() },
           pointer,
           scrollDelta: { value: 0 },
+          setActions(value) { actionPrompts = value || [] },
           release() {
             if (!done) released++
             done = true
-            if (activeControl === control) activeControl = null
+            if (activeControl === boundControl) activeControl = null
           },
         },
         {
@@ -92,6 +94,7 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
           },
         }
       )
+      control = boundControl
       activeControl = control
       return control
     },
@@ -127,6 +130,7 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     created,
     sent,
     audioPlays,
+    get actionPrompts() { return actionPrompts },
     get activeControl() { return activeControl },
     get control() {
       activeControl = control

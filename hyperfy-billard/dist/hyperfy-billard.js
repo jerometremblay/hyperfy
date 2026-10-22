@@ -1568,20 +1568,20 @@
   }
 
   // src/client.js
-  function startClient(world2, app2, { balls, ghost, action, size, playChannel, soundSources }) {
+  function startClient(world2, app2, { balls, ghost, surfaceTarget, size, playChannel, soundSources }) {
     if (!world2.getPlayer) return;
     const me = world2.getPlayer();
     if (!me) {
       const ready = () => {
         if (!world2.getPlayer()) return;
         app2.off("update", ready);
-        startClient(world2, app2, { balls, ghost, action, size, playChannel, soundSources });
+        startClient(world2, app2, { balls, ghost, surfaceTarget, size, playChannel, soundSources });
       };
       app2.on("update", ready);
       return;
     }
     let latest = app2.state?.pool, frames = [], clock = 0, control = null, idle = null;
-    let pending = false, requestedAt = 0, toastUntil = 0, ping = 0, sinceAim = 0;
+    let pending = false, requestedAt = 0, shotPending = false, shotRequestSeq = -1, ping = 0, sinceAim = 0;
     let angle = 0, speed = 2.5, side = 0, top = 0;
     let elevation = AIM_ELEVATION, floorY = 0, lastStanceAt = -1;
     let placeX = -size.length / 4, placeY = 0;
@@ -1595,6 +1595,7 @@
     const aimingEvent = `billard:aiming:${playChannel}`;
     const poseEvent = `billard:cue-pose:${playChannel}`;
     const hasCue = () => cueHolders.includes(me.id);
+    const canPlay = () => hasCue() && !control && !pending && !shotPending && !latest?.moving && !latest?.owner;
     const ui = app2.create("ui", {
       space: "screen",
       width: 620,
@@ -1610,16 +1611,39 @@
     ui.add(text);
     ui.active = false;
     app2.add(ui);
-    const label = () => {
-      action.label = "Play";
-      action.distance = hasCue() && !control ? 3 : 0;
+    let playHintControl = null;
+    let hintMode = null;
+    let hoverRefreshPending = false;
+    const hoveredTargets = /* @__PURE__ */ new Set();
+    const clearPlayHint = () => {
+      playHintControl?.setActions([]);
+      playHintControl?.release();
+      playHintControl = null;
+      hintMode = null;
+    };
+    const refresh2 = () => {
+      const waiting = hoveredTargets.size > 0 && (shotPending || latest?.moving) && me.position.distanceTo(app2.position) < 15;
+      const mode = waiting ? "waiting" : canPlay() && hoveredTargets.size > 0 ? "play" : null;
+      if (mode !== hintMode) {
+        if (mode) {
+          playHintControl ||= app2.control();
+          playHintControl.setActions([mode === "waiting" ? { type: "hourglass", position: "pointer", opacity: 0.5 } : { type: "mouseLeft", label: "Play", position: "pointer", opacity: 0.5 }]);
+          hintMode = mode;
+        } else clearPlayHint();
+      }
       app2.emit(aimingEvent, !!control);
     };
-    const toast = (value) => {
-      text.value = value;
-      toastUntil = clock + 3;
-      ui.active = true;
-    };
+    for (const target of [surfaceTarget, ...balls]) {
+      target.onPointerEnter = () => {
+        hoveredTargets.add(target);
+        hoverRefreshPending = false;
+        refresh2();
+      };
+      target.onPointerLeave = () => {
+        hoveredTargets.delete(target);
+        hoverRefreshPending = true;
+      };
+    }
     const clearPose = () => {
       if (posedPlayer) app2.emit(poseEvent, { playerId: posedPlayer, clear: true });
       posedPlayer = null;
@@ -1637,7 +1661,7 @@
       idle?.release();
       idle = null;
       ui.active = ghost.active = false;
-      label();
+      refresh2();
     };
     const request = (operation, data = {}) => app2.send(`pool:${operation}`, { ...data, seq: latest?.seq });
     const placeCueBall = () => {
@@ -1665,6 +1689,8 @@
         else {
           const ball = latest.balls[0].p;
           me.setCamera?.({ target: worldPosition(new V(ball[0], BALL_RADIUS + ball[2], -ball[1])), zoom: 0.3, duration: 0.45 });
+          shotPending = true;
+          shotRequestSeq = latest.seq;
           request("shoot", { angle, speed, side, top });
           stop();
         }
@@ -1684,6 +1710,7 @@
     const receive = (snapshot) => {
       if (!snapshot || latest && snapshot.seq <= latest.seq) return;
       if (Object.hasOwn(snapshot, "aim")) aim = snapshot.aim;
+      if (shotPending && snapshot.seq > shotRequestSeq) shotPending = false;
       if (latest && snapshot.scratched !== latest.scratched && !snapshot.moving) frames = [];
       if (latest && snapshot.rack !== latest.rack) {
         frames = [];
@@ -1707,7 +1734,7 @@
         idle.release();
         idle = null;
       }
-      label();
+      refresh2();
     };
     app2.on("pool:snapshot", receive);
     app2.on("pool:aim", (next) => {
@@ -1717,20 +1744,11 @@
       if (!Array.isArray(holders)) return;
       cueHolders = holders.filter((id) => typeof id === "string");
       if (!hasCue() && control) stop();
-      label();
+      refresh2();
     });
     if (latest) frames = [{ at: clock, snapshot: latest }];
-    action.onTrigger = () => {
-      if (control || pending) return;
-      if (!hasCue()) return;
-      if (latest?.moving) {
-        toast("Wait for the balls to stop before aiming again.");
-        return;
-      }
-      if (latest?.owner && latest.owner !== me.id) {
-        toast("The pool table is in use.");
-        return;
-      }
+    const play = () => {
+      if (!canPlay()) return;
       const local = me.position.clone().sub(app2.position).applyQuaternion(app2.quaternion.clone().invert());
       const ball = latest?.scratched ? [-size.length / 4, 0, 0] : latest?.balls[0]?.p || [-size.length / 4, 0, 0];
       angle = Math.atan2(ball[1] + local.z, ball[0] - local.x);
@@ -1739,22 +1757,26 @@
       idle = app2.control();
       idle.pointer.lock();
       app2.send("pool:claim", { angle });
+      refresh2();
     };
-    app2.onPointerDown = (event) => {
-      if (event?.button === "left" && placeCueBall()) return;
-      action.onTrigger();
+    const playOrPlace = (event) => {
+      if (event?.button !== "left") return;
+      if (!placeCueBall()) play();
     };
-    world2.on(`billard:play:${playChannel}`, action.onTrigger);
-    world2.on(`${aimingEvent}:request`, () => app2.emit(aimingEvent, !!control));
-    label();
+    for (const target of [surfaceTarget, ...balls]) target.onPointerDown = playOrPlace;
+    world2.on(`${aimingEvent}:request`, refresh2);
+    refresh2();
     app2.emit(`${cueEvent}:request`);
     const axis = new V();
     const worldPosition = (local) => local.clone().multiply(app2.scale).applyQuaternion(app2.quaternion).add(app2.position);
     app2.on("update", (dt) => {
       if (!Number.isFinite(dt) || dt <= 0) return;
       clock += dt;
+      if (hoverRefreshPending) {
+        hoverRefreshPending = false;
+        refresh2();
+      }
       if (pending && clock - requestedAt > 2) stop(false);
-      if (!control && clock > toastUntil) ui.active = false;
       sounds.update(clock);
       const nearby = me.position.distanceTo(app2.position) < 15;
       for (const ball of balls) ball.active = nearby;
@@ -1863,7 +1885,10 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
         });
       } else clearPose();
     });
-    app2.on("destroy", () => stop());
+    app2.on("destroy", () => {
+      stop();
+      clearPlayHint();
+    });
   }
 
   // src/app.js
@@ -1931,16 +1956,19 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
       group.add(sphere);
       return group;
     });
+    const surfaceTarget = prim("box", [L, 4e-3, W], [0, 0.012, 0], "#000000", {
+      opacity: 0,
+      castShadow: false,
+      receiveShadow: false
+    });
     const ghost = prim("sphere", [BALL_RADIUS], [-L / 4, BALL_RADIUS, 0], "#ffffff", { opacity: 0.4 });
     ghost.active = false;
-    const action = app.create("action", { label: "Play", distance: 3, duration: 0.2, position: [0, 0.25, W / 2] });
-    app.add(action);
     if (!world.isPreview)
       startClient(world, app, {
         soundSources: Object.fromEntries(["Hit", "Collision", "Cushion", "Pot"].map((type) => [type, props[`sound${type}`]?.url || define_BILLARD_SOUNDS_default[type]])),
         balls,
         ghost,
-        action,
+        surfaceTarget,
         size,
         playChannel: props.playChannel || "classic-8-ft-pool-table"
       });

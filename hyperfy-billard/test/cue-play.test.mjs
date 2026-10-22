@@ -82,7 +82,7 @@ test('the held cue aligns for shooter and late observer, then returns to hand on
   const client = harness({ players, bus: clientBus, state: structuredClone(game.app.state) })
   game.app.deliver = (event, body) => client.emit(event, body)
   client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
-  client.created.find(n => n.name === 'action').onTrigger()
+  client.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
   client.emit('update', 1 / 60)
   clientRack.emit('update', 1 / 60)
   const cue = clientRack.created.filter(n => n.name === 'group')[0]
@@ -115,7 +115,7 @@ test('all game controls release immediately without waiting for a server respons
   const client = harness({ players, state: structuredClone(game.app.state) })
   client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
   game.app.deliver = (event, body) => client.emit(event, body)
-  client.created.find(n => n.name === 'action').onTrigger()
+  client.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
   client.emit('update', 1 / 60)
   const aiming = client.control
   client.app.deliver = () => {} // Network response held back.
@@ -137,7 +137,7 @@ test('aim packets do not stale the next shot; dropping a cue cancels active aimi
   const client = harness({ players, state: structuredClone(game.app.state) })
   client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
   game.app.deliver = (event, body) => client.emit(event, body)
-  client.created.find(n => n.name === 'action').onTrigger()
+  client.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
   const aiming = client.control
   assert.equal(aiming.camera.write, true)
   rack.emit('drop-cue', { slot: 0 }, 'socket-a')

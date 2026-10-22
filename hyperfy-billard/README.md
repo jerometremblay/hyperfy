@@ -39,9 +39,12 @@ views and orbit/zoom. It does not emulate multiplayer gameplay.
 ## Controls
 
 Point at a cue on the wall rack and click, or hold **E**, to take it. **X** returns
-it to the rack. Then click the table, or point at it and hold **E**, to aim. The
-server checks actual rack ownership before granting controls and again on each
-shot/place/reset. Pickup and return identify players from the transport sender.
+it to the rack. Then hover over the playing surface or a ball to see Hyperfy's
+built-in mouse-icon **Play** hint, and click to aim. Both the Play hint and the
+hourglass shown while a shot runs are centered below the pointer at 50% opacity.
+The hourglass appears only over the playing surface or balls. The server checks actual rack
+ownership before granting controls and again on each shot/place/reset. Pickup
+and return identify players from the transport sender.
 
 The aiming camera starts 68 cm behind the cue ball and 14 cm above its centre.
 Mouse movement orbits that ball and changes aim; vertical movement changes the
@@ -96,8 +99,9 @@ from the same pinned revision as the physics. It is converted to a self-containe
 Y-up GLB, with its end sections translated to fit the 8-foot surface while retaining
 the original pocket sizes. The cloth is at local Y=0.708 m. The upstream asset is
 a tabletop; four plain support legs are added to ground it. Entity scale is `[1,1,1]`.
-Native Play actions cover the entire table surface and route clicks/E to the game.
-They appear only while holding a rack cue; empty-handed clicks do nothing.
+The built-in left-mouse **Play** hint appears over the playing surface and balls
+only, while holding a rack cue and while the balls are stopped. The rails and
+supports do not start a game; clicks during a shot are ignored.
 
 Run `node upstream-table/build.mjs` followed by `npm run build` to rebuild the
 table and combined preview. `npm run preview:overlay` uses the original model and
@@ -108,7 +112,7 @@ remain under `overlay/`; model provenance, backups, exact-asset preview, screens
 and current verification are under `upstream-table/`. The world-source repository
 also contains the replacement GLB and interaction script. The game app is separate.
 
-Enter through the table's Play action or click the table. Escape leaves.
+Hover over the playing surface or a ball and click to play. Escape leaves.
 As with any in-world camera, other avatars can walk in front of the view.
 
 `cue-rack/deploy.mjs` defaults to a read-only plan; `--apply` updates only the

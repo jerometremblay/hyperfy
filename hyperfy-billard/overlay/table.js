@@ -388,14 +388,5 @@ for (let row = 0; row < 5; row++) {
 
 }
 
-// Normal local app events route a table click to its game overlay.
-if (world.isClient && props.poolChannel) {
-  const play = () => app.emit(`billard:play:${props.poolChannel}`, {})
-  const action = app.create('action', { label: 'Play pool', position: [0, 0.9, 0], distance: 3, duration: 0.2 })
-  action.onTrigger = play
-  app.add(action)
-  app.onPointerDown = play
-}
-
 // Maker plate.
 box([0.26, 0.07, 0.012], [0, 0.055, -0.681], '#b08d57', { metalness: 0.60, roughness: 0.26 })

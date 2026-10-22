@@ -37,6 +37,22 @@ Here is a list of available button properties:
 
 `keyA` to `keyZ`, `digit0` to `digit9`, `minus`, `equal`, `bracketLeft`, `bracketRight`, `backslash`, `semicolon`, `quote`, `backquote`, `comma`, `period`, `slash`, `arrowUp`, `arrowDown`, `arrowLeft`, `arrowRight`, `home`, `end`, `pageUp`, `pageDown`, `tab`, `capsLock`, `shiftLeft`, `shiftRight`, `controlLeft`, `controlRight`, `altLeft`, `altRight`, `enter`, `space`, `backspace`, `delete`, `escape`, `mouseLeft`, `mouseRight`, `metaLeft`.
 
+### Action hints
+
+Use `control.setActions()` to show an input hint in Hyperfy's built-in controls overlay. The `type` is a button property and `label` describes the action. For example:
+
+```javascript
+control.setActions([{ type: 'mouseLeft', label: 'Play' }])
+```
+
+Set `position: 'pointer'` to center a native hint below the mouse or locked reticle. `opacity` accepts a value from 0 to 1. An hourglass can be shown without a label or background:
+
+```javascript
+control.setActions([{ type: 'hourglass', position: 'pointer', opacity: 0.5 }])
+```
+
+Clear the hint with `control.setActions([])` before releasing the control.
+
 ### Pointer
 
 Access pointer (mouse) information.

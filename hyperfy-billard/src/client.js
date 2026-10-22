@@ -3,20 +3,20 @@ import { BALL_RADIUS as R } from './simulation.js'
 import { createSounds } from './sound.js'
 import { shotPose, avatarStance, AIM_ELEVATION } from './aim.js'
 
-export function startClient(world, app, { balls, ghost, action, size, playChannel, soundSources }) {
+export function startClient(world, app, { balls, ghost, surfaceTarget, size, playChannel, soundSources }) {
   if (!world.getPlayer) return
   const me = world.getPlayer()
   if (!me) {
     const ready = () => {
       if (!world.getPlayer()) return
       app.off('update', ready)
-      startClient(world, app, { balls, ghost, action, size, playChannel, soundSources })
+      startClient(world, app, { balls, ghost, surfaceTarget, size, playChannel, soundSources })
     }
     app.on('update', ready)
     return
   }
   let latest = app.state?.pool, frames = [], clock = 0, control = null, idle = null
-  let pending = false, requestedAt = 0, toastUntil = 0, ping = 0, sinceAim = 0
+  let pending = false, requestedAt = 0, shotPending = false, shotRequestSeq = -1, ping = 0, sinceAim = 0
   let angle = 0, speed = 2.5, side = 0, top = 0
   let elevation = AIM_ELEVATION, floorY = 0, lastStanceAt = -1
   let placeX = -size.length / 4, placeY = 0
@@ -30,6 +30,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
   const aimingEvent = `billard:aiming:${playChannel}`
   const poseEvent = `billard:cue-pose:${playChannel}`
   const hasCue = () => cueHolders.includes(me.id)
+  const canPlay = () => hasCue() && !control && !pending && !shotPending && !latest?.moving && !latest?.owner
   const ui = app.create('ui', {
     space: 'screen', width: 620, height: 92, position: [0.5, 1, 0],
     offset: [0, -24, 0], pivot: 'bottom-center', backgroundColor: '#101b29',
@@ -39,12 +40,42 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
   ui.add(text)
   ui.active = false
   app.add(ui)
-  const label = () => {
-    action.label = 'Play'
-    action.distance = hasCue() && !control ? 3 : 0
+  let playHintControl = null
+  let hintMode = null
+  let hoverRefreshPending = false
+  const hoveredTargets = new Set()
+  const clearPlayHint = () => {
+    playHintControl?.setActions([])
+    playHintControl?.release()
+    playHintControl = null
+    hintMode = null
+  }
+  const refresh = () => {
+    const waiting = hoveredTargets.size > 0 && (shotPending || latest?.moving) && me.position.distanceTo(app.position) < 15
+    const mode = waiting ? 'waiting' : canPlay() && hoveredTargets.size > 0 ? 'play' : null
+    if (mode !== hintMode) {
+      if (mode) {
+        playHintControl ||= app.control()
+        playHintControl.setActions([mode === 'waiting'
+          ? { type: 'hourglass', position: 'pointer', opacity: 0.5 }
+          : { type: 'mouseLeft', label: 'Play', position: 'pointer', opacity: 0.5 }])
+        hintMode = mode
+      } else clearPlayHint()
+    }
     app.emit(aimingEvent, !!control)
   }
-  const toast = value => { text.value = value; toastUntil = clock + 3; ui.active = true }
+  for (const target of [surfaceTarget, ...balls]) {
+    target.onPointerEnter = () => {
+      hoveredTargets.add(target)
+      hoverRefreshPending = false
+      refresh()
+    }
+    target.onPointerLeave = () => {
+      hoveredTargets.delete(target)
+      // Pointer leave runs before enter when crossing between cloth and balls.
+      hoverRefreshPending = true
+    }
+  }
   const clearPose = () => {
     if (posedPlayer) app.emit(poseEvent, { playerId: posedPlayer, clear: true })
     posedPlayer = null
@@ -59,7 +90,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     idle?.release()
     idle = null
     ui.active = ghost.active = false
-    label()
+    refresh()
   }
   const request = (operation, data = {}) => app.send(`pool:${operation}`, { ...data, seq: latest?.seq })
   const placeCueBall = () => {
@@ -84,6 +115,8 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
       else {
         const ball = latest.balls[0].p
         me.setCamera?.({ target: worldPosition(new Vector3(ball[0], R + ball[2], -ball[1])), zoom: 0.3, duration: 0.45 })
+        shotPending = true
+        shotRequestSeq = latest.seq
         request('shoot', { angle, speed, side, top })
         stop()
       }
@@ -101,6 +134,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
   const receive = snapshot => {
     if (!snapshot || (latest && snapshot.seq <= latest.seq)) return
     if (Object.hasOwn(snapshot, 'aim')) aim = snapshot.aim
+    if (shotPending && snapshot.seq > shotRequestSeq) shotPending = false
     if (latest && snapshot.scratched !== latest.scratched && !snapshot.moving) frames = []
     if (latest && snapshot.rack !== latest.rack) {
       frames = []
@@ -121,7 +155,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     if (!hasCue() || latest.moving || (latest.owner && latest.owner !== me.id)) pending = false
     if (!latest.owner || latest.moving) clearPose()
     if (!pending && idle) { idle.release(); idle = null }
-    label()
+    refresh()
   }
   app.on('pool:snapshot', receive)
   app.on('pool:aim', next => { aim = next })
@@ -129,14 +163,11 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     if (!Array.isArray(holders)) return
     cueHolders = holders.filter(id => typeof id === 'string')
     if (!hasCue() && control) stop()
-    label()
+    refresh()
   })
   if (latest) frames = [{ at: clock, snapshot: latest }]
-  action.onTrigger = () => {
-    if (control || pending) return
-    if (!hasCue()) return
-    if (latest?.moving) { toast('Wait for the balls to stop before aiming again.'); return }
-    if (latest?.owner && latest.owner !== me.id) { toast('The pool table is in use.'); return }
+  const play = () => {
+    if (!canPlay()) return
     const local = me.position.clone().sub(app.position).applyQuaternion(app.quaternion.clone().invert())
     const ball = latest?.scratched ? [-size.length / 4, 0, 0] : latest?.balls[0]?.p || [-size.length / 4, 0, 0]
     angle = Math.atan2(ball[1] + local.z, ball[0] - local.x)
@@ -145,22 +176,26 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     idle = app.control()
     idle.pointer.lock()
     app.send('pool:claim', { angle })
+    refresh()
   }
-  app.onPointerDown = event => {
-    if (event?.button === 'left' && placeCueBall()) return
-    action.onTrigger()
+  const playOrPlace = event => {
+    if (event?.button !== 'left') return
+    if (!placeCueBall()) play()
   }
-  world.on(`billard:play:${playChannel}`, action.onTrigger)
-  world.on(`${aimingEvent}:request`, () => app.emit(aimingEvent, !!control))
-  label()
+  for (const target of [surfaceTarget, ...balls]) target.onPointerDown = playOrPlace
+  world.on(`${aimingEvent}:request`, refresh)
+  refresh()
   app.emit(`${cueEvent}:request`)
   const axis = new Vector3()
   const worldPosition = local => local.clone().multiply(app.scale).applyQuaternion(app.quaternion).add(app.position)
   app.on('update', dt => {
     if (!Number.isFinite(dt) || dt <= 0) return
     clock += dt
+    if (hoverRefreshPending) {
+      hoverRefreshPending = false
+      refresh()
+    }
     if (pending && clock - requestedAt > 2) stop(false)
-    if (!control && clock > toastUntil) ui.active = false
     sounds.update(clock)
     const nearby = me.position.distanceTo(app.position) < 15
     for (const ball of balls) ball.active = nearby
@@ -253,5 +288,8 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
         quaternion: app.quaternion.clone().multiply(pose.cueQuaternion).toArray() })
     } else clearPose()
   })
-  app.on('destroy', () => stop())
+  app.on('destroy', () => {
+    stop()
+    clearPlayHint()
+  })
 }

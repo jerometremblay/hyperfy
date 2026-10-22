@@ -1,6 +1,6 @@
 import { css } from '@firebolt-dev/css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronUpIcon, LoaderIcon, MessageSquareTextIcon, RefreshCwIcon, SendHorizonalIcon } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { ChevronUpIcon, HourglassIcon, LoaderIcon, MessageSquareTextIcon, RefreshCwIcon, SendHorizonalIcon } from 'lucide-react'
 import moment from 'moment'
 
 import { AvatarPane } from './AvatarPane'
@@ -1064,16 +1064,49 @@ function Actions({ world }) {
       `}
     >
       {actions.map(action => (
-        <div className='actions-item' key={action.id}>
-          <div className='actions-item-icon'>{getActionIcon(action)}</div>
-          <div className='actions-item-label'>{action.label}</div>
-        </div>
+        <ActionHint key={action.id} action={action} world={world} />
       ))}
     </div>
   )
 }
 
+function ActionHint({ action, world }) {
+  const ref = useRef()
+  useLayoutEffect(() => {
+    if (action.position !== 'pointer') return
+    let frame
+    const move = () => {
+      const element = ref.current
+      const viewport = world.controls.viewport
+      if (element && viewport) {
+        const rect = viewport.getBoundingClientRect()
+        const pointer = world.controls.pointer
+        const x = rect.left + (pointer.locked ? rect.width / 2 : pointer.position.x)
+        const y = rect.top + (pointer.locked ? rect.height / 2 : pointer.position.y)
+        element.style.left = `${Math.max(rect.left, Math.min(x - element.offsetWidth / 2, rect.right - element.offsetWidth - 8))}px`
+        element.style.top = `${Math.max(rect.top, Math.min(y + 14, rect.bottom - element.offsetHeight - 8))}px`
+        element.style.visibility = 'visible'
+      }
+      frame = requestAnimationFrame(move)
+    }
+    move()
+    return () => cancelAnimationFrame(frame)
+  }, [action.position, world])
+  return (
+    <div ref={ref} className='actions-item' style={{
+      position: action.position === 'pointer' ? 'fixed' : undefined,
+      visibility: action.position === 'pointer' ? 'hidden' : undefined,
+      pointerEvents: 'none',
+      opacity: action.opacity ?? 1,
+    }}>
+      <div className='actions-item-icon'>{getActionIcon(action)}</div>
+      {action.label && <div className='actions-item-label'>{action.label}</div>}
+    </div>
+  )
+}
+
 function getActionIcon(action) {
+  if (action.type === 'hourglass') return <ActionIcon icon={HourglassIcon} />
   if (action.type === 'custom') {
     return <ActionPill label={action.btn} />
   }

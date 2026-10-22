@@ -45,9 +45,7 @@ test('late join, two real-node clients, interpolation, input release, snapshots 
   }
   alice.app.deliver = (event, value) => server.emit(event, value, 'socket-a')
   bob.app.deliver = (event, value) => server.emit(event, value, 'socket-b')
-  const action =
-    alice.created.find(n => n.name === 'action') || alice.created.find(n => n.constructor.name === 'Action')
-  action.onTrigger()
+  alice.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
   assert.ok(alice.control)
   assert.equal(alice.control.keyW.capture, true)
   assert.equal(alice.control.camera.write, true)

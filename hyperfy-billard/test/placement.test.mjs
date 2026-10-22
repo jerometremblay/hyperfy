@@ -13,7 +13,7 @@ function setup() {
   const state = structuredClone(client.app.state.pool)
   state.balls[0] = { ...state.balls[0], p: [1.3, 0.65, -0.2], state: 'InPocket' }
   client.emit('pool:snapshot', { ...state, seq: 2 })
-  client.created.find(n => n.name === 'action').onTrigger()
+  client.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
   client.emit('pool:snapshot', { ...state, seq: 3, owner: 'alice' })
   client.emit('update', 0.06)
   return { client, control: client.control, state, players,

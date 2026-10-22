@@ -61,41 +61,6 @@ if (world.isClient && !world.isPreview) {
   const sendVolume = () => app.emit(volumeEvent, props.soundVolume ?? 1)
   world.on(`${volumeEvent}:request`, sendVolume)
   sendVolume()
-  let holders = [], aiming = false
-  const hasCue = () => holders.includes(world.getPlayer()?.id)
-  const play = () => { if (hasCue() && !aiming) app.emit(`billard:play:${channel}`) }
-  // Native actions require the pointer hit to be within one metre of their
-  // position. Three positions cover the whole cloth and every rail.
-  const actions = [-0.9, 0, 0.9].map(x => {
-    const action = app.create('action', {
-      label: 'Play', distance: 0, duration: 0.2, position: [x, 0.72, 0],
-    })
-    action.onTrigger = play
-    app.add(action)
-    return action
-  })
-  const refresh = () => {
-    for (const action of actions) action.distance = hasCue() && !aiming ? 3 : 0
-  }
-  world.on(`billard:cues:${channel}`, next => {
-    if (!Array.isArray(next)) return
-    holders = next.filter(id => typeof id === 'string')
-    refresh()
-  })
-  world.on(`billard:aiming:${channel}`, active => {
-    aiming = active === true
-    refresh()
-  })
-  const ready = () => {
-    if (!world.getPlayer()) return
-    app.off('update', ready)
-    refresh()
-    app.emit(`billard:cues:${channel}:request`)
-    app.emit(`billard:aiming:${channel}:request`)
-  }
-  app.on('update', ready)
-  ready()
-  app.onPointerDown = play
   // One detached structural collider for avatars; ball physics stays numerical.
   const colliderSize = [2.72, 0.70, 1.53]
   const colliderTransform = () => {

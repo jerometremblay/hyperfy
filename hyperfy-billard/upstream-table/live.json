@@ -2,17 +2,17 @@
   "target": "https://monstre.duckdns.org:3333/api/agent",
   "blueprint": {
     "id": "YwfF8lHqTK",
-    "version": 70,
+    "version": 75,
     "name": "Tailuge 8 ft Pool Table",
     "model": "asset://33e17716590151e9ca598ca09a7691a14610259663cf32ba94747099524da8d7.glb",
-    "script": "asset://c9f32a10aa7cb825cc0a124682e77a43602810aec6a003516b5ed71259874d56.js",
+    "script": "asset://2aca48235a23689425db486b3793373100d2105b367b89886aa61565ce5bfd7f.js",
     "props": {
       "castShadows": true,
+      "clothColor": "#d77939",
+      "poolChannel": "classic-8-ft-pool-table",
       "promptBoxRequestId": "vbfGQmNv0x",
       "promptBoxTargetEntityId": "PMPL83pUPI",
       "receiveShadows": true,
-      "poolChannel": "classic-8-ft-pool-table",
-      "clothColor": "#d77939",
       "soundVolume": 1
     },
     "unique": true,
@@ -45,12 +45,12 @@
       1,
       1
     ],
-    "pinned": false
+    "pinned": true
   },
   "game": {
     "blueprintId": "da0d2cbe-f18f-40dc-8b7b-3d2ba8e35e9d",
     "entityId": "e24a2b45-2208-4173-aca9-e6ccbcd2e171",
-    "script": "asset://15ba59694773e1540ef59b9f59862e201021c2174e1b61cb54ac2918370b5dcc.js",
+    "script": "asset://ee7eac7ae0127e57153b91d988a5987616918e7a24b63ac023df894bc6f924c7.js",
     "props": {
       "tableSize": "8",
       "showSurface": false,
@@ -114,8 +114,24 @@
         "type": "texture",
         "url": "asset://9862fbb47d08f5bd2fd1e506e7146e12affe236340f9cdb7c6bfe1aad7bef78b.png"
       },
-      "playChannel": "classic-8-ft-pool-table"
+      "playChannel": "classic-8-ft-pool-table",
+      "soundHit": {
+        "type": "audio",
+        "url": "asset://caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090.ogg"
+      },
+      "soundCollision": {
+        "type": "audio",
+        "url": "asset://9c25bb4e737fbfe3e84f166621e52b3f6eb0a507a5ddbe29eed5186a27660af2.ogg"
+      },
+      "soundCushion": {
+        "type": "audio",
+        "url": "asset://5c28fde11e323cbf0dca9181b1e17e318c31e20afb3d53ccf3e97ad083224594.ogg"
+      },
+      "soundPot": {
+        "type": "audio",
+        "url": "asset://cff7442580bce2f65be7f7968688bd827c7a140ee05578f3e41a0f45eec9b479.ogg"
+      }
     }
   },
-  "checkedAt": "2026-10-22T01:58:09.018Z"
+  "checkedAt": "2026-10-22T14:17:31.571Z"
 }

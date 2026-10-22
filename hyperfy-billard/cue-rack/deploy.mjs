@@ -23,7 +23,7 @@ for (const key of ['rack', 'game']) {
 }
 if (!(await fs.readFile(`${engine}../hyperfy-world-jerome/objects/app-ad9a35e5852a2887/script.js`)).equals(rackSource))
   throw Error('World source and prepared rack differ')
-console.log(`Target ${profile.apiUrl}: mouse orbit, native player mode after shots, and cue-only Play`)
+console.log(`Target ${profile.apiUrl}: cursor-following play hint, hourglass while shots run, and no play input while balls move`)
 if (!process.argv.includes('--apply')) process.exit(0)
 for (const [key, bytes] of [['rack', rackSource], ['game', gameSource]]) {
   const app = current[key]

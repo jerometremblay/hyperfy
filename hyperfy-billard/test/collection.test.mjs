@@ -39,7 +39,7 @@ test('adding one pool table includes the simulator, cloth-height balls, sounds a
   assert.equal(white.parent, root)
   assert.equal(white.position.y, physics.BALL_RADIUS)
   assert.equal(white.position.x, -physics.dimensions('8').length / 4)
-  client.app.onPointerDown()
+  client.created.find(n => n.name === 'prim' && n.opacity === 0 && typeof n.onPointerDown === 'function').onPointerDown({ button: 'left' })
   client.emit('update', 0.06)
   const active = client.control
   assert.ok(active.camera.write)

@@ -74,17 +74,20 @@ if (world.isServer) {
 
     return group
   })
+  const surfaceTarget = prim('box', [L, 0.004, W], [0, 0.012, 0], '#000000', {
+    opacity: 0,
+    castShadow: false,
+    receiveShadow: false,
+  })
   const ghost = prim('sphere', [R], [-L / 4, R, 0], '#ffffff', { opacity: 0.4 })
   ghost.active = false
-  const action = app.create('action', { label: 'Play', distance: 3, duration: 0.2, position: [0, 0.25, W / 2] })
-  app.add(action)
   if (!world.isPreview)
     startClient(world, app, {
       soundSources: Object.fromEntries(['Hit', 'Collision', 'Cushion', 'Pot'].map(type =>
         [type, props[`sound${type}`]?.url || BILLARD_SOUNDS[type]])),
       balls,
       ghost,
-      action,
+      surfaceTarget,
       size,
       playChannel: props.playChannel || 'classic-8-ft-pool-table',
     })
