@@ -299,3 +299,34 @@ SQLite database, with the script hash matching the live deployment.
   /index-UZS4XNUX.js (SHA-256 cded07c85895ff4db746d0fdba46bbbbd41136c8b0aded07312ab1ea58dda6ed),
   whose source map contains the fixed Audio source. Existing clients must reload.
   No in-world listening test was performed; volume and samples were unchanged.
+
+
+## Left-click cue-ball placement (2026-10-21)
+
+- Normal left mouse press confirms the current white-ball placement using the
+  same validated request as Space. The control consumes the placement click;
+  subsequent clicks while aiming cannot place again or accidentally shoot.
+  Escape cancels it, and the placement HUD documents Click / Space.
+- All 42 billiards tests and script/HYP/source ZIP preflight pass. The new
+  placement regression checks the chosen coordinates and sequence, consumed
+  click, continued orbit/aim, no shot, and no placement after cancellation.
+- Deployed game v15 to 3333 and verified script/audio bytes, props and preload
+  by read-back. No manual in-world check or commit was performed.
+
+
+## Default Add collection (2026-10-21)
+
+- Added self-contained Pool Table, Pool Cue Rack, Pool Table Light and Wall Light
+  Switch packages to the built-in Default manifest, using the existing sources.
+  The pool table includes the furniture and playable simulator in one app, with
+  game visuals at cloth height. The rack and light switch expose matching channels.
+- New-object channels `pool-room` and `pool-room-lights` keep newly added pairs
+  separate from the current installed house objects. The wall-switch source/model
+  is now included in the repository's reusable worldsync catalog.
+- All 46 pool tests and the Add-menu test pass. New integration tests validate
+  package assets, cloth-height game controls, authenticated rack pickup, and the
+  wall switch controlling its matching pendant. `git diff --check` passes.
+- Reloaded 3333 through its existing development watcher and confirmed HTTP 200.
+  A fresh browser connection showed all four entries in the live Add menu.
+  Screenshot: `default-pool-catalog.jpg`. No objects were placed in the live world.
+- Build/source instructions: `docs/pool-room-collection.md`. No commit was created.

@@ -83,6 +83,11 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
         stop()
       }
     }
+    control.mouseLeft.onPress = () => {
+      if (!control || !latest?.scratched) return
+      control.space.onPress()
+      return true
+    }
     control.keyR.onPress = () => { if (!latest?.moving) request('reset') }
     control.escape.onPress = () => stop()
     ui.active = true
@@ -227,7 +232,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
       if (sinceAim >= 0.1) { sinceAim = 0; app.send('pool:aim', { angle, side, top }) }
       ghost.active = false
       text.value = latest?.error || (latest?.scratched
-        ? 'Scratch · Mouse / ← →: orbit · WASD: move white ball\nSpace: confirm · R: re-rack · Esc: leave'
+        ? 'Scratch · Mouse / ← →: orbit · WASD: move white ball\nClick / Space: confirm · R: re-rack · Esc: leave'
         : `Mouse: orbit / aim · ↑ ↓ Power ${speed.toFixed(1)} m/s · W/S Top ${top.toFixed(2)} · A/D Side ${side.toFixed(2)}\nSpace: shoot · Esc: leave · X: return cue`)
     }
     // Move the actual cue from the existing rack, visible to every observer.

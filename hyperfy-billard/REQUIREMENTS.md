@@ -113,5 +113,5 @@ markers, so no unavailable assistant text is represented as an agreed requiremen
 
 71. After a scratch, retain the normal mouse/left-right-arrow orbit around the
     white ball. Use WASD to move its visible mesh relative to the viewing direction
-    within the cloth boundaries. Space confirms through existing server placement
+    within the cloth boundaries. Left click or Space confirms through existing server placement
     validation and continues aiming at that position; Escape cancels the preview.

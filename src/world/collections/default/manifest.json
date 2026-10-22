@@ -8,6 +8,10 @@
     "Tree.hyp",
     "gs.hyp",
     "HyperfyJournal.hyp",
-    "WorldPortal.hyp"
+    "WorldPortal.hyp",
+    "PoolTable.hyp",
+    "CueRack.hyp",
+    "PoolLight.hyp",
+    "WallLightSwitch.hyp"
   ]
 }

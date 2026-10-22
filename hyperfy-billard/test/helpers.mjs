@@ -17,7 +17,7 @@ export const physics = await import(`${temp}/simulation.mjs`)
 await build({
   stdin: {
     contents:
-      ['Prim', 'Group', 'Action', 'UI', 'UIText', 'Audio']
+      ['Prim', 'Group', 'Action', 'UI', 'UIText', 'Audio', 'Light']
         .map(n => `export { ${n} } from './src/core/nodes/${n}.js'`)
         .join(';') + "; export { importApp, exportApp } from './src/core/extras/appTools.js'",
     resolveDir: `${root}..`,
@@ -28,9 +28,9 @@ await build({
   outfile: `${temp}/nodes.mjs`,
 })
 export const nodes = await import(`${temp}/nodes.mjs`)
-const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText, audio: nodes.Audio }
+const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText, audio: nodes.Audio, light: nodes.Light }
 export const code = await readFile(`${root}dist/hyperfy-billard.js`, 'utf8')
-export function harness({ server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders } = {}) {
+export function harness({ server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders, modelNodes = {} } = {}) {
   const handlers = {},
     created = [],
     sent = [],
@@ -45,7 +45,7 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     scale: new THREE.Vector3(1, 1, 1),
     state,
     configure() {},
-    get() { return null },
+    get(id) { return modelNodes[id] || null },
     add() {},
     remove() {},
     create(type, data) {

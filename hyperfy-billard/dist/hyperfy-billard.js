@@ -1664,6 +1664,11 @@
           stop();
         }
       };
+      control.mouseLeft.onPress = () => {
+        if (!control || !latest?.scratched) return;
+        control.space.onPress();
+        return true;
+      };
       control.keyR.onPress = () => {
         if (!latest?.moving) request("reset");
       };
@@ -1836,7 +1841,7 @@
           app2.send("pool:aim", { angle, side, top });
         }
         ghost.active = false;
-        text.value = latest?.error || (latest?.scratched ? "Scratch \xB7 Mouse / \u2190 \u2192: orbit \xB7 WASD: move white ball\nSpace: confirm \xB7 R: re-rack \xB7 Esc: leave" : `Mouse: orbit / aim \xB7 \u2191 \u2193 Power ${speed.toFixed(1)} m/s \xB7 W/S Top ${top.toFixed(2)} \xB7 A/D Side ${side.toFixed(2)}
+        text.value = latest?.error || (latest?.scratched ? "Scratch \xB7 Mouse / \u2190 \u2192: orbit \xB7 WASD: move white ball\nClick / Space: confirm \xB7 R: re-rack \xB7 Esc: leave" : `Mouse: orbit / aim \xB7 \u2191 \u2193 Power ${speed.toFixed(1)} m/s \xB7 W/S Top ${top.toFixed(2)} \xB7 A/D Side ${side.toFixed(2)}
 Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
       }
       const shooter = latest?.owner;

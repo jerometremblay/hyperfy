@@ -1,0 +1,25 @@
+{
+  "blueprint": {
+    "author": "OpenAI",
+    "desc": "Wall-mounted toggle switch communicating with billiards light fixtures over a configurable channel",
+    "disabled": false,
+    "image": null,
+    "locked": false,
+    "model": "file:./model.glb",
+    "name": "Billiards - Wall Light Switch",
+    "preload": false,
+    "props": {
+      "channel": "billiards-main",
+      "initialOn": true,
+      "plateColor": "#c7bca1"
+    },
+    "public": false,
+    "script": "file:./script.js",
+    "unique": false,
+    "url": null
+  },
+  "extraAssets": [],
+  "key": "apps/billiards-wall-light-switch",
+  "mode": "files",
+  "schemaVersion": 1
+}

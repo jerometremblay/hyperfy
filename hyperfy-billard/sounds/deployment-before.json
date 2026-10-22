@@ -5,7 +5,7 @@
     "author": "jerometremblay-bot",
     "url": null,
     "desc": "Server-owned pool practice, Tailuge physics, WPA 8/9-foot surface. GPL-3.0-only.",
-    "script": "asset://6435fdb0c5acf36196d602967b4583777d57571c508ea7b53b224e39a8fd0b90.js",
+    "script": "asset://b4513aadc8fb8293deeca9aa6cde5004395adce7e1002492413263fa02d6fc38.js",
     "props": {
       "tableSize": "8",
       "showSurface": false,
@@ -97,6 +97,6 @@
     "name": "Hyperfy Billard — Pool Table Overlay",
     "model": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
     "id": "da0d2cbe-f18f-40dc-8b7b-3d2ba8e35e9d",
-    "version": 13
+    "version": 14
   }
 }

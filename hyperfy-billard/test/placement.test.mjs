@@ -103,3 +103,31 @@ test('Space confirms the selected position and continues aiming there; escape ca
   assert.equal(other.client.activeControl, null)
   assert.equal(other.client.sent.filter(([name]) => name === 'pool:place').length, 0)
 })
+
+
+test('left click confirms placement, consumes that click, and never shoots after confirmation or exit', () => {
+  const { client, control, white, state } = setup()
+  control.keyD.down = true
+  client.emit('update', 0.2)
+  control.keyD.down = false
+  const position = white.position.clone()
+  assert.equal(control.mouseLeft.onPress(), true)
+  const placements = client.sent.filter(([name]) => name === 'pool:place')
+  assert.equal(placements.length, 1)
+  assert.equal(placements[0][1].x, position.x)
+  assert.equal(placements[0][1].y, -position.z)
+  assert.equal(placements[0][1].seq, 3)
+  assert.equal(client.sent.filter(([name]) => name === 'pool:shoot').length, 0)
+  client.emit('pool:snapshot', { ...state, seq: 4, owner: 'alice', scratched: false,
+    balls: [{ ...state.balls[0], state: 'Stationary', p: [position.x, -position.z, 0] }, ...state.balls.slice(1)] })
+  client.emit('update', 0.01)
+  control.mouseLeft.onPress()
+  assert.equal(client.sent.filter(([name]) => name === 'pool:place').length, 1)
+  assert.equal(client.sent.filter(([name]) => name === 'pool:shoot').length, 0)
+  assert.equal(client.activeControl, control)
+  aimedAt(client, control, white)
+  const cancelled = setup()
+  cancelled.control.escape.onPress()
+  cancelled.control.mouseLeft.onPress()
+  assert.equal(cancelled.client.sent.filter(([name]) => name === 'pool:place').length, 0)
+})

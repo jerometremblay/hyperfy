@@ -62,7 +62,7 @@ standing animation with a custom crouching animation.
 - After a scratch: mouse or left/right arrows orbit the white ball as usual.
   WASD moves the actual white-ball mesh across the cloth relative to the view
   (W forward, S backward, A left, D right), with the camera following its position.
-  Space confirms placement and continues aiming; Escape cancels the local preview.
+  Left click or Space confirms placement and continues aiming; Escape cancels the local preview.
   The server rejects occupied or out-of-bounds positions.
 - R: re-rack while stopped. Escape: release the camera and movement controls.
 

@@ -1,9 +1,9 @@
 {
   "target": "https://monstre.duckdns.org:3333/api/agent",
-  "checkedAt": "2026-10-22T01:57:54.755Z",
+  "checkedAt": "2026-10-22T02:11:30.164Z",
   "game": "da0d2cbe-f18f-40dc-8b7b-3d2ba8e35e9d",
-  "version": 14,
-  "script": "asset://b4513aadc8fb8293deeca9aa6cde5004395adce7e1002492413263fa02d6fc38.js",
+  "version": 15,
+  "script": "asset://720b199ce0318542d1e03c75a9bf96e8dce7756da0a5f48dbbb709cab21fca6f.js",
   "assets": [
     {
       "url": "asset://caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090.ogg",
@@ -26,9 +26,9 @@
       "size": 6645
     },
     {
-      "url": "asset://b4513aadc8fb8293deeca9aa6cde5004395adce7e1002492413263fa02d6fc38.js",
+      "url": "asset://720b199ce0318542d1e03c75a9bf96e8dce7756da0a5f48dbbb709cab21fca6f.js",
       "type": "script",
-      "size": 71190
+      "size": 71355
     }
   ],
   "verifiedBytes": true
