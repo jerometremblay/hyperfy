@@ -18,6 +18,7 @@ import { getDB } from './db'
 import { Storage } from './Storage'
 import { assets } from './assets'
 import { agentAPI } from './agent-api'
+import { publishedObjectsAPI } from './published-objects'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { PhotoUploadLimits, isJPEGUpload, validatePhoto, MAX_PHOTO_BYTES } from './photoUploads'
@@ -226,6 +227,7 @@ fastify.register(multipart, {
 })
 fastify.register(ws)
 fastify.register(worldNetwork)
+fastify.register(publishedObjectsAPI, { world, assets, maxBytes: Math.min(maxUploadSize || 32, 64) * 1024 * 1024 })
 fastify.register(agentAPI, {
   prefix: '/api/agent',
   world,

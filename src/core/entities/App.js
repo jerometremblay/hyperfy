@@ -61,7 +61,7 @@ export class App extends Entity {
     this.hitResultsPool = []
     this.hitResults = []
     this.deadHook = { dead: false }
-    this.build()
+    this.buildPromise = this.build()
   }
 
   createNode(name, data) {
@@ -71,6 +71,7 @@ export class App extends Entity {
 
   async build(crashed) {
     this.building = true
+    this.loadError = null
     const n = ++this.n
     // fetch blueprint
     const blueprint = this.world.blueprints.get(this.data.blueprint)
@@ -123,6 +124,7 @@ export class App extends Entity {
           }
         } catch (err) {
           console.error(err)
+          this.loadError = err
           crashed = true
           // no model, will use crash block below
         }
@@ -137,6 +139,7 @@ export class App extends Entity {
           if (!script) script = await this.world.loader.load('script', blueprint.script)
         } catch (err) {
           console.error(err)
+          this.loadError = err
           crashed = true
         }
       }
@@ -393,8 +396,15 @@ export class App extends Entity {
         rebuild = true
       }
     }
+    if (data.hasOwnProperty('published')) {
+      if (data.published == null) delete this.data.published
+      else this.data.published = structuredClone(data.published)
+    }
+    if (data.hasOwnProperty('publishedRevision')) this.data.publishedRevision = data.publishedRevision
+    if (rebuild || data.hasOwnProperty('published')) this.world.emit('appChanged', this)
     if (rebuild) {
-      return this.build()
+      this.buildPromise = this.build()
+      return this.buildPromise
     }
   }
 

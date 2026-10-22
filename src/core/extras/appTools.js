@@ -169,23 +169,54 @@ export async function replaceApp(world, app, file) {
   const blueprint = { ...imported, id: uuid(), version: 0, props: imported.props || {}, scene: false }
   const previous = { blueprint: originalBlueprint, state: cloneDeep(app.data.state || {}) }
   const change = { id: app.data.id, blueprint: blueprint.id, state: {} }
-  world.blueprints.add(blueprint)
-  try {
-    app.scriptError = null
-    await app.modify(change)
-    if (app.scriptError) throw new Error('The replacement app failed to load. The original app has been restored.')
-    if (!world.builder.canBuild()) throw new Error('Builder permission is required.')
-  } catch (err) {
-    if (!app.destroyed && app.data.blueprint === blueprint.id) await app.modify(previous)
-    throw err
-  }
-  if (app.destroyed || app.data.blueprint !== blueprint.id) {
-    throw new Error('This app changed during replacement. Try again.')
-  }
+  await stageAppReplacement(world, app, blueprint, change, check)
   world.network.send('blueprintAdded', blueprint)
   world.network.send('entityModified', change)
   world.builder.addUndo({ name: 'replace-app', entityId: app.data.id, replacementBlueprintId: blueprint.id, previous })
   world.ui.setApp(null)
   world.emit('toast', 'App replaced. Use Undo to restore the original.')
   return true
+}
+
+// Shared load-and-rollback primitive for file replacements and server-prepared sources.
+export async function waitForReplacement(promise, timeout = 30000) {
+  let timer
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('App loading timed out. Retry or reconnect.')), timeout)
+      }),
+    ])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+export async function stageAppReplacement(world, app, blueprint, change, check) {
+  check()
+  const previous = { blueprint: app.data.blueprint, state: cloneDeep(app.data.state || {}) }
+  if (Object.hasOwn(change, 'published') || app.data.published) {
+    previous.published = cloneDeep(app.data.published ?? null)
+    previous.publishedRevision = app.data.publishedRevision || 0
+  }
+  world.blueprints.add(blueprint)
+  const rollback = async () => {
+    if (!app.destroyed && app.data.blueprint === blueprint.id) await waitForReplacement(app.modify(previous))
+  }
+  rollback.state = previous.state
+  try {
+    app.scriptError = null
+    app.loadError = null
+    await waitForReplacement(app.modify(change))
+    if (app.scriptError || app.loadError)
+      throw new Error('The replacement app failed to load. The original app has been restored.')
+    if (!world.builder.canBuild()) throw new Error('Builder permission is required.')
+    if (app.destroyed || app.data.blueprint !== blueprint.id)
+      throw new Error('This app changed during replacement. Try again.')
+  } catch (error) {
+    await rollback()
+    throw error
+  }
+  return rollback
 }

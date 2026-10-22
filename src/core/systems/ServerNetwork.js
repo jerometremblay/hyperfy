@@ -6,7 +6,7 @@ import { uuid } from '../utils'
 import { System } from './System'
 import { createJWT, readJWT } from '../utils-server'
 import { appHasBrowserSource } from '../utils/browser'
-import { cloneDeep, isNumber } from 'lodash-es'
+import { cloneDeep, isEqual, isNumber } from 'lodash-es'
 import * as THREE from '../extras/three'
 import { Ranks } from '../extras/ranks'
 import { isValidDayNightSetting, getWorldTime, getTimeOffset, TIME_TRANSITION_DURATION } from '../extras/dayNight'
@@ -101,7 +101,11 @@ export class ServerNetwork extends System {
     const packet = writePacket(name, data)
     this.sockets.forEach(socket => {
       if (socket.id === ignoreSocketId) return
-      socket.sendPacket(packet)
+      try { socket.sendPacket(packet) }
+      catch (error) {
+        console.error('Observer disconnected during broadcast:', error.message)
+        socket.disconnect()
+      }
     })
   }
 
@@ -174,6 +178,7 @@ export class ServerNetwork extends System {
     }
     // app entities
     for (const id of this.dirtyApps) {
+      if (this.publishedObjects?.locks.has(id)) continue
       const entity = this.world.entities.get(id)
       if (entity) {
         // it needs creating/updating
@@ -336,6 +341,8 @@ export class ServerNetwork extends System {
         true
       )
 
+      // Do not expose a transaction that is still building or saving.
+      await this.publishedObjects?.settled()
       // send snapshot
       socket.send('snapshot', {
         id: socket.id,
@@ -496,6 +503,7 @@ export class ServerNetwork extends System {
     if (!socket.player.isBuilder()) {
       return console.error('player attempted to add blueprint without builder permission')
     }
+    if (this.world.blueprints.get(blueprint.id)) return socket.send('blueprintAdded', this.world.blueprints.get(blueprint.id))
     this.world.blueprints.add(blueprint)
     this.send('blueprintAdded', blueprint, socket.id)
     this.dirtyBlueprints.add(blueprint.id)
@@ -506,6 +514,8 @@ export class ServerNetwork extends System {
       return console.error('player attempted to modify blueprint without builder permission')
     }
     const blueprint = this.world.blueprints.get(data.id)
+    if (this.publishedObjects && [...this.publishedObjects.locks].some(id => this.world.entities.get(id)?.data.blueprint === data.id)) return socket.send('blueprintModified', blueprint)
+    if (!blueprint) return
     // if new version is greater than current version, allow it
     if (data.version > blueprint.version) {
       this.world.blueprints.modify(data)
@@ -522,8 +532,19 @@ export class ServerNetwork extends System {
     if (!socket.player.isBuilder()) {
       return console.error('player attempted to add entity without builder permission')
     }
+    if (this.world.entities.get(data.id)) return
+    // Installed provenance can only be minted by the published-object service.
+    const source = data.published
+    data = { ...data }
+    delete data.publishedRevision
+    delete data.published
+    if (source) {
+      const original = [...this.world.entities.items.values()].find(app => app.data.blueprint === data.blueprint && isEqual(app.data.published, source))
+      if (original) data.published = cloneDeep(original.data.published)
+    }
     const entity = this.world.entities.add(data)
     this.send('entityAdded', data, socket.id)
+    if (source) socket.send('entityModified', { id: data.id, published: data.published || null, publishedRevision: 0 })
     if (entity.isApp) this.dirtyApps.add(entity.data.id)
   }
 
@@ -538,6 +559,17 @@ export class ServerNetwork extends System {
   onEntityModified = async (socket, data) => {
     const entity = this.world.entities.get(data.id)
     if (!entity) return console.error('onEntityModified: no entity found', data)
+    if (entity.isApp) {
+      if (this.publishedObjects?.locks.has(data.id) || (Object.hasOwn(data, 'blueprint') && !socket.player?.isBuilder())) return
+      data = { ...data }
+      delete data.published
+      delete data.publishedRevision
+      // Generic blueprint replacement invalidates installed provenance.
+      if (data.blueprint && data.blueprint !== entity.data.blueprint && entity.data.published) {
+        data.published = { schemaVersion: 1, sourceUrl: entity.data.published.sourceUrl, verified: false }
+        data.publishedRevision = (entity.data.publishedRevision || 0) + 1
+      }
+    }
     if (entity.isPlayer && entity.data.owner !== socket.id) {
       return console.error('player attempted to modify another player', { socketId: socket.id, playerId: data.id })
     }
@@ -556,6 +588,7 @@ export class ServerNetwork extends System {
       changes = { ...changes, seatPose }
     }
     this.send('entityModified', changes, socket.id)
+    if (entity.isApp && Object.hasOwn(changes, 'published')) socket.send('entityModified', { id: data.id, published: changes.published, publishedRevision: changes.publishedRevision })
     if (seatContextChanged) {
       socket.send('entityModified', { id: entity.data.id, seatPose: changes.seatPose })
     }
@@ -699,6 +732,7 @@ export class ServerNetwork extends System {
   onEntityRemoved = (socket, id) => {
     if (!socket.player.isBuilder()) return console.error('player attempted to remove entity without builder permission')
     const entity = this.world.entities.get(id)
+    if (this.publishedObjects?.locks.has(id)) return
     this.world.entities.remove(id)
     this.send('entityRemoved', id, socket.id)
     if (entity.isApp) this.dirtyApps.add(id)
@@ -806,6 +840,7 @@ export class ServerNetwork extends System {
   }
 
   destroy() {
+    this.publishedObjects?.resolver.destroy()
     this.portalPreviews?.destroy()
     clearInterval(this.socketIntervalId)
     clearTimeout(this.saveTimerId)
