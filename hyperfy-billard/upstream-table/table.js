@@ -29,6 +29,7 @@ const CLOTH_COLORS = [
 const DEFAULT_CLOTH_COLOR = '#e99476'
 
 app.configure([
+  { key: 'soundVolume', type: 'range', label: 'Sound volume (1 = normal)', min: 0, max: 5, step: 0.1, initial: 1 },
   { key: 'poolChannel', type: 'text', label: 'Pool game channel', initial: 'classic-8-ft-pool-table' },
   {
     key: 'clothColor', type: 'select', label: 'Cloth color', initial: DEFAULT_CLOTH_COLOR,
@@ -56,6 +57,10 @@ if (world.isClient) {
 
 if (world.isClient && !world.isPreview) {
   const channel = props.poolChannel || 'classic-8-ft-pool-table'
+  const volumeEvent = `billard:volume:${channel}`
+  const sendVolume = () => app.emit(volumeEvent, props.soundVolume ?? 1)
+  world.on(`${volumeEvent}:request`, sendVolume)
+  sendVolume()
   let holders = [], aiming = false
   const hasCue = () => holders.includes(world.getPlayer()?.id)
   const play = () => { if (hasCue() && !aiming) app.emit(`billard:play:${channel}`) }

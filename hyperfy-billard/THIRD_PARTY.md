@@ -15,11 +15,17 @@ Modified 2026-10-20 for headless Hyperfy execution:
 - model/table.ts: remove browser cue/session/proximity/aim/replay integration and
   methods after inPockets(). Remove replay-link reporting on solver exhaustion.
   Retain advance, pair resolution, cushion/jaw/pocket resolution and stop checks.
+- model/outcome.ts: capture impact positions as immutable coordinates for spatial
+  sound events (2026-10-21).
 - utils/utils.ts: retain the numeric utility functions; remove recorder/game
   dependencies and unrelated emoji helpers.
 
 Other vendored files are unmodified. Hyperfy adapters, tests, generated ball art,
 and the build/preview tools are new source under GPL-3.0-only.
+
+The four `sounds/*.ogg` files are unmodified assets from `dist/sounds/` at the
+same pinned Tailuge revision, distributed under its repository GPL-3.0 license.
+`sounds/provenance.json` records source paths, Git blob IDs and SHA-256 hashes.
 
 `upstream-table/p8.min.gltf` and `p8.min.bin` are unmodified original model assets
 from `dist/models/` at the same pinned revision, under the repository GPL-3.0

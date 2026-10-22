@@ -206,3 +206,96 @@ SQLite database, with the script hash matching the live deployment.
   for action hiding, ignored duplicate clicks, exit/shoot restoration and spin
   reset. Deployed and verified game v10 and furniture v42 through the Agent API,
   preserving current live cloth selection and model.
+
+
+## Spatial impact sounds (2026-10-21)
+
+- Server snapshots now carry physics time and batches of cue-strike, ball-collision,
+  cushion and pocket events. Each event has a monotonic ID, immutable local impact
+  coordinates and incident speed. Re-racks carry a new generation.
+- Clients consume events against the same interpolated physics time as ball
+  positions. Duplicate packets, late-join history, queued effects from old racks,
+  effects beyond 15 m, and effects over 120 ms behind displayed physics are skipped.
+- Native spatial SFX nodes support up to 24 overlapping effects with strength-based
+  volume. Nodes remount after repositioning so their initial panner transform is
+  correct. Four original synthesized 0.3-second mono MP3s are packaged and preloaded;
+  native audio file fields allow replacements. No engine changes are required.
+- All 36 billiards tests pass, including six new event/timing/multiplayer tests.
+  Tests use real native node properties with a mocked browser audio backend.
+  Package byte hashes, audio props, preload flag and native import/export pass.
+- Script, HYP and source ZIP authoring preflight pass. FFmpeg decodes all four MP3s
+  without errors; each is 44.1 kHz mono. `git diff --check` passes.
+- No live-world deployment or in-world listening test was performed. Playback is
+  frame based; sample quality and perceived synchronization still need listening
+  in the target world. Existing browser gesture requirements apply.
+
+
+## Original Tailuge OGG sounds (2026-10-21)
+
+- Replaced all four synthesized MP3 defaults with the unmodified upstream
+  `cue.ogg`, `ballcollision.ogg`, `cushion.ogg` and `pot.ogg` from pinned commit
+  b23b1d9f0da103783f70fa48a6c6f7f288290d9e. Removed the synthesized samples and
+  generator. `sounds/provenance.json` records verified Git blob and SHA-256 hashes.
+- All four files are stereo Ogg Vorbis at 48 kHz, under 0.15 seconds each, within
+  the existing 0.5-second voice lifetime. No transcoding or timing changes.
+- A localhost browser check decoded each original with AudioContext.decodeAudioData:
+  cue 0.0680 s, collision 0.0773 s, cushion 0.1200 s, pocket 0.1440 s.
+  This confirms browser decoding; no in-world listening test was performed.
+- All 37 tests and script/HYP/source ZIP preflight pass. A package regression
+  verifies exact original asset bytes, OGG URLs, MIME types and Git blob hashes.
+- Deployed pool game v12 to the configured 3333 world through the Agent API.
+  Read-back verified all five uploaded assets byte for byte, audio props,
+  preload flag and preserved table settings. Receipt: `sounds/deployment.json`.
+
+
+## Cue-ball placement orbit and WASD (2026-10-21)
+
+- Scratch placement retains the same mouse and left/right-arrow orbit and
+  elevation controls as aiming. WASD moves the real white-ball mesh relative to
+  the view at 0.5 m/s, with normalized diagonal movement and existing rail limits.
+  The camera and outside-rail avatar stance follow the selected position.
+- Placement remains a local preview until Space commits through existing server
+  validation; Escape cancels it. Spin inputs are inactive while placing. A new
+  placement starts at the standard cue-ball spot. Confirmation drops buffered
+  scratch coordinates so the ball does not flicker back into the pocket.
+- All 40 billiards tests pass, including three placement tests for orbit without
+  translation, WASD directions under a rotated table, diagonal speed, rail bounds,
+  confirmation without a positional jump, continuing aim and Escape cancellation.
+  Script/HYP/source ZIP authoring preflight and `git diff --check` pass.
+- Deployed game v13 to the configured 3333 world through the Agent API. Read-back
+  verified exact script/audio asset bytes, props and preload. Existing table
+  settings and original OGG sounds were preserved. No in-world manual test or
+  commit was performed.
+
+
+## Visible table sound-volume setting (2026-10-21)
+
+- Added the native table-settings range `Sound volume (1 = normal)`: 0 to 5 in
+  0.1 increments, default 1. Table-local channel events set the game audio gain,
+  with startup request/response supporting either app initialization order.
+- The multiplier preserves impact-strength/type balance, updates active voices,
+  and affects future sounds. Zero mutes; 1 restores the prior volume. Only the
+  furniture reloads on settings changes, leaving server pool physics running.
+- All 41 billiards tests and script/HYP/source ZIP preflight pass. The new
+  integration test covers both startup orders, 3x boost, mute/restore, maximum
+  clamp and channel isolation. `git diff --check` passes.
+- Deployed game v14 and visible table v70 to 3333; verified script and audio
+  bytes, table props/model, and game preload. Preserved live orange cloth color
+  (#d77939) and all existing table props. Volume remains 1 for the user to adjust.
+
+
+## Immediate spatial audio initialization (2026-10-21)
+
+- Fixed native Audio panner initialization: position and orientation now use
+  setValueAtTime at the current audio time before a newly created source starts.
+  New and reused impacts no longer ramp from the default world origin. Later
+  movement retains the existing one-frame interpolation; legacy panners and
+  non-spatial playback retain their existing paths.
+- Native regression reproduced six startup ramps before the fix. All three
+  native Audio tests now pass, covering initial position/orientation before
+  start, reused sources, continued movement smoothing, and legacy/non-spatial
+  paths. All 41 billiards tests and `git diff --check` pass.
+- Production engine build succeeded. Verified 3333 serves the exact new client
+  /index-UZS4XNUX.js (SHA-256 cded07c85895ff4db746d0fdba46bbbbd41136c8b0aded07312ab1ea58dda6ed),
+  whose source map contains the fixed Audio source. Existing clients must reload.
+  No in-world listening test was performed; volume and samples were unchanged.

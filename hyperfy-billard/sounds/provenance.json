@@ -1,0 +1,30 @@
+{
+  "repository": "https://github.com/tailuge/billiards",
+  "commit": "b23b1d9f0da103783f70fa48a6c6f7f288290d9e",
+  "files": [
+    {
+      "path": "dist/sounds/ballcollision.ogg",
+      "bytes": 5679,
+      "gitBlob": "e3effce2b41337d0bc5a02d57d3a48bc9d2cbcba",
+      "sha256": "9c25bb4e737fbfe3e84f166621e52b3f6eb0a507a5ddbe29eed5186a27660af2"
+    },
+    {
+      "path": "dist/sounds/cue.ogg",
+      "bytes": 5492,
+      "gitBlob": "ced7466cf759ff3c6ff6da092d6ec2edda6dd57a",
+      "sha256": "caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090"
+    },
+    {
+      "path": "dist/sounds/cushion.ogg",
+      "bytes": 5808,
+      "gitBlob": "e5fe6f92c9c0dfba522dffe739f328b62c847308",
+      "sha256": "5c28fde11e323cbf0dca9181b1e17e318c31e20afb3d53ccf3e97ad083224594"
+    },
+    {
+      "path": "dist/sounds/pot.ogg",
+      "bytes": 6645,
+      "gitBlob": "ddafe1cd13b5f0e055541882ad15b90378deaed1",
+      "sha256": "cff7442580bce2f65be7f7968688bd827c7a140ee05578f3e41a0f45eec9b479"
+    }
+  ]
+}

@@ -117,7 +117,7 @@ const output = Buffer.from(await new GLTFExporter().parseAsync(table, { binary: 
 await fs.writeFile(`${here}model.glb`, output)
 const source = await fs.readFile(`${here}table.js`)
 const modelUrl = `asset://${hash(output)}.glb`, scriptUrl = `asset://${hash(source)}.js`
-const blueprint = { id: 'tailuge-pool-table', version: 0, name: 'Tailuge 8 ft Pool Table', model: modelUrl, script: scriptUrl, author: 'tailuge and contributors; Hyperfy conversion', desc: 'Original p8 model, GPL-3.0-only. Converted to Y-up and fitted to WPA 8 ft; four plain support legs added.', props: { poolChannel: 'classic-8-ft-pool-table', clothColor: '#e99476' }, unique: false, disabled: false }
+const blueprint = { id: 'tailuge-pool-table', version: 0, name: 'Tailuge 8 ft Pool Table', model: modelUrl, script: scriptUrl, author: 'tailuge and contributors; Hyperfy conversion', desc: 'Original p8 model, GPL-3.0-only. Converted to Y-up and fitted to WPA 8 ft; four plain support legs added.', props: { poolChannel: 'classic-8-ft-pool-table', clothColor: '#e99476', soundVolume: 1 }, unique: false, disabled: false }
 const assets = [{ type: 'model', url: modelUrl, size: output.length, mime: 'model/gltf-binary' }, { type: 'script', url: scriptUrl, size: source.length, mime: 'text/plain' }]
 const header = Buffer.from(JSON.stringify({ blueprint, assets }))
 const prefix = Buffer.alloc(4); prefix.writeUInt32LE(header.length)

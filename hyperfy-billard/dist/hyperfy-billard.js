@@ -1,5 +1,8 @@
 ; // Safe after Hyperfy’s semicolon-free script wrapper.
 (() => {
+  // <define:BILLARD_SOUNDS>
+  var define_BILLARD_SOUNDS_default = { Hit: "asset://caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090.ogg", Collision: "asset://9c25bb4e737fbfe3e84f166621e52b3f6eb0a507a5ddbe29eed5186a27660af2.ogg", Cushion: "asset://5c28fde11e323cbf0dca9181b1e17e318c31e20afb3d53ccf3e97ad083224594.ogg", Pot: "asset://cff7442580bce2f65be7f7968688bd827c7a140ee05578f3e41a0f45eec9b479.ogg" };
+
   // <define:BILLARD_TEXTURES>
   var define_BILLARD_TEXTURES_default = [null, "asset://57e1dd066ccdbcd57ad5740439d7a57213cea1c70a5607220f76577c16393584.png", "asset://59b6f66e283c9b285c7621345510586aa1c93fd3b304cd693e86263bc43875d3.png", "asset://5ec7943e4a23e95bcaf1412ccbc4e2995ccf8505fb71240180716c3cfde13fc7.png", "asset://12cb63cd1a2235f5b3ac628e101745f41a2f7a698a99aa9b2b78789d5a8cc6b5.png", "asset://3245fc89203de2c0c71441fdbf3b5b1ce0c011c424c4e12ca373687706533079.png", "asset://e42ab0f7ffcc195e0630bcf0bb2a230645dc65896888f056f8304c3b420df3d1.png", "asset://725af0e774306d4dd5198919f2add7298199894b389e77300d2343c8c3e6fd6b.png", "asset://b4c08c6a6739ab486e7ebfc2402e9789e12f75f70196bc6a4418d7cb011bf76d.png", "asset://5a7ba854d9b9e97887480072fb02c8c6c09c4cfa91aefaa972702f4aa6148017.png", "asset://7b3023944d422695a72b4b360092bb6a6172270d69d65fe3d653088b4ad066ed.png", "asset://3e85b49dd7c0ae2cd259b7121de184a2998cc53bc36bae7b4fd9b1baa2ad8f3d.png", "asset://3574fbad38141c5f1416b7db1d5f80697e6f568ba679b375b32983d52bbf2b96.png", "asset://67cb4eb820ace10d66f77d10f3fd998551c32f63f1a5f1a7353da6ad030be95a.png", "asset://27e6fc1a20542f6c6beff0c211a1986b39f5e1adae6b4c90ccbe9fa82e9edae6.png", "asset://9862fbb47d08f5bd2fd1e506e7146e12affe236340f9cdb7c6bfe1aad7bef78b.png"];
 
@@ -989,7 +992,9 @@
     ballB = null;
     incidentSpeed;
     cushion;
+    position;
     constructor(type, ballA, ballB, incidentSpeed, timestamp, cushion) {
+      this.position = type === "Collision" /* Collision */ ? ballA.pos.clone().add(ballB.pos).multiplyScalar(0.5).toArray() : ballA.pos.toArray();
       this.type = type;
       this.ballA = ballA;
       this.ballB = ballB;
@@ -1275,6 +1280,7 @@
         hasPockets: true
       });
       PocketGeometry.scaleToRadius(R);
+      this.eventId = 0;
       this.reset();
     }
     reset() {
@@ -1285,6 +1291,7 @@
           return ball;
         })
       );
+      this.events = [];
       this.shots = 0;
       this.error = null;
     }
@@ -1302,6 +1309,13 @@
       this.table.cueball.rvel.copy(strike.rvel);
       this.table.cueball.state = "Sliding" /* Sliding */;
       this.table.outcome.length = 0;
+      this.events.push({
+        id: ++this.eventId,
+        type: "Hit",
+        time: this.table.time / 1e3,
+        position: this.table.cueball.pos.toArray(),
+        strength: speed
+      });
       this.shots++;
       return true;
     }
@@ -1318,6 +1332,16 @@
       if (!this.moving || this.error) return;
       try {
         this.table.advance(STEP);
+        for (const event of this.table.outcome) {
+          if (event.incidentSpeed < 0.03) continue;
+          this.events.push({
+            id: ++this.eventId,
+            type: event.type,
+            time: event.timestamp / 1e3,
+            position: event.position,
+            strength: event.incidentSpeed
+          });
+        }
         this.table.outcome.length = 0;
         if (this.table.balls.some(
           (b) => ![...b.pos.toArray(), ...b.vel.toArray(), ...b.rvel.toArray()].every(Number.isFinite)
@@ -1334,6 +1358,8 @@
     }
     snapshot() {
       return {
+        time: this.table.time / 1e3,
+        lastEventId: this.eventId,
         shots: this.shots,
         moving: this.moving,
         scratched: this.scratched,
@@ -1346,10 +1372,10 @@
   // hyperfy-billard/src/server.js
   function startServer(world2, app2, preset2, playChannel = "classic-8-ft-pool-table") {
     const sim = new Simulation(preset2);
-    let owner = null, lease = 0, seq = 0, elapsed = 0, accumulator = 0, sinceSnapshot = 0, cueHolders = [], aim = null, lastAim = -1;
+    let owner = null, lease = 0, seq = 0, rack = 0, elapsed = 0, accumulator = 0, sinceSnapshot = 0, cueHolders = [], aim = null, lastAim = -1;
     const publish = () => {
       app2.state.aim = aim;
-      app2.state.pool = { ...sim.snapshot(), owner, cueHolders: cueHolders.slice(), seq: ++seq, time: elapsed };
+      app2.state.pool = { ...sim.snapshot(), owner, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) };
       app2.send("pool:snapshot", app2.state.pool);
     };
     const playerFor = (sender) => world2.getPlayers().find((p) => p.networkId === sender);
@@ -1421,6 +1447,7 @@
         if (operation === "place") accepted = sim.place(request.x, request.y);
         if (operation === "reset" && !sim.moving) {
           sim.reset();
+          rack++;
           accepted = true;
         }
         if (accepted) publish();
@@ -1448,6 +1475,54 @@
     refreshCues();
     publish();
     return sim;
+  }
+
+  // hyperfy-billard/src/sound.js
+  function createSounds(app2, sources) {
+    const voices = [];
+    let volume = 1;
+    const play = (event, clock) => {
+      const src = sources[event.type];
+      if (!src) return;
+      let voice = voices.find((v) => v.until <= clock);
+      if (!voice && voices.length < 24) {
+        const node = app2.create("audio", { group: "sfx", spatial: true, refDistance: 1, rolloffFactor: 1.5 });
+        app2.add(node);
+        voice = { node, until: 0 };
+        voices.push(voice);
+      }
+      if (!voice) return;
+      voice.node.active = false;
+      voice.node.src = src;
+      voice.node.position.set(event.position[0], BALL_RADIUS + event.position[2], -event.position[1]);
+      const gain = event.type === "Cushion" ? 0.55 : event.type === "Pot" ? 0.7 : 1;
+      voice.gain = gain * Math.min(1, Math.sqrt(event.strength / 5));
+      voice.node.volume = voice.gain * volume;
+      voice.node.active = true;
+      voice.node.play();
+      voice.until = clock + 0.5;
+    };
+    return {
+      play,
+      setVolume(value) {
+        volume = Number.isFinite(value) ? Math.max(0, Math.min(5, value)) : 1;
+        for (const voice of voices) voice.node.volume = voice.gain * volume;
+      },
+      update(clock) {
+        for (const voice of voices) {
+          if (voice.until && voice.until <= clock) {
+            voice.node.stop();
+            voice.until = 0;
+          }
+        }
+      },
+      clear() {
+        for (const voice of voices) {
+          voice.node.stop();
+          voice.until = 0;
+        }
+      }
+    };
   }
 
   // hyperfy-billard/src/aim.js
@@ -1493,14 +1568,14 @@
   }
 
   // hyperfy-billard/src/client.js
-  function startClient(world2, app2, { balls, ghost, action, size, playChannel }) {
+  function startClient(world2, app2, { balls, ghost, action, size, playChannel, soundSources }) {
     if (!world2.getPlayer) return;
     const me = world2.getPlayer();
     if (!me) {
       const ready = () => {
         if (!world2.getPlayer()) return;
         app2.off("update", ready);
-        startClient(world2, app2, { balls, ghost, action, size, playChannel });
+        startClient(world2, app2, { balls, ghost, action, size, playChannel, soundSources });
       };
       app2.on("update", ready);
       return;
@@ -1511,6 +1586,11 @@
     let elevation = AIM_ELEVATION, floorY = 0, lastStanceAt = -1;
     let placeX = -size.length / 4, placeY = 0;
     let cueHolders = latest?.cueHolders || [], aim = app2.state?.aim, posedPlayer = null;
+    const sounds = createSounds(app2, soundSources || {});
+    const volumeEvent = `billard:volume:${playChannel}`;
+    world2.on(volumeEvent, (value) => sounds.setVolume(value));
+    app2.emit(`${volumeEvent}:request`);
+    let soundEvents = [], lastEventId = latest?.lastEventId || 0;
     const cueEvent = `billard:cues:${playChannel}`;
     const aimingEvent = `billard:aiming:${playChannel}`;
     const poseEvent = `billard:cue-pose:${playChannel}`;
@@ -1564,6 +1644,10 @@
       if (control || !pending || !hasCue() || latest?.moving) return;
       pending = false;
       side = top = 0;
+      if (latest.scratched) {
+        placeX = -size.length / 4;
+        placeY = 0;
+      }
       control = app2.control();
       idle = null;
       for (const key of ["keyW", "keyA", "keyS", "keyD", "arrowLeft", "arrowRight", "arrowUp", "arrowDown", "space", "keyR", "escape"])
@@ -1593,6 +1677,17 @@
     };
     const receive = (snapshot) => {
       if (!snapshot || latest && snapshot.seq <= latest.seq) return;
+      if (latest && snapshot.scratched !== latest.scratched && !snapshot.moving) frames = [];
+      if (latest && snapshot.rack !== latest.rack) {
+        frames = [];
+        soundEvents = [];
+        sounds.clear();
+      }
+      if (!latest) lastEventId = snapshot.lastEventId || 0;
+      for (const event of snapshot.events || []) {
+        if (event.id > lastEventId) soundEvents.push(event);
+      }
+      lastEventId = Math.max(lastEventId, snapshot.lastEventId || 0);
       latest = snapshot;
       cueHolders = snapshot.cueHolders || [];
       frames.push({ at: clock, snapshot });
@@ -1630,7 +1725,7 @@
         return;
       }
       const local = me.position.clone().sub(app2.position).applyQuaternion(app2.quaternion.clone().invert());
-      const ball = latest?.balls[0]?.p || [-size.length / 4, 0, 0];
+      const ball = latest?.scratched ? [-size.length / 4, 0, 0] : latest?.balls[0]?.p || [-size.length / 4, 0, 0];
       angle = Math.atan2(ball[1] + local.z, ball[0] - local.x);
       pending = true;
       requestedAt = clock;
@@ -1650,22 +1745,31 @@
       clock += dt;
       if (pending && clock - requestedAt > 2) stop(false);
       if (!control && clock > toastUntil) ui.active = false;
+      sounds.update(clock);
       const nearby = me.position.distanceTo(app2.position) < 15;
       for (const ball of balls) ball.active = nearby;
       if (!nearby) {
         if (control) stop();
         clearPose();
-        return;
+        sounds.clear();
+        soundEvents = [];
       }
       const renderAt = clock - 0.1;
       while (frames.length > 1 && frames[1].at <= renderAt) frames.shift();
       const a = frames[0], b = frames[1] || a;
       if (a) {
         const alpha = a === b ? 1 : Math.max(0, Math.min(1, (renderAt - a.at) / (b.at - a.at || 1)));
+        const displayedTime = a.snapshot.time + (b.snapshot.time - a.snapshot.time) * alpha;
+        const futureEvents = [];
+        for (const event of soundEvents) {
+          if (event.time > displayedTime) futureEvents.push(event);
+          else if (nearby && displayedTime - event.time <= 0.12) sounds.play(event, clock);
+        }
+        soundEvents = futureEvents;
         a.snapshot.balls.forEach((state, i) => {
           const next = b.snapshot.balls[i];
           const p = state.p.map((v, j) => v + (next.p[j] - v) * alpha);
-          balls[i].active = state.state !== "InPocket";
+          balls[i].active = nearby && state.state !== "InPocket";
           balls[i].position.set(p[0], BALL_RADIUS + p[2], -p[1]);
           axis.set(state.w[0], state.w[2], -state.w[1]);
           const rotationSpeed = axis.length();
@@ -1674,6 +1778,7 @@
           );
         });
       }
+      if (!nearby) return;
       if (control && (me.position.distanceTo(app2.position) > 5 || !hasCue())) stop();
       if (control) {
         ping += dt;
@@ -1684,14 +1789,24 @@
         const horizontal = Number(control.arrowRight.down) - Number(control.arrowLeft.down);
         const vertical = Number(control.arrowUp.down) - Number(control.arrowDown.down);
         const pointer = control.pointer.delta;
+        const turn = horizontal * dt + pointer.x * 3e-3;
+        angle = Math.atan2(Math.sin(angle - turn), Math.cos(angle - turn));
+        elevation = Math.max(0.08, Math.min(0.75, elevation + pointer.y * 3e-3));
         if (latest?.scratched) {
-          placeX = Math.max(-size.length / 2 + 2 * BALL_RADIUS, Math.min(size.length / 2 - 2 * BALL_RADIUS, placeX + horizontal * dt * 0.5));
-          placeY = Math.max(-size.width / 2 + 2 * BALL_RADIUS, Math.min(size.width / 2 - 2 * BALL_RADIUS, placeY + vertical * dt * 0.5));
-          ghost.position.set(placeX, BALL_RADIUS, -placeY);
+          const forward = Number(control.keyW.down) - Number(control.keyS.down);
+          const right = Number(control.keyD.down) - Number(control.keyA.down);
+          const distance = dt * 0.5 / Math.max(1, Math.hypot(forward, right));
+          placeX = Math.max(-size.length / 2 + 2 * BALL_RADIUS, Math.min(
+            size.length / 2 - 2 * BALL_RADIUS,
+            placeX + (Math.cos(angle) * forward + Math.sin(angle) * right) * distance
+          ));
+          placeY = Math.max(-size.width / 2 + 2 * BALL_RADIUS, Math.min(
+            size.width / 2 - 2 * BALL_RADIUS,
+            placeY + (Math.sin(angle) * forward - Math.cos(angle) * right) * distance
+          ));
+          balls[0].active = true;
+          balls[0].position.set(placeX, BALL_RADIUS, -placeY);
         } else {
-          const turn = horizontal * dt + pointer.x * 3e-3;
-          angle = Math.atan2(Math.sin(angle - turn), Math.cos(angle - turn));
-          elevation = Math.max(0.08, Math.min(0.75, elevation + pointer.y * 3e-3));
           speed = Math.max(0.1, Math.min(5, speed + vertical * dt));
           side += (Number(control.keyD.down) - Number(control.keyA.down)) * dt * 0.3;
           top += (Number(control.keyW.down) - Number(control.keyS.down)) * dt * 0.3;
@@ -1720,8 +1835,8 @@
           sinceAim = 0;
           app2.send("pool:aim", { angle, side, top });
         }
-        ghost.active = !!latest?.scratched;
-        text.value = latest?.error || (latest?.scratched ? "Scratch \xB7 Arrows: place cue ball \xB7 Space: confirm \xB7 R: re-rack \xB7 Esc: leave" : `Mouse: orbit / aim \xB7 \u2191 \u2193 Power ${speed.toFixed(1)} m/s \xB7 W/S Top ${top.toFixed(2)} \xB7 A/D Side ${side.toFixed(2)}
+        ghost.active = false;
+        text.value = latest?.error || (latest?.scratched ? "Scratch \xB7 Mouse / \u2190 \u2192: orbit \xB7 WASD: move white ball\nSpace: confirm \xB7 R: re-rack \xB7 Esc: leave" : `Mouse: orbit / aim \xB7 \u2191 \u2193 Power ${speed.toFixed(1)} m/s \xB7 W/S Top ${top.toFixed(2)} \xB7 A/D Side ${side.toFixed(2)}
 Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
       }
       const shooter = latest?.owner;
@@ -1753,6 +1868,7 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
       ],
       initial: "9"
     },
+    ...[["Hit", "Cue strike"], ["Collision", "Ball collision"], ["Cushion", "Cushion hit"], ["Pot", "Pocket drop"]].map(([type, label]) => ({ key: `sound${type}`, type: "file", kind: "audio", label: `${label} sound` })),
     { key: "showSurface", type: "toggle", label: "Show practice surface", initial: true },
     { key: "playChannel", type: "text", label: "Table and cue rack channel", initial: "classic-8-ft-pool-table" }
   ]);
@@ -1811,6 +1927,7 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
     app.add(action);
     if (!world.isPreview)
       startClient(world, app, {
+        soundSources: Object.fromEntries(["Hit", "Collision", "Cushion", "Pot"].map((type) => [type, props[`sound${type}`]?.url || define_BILLARD_SOUNDS_default[type]])),
         balls,
         ghost,
         action,

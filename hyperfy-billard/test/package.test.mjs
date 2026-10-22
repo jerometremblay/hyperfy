@@ -65,16 +65,42 @@ test('different app instances keep physics dimensions and ownership isolated', (
   assert.equal(b.app.state.pool.owner, null)
 })
 
-test('native import/export retains every texture for later re-export and cleanup', async () => {
+test('native import/export retains every texture and sound for later re-export and cleanup', async () => {
   const bytes = await readFile(`${root}dist/hyperfy-billard.hyp`)
   const imported = await nodes.importApp(new File([bytes], 'billard.hyp'))
   const files = new Map(imported.assets.map(a => [a.url, a.file]))
   const exported = await nodes.exportApp(imported.blueprint, url => files.get(url))
   const again = await nodes.importApp(exported)
-  assert.equal(again.assets.length, 17)
+  assert.equal(again.assets.length, 21)
+  assert.equal(again.blueprint.preload, true)
+  const sounds = again.assets.filter(asset => asset.type === 'audio')
+  assert.equal(sounds.length, 4)
+  for (const type of ['Hit', 'Collision', 'Cushion', 'Pot']) {
+    const prop = again.blueprint.props[`sound${type}`]
+    assert.equal(prop.type, 'audio')
+    assert.ok(sounds.some(asset => asset.url === prop.url))
+  }
   for (const asset of again.assets) {
     const original = files.get(asset.url)
     assert.ok(original, asset.url)
     assert.deepEqual(Buffer.from(await asset.file.arrayBuffer()), Buffer.from(await original.arrayBuffer()))
+  }
+})
+
+
+test('packaged OGG sounds are exact unmodified upstream assets', async () => {
+  const provenance = JSON.parse(await readFile(`${root}sounds/provenance.json`))
+  assert.equal(provenance.commit, 'b23b1d9f0da103783f70fa48a6c6f7f288290d9e')
+  const imported = await nodes.importApp(new File([await readFile(`${root}dist/hyperfy-billard.hyp`)], 'billard.hyp'))
+  const sounds = imported.assets.filter(asset => asset.type === 'audio')
+  assert.equal(sounds.length, 4)
+  for (const record of provenance.files) {
+    const bytes = await readFile(`${root}sounds/${record.path.split('/').at(-1)}`)
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), record.sha256)
+    assert.equal(createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex'), record.gitBlob)
+    const asset = sounds.find(asset => asset.url === `asset://${record.sha256}.ogg`)
+    assert.ok(asset)
+    assert.equal(asset.file.type, 'audio/ogg')
+    assert.deepEqual(Buffer.from(await asset.file.arrayBuffer()), bytes)
   }
 })

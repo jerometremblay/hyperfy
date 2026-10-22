@@ -76,20 +76,21 @@ export class Audio extends Node {
     this.stop()
   }
 
-  updatePannerPosition() {
+  updatePannerPosition(immediate = false) {
     if (!this.pannerNode) return
     const audio = this.ctx.world.audio
     const pos = v1.setFromMatrixPosition(this.matrixWorld)
     const qua = q1.setFromRotationMatrix(this.matrixWorld)
     const dir = v2.set(0, 0, -1).applyQuaternion(qua)
     if (this.pannerNode.positionX) {
-      const endTime = audio.ctx.currentTime + audio.lastDelta
-      this.pannerNode.positionX.linearRampToValueAtTime(pos.x, endTime)
-      this.pannerNode.positionY.linearRampToValueAtTime(pos.y, endTime)
-      this.pannerNode.positionZ.linearRampToValueAtTime(pos.z, endTime)
-      this.pannerNode.orientationX.linearRampToValueAtTime(dir.x, endTime)
-      this.pannerNode.orientationY.linearRampToValueAtTime(dir.y, endTime)
-      this.pannerNode.orientationZ.linearRampToValueAtTime(dir.z, endTime)
+      const set = immediate ? 'setValueAtTime' : 'linearRampToValueAtTime'
+      const endTime = audio.ctx.currentTime + (immediate ? 0 : audio.lastDelta)
+      this.pannerNode.positionX[set](pos.x, endTime)
+      this.pannerNode.positionY[set](pos.y, endTime)
+      this.pannerNode.positionZ[set](pos.z, endTime)
+      this.pannerNode.orientationX[set](dir.x, endTime)
+      this.pannerNode.orientationY[set](dir.y, endTime)
+      this.pannerNode.orientationZ[set](dir.z, endTime)
     } else {
       this.pannerNode.setPosition(pos.x, pos.y, pos.z)
       this.pannerNode.setOrientation(dir.x, dir.y, dir.z)
@@ -345,7 +346,8 @@ export class Audio extends Node {
       this.source.connect(this.gainNode)
       this.gainNode.connect(this.pannerNode)
       this.pannerNode.connect(audio.groupGains[this._group])
-      this.updatePannerPosition()
+      // A new source must begin at its actual position, never ramp from (0, 0, 0).
+      this.updatePannerPosition(true)
     } else {
       this.source.connect(this.gainNode)
       this.gainNode.connect(audio.groupGains[this._group])

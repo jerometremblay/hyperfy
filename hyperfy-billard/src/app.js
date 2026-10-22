@@ -15,6 +15,8 @@ app.configure?.([
     ],
     initial: '9',
   },
+  ...[['Hit', 'Cue strike'], ['Collision', 'Ball collision'], ['Cushion', 'Cushion hit'], ['Pot', 'Pocket drop']]
+    .map(([type, label]) => ({ key: `sound${type}`, type: 'file', kind: 'audio', label: `${label} sound` })),
   { key: 'showSurface', type: 'toggle', label: 'Show practice surface', initial: true },
   { key: 'playChannel', type: 'text', label: 'Table and cue rack channel', initial: 'classic-8-ft-pool-table' },
 ])
@@ -78,6 +80,8 @@ if (world.isServer) {
   app.add(action)
   if (!world.isPreview)
     startClient(world, app, {
+      soundSources: Object.fromEntries(['Hit', 'Collision', 'Cushion', 'Pot'].map(type =>
+        [type, props[`sound${type}`]?.url || BILLARD_SOUNDS[type]])),
       balls,
       ghost,
       action,

@@ -17,7 +17,7 @@ export const physics = await import(`${temp}/simulation.mjs`)
 await build({
   stdin: {
     contents:
-      ['Prim', 'Group', 'Action', 'UI', 'UIText']
+      ['Prim', 'Group', 'Action', 'UI', 'UIText', 'Audio']
         .map(n => `export { ${n} } from './src/core/nodes/${n}.js'`)
         .join(';') + "; export { importApp, exportApp } from './src/core/extras/appTools.js'",
     resolveDir: `${root}..`,
@@ -28,12 +28,13 @@ await build({
   outfile: `${temp}/nodes.mjs`,
 })
 export const nodes = await import(`${temp}/nodes.mjs`)
-const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText }
+const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText, audio: nodes.Audio }
 export const code = await readFile(`${root}dist/hyperfy-billard.js`, 'utf8')
 export function harness({ server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders } = {}) {
   const handlers = {},
     created = [],
-    sent = []
+    sent = [],
+    audioPlays = []
   let released = 0
   let control = null, activeControl = null
   const pointer = { delta: new THREE.Vector3(), locked: false,
@@ -50,6 +51,11 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     create(type, data) {
       const n = new constructors[type](data)
       n.activate = n.deactivate = () => {}
+      // Keep real Audio properties/proxies; replace only the browser audio backend.
+      if (type === 'audio') {
+        n.play = () => audioPlays.push({ src: n.src, volume: n.volume, position: n.position.clone(), node: n })
+        n.stop = () => { n.stops = (n.stops || 0) + 1 }
+      }
       created.push(n)
       return n.getProxy()
     },
@@ -120,6 +126,7 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     handlers,
     created,
     sent,
+    audioPlays,
     get activeControl() { return activeControl },
     get control() {
       activeControl = control

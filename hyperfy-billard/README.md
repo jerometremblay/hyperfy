@@ -1,7 +1,7 @@
 # Hyperfy Billard
 
 A portable, server-owned pool practice app for this Hyperfy 0.16 fork. One `.hyp`
-contains the physics code, renderer adapter, numbered ball textures and empty GLB
+contains the physics code, renderer adapter, spatial sound samples, numbered ball textures and empty GLB
 bootstrap. The physics needs no external service or runtime downloads. The close,
 animated camera return uses this fork's native player camera API.
 Playing requires a held cue from the companion rack (`cue-rack/rack.hyp`). The
@@ -59,7 +59,10 @@ standing animation with a custom crouching animation.
   zoom (0.3 m) with a 0.45-second eased motion, looking toward the cue ball at
   the instant of the shot. Normal mouse
   look, movement, zoom and wall collision remain active; no ball tracking follows. Click Play on the table again for your next shot.
-- After a scratch: arrows move the transparent cue-ball marker; Space places it.
+- After a scratch: mouse or left/right arrows orbit the white ball as usual.
+  WASD moves the actual white-ball mesh across the cloth relative to the view
+  (W forward, S backward, A left, D right), with the camera following its position.
+  Space confirms placement and continues aiming; Escape cancels the local preview.
   The server rejects occupied or out-of-bounds positions.
 - R: re-rack while stopped. Escape: release the camera and movement controls.
 
@@ -128,10 +131,29 @@ speed reduce missed contacts but do not prove every grazing or simultaneous
 contact. Pocket circles/jaws retain upstream proportions; they are not a certified
 WPA pocket cut. The six black disks on the practice surface mark capture zones.
 The app provides no jumps, masse/elevated-cue shots, full 8-ball foul/win rules,
-VR cue tracking, tournament scoring, audio, or durable match persistence.
+VR cue tracking, tournament scoring, or durable match persistence.
 
 The server alone advances physics. Clients render snapshots at up to 20 Hz with
-100 ms interpolation. All connected clients receive the normal Hyperfy app
+100 ms interpolation. Cue strikes, ball collisions, cushion hits and pocket drops
+play as spatial effects on that same simulation timeline, with volume based on
+impact speed. Events are sent once in snapshot batches; late joins skip historical
+sounds, resets clear queued effects, and effects more than 120 ms behind displayed
+physics are skipped. Up to 24 overlapping voices are allowed; negligible impacts
+(below 0.03 m/s) are silent. Audio also stops beyond 15 m.
+
+Four unmodified Ogg Vorbis samples from the pinned Tailuge revision are embedded
+as audio props and preloaded with the blueprint: `cue.ogg`, `ballcollision.ogg`,
+`cushion.ogg`, and `pot.ogg`. File hashes and source paths are recorded in
+`sounds/provenance.json`. The app audio fields can replace `soundHit`,
+`soundCollision`, `soundCushion`, and `soundPot`. Playback uses native
+Hyperfy audio nodes and the SFX volume setting; a world click is required to
+unlock browser audio. The visible table settings include **Sound volume (1 = normal)**:
+0 mutes, 1 restores the standard level, and values up to 5 boost all impact sounds.
+This table setting updates active effects and future impacts without restarting
+the pool simulation; the global SFX volume still applies.
+Timing is frame based, not sample accurate.
+
+All connected clients receive the normal Hyperfy app
 broadcast; ball rendering stops beyond 15 m. Interest-managed network delivery
 would need a later engine feature. The current desktop camera/controls are tested;
 mobile/XR input is not provided.

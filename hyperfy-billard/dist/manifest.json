@@ -6,8 +6,24 @@
     "author": "jerometremblay-bot",
     "desc": "Server-owned pool practice, Tailuge physics, WPA 8/9-foot surface. GPL-3.0-only.",
     "model": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
-    "script": "asset://15ba59694773e1540ef59b9f59862e201021c2174e1b61cb54ac2918370b5dcc.js",
+    "script": "asset://b4513aadc8fb8293deeca9aa6cde5004395adce7e1002492413263fa02d6fc38.js",
     "props": {
+      "soundHit": {
+        "type": "audio",
+        "url": "asset://caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090.ogg"
+      },
+      "soundCollision": {
+        "type": "audio",
+        "url": "asset://9c25bb4e737fbfe3e84f166621e52b3f6eb0a507a5ddbe29eed5186a27660af2.ogg"
+      },
+      "soundCushion": {
+        "type": "audio",
+        "url": "asset://5c28fde11e323cbf0dca9181b1e17e318c31e20afb3d53ccf3e97ad083224594.ogg"
+      },
+      "soundPot": {
+        "type": "audio",
+        "url": "asset://cff7442580bce2f65be7f7968688bd827c7a140ee05578f3e41a0f45eec9b479.ogg"
+      },
       "tableSize": "9",
       "showSurface": true,
       "playChannel": "classic-8-ft-pool-table",
@@ -72,13 +88,37 @@
         "url": "asset://9862fbb47d08f5bd2fd1e506e7146e12affe236340f9cdb7c6bfe1aad7bef78b.png"
       }
     },
-    "preload": false,
+    "preload": true,
     "public": false,
     "locked": false,
     "unique": false,
     "disabled": false
   },
   "assets": [
+    {
+      "type": "audio",
+      "url": "asset://caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090.ogg",
+      "size": 5492,
+      "mime": "audio/ogg"
+    },
+    {
+      "type": "audio",
+      "url": "asset://9c25bb4e737fbfe3e84f166621e52b3f6eb0a507a5ddbe29eed5186a27660af2.ogg",
+      "size": 5679,
+      "mime": "audio/ogg"
+    },
+    {
+      "type": "audio",
+      "url": "asset://5c28fde11e323cbf0dca9181b1e17e318c31e20afb3d53ccf3e97ad083224594.ogg",
+      "size": 5808,
+      "mime": "audio/ogg"
+    },
+    {
+      "type": "audio",
+      "url": "asset://cff7442580bce2f65be7f7968688bd827c7a140ee05578f3e41a0f45eec9b479.ogg",
+      "size": 6645,
+      "mime": "audio/ogg"
+    },
     {
       "type": "texture",
       "url": "asset://57e1dd066ccdbcd57ad5740439d7a57213cea1c70a5607220f76577c16393584.png",
@@ -177,8 +217,8 @@
     },
     {
       "type": "script",
-      "url": "asset://15ba59694773e1540ef59b9f59862e201021c2174e1b61cb54ac2918370b5dcc.js",
-      "size": 66089,
+      "url": "asset://b4513aadc8fb8293deeca9aa6cde5004395adce7e1002492413263fa02d6fc38.js",
+      "size": 71190,
       "mime": "text/plain"
     }
   ]

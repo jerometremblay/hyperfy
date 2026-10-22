@@ -43,6 +43,7 @@ export class Simulation {
       hasPockets: true,
     })
     PocketGeometry.scaleToRadius(R)
+    this.eventId = 0
     this.reset()
   }
   reset() {
@@ -54,6 +55,7 @@ export class Simulation {
         return ball
       })
     )
+    this.events = []
     this.shots = 0
     this.error = null
   }
@@ -80,6 +82,8 @@ export class Simulation {
     this.table.cueball.rvel.copy(strike.rvel)
     this.table.cueball.state = State.Sliding
     this.table.outcome.length = 0
+    this.events.push({ id: ++this.eventId, type: 'Hit', time: this.table.time / 1000,
+      position: this.table.cueball.pos.toArray(), strength: speed })
     this.shots++
     return true
   }
@@ -103,7 +107,12 @@ export class Simulation {
     if (!this.moving || this.error) return
     try {
       this.table.advance(STEP)
-      // Outcomes are diagnostic, not a growing match history.
+      for (const event of this.table.outcome) {
+        if (event.incidentSpeed < 0.03) continue
+        this.events.push({ id: ++this.eventId, type: event.type, time: event.timestamp / 1000,
+          position: event.position, strength: event.incidentSpeed })
+      }
+      // Drain sound events at each publication; do not retain match history.
       this.table.outcome.length = 0
       if (
         this.table.balls.some(
@@ -122,6 +131,8 @@ export class Simulation {
   }
   snapshot() {
     return {
+      time: this.table.time / 1000,
+      lastEventId: this.eventId,
       shots: this.shots,
       moving: this.moving,
       scratched: this.scratched,

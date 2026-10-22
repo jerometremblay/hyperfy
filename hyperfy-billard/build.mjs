@@ -10,8 +10,13 @@ await mkdir(dist, { recursive: true })
 const url = (bytes, ext) => `asset://${createHash('sha256').update(bytes).digest('hex')}.${ext}`
 const textures = Array.from({ length: 15 }, (_, i) => ballTexture(i + 1))
 const textureUrls = [null, ...textures.map(bytes => url(bytes, 'png'))]
+const sounds = await Promise.all([['Hit', 'cue'], ['Collision', 'ballcollision'], ['Cushion', 'cushion'], ['Pot', 'pot']].map(async ([type, name]) => {
+  const bytes = await readFile(`${root}sounds/${name}.ogg`)
+  return { type, bytes, url: url(bytes, 'ogg') }
+}))
+const soundUrls = Object.fromEntries(sounds.map(sound => [sound.type, sound.url]))
 await build({
-  define: { BILLARD_TEXTURES: JSON.stringify(textureUrls) },
+  define: { BILLARD_TEXTURES: JSON.stringify(textureUrls), BILLARD_SOUNDS: JSON.stringify(soundUrls) },
   entryPoints: [`${root}src/app.js`],
   bundle: true,
   format: 'iife',
@@ -52,18 +57,20 @@ const blueprint = {
   model: url(model, 'glb'),
   script: url(script, 'js'),
   props: {
+    ...Object.fromEntries(sounds.map(sound => [`sound${sound.type}`, { type: 'audio', url: sound.url }])),
     tableSize: '9',
     showSurface: true,
     playChannel: 'classic-8-ft-pool-table',
     ...Object.fromEntries(textureUrls.slice(1).map((url, i) => [`ball${i + 1}`, { type: 'texture', url }])),
   },
-  preload: false,
+  preload: true,
   public: false,
   locked: false,
   unique: false,
   disabled: false,
 }
 const assets = [
+  ...sounds.map(sound => ({ type: 'audio', url: sound.url, size: sound.bytes.length, mime: 'audio/ogg' })),
   ...textures.map((bytes, i) => ({ type: 'texture', url: textureUrls[i + 1], size: bytes.length, mime: 'image/png' })),
   { type: 'model', url: blueprint.model, size: model.length, mime: 'model/gltf-binary' },
   { type: 'script', url: blueprint.script, size: script.length, mime: 'text/plain' },
@@ -71,7 +78,7 @@ const assets = [
 const header = Buffer.from(JSON.stringify({ blueprint, assets }))
 const prefix = Buffer.alloc(4)
 prefix.writeUInt32LE(header.length)
-await writeFile(`${dist}/hyperfy-billard.hyp`, Buffer.concat([prefix, header, ...textures, model, script]))
+await writeFile(`${dist}/hyperfy-billard.hyp`, Buffer.concat([prefix, header, ...sounds.map(sound => sound.bytes), ...textures, model, script]))
 const viewer = await build({
   entryPoints: [`${root}preview-viewer.js`],
   bundle: true,

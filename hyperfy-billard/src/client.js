@@ -1,15 +1,16 @@
 import { Vector3, Quaternion, Euler } from 'three'
 import { BALL_RADIUS as R } from './simulation.js'
+import { createSounds } from './sound.js'
 import { shotPose, avatarStance, AIM_ELEVATION } from './aim.js'
 
-export function startClient(world, app, { balls, ghost, action, size, playChannel }) {
+export function startClient(world, app, { balls, ghost, action, size, playChannel, soundSources }) {
   if (!world.getPlayer) return
   const me = world.getPlayer()
   if (!me) {
     const ready = () => {
       if (!world.getPlayer()) return
       app.off('update', ready)
-      startClient(world, app, { balls, ghost, action, size, playChannel })
+      startClient(world, app, { balls, ghost, action, size, playChannel, soundSources })
     }
     app.on('update', ready)
     return
@@ -20,6 +21,11 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
   let elevation = AIM_ELEVATION, floorY = 0, lastStanceAt = -1
   let placeX = -size.length / 4, placeY = 0
   let cueHolders = latest?.cueHolders || [], aim = app.state?.aim, posedPlayer = null
+  const sounds = createSounds(app, soundSources || {})
+  const volumeEvent = `billard:volume:${playChannel}`
+  world.on(volumeEvent, value => sounds.setVolume(value))
+  app.emit(`${volumeEvent}:request`)
+  let soundEvents = [], lastEventId = latest?.lastEventId || 0
   const cueEvent = `billard:cues:${playChannel}`
   const aimingEvent = `billard:aiming:${playChannel}`
   const poseEvent = `billard:cue-pose:${playChannel}`
@@ -60,6 +66,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     if (control || !pending || !hasCue() || latest?.moving) return
     pending = false
     side = top = 0
+    if (latest.scratched) { placeX = -size.length / 4; placeY = 0 }
     control = app.control()
     idle = null
     for (const key of ['keyW', 'keyA', 'keyS', 'keyD', 'arrowLeft', 'arrowRight', 'arrowUp', 'arrowDown', 'space', 'keyR', 'escape'])
@@ -87,6 +94,17 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
   }
   const receive = snapshot => {
     if (!snapshot || (latest && snapshot.seq <= latest.seq)) return
+    if (latest && snapshot.scratched !== latest.scratched && !snapshot.moving) frames = []
+    if (latest && snapshot.rack !== latest.rack) {
+      frames = []
+      soundEvents = []
+      sounds.clear()
+    }
+    if (!latest) lastEventId = snapshot.lastEventId || 0
+    for (const event of snapshot.events || []) {
+      if (event.id > lastEventId) soundEvents.push(event)
+    }
+    lastEventId = Math.max(lastEventId, snapshot.lastEventId || 0)
     latest = snapshot
     cueHolders = snapshot.cueHolders || []
     frames.push({ at: clock, snapshot })
@@ -113,7 +131,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     if (latest?.moving) { toast('Wait for the balls to stop before aiming again.'); return }
     if (latest?.owner && latest.owner !== me.id) { toast('The pool table is in use.'); return }
     const local = me.position.clone().sub(app.position).applyQuaternion(app.quaternion.clone().invert())
-    const ball = latest?.balls[0]?.p || [-size.length / 4, 0, 0]
+    const ball = latest?.scratched ? [-size.length / 4, 0, 0] : latest?.balls[0]?.p || [-size.length / 4, 0, 0]
     angle = Math.atan2(ball[1] + local.z, ball[0] - local.x)
     pending = true
     requestedAt = clock
@@ -133,18 +151,26 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     clock += dt
     if (pending && clock - requestedAt > 2) stop(false)
     if (!control && clock > toastUntil) ui.active = false
+    sounds.update(clock)
     const nearby = me.position.distanceTo(app.position) < 15
     for (const ball of balls) ball.active = nearby
-    if (!nearby) { if (control) stop(); clearPose(); return }
+    if (!nearby) { if (control) stop(); clearPose(); sounds.clear(); soundEvents = [] }
     const renderAt = clock - 0.1
     while (frames.length > 1 && frames[1].at <= renderAt) frames.shift()
     const a = frames[0], b = frames[1] || a
     if (a) {
       const alpha = a === b ? 1 : Math.max(0, Math.min(1, (renderAt - a.at) / (b.at - a.at || 1)))
+      const displayedTime = a.snapshot.time + (b.snapshot.time - a.snapshot.time) * alpha
+      const futureEvents = []
+      for (const event of soundEvents) {
+        if (event.time > displayedTime) futureEvents.push(event)
+        else if (nearby && displayedTime - event.time <= 0.12) sounds.play(event, clock)
+      }
+      soundEvents = futureEvents
       a.snapshot.balls.forEach((state, i) => {
         const next = b.snapshot.balls[i]
         const p = state.p.map((v, j) => v + (next.p[j] - v) * alpha)
-        balls[i].active = state.state !== 'InPocket'
+        balls[i].active = nearby && state.state !== 'InPocket'
         balls[i].position.set(p[0], R + p[2], -p[1])
         axis.set(state.w[0], state.w[2], -state.w[1])
         const rotationSpeed = axis.length()
@@ -152,6 +178,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
           new Quaternion().setFromAxisAngle(axis.multiplyScalar(1 / rotationSpeed), rotationSpeed * Math.min(dt, 0.1)))
       })
     }
+    if (!nearby) return
     if (control && (me.position.distanceTo(app.position) > 5 || !hasCue())) stop()
     if (control) {
       ping += dt
@@ -159,14 +186,21 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
       const horizontal = Number(control.arrowRight.down) - Number(control.arrowLeft.down)
       const vertical = Number(control.arrowUp.down) - Number(control.arrowDown.down)
       const pointer = control.pointer.delta
+      const turn = horizontal * dt + pointer.x * 0.003
+      angle = Math.atan2(Math.sin(angle - turn), Math.cos(angle - turn))
+      elevation = Math.max(0.08, Math.min(0.75, elevation + pointer.y * 0.003))
       if (latest?.scratched) {
-        placeX = Math.max(-size.length / 2 + 2 * R, Math.min(size.length / 2 - 2 * R, placeX + horizontal * dt * 0.5))
-        placeY = Math.max(-size.width / 2 + 2 * R, Math.min(size.width / 2 - 2 * R, placeY + vertical * dt * 0.5))
-        ghost.position.set(placeX, R, -placeY)
+        const forward = Number(control.keyW.down) - Number(control.keyS.down)
+        const right = Number(control.keyD.down) - Number(control.keyA.down)
+        const distance = dt * 0.5 / Math.max(1, Math.hypot(forward, right))
+        placeX = Math.max(-size.length / 2 + 2 * R, Math.min(size.length / 2 - 2 * R,
+          placeX + (Math.cos(angle) * forward + Math.sin(angle) * right) * distance))
+        placeY = Math.max(-size.width / 2 + 2 * R, Math.min(size.width / 2 - 2 * R,
+          placeY + (Math.sin(angle) * forward - Math.cos(angle) * right) * distance))
+        // Preview using the real cue-ball mesh; the server commits on Space.
+        balls[0].active = true
+        balls[0].position.set(placeX, R, -placeY)
       } else {
-        const turn = horizontal * dt + pointer.x * 0.003
-        angle = Math.atan2(Math.sin(angle - turn), Math.cos(angle - turn))
-        elevation = Math.max(0.08, Math.min(0.75, elevation + pointer.y * 0.003))
         speed = Math.max(0.1, Math.min(5, speed + vertical * dt))
         side += (Number(control.keyD.down) - Number(control.keyA.down)) * dt * 0.3
         top += (Number(control.keyW.down) - Number(control.keyS.down)) * dt * 0.3
@@ -191,9 +225,9 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
       }
       sinceAim += dt
       if (sinceAim >= 0.1) { sinceAim = 0; app.send('pool:aim', { angle, side, top }) }
-      ghost.active = !!latest?.scratched
+      ghost.active = false
       text.value = latest?.error || (latest?.scratched
-        ? 'Scratch · Arrows: place cue ball · Space: confirm · R: re-rack · Esc: leave'
+        ? 'Scratch · Mouse / ← →: orbit · WASD: move white ball\nSpace: confirm · R: re-rack · Esc: leave'
         : `Mouse: orbit / aim · ↑ ↓ Power ${speed.toFixed(1)} m/s · W/S Top ${top.toFixed(2)} · A/D Side ${side.toFixed(2)}\nSpace: shoot · Esc: leave · X: return cue`)
     }
     // Move the actual cue from the existing rack, visible to every observer.

@@ -17,8 +17,8 @@
     {
       "path": "model/outcome.ts",
       "upstreamSha256": "565aa794a8db0432e553fcdc19fccd434e942d2b4e6263275b792bb5b2a171ee",
-      "localSha256": "565aa794a8db0432e553fcdc19fccd434e942d2b4e6263275b792bb5b2a171ee",
-      "modified": false
+      "localSha256": "825ea495609f5956405f2092dd31c36e05327ade3316f8471e2a84d1fc8384e2",
+      "modified": true
     },
     {
       "path": "view/tablegeometry.ts",

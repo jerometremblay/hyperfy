@@ -16,6 +16,7 @@ export class Outcome {
   ballB: Ball | null = null
   incidentSpeed: number
   cushion?: string
+  position: number[]
 
   constructor(
     type: OutcomeType,
@@ -25,6 +26,10 @@ export class Outcome {
     timestamp: number,
     cushion?: string
   ) {
+    // Capture now: ball references continue moving after this event.
+    this.position = type === OutcomeType.Collision
+      ? ballA.pos.clone().add(ballB.pos).multiplyScalar(0.5).toArray()
+      : ballA.pos.toArray()
     this.type = type
     this.ballA = ballA
     this.ballB = ballB

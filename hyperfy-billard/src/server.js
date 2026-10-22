@@ -6,6 +6,7 @@ export function startServer(world, app, preset, playChannel = 'classic-8-ft-pool
   let owner = null,
     lease = 0,
     seq = 0,
+    rack = 0,
     elapsed = 0,
     accumulator = 0,
     sinceSnapshot = 0,
@@ -14,7 +15,7 @@ export function startServer(world, app, preset, playChannel = 'classic-8-ft-pool
     lastAim = -1
   const publish = () => {
     app.state.aim = aim
-    app.state.pool = { ...sim.snapshot(), owner, cueHolders: cueHolders.slice(), seq: ++seq, time: elapsed }
+    app.state.pool = { ...sim.snapshot(), owner, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) }
     app.send('pool:snapshot', app.state.pool)
   }
   const playerFor = sender => world.getPlayers().find(p => p.networkId === sender)
@@ -92,6 +93,7 @@ export function startServer(world, app, preset, playChannel = 'classic-8-ft-pool
       if (operation === 'place') accepted = sim.place(request.x, request.y)
       if (operation === 'reset' && !sim.moving) {
         sim.reset()
+        rack++
         accepted = true
       }
       if (accepted) publish()
