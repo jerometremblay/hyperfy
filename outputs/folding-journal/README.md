@@ -1,5 +1,15 @@
 # Folding journal
 
+## Daily content and the ChatGPT scheduled task
+
+The [Daily Hyperfy Activity task](https://chatgpt.com/scheduled?automationId=6ace4e1aa46881919663561af465546b&automationSource=cloud&edit_modal=true) researches journal content daily; its schedule displayed 5:00 a.m. when inspected on 21 October 2026. It publishes only materially new, verified developments to [The Hyperfy Journal](https://hyperfy-news.jerometremblay.chatgpt.site). Quiet days leave the journal unchanged and produce no notification.
+
+The task researches upstream Hyperfy, the public engine fork, Hyperfy apps and the wider ecosystem using a non-overlapping research cutoff. It checks existing reports for duplicates, then publishes through the site's `/api/reports` endpoint and verifies the saved report and issue archive. Same-date corrections preserve unrelated published stories and create an immutable revision. Personal/private world-instance repositories are excluded. Routine updates change feed data rather than redeploying the site; the in-world journal discovers new editions when opened.
+
+To inspect or recover the executed prompt, sign in to ChatGPT, open **Scheduled**, find **Daily Hyperfy Activity**, and choose **Edit**. The **Prompt** field contains the complete saved instructions, including editorial tone, repository attribution, layout, archive preservation and no-news rules. Copy that field and close the dialog without saving for a read-only recovery. The prompt recovered on 21 October 2026 contained 14,160 characters. Codex's automation tool does not expose this ChatGPT task; it was recovered through the signed-in ChatGPT browser interface. The task was left unchanged.
+
+## In-world app and interaction
+
 `journal.js` is the live app source for blueprint `EBE4MSm8zh` in the development world. Changes are uploaded through the agent REST API and applied with a blueprint version check.
 
 Page turns are server-authoritative. The opener sends `journal:turn-request` with direction `1` or `-1`. The server keeps `firstPage` and `turn` in app state and broadcasts `journal:pages`. Each turn includes a start time from Hyperfy's synchronized network clock; all clients animate the same 0.65-second turn. Snapshot state lets late joiners recover the current spread or animation phase. Closing cancels the active animation and retains the accepted destination spread.

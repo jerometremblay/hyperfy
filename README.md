@@ -93,7 +93,8 @@ the intended region. See the
 The **Hyperfy Journal** is a folding, readable newspaper app built with WebView
 surfaces. Open it to read the latest editions, follow links, and turn animated
 pages. Page turns are synchronized across clients, and the journal checks for
-new editions each time it opens. See the [journal app notes](outputs/folding-journal/README.md).
+new editions each time it opens. A daily ChatGPT scheduled task researches fresh
+content and updates the journal when there is substantive news. See the [journal app notes](outputs/folding-journal/README.md).
 
 ![A seated avatar reading an open two-page Hyperfy Journal beside the fireplace](hyperfy-journal.png)
 
