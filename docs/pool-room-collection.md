@@ -10,10 +10,19 @@ above that origin, matching the existing model's cloth height. The light fixture
 uses its existing cloth-level origin; place it on the table's playing surface and
 adjust its mounting height in settings. Place the rack and switch on a wall.
 
-Table and rack default to the shared `pool-room` channel. Pendant and wall switch
-default to `pool-room-lights`. These differ from the existing installed house
-objects, so newly added objects do not control that pool room. For another set,
-change each pair to matching, distinct channels in their settings.
+Each added or duplicated table defaults to an automatic channel derived from its
+entity ID. Leave **Pool game channel** blank to keep tables independent, including
+volume. An explicit shared channel shares volume events; it does not mirror balls
+or shots. Every table runs its own game, so you can play on either table.
+
+Cues from any rack work on every table, including aiming poses seen by observers.
+A player can hold only one cue across all racks. Return it with X before taking
+another. Pickup is checked on the server; other racks also hide their pickup
+prompts while you hold a cue. Updating or removing a rack preserves the holders
+from other racks.
+
+Pendant and wall switch default to `pool-room-lights`. To control another group
+of lights separately, give that fixture/switch pair a matching, distinct channel.
 
 Rebuild after changing the source apps:
 
@@ -34,7 +43,7 @@ The server imports its built-in collections on startup. Restart/reload the serve
 and reconnect clients after rebuilding the packages to refresh the Add menu.
 
 Verification: `npm test --prefix hyperfy-billard` covers package dependencies,
-playable combined table behavior, matching rack pickup, and switch/fixture state.
+playable combined table behavior, cross-table rack pickup, and switch/fixture state.
 `node --test src/client/components/addableBlueprints.test.mjs` checks the Add-menu
 collection source. The four choices were verified in 3333's live Add menu after a
 normal development-watcher restart; see `hyperfy-billard/validation/default-pool-catalog.jpg`.

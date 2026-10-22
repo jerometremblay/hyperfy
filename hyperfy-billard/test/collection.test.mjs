@@ -50,9 +50,8 @@ test('adding one pool table includes the simulator, cloth-height balls, sounds a
   assert.equal(client.activeControl, null)
 })
 
-test('the default rack and table use matching cue channels', async () => {
+test('the default rack works with the default table without channel configuration', async () => {
   const rack = await load('CueRack'), table = await load('PoolTable')
-  assert.equal(rack.blueprint.props.poolChannel, table.blueprint.props.poolChannel)
   const players = [player('alice')], bus = {}
   const rackServer = harness({ source: source(rack), props: rack.blueprint.props, players, bus, server: true })
   const tableServer = harness({ source: source(table), props: table.blueprint.props, players, bus, server: true })
@@ -75,4 +74,47 @@ test('the bundled wall switch controls the matching pendant light', async () => 
   assert.equal(light.app.state.on, false)
   toggle.emit('billiards-wall-switch-toggle', {}, 'alice')
   assert.equal(light.app.state.on, true)
+})
+
+
+test('two added tables get independent channels, accept any rack cue and keep shots separate', async () => {
+  const table = await load('PoolTable'), rack = await load('CueRack')
+  const players = [player('alice')], bus = {}
+  const a = harness({ instanceId: 'table-a', source: source(table), props: table.blueprint.props, players, bus, server: true })
+  const b = harness({ instanceId: 'table-b', source: source(table), props: table.blueprint.props, players, bus, server: true })
+  const rackServer = harness({ source: source(rack), props: { poolChannel: 'unrelated-rack' }, players, bus, server: true })
+  rackServer.emit('take-cue', { slot: 0 }, 'alice')
+  for (const game of [a, b]) {
+    game.emit('pool:claim', {}, 'alice')
+    assert.equal(game.app.state.pool.owner, 'alice', 'any held cue permits play on either table')
+    game.emit('pool:shoot', { seq: game.app.state.pool.seq, angle: 0, speed: 1 }, 'alice')
+    assert.equal(game.app.state.pool.shots, 1)
+  }
+  assert.equal(table.blueprint.props.poolChannel, '', 'new tables default to automatic channels')
+})
+
+
+test('automatic table channels isolate volume and sharing an explicit channel keeps games independent', async () => {
+  const table = await load('PoolTable'), players = [player('alice')], bus = {}
+  const a = harness({ instanceId: 'table-a', source: source(table), props: { ...table.blueprint.props, soundVolume: 0 }, players, bus })
+  const b = harness({ instanceId: 'table-b', source: source(table), props: { ...table.blueprint.props, soundVolume: 3 }, players, bus })
+  // Client audio nodes are created lazily on an audible impact.
+  for (const h of [a, b]) {
+    const game = harness({ server: true, players, cueHolders: ['alice'] })
+    h.emit('pool:snapshot', structuredClone(game.app.state.pool))
+    h.emit('pool:snapshot', { ...structuredClone(game.app.state.pool), seq: game.app.state.pool.seq + 1, time: 0.1,
+      lastEventId: 1, events: [{ id: 1, type: 'Hit', time: 0.05, position: [0, 0, 0], strength: 1 }] })
+    h.emit('update', 0.1)
+  }
+  assert.equal(a.audioPlays[0].volume, 0)
+  assert.ok(b.audioPlays[0].volume > 1, 'the other table keeps its boosted volume')
+  const shared = { ...table.blueprint.props, poolChannel: 'shared' }, serverBus = {}
+  const one = harness({ source: source(table), props: shared, server: true, players, bus: serverBus, cueHolders: ['alice'] })
+  const two = harness({ source: source(table), props: shared, server: true, players, bus: serverBus })
+  one.emit('pool:claim', {}, 'alice')
+  one.emit('pool:shoot', { seq: one.app.state.pool.seq, angle: 0, speed: 1 }, 'alice')
+  assert.equal(one.app.state.pool.shots, 1)
+  assert.equal(two.app.state.pool.shots, 0)
+  two.emit('pool:claim', {}, 'alice')
+  assert.equal(two.app.state.pool.owner, 'alice')
 })

@@ -11,7 +11,7 @@
   var Q = Quaternion;
   var E = Euler;
 
-  // vendor/tailuge/utils/utils.ts
+  // hyperfy-billard/vendor/tailuge/utils/utils.ts
   function atan2(y, x) {
     return Math.fround(Math.atan2(y, x));
   }
@@ -31,7 +31,7 @@
     return Math.fround(Math.hypot(x, y));
   }
 
-  // vendor/tailuge/utils/three-utils.ts
+  // hyperfy-billard/vendor/tailuge/utils/three-utils.ts
   var zero = new V(0, 0, 0);
   var up = new V(0, 0, 1);
   function vec(v) {
@@ -50,7 +50,7 @@
     return vc.copy(v).add(dv).dot(v) <= 0;
   }
 
-  // vendor/tailuge/model/physics/constants.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/constants.ts
   var mu = 55e-4;
   var muS = 0.126;
   var rho = 0.045;
@@ -86,7 +86,7 @@
     refresh();
   }
 
-  // vendor/tailuge/model/physics/mathavan.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/mathavan.ts
   var Mathavan = class {
     // work done
     P = 0;
@@ -219,7 +219,7 @@
     }
   };
 
-  // vendor/tailuge/model/physics/physics.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/physics.ts
   function surfaceVelocity(v, w) {
     return surfaceVelocityFull(v, w).setZ(0);
   }
@@ -361,7 +361,7 @@
     return rvel;
   }
 
-  // vendor/tailuge/model/ball.ts
+  // hyperfy-billard/vendor/tailuge/model/ball.ts
   var Ball = class _Ball {
     pos;
     vel = zero.clone();
@@ -478,7 +478,7 @@
     }
   };
 
-  // vendor/tailuge/view/tablegeometry.ts
+  // hyperfy-billard/vendor/tailuge/view/tablegeometry.ts
   var TableGeometry = class _TableGeometry {
     static tableX;
     static tableY;
@@ -513,7 +513,7 @@
     }
   };
 
-  // vendor/tailuge/model/physics/knuckle.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/knuckle.ts
   var Knuckle = class _Knuckle {
     pos;
     radius;
@@ -539,7 +539,7 @@
     }
   };
 
-  // vendor/tailuge/model/physics/pocket.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/pocket.ts
   var Pocket = class _Pocket {
     pos;
     radius;
@@ -594,7 +594,7 @@
     }
   };
 
-  // vendor/tailuge/view/pocketgeometry.ts
+  // hyperfy-billard/vendor/tailuge/view/pocketgeometry.ts
   var PocketGeometry = class _PocketGeometry {
     static PX;
     static PY;
@@ -787,7 +787,7 @@
     }
   };
 
-  // vendor/tailuge/model/physics/cushion.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/cushion.ts
   var Cushion = class _Cushion {
     /**
      * Modify ball state reflecting in cushion if it impacts in time t.
@@ -893,7 +893,7 @@
     }
   };
 
-  // vendor/tailuge/model/physics/collisionthrow.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/collisionthrow.ts
   var ab_v = new V();
   var abTangent_v = new V();
   var vPoint_v = new V();
@@ -943,7 +943,7 @@
     }
   };
 
-  // vendor/tailuge/model/physics/collision.ts
+  // hyperfy-billard/vendor/tailuge/model/physics/collision.ts
   var Collision = class _Collision {
     static willCollide(a, b, t) {
       return (a.inMotion() || b.inMotion()) && a.onTable() && b.onTable() && a.futurePosition(t).distanceToSquared(b.futurePosition(t)) < 4 * R * R;
@@ -984,7 +984,7 @@
     }
   };
 
-  // vendor/tailuge/model/outcome.ts
+  // hyperfy-billard/vendor/tailuge/model/outcome.ts
   var Outcome = class _Outcome {
     type;
     timestamp;
@@ -1124,7 +1124,7 @@
     }
   };
 
-  // vendor/tailuge/model/table.ts
+  // hyperfy-billard/vendor/tailuge/model/table.ts
   var Table = class {
     balls;
     cue;
@@ -1242,7 +1242,7 @@
     }
   };
 
-  // src/simulation.js
+  // hyperfy-billard/src/simulation.js
   var BALL_RADIUS = 0.028575;
   var STEP = 1 / 480;
   var MAX_SPEED = 5;
@@ -1369,8 +1369,21 @@
     }
   };
 
-  // src/server.js
-  function startServer(world2, app2, preset2, playChannel = "classic-8-ft-pool-table") {
+  // hyperfy-billard/src/cues.js
+  var CUE_EVENT = "billard:cues";
+  var POSE_EVENT = "billard:cue-pose";
+  function watchCues(world2, changed) {
+    const racks = /* @__PURE__ */ new Map();
+    world2.on(CUE_EVENT, (data) => {
+      if (!data || typeof data.rackId !== "string" || !Array.isArray(data.holders)) return;
+      if (data.holders.length) racks.set(data.rackId, data.holders.filter((id) => typeof id === "string"));
+      else racks.delete(data.rackId);
+      changed([...new Set([...racks.values()].flat())]);
+    });
+  }
+
+  // hyperfy-billard/src/server.js
+  function startServer(world2, app2, preset2) {
     const sim = new Simulation(preset2);
     let owner = null, lease = 0, seq = 0, rack = 0, elapsed = 0, accumulator = 0, sinceSnapshot = 0, cueHolders = [], aim = null, lastAim = -1;
     const publish = () => {
@@ -1388,10 +1401,8 @@
       const player = playerFor(sender);
       return player && player.id === owner && cueHolders.includes(player.id) && nearby(player);
     };
-    const cueEvent = `billard:cues:${playChannel}`;
-    world2.on(cueEvent, (holders) => {
-      if (!Array.isArray(holders)) return;
-      const next = holders.filter((id) => typeof id === "string");
+    const cueEvent = CUE_EVENT;
+    watchCues(world2, (next) => {
       if (JSON.stringify(next) === JSON.stringify(cueHolders)) return;
       cueHolders = next;
       if (owner && !cueHolders.includes(owner)) owner = aim = null;
@@ -1477,7 +1488,7 @@
     return sim;
   }
 
-  // src/sound.js
+  // hyperfy-billard/src/sound.js
   function createSounds(app2, sources) {
     const voices = [];
     let volume = 1;
@@ -1525,7 +1536,7 @@
     };
   }
 
-  // src/aim.js
+  // hyperfy-billard/src/aim.js
   var AIM_ELEVATION = Math.atan2(0.14, 0.68);
   function avatarStance(position, angle, size, floorY) {
     const forward = new V(Math.cos(angle), 0, -Math.sin(angle));
@@ -1567,7 +1578,7 @@
     return { cameraPosition, cameraQuaternion, cameraTarget: ball, cuePosition, cueQuaternion };
   }
 
-  // src/client.js
+  // hyperfy-billard/src/client.js
   function startClient(world2, app2, { balls, ghost, surfaceTarget, size, playChannel, soundSources }) {
     if (!world2.getPlayer) return;
     const me = world2.getPlayer();
@@ -1591,9 +1602,9 @@
     world2.on(volumeEvent, (value) => sounds.setVolume(value));
     app2.emit(`${volumeEvent}:request`);
     let soundEvents = [], lastEventId = latest?.lastEventId || 0;
-    const cueEvent = `billard:cues:${playChannel}`;
+    const cueEvent = CUE_EVENT;
     const aimingEvent = `billard:aiming:${playChannel}`;
-    const poseEvent = `billard:cue-pose:${playChannel}`;
+    const poseEvent = POSE_EVENT;
     const hasCue = () => cueHolders.includes(me.id);
     const canPlay = () => hasCue() && !control && !pending && !shotPending && !latest?.moving && !latest?.owner;
     const ui = app2.create("ui", {
@@ -1645,7 +1656,7 @@
       };
     }
     const clearPose = () => {
-      if (posedPlayer) app2.emit(poseEvent, { playerId: posedPlayer, clear: true });
+      if (posedPlayer) app2.emit(poseEvent, { playerId: posedPlayer, tableId: app2.instanceId, clear: true });
       posedPlayer = null;
     };
     const stop = (release = true) => {
@@ -1740,9 +1751,8 @@
     app2.on("pool:aim", (next) => {
       aim = next;
     });
-    world2.on(cueEvent, (holders) => {
-      if (!Array.isArray(holders)) return;
-      cueHolders = holders.filter((id) => typeof id === "string");
+    watchCues(world2, (holders) => {
+      cueHolders = holders;
       if (!hasCue() && control) stop();
       refresh2();
     });
@@ -1880,6 +1890,7 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
         posedPlayer = shooter;
         app2.emit(poseEvent, {
           playerId: shooter,
+          tableId: app2.instanceId,
           position: worldPosition(pose.cuePosition).toArray(),
           quaternion: app2.quaternion.clone().multiply(pose.cueQuaternion).toArray()
         });
@@ -1891,7 +1902,7 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
     });
   }
 
-  // src/app.js
+  // hyperfy-billard/src/app.js
   app.configure?.([
     {
       key: "tableSize",
@@ -1909,7 +1920,7 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
   ]);
   var preset = props.tableSize === "8" ? "8" : "9";
   if (world.isServer) {
-    startServer(world, app, preset, props.playChannel || "classic-8-ft-pool-table");
+    startServer(world, app, preset);
   } else {
     const size = dimensions(preset);
     const { length: L, width: W } = size;

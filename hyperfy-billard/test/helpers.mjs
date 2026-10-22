@@ -30,7 +30,8 @@ await build({
 export const nodes = await import(`${temp}/nodes.mjs`)
 const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText, audio: nodes.Audio, light: nodes.Light }
 export const code = await readFile(`${root}dist/hyperfy-billard.js`, 'utf8')
-export function harness({ server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders, modelNodes = {} } = {}) {
+let nextInstanceId = 0
+export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders, modelNodes = {} } = {}) {
   const handlers = {},
     created = [],
     sent = [],
@@ -41,6 +42,7 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
   const pointer = { coords: new THREE.Vector3(0.5, 0.5, 0), position: new THREE.Vector3(), delta: new THREE.Vector3(), locked: false,
     lock() { this.locked = true }, unlock() { this.locked = false } }
   const app = {
+    instanceId,
     position: new THREE.Vector3(0, 0.762, 0),
     quaternion: new THREE.Quaternion(),
     scale: new THREE.Vector3(1, 1, 1),
@@ -115,8 +117,8 @@ export function harness({ server = false, state = {}, props = {}, players = [], 
     getPlayer: id => (id ? players.find(p => p.id === id) : players[0]),
   }
   if (cueHolders) {
-    const cueEvent = `billard:cues:${props.playChannel || 'classic-8-ft-pool-table'}`
-    world.on(`${cueEvent}:request`, () => world.emit(cueEvent, cueHolders))
+    const cueEvent = 'billard:cues'
+    world.on(`${cueEvent}:request`, () => world.emit(cueEvent, { rackId: 'test-rack', holders: cueHolders }))
   }
   vm.runInNewContext(
     `(function(world, app, props) { const config = props\n${source}\n})(world, app, props)`,

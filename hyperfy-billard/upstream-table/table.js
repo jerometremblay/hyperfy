@@ -30,7 +30,7 @@ const DEFAULT_CLOTH_COLOR = '#e99476'
 
 app.configure([
   { key: 'soundVolume', type: 'range', label: 'Sound volume (1 = normal)', min: 0, max: 5, step: 0.1, initial: 1 },
-  { key: 'poolChannel', type: 'text', label: 'Pool game channel', initial: 'classic-8-ft-pool-table' },
+  { key: 'poolChannel', type: 'text', label: 'Pool game channel', initial: '', hint: 'Blank = automatic per table. A shared channel shares volume only; games stay independent.' },
   {
     key: 'clothColor', type: 'select', label: 'Cloth color', initial: DEFAULT_CLOTH_COLOR,
     hint: 'Approximate colors from A.E. Schmidt Standard Cloth and Speedball options.',

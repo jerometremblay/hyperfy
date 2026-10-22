@@ -1,7 +1,8 @@
 import { Simulation, STEP } from './simulation.js'
+import { CUE_EVENT, watchCues } from './cues.js'
 
 // Use the transport's sender ID. Never accept a player ID from a request body.
-export function startServer(world, app, preset, playChannel = 'classic-8-ft-pool-table') {
+export function startServer(world, app, preset) {
   const sim = new Simulation(preset)
   let owner = null,
     lease = 0,
@@ -28,11 +29,9 @@ export function startServer(world, app, preset, playChannel = 'classic-8-ft-pool
     const player = playerFor(sender)
     return player && player.id === owner && cueHolders.includes(player.id) && nearby(player)
   }
-  const cueEvent = `billard:cues:${playChannel}`
+  const cueEvent = CUE_EVENT
   // Only local server apps can emit this event; clients cannot self-report a cue.
-  world.on(cueEvent, holders => {
-    if (!Array.isArray(holders)) return
-    const next = holders.filter(id => typeof id === 'string')
+  watchCues(world, next => {
     if (JSON.stringify(next) === JSON.stringify(cueHolders)) return
     cueHolders = next
     if (owner && !cueHolders.includes(owner)) owner = aim = null

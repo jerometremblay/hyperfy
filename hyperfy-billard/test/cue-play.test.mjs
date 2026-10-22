@@ -145,3 +145,52 @@ test('aim packets do not stale the next shot; dropping a cue cancels active aimi
   assert.equal(game.app.state.pool.owner, null)
   assert.equal(client.activeControl, null)
 })
+
+
+test('multiple racks preserve all holders and enforce one cue per player across channels', () => {
+  const players = [player('alice'), player('bob')], bus = {}
+  const a = harness({ source, players, bus, server: true, props: { poolChannel: 'rack-a' } })
+  const b = harness({ source, players, bus, server: true, props: { poolChannel: 'rack-b' } })
+  const game = harness({ players, bus, server: true, props: { playChannel: 'table-c' } })
+  a.emit('take-cue', { slot: 0 }, 'alice')
+  b.emit('take-cue', { slot: 0 }, 'alice')
+  assert.equal(b.app.state.holders[0], null, 'cannot take a second cue from another rack')
+  b.emit('take-cue', { slot: 1 }, 'bob')
+  assert.deepEqual([...game.app.state.pool.cueHolders].sort(), ['alice', 'bob'])
+  a.emit('drop-cue', { slot: 0 }, 'alice')
+  assert.deepEqual([...game.app.state.pool.cueHolders], ['bob'])
+  b.emit('take-cue', { slot: 0 }, 'alice')
+  assert.equal(b.app.state.holders[0], 'alice', 'returning a cue permits pickup elsewhere')
+  a.emit('destroy')
+  assert.deepEqual([...game.app.state.pool.cueHolders].sort(), ['alice', 'bob'], 'removing another rack preserves held cues')
+  b.emit('destroy')
+  assert.deepEqual([...game.app.state.pool.cueHolders], [])
+})
+
+
+test('clients hide pickup on every rack while holding a cue and aim it on either table', () => {
+  const players = [player('alice')], bus = {}
+  const a = harness({ source, players, bus, state: { holders: ['alice', null, null, null] } })
+  const b = harness({ source, players, bus })
+  assert.ok(b.created.filter(n => n.name === 'action').every(n => n.distance === 0))
+  b.created.find(n => n.name === 'action').onTrigger()
+  assert.equal(b.sent.some(([event]) => event === 'take-cue'), false)
+  for (const channel of ['table-a', 'table-b']) {
+    const game = harness({ server: true, players, cueHolders: ['alice'] })
+    const client = harness({ instanceId: channel, players, bus, props: { playChannel: channel }, state: structuredClone(game.app.state) })
+    client.app.deliver = (event, data) => game.emit(event, data, 'alice')
+    game.app.deliver = (event, data) => client.emit(event, data)
+    client.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
+    client.emit('update', 1 / 60)
+    a.emit('update', 1 / 60)
+    const cue = a.created.find(n => n.name === 'group')
+    const pose = physics.shotPose(game.app.state.pool.balls[0].p, game.app.state.aim.angle)
+    assert.ok(cue.position.distanceTo(pose.cuePosition.clone().add(client.app.position)) < 1e-8)
+    client.emit('destroy')
+  }
+  a.emit('cue-holders', [null, null, null, null])
+  assert.ok(b.created.filter(n => n.name === 'action').every(n => n.distance > 0))
+  a.emit('cue-holders', ['alice', null, null, null])
+  a.emit('destroy')
+  assert.ok(b.created.filter(n => n.name === 'action').every(n => n.distance > 0))
+})

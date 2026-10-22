@@ -42,7 +42,8 @@ Point at a cue on the wall rack and click, or hold **E**, to take it. **X** retu
 it to the rack. Then hover over the playing surface or a ball to see Hyperfy's
 built-in mouse-icon **Play** hint, and click to aim. Both the Play hint and the
 hourglass shown while a shot runs are centered below the pointer at 50% opacity.
-The hourglass appears only over the playing surface or balls. The server checks actual rack
+The hourglass appears only over the playing surface or balls. Cues work on every table, and players can hold only one cue across all racks.
+The server checks actual rack
 ownership before granting controls and again on each shot/place/reset. Pickup
 and return identify players from the transport sender.
 

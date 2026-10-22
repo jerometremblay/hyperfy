@@ -26,7 +26,7 @@ const tableSource = table.assets.find(a => a.url === table.blueprint.script).byt
 const gameSource = game.assets.find(a => a.url === game.blueprint.script).bytes.toString()
 // The furniture uses floor-level coordinates; the existing simulator uses cloth
 // level. Keep both unchanged and attach game visuals at the table's cloth height.
-const source = Buffer.from(`;(function(world, app, props) {\n${tableSource}\n})(world, app, props);
+const source = Buffer.from(`;(function(world, app, props) {\n${tableSource}\n})(world, app, { ...props, poolChannel: props.poolChannel || app.instanceId });
 const gameRoot = world.isClient ? app.create('group', { position: [0, 0.708, 0] }) : null;
 if (gameRoot) app.add(gameRoot);
 const gameApp = new Proxy(app, {
@@ -39,11 +39,11 @@ const gameApp = new Proxy(app, {
   }
 });
 (function(world, app, props) {\n${gameSource}\n})(world, gameApp, { ...props, tableSize: '8', showSurface: false,
-  playChannel: props.poolChannel || 'classic-8-ft-pool-table' });\n`)
+  playChannel: props.poolChannel || app.instanceId });\n`)
 const script = `asset://${hash(source)}.js`
 const pool = { ...table.blueprint, id: 'default-pool-table', version: 0, name: 'Pool Table',
-  desc: 'Playable 8-foot pool table with original Tailuge physics and sounds. Add a cue rack with the same Pool game channel.',
-  preload: true, props: { ...game.blueprint.props, ...table.blueprint.props, tableSize: '8', showSurface: false, poolChannel: 'pool-room', playChannel: 'pool-room' }, script }
+  desc: 'Playable 8-foot pool table with original Tailuge physics and sounds. Use a cue from any pool cue rack. Each table has its own game.',
+  preload: true, props: { ...game.blueprint.props, ...table.blueprint.props, tableSize: '8', showSurface: false, poolChannel: '', playChannel: '' }, script }
 const assets = [
   ...table.assets.filter(a => a.url !== table.blueprint.script),
   ...game.assets.filter(a => a.url !== game.blueprint.script && a.url !== game.blueprint.model),
@@ -51,12 +51,11 @@ const assets = [
 ]
 await fs.writeFile(`${destination}PoolTable.hyp`, packHyp(pool, assets))
 const rack = unpack(await read('hyperfy-billard/cue-rack/rack.hyp'))
-const rackSource = Buffer.from(`;app.configure([{ key: 'poolChannel', type: 'text', label: 'Pool game channel', initial: 'pool-room', hint: 'Match the pool table channel' }]);\n` +
-  rack.assets.find(a => a.url === rack.blueprint.script).bytes.toString())
+const rackSource = rack.assets.find(a => a.url === rack.blueprint.script).bytes
 const rackScript = `asset://${hash(rackSource)}.js`
 await fs.writeFile(`${destination}CueRack.hyp`, packHyp({ ...rack.blueprint,
   id: 'default-pool-cue-rack', name: 'Pool Cue Rack', version: 0, script: rackScript,
-  props: { ...rack.blueprint.props, poolChannel: 'pool-room' } }, [
+  props: {} }, [
   ...rack.assets.filter(a => a.url !== rack.blueprint.script),
   { type: 'script', url: rackScript, bytes: rackSource, mime: 'text/javascript' },
 ]))

@@ -1,6 +1,7 @@
 import { Vector3, Quaternion, Euler } from 'three'
 import { BALL_RADIUS as R } from './simulation.js'
 import { createSounds } from './sound.js'
+import { CUE_EVENT, POSE_EVENT, watchCues } from './cues.js'
 import { shotPose, avatarStance, AIM_ELEVATION } from './aim.js'
 
 export function startClient(world, app, { balls, ghost, surfaceTarget, size, playChannel, soundSources }) {
@@ -26,9 +27,9 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
   world.on(volumeEvent, value => sounds.setVolume(value))
   app.emit(`${volumeEvent}:request`)
   let soundEvents = [], lastEventId = latest?.lastEventId || 0
-  const cueEvent = `billard:cues:${playChannel}`
+  const cueEvent = CUE_EVENT
   const aimingEvent = `billard:aiming:${playChannel}`
-  const poseEvent = `billard:cue-pose:${playChannel}`
+  const poseEvent = POSE_EVENT
   const hasCue = () => cueHolders.includes(me.id)
   const canPlay = () => hasCue() && !control && !pending && !shotPending && !latest?.moving && !latest?.owner
   const ui = app.create('ui', {
@@ -77,7 +78,7 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
     }
   }
   const clearPose = () => {
-    if (posedPlayer) app.emit(poseEvent, { playerId: posedPlayer, clear: true })
+    if (posedPlayer) app.emit(poseEvent, { playerId: posedPlayer, tableId: app.instanceId, clear: true })
     posedPlayer = null
   }
   const stop = (release = true) => {
@@ -159,9 +160,8 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
   }
   app.on('pool:snapshot', receive)
   app.on('pool:aim', next => { aim = next })
-  world.on(cueEvent, holders => {
-    if (!Array.isArray(holders)) return
-    cueHolders = holders.filter(id => typeof id === 'string')
+  watchCues(world, holders => {
+    cueHolders = holders
     if (!hasCue() && control) stop()
     refresh()
   })
@@ -284,7 +284,7 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
       const pose = shotPose(latest.balls[0].p, params.angle, params.side, params.top)
       if (posedPlayer && posedPlayer !== shooter) clearPose()
       posedPlayer = shooter
-      app.emit(poseEvent, { playerId: shooter, position: worldPosition(pose.cuePosition).toArray(),
+      app.emit(poseEvent, { playerId: shooter, tableId: app.instanceId, position: worldPosition(pose.cuePosition).toArray(),
         quaternion: app.quaternion.clone().multiply(pose.cueQuaternion).toArray() })
     } else clearPose()
   })

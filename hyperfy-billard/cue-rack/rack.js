@@ -20,9 +20,8 @@ const CUE_Y = -0.236
 const CUE_Z = 0.170
 const CUE_LENGTH = 1.47
 const HOLD_TILT = -Math.PI * 0.44
-const CHANNEL = props.poolChannel || 'classic-8-ft-pool-table'
-const CUE_EVENT = `billard:cues:${CHANNEL}`
-const POSE_EVENT = `billard:cue-pose:${CHANNEL}`
+const CUE_EVENT = 'billard:cues'
+const POSE_EVENT = 'billard:cue-pose'
 const aimPoses = new Map()
 app.resetOnMove = false
 
@@ -129,6 +128,19 @@ const attached = [false, false, false, false]
 const actions = []
 let localControls = null
 let localHeld = -1
+const rackHolders = new Map()
+const heldAnywhere = id => [...rackHolders.values()].some(ids => ids.includes(id))
+const publishHolders = () => app.emit(CUE_EVENT, { rackId: app.instanceId, holders: holders.slice() })
+const refreshActions = () => {
+  const holding = world.isClient && heldAnywhere(world.getPlayer()?.id)
+  for (let i = 0; i < actions.length; i++) actions[i].distance = holders[i] || holding ? 0 : 2.8
+}
+world.on(CUE_EVENT, data => {
+  if (!data || typeof data.rackId !== 'string' || !Array.isArray(data.holders)) return
+  if (data.holders.length) rackHolders.set(data.rackId, data.holders.filter(id => typeof id === 'string'))
+  else rackHolders.delete(data.rackId)
+  refreshActions()
+})
 
 function applyHolders(next) {
   if (!Array.isArray(next) || next.length !== 4) return
@@ -149,7 +161,7 @@ function applyHolders(next) {
     }
   }
   for (const id of aimPoses.keys()) if (!holders.includes(id)) aimPoses.delete(id)
-  app.emit(CUE_EVENT, holders.slice())
+  publishHolders()
   if (!world.isClient || typeof world.getPlayer !== 'function') return
   const me = world.getPlayer()
   const nextHeld = me ? holders.findIndex(id => id === me.id) : -1
@@ -186,7 +198,7 @@ for (let i = 0; i < 4; i++) {
     onTrigger: () => {
       if (!world.isClient || typeof world.getPlayer !== 'function' || holders[i]) return
       const me = world.getPlayer()
-      if (me) app.send('take-cue', { slot: i })
+      if (me && !heldAnywhere(me.id)) app.send('take-cue', { slot: i })
     },
   })
   app.add(action)
@@ -202,13 +214,14 @@ if (world.isServer) {
   const publish = () => {
     app.state.holders = holders.slice()
     app.send('cue-holders', holders.slice())
-    app.emit(CUE_EVENT, holders.slice())
+    publishHolders()
   }
   const playerFor = sender => world.getPlayers().find(player => player.networkId === sender)
   app.on('take-cue', ({ slot } = {}, sender) => {
     const player = playerFor(sender)
     const playerId = player?.id
-    if (!valid(slot, playerId) || holders[slot] || holders.includes(playerId)) return
+    app.emit(`${CUE_EVENT}:request`)
+    if (!valid(slot, playerId) || holders[slot] || heldAnywhere(playerId)) return
     if (player.position.distanceTo(app.position) > 3.4) return
     holders[slot] = playerId
     publish()
@@ -220,8 +233,11 @@ if (world.isServer) {
     publish()
   })
   app.on('request-cues', () => publish())
-  world.on(`${CUE_EVENT}:request`, () => app.emit(CUE_EVENT, holders.slice()))
-  app.on('destroy', () => app.emit(CUE_EVENT, []))
+  world.on(`${CUE_EVENT}:request`, publishHolders)
+  app.on('destroy', () => {
+    holders.fill(null)
+    app.emit(CUE_EVENT, { rackId: app.instanceId, holders: [] })
+  })
   publish()
   // Reset abandoned cues for disconnects, without one physics body per cue.
   let checkElapsed = 0
@@ -241,10 +257,13 @@ if (world.isServer) {
 }
 
 if (world.isClient && typeof world.getPlayer === 'function') {
-  world.on(`${CUE_EVENT}:request`, () => app.emit(CUE_EVENT, holders.slice()))
+  world.on(`${CUE_EVENT}:request`, publishHolders)
   world.on(POSE_EVENT, pose => {
     if (!pose || !holders.includes(pose.playerId)) return
-    if (pose.clear) { aimPoses.delete(pose.playerId); return }
+    if (pose.clear) {
+      if (aimPoses.get(pose.playerId)?.tableId === pose.tableId) aimPoses.delete(pose.playerId)
+      return
+    }
     if (Array.isArray(pose.position) && pose.position.length === 3 && pose.position.every(Number.isFinite) &&
         Array.isArray(pose.quaternion) && pose.quaternion.length === 4 && pose.quaternion.every(Number.isFinite))
       aimPoses.set(pose.playerId, pose)
@@ -252,6 +271,7 @@ if (world.isClient && typeof world.getPlayer === 'function') {
   app.on('cue-holders', next => applyHolders(next))
   applyHolders(holders)
   app.send('request-cues')
+  app.emit(`${CUE_EVENT}:request`)
 
   // Only held cues move. In the rack the entire construction is static.
   let localPlayerId = world.getPlayer()?.id
@@ -290,6 +310,8 @@ if (world.isClient && typeof world.getPlayer === 'function') {
   })
   app.on('destroy', () => {
     if (localControls) localControls.release()
+    holders.fill(null)
+    app.emit(CUE_EVENT, { rackId: app.instanceId, holders: [] })
     for (let i = 0; i < 4; i++) if (attached[i]) world.remove(cues[i])
   })
 }

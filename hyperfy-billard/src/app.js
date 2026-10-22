@@ -22,7 +22,7 @@ app.configure?.([
 ])
 const preset = props.tableSize === '8' ? '8' : '9'
 if (world.isServer) {
-  startServer(world, app, preset, props.playChannel || 'classic-8-ft-pool-table')
+  startServer(world, app, preset)
 } else {
   const size = dimensions(preset)
   const { length: L, width: W } = size
