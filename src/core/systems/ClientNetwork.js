@@ -138,7 +138,7 @@ export class ClientNetwork extends System {
     // preload some blueprints
     for (const item of data.blueprints) {
       if (item.preload && !item.disabled) {
-        if (item.model) {
+        if (item.model && item.model !== 'script-only') {
           const type = item.model.endsWith('.vrm') ? 'avatar' : 'model'
           this.world.loader.preload(type, item.model)
         }

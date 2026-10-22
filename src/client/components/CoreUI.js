@@ -125,6 +125,7 @@ export function CoreUI({ world }) {
       {avatar && <AvatarPane key={avatar.hash} world={world} info={avatar} />}
       {/* {apps && <AppsPane world={world} close={() => world.ui.toggleApps()} />} */}
       {!ready && <LoadingOverlay world={world} />}
+      {!xr && !disconnected && !kicked && <AssetLoadingStatus world={world} />}
       {kicked && <KickedOverlay code={kicked} />}
       {ready && isTouch && <TouchBtns world={world} />}
       {ready && isTouch && <TouchStick world={world} />}
@@ -798,6 +799,47 @@ function Disconnected() {
         <span>Reconnect</span>
       </div>
     </>
+  )
+}
+
+function AssetLoadingStatus({ world }) {
+  const [loading, setLoading] = useState(() => world.loader.loading)
+  useEffect(() => {
+    world.loader.on('loading', setLoading)
+    setLoading(world.loader.loading)
+    return () => world.loader.off('loading', setLoading)
+  }, [world])
+  if (!loading.pending) return null
+  return (
+    <div
+      role='status'
+      aria-live='polite'
+      css={css`
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: calc(100% - 2rem);
+        padding: 0.625rem 0.875rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        background: rgba(11, 10, 21, 0.9);
+        color: white;
+        text-align: center;
+        font-size: 0.8125rem;
+        pointer-events: none;
+        .asset-loading-detail {
+          margin-top: 0.25rem;
+          color: rgba(255, 255, 255, 0.65);
+          font-size: 0.75rem;
+        }
+      `}
+    >
+      <div>{`Loading world assets… ${loading.pending} remaining`}</div>
+      <div className='asset-loading-detail'>
+        {loading.completed} loaded{loading.failed > 0 && ` · ${loading.failed} failed`}
+      </div>
+    </div>
   )
 }
 

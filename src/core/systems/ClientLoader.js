@@ -38,6 +38,7 @@ export class ClientLoader extends System {
     this.dracoLoader = new DRACOLoader().setDecoderPath('/draco/')
     this.gltfLoader.setDRACOLoader(this.dracoLoader)
     this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))
+    this.loading = { pending: 0, completed: 0, failed: 0 }
     this.preloadItems = []
   }
 
@@ -50,6 +51,30 @@ export class ClientLoader extends System {
       setupMaterial: this.world.setupMaterial,
       loader: this.world.loader,
     }
+  }
+
+  // Count unique asset work through decoding, rather than just network downloads.
+  trackLoading(promise) {
+    this.loading = { ...this.loading, pending: this.loading.pending + 1 }
+    this.emit('loading', this.loading)
+    const finish = failed => {
+      this.loading = {
+        pending: this.loading.pending - 1,
+        completed: this.loading.completed + (failed ? 0 : 1),
+        failed: this.loading.failed + (failed ? 1 : 0),
+      }
+      if (!this.destroyed) this.emit('loading', this.loading)
+    }
+    return promise.then(
+      result => {
+        finish(false)
+        return result
+      },
+      error => {
+        finish(true)
+        throw error
+      }
+    )
   }
 
   has(type, url) {
@@ -126,6 +151,7 @@ export class ClientLoader extends System {
       return this.files.get(url)
     }
     const resp = await fetch(url)
+    if (!resp.ok) throw new Error(`Asset request failed (${resp.status}): ${url}`)
     const blob = await resp.blob()
     const file = new File([blob], url.split('/').pop(), { type: blob.type })
     this.files.set(url, file)
@@ -166,8 +192,12 @@ export class ClientLoader extends System {
         return texture
       }
       if (type === 'image') {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
           const img = new Image()
+          img.onerror = () => {
+            URL.revokeObjectURL(img.src)
+            reject(new Error(`Image could not be decoded: ${url}`))
+          }
           img.onload = () => {
             this.results.set(key, img)
             resolve(img)
@@ -177,8 +207,12 @@ export class ClientLoader extends System {
         })
       }
       if (type === 'texture') {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
           const img = new Image()
+          img.onerror = () => {
+            URL.revokeObjectURL(img.src)
+            reject(new Error(`Image could not be decoded: ${url}`))
+          }
           img.onload = () => {
             const texture = this.texLoader.load(img.src)
             texture.colorSpace = THREE.SRGBColorSpace
@@ -272,8 +306,9 @@ export class ClientLoader extends System {
       }
       return result
     })
-    this.promises.set(key, promise)
-    return promise
+    const tracked = this.trackLoading(promise)
+    this.promises.set(key, tracked)
+    return tracked
   }
 
   // Shared splat result factory used by both load() and insert().
@@ -301,7 +336,7 @@ export class ClientLoader extends System {
           lod: true,
           onProgress: options.onProgress,
         })
-        await splatMesh.initialized
+        await this.trackLoading(splatMesh.initialized)
         return splatMesh
       },
       getStats() {
