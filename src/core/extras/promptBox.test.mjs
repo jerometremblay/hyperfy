@@ -11,7 +11,7 @@ import { unzipSync, zipSync, strToU8, strFromU8 } from 'fflate'
 const bundle = await build({
   stdin: {
     contents: `export * from './promptBoxTools.js'; export * from './PromptBoxWorkflow.js';
-      export * from './PromptBoxResizeControls.js'; export * from './appTools.js';
+      export * from './PromptBoxPlacement.js'; export * from './PromptBoxResizeControls.js'; export * from './appTools.js';
       export * from './promptBoxIntersections.js'; export * from './LooseOctree.js';`,
     resolveDir: fileURLToPath(new URL('.', import.meta.url)),
   },
@@ -22,6 +22,7 @@ const bundle = await build({
   write: false,
 })
 const {
+  PromptBoxPlacement,
   PromptBoxWorkflow,
   PromptBoxResizeControls,
   resizePromptBoxFace,
@@ -350,10 +351,10 @@ test('blank prompt and invalid dimensions cannot be exported', async () => {
   await assert.rejects(() => f.workflow.export(f.app), /dimensions/)
 })
 
-test('new prompt-boxes use independent blueprints and place their bottom on the spawn surface', async () => {
+test('confirmed prompt-boxes use independent blueprints and the preview transform', async () => {
   const f = fixture()
   const spawned = []
-  f.world.builder.getSpawnTransform = () => ({ position: [2, 0, -3], quaternion: [0, 0, 0, 1] })
+  f.world.builder.placePromptBox = async () => ({ position: [2, 0.5, -3], quaternion: [0, 0, 0, 1] })
   f.world.entities.add = data => {
     spawned.push(data)
     return { data }
@@ -972,4 +973,39 @@ test('each included prompt-box needs a prompt before export', async () => {
   f.second.blueprint.props.prompt = '   '
   await assert.rejects(f.workflow.export(f.app), /every intersected prompt-box/)
   assert.equal(f.app.blueprint.props.promptBoxRequest, undefined)
+})
+
+
+test('placement follows rotated floors and walls, and cancellation disposes the local preview', () => {
+  const scene = new Scene()
+  const heading = 0.37
+  const root = { quaternion: new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), heading) }
+  let hit = { point: new Vector3(2, 0, 3), face: { normal: new Vector3(0, 1, 0) },
+    node: { matrixWorld: new Matrix4().makeRotationY(heading) }, getEntity: () => ({ root }) }
+  const world = { stage: { scene, raycastPointer: () => hit ? [hit] : [] },
+    builder: { control: { pointer: { locked: false, position: {} } } }, rig: root }
+  let result = 'pending'
+  const placement = new PromptBoxPlacement(world, value => { result = value })
+  assert.deepEqual(placement.transform.position, [2, 0.5, 3])
+  assert.ok(new Quaternion().fromArray(placement.transform.quaternion).angleTo(root.quaternion) < 1e-7)
+  hit.face.normal.set(0, 0, 1)
+  placement.update()
+  assert.deepEqual(placement.transform.position, [2, 0, 3])
+  assert.ok(new Quaternion().fromArray(placement.transform.quaternion).angleTo(root.quaternion) < 1e-7)
+  hit = null
+  placement.update()
+  assert.equal(placement.mesh.visible, false)
+  placement.finish(true)
+  assert.equal(result, 'pending')
+  placement.finish(false)
+  assert.equal(result, null)
+  assert.equal(scene.children.length, 0)
+})
+
+test('cancelled placement creates no blueprint or entity', async () => {
+  const f = fixture()
+  f.world.builder.placePromptBox = async () => null
+  f.world.entities.add = () => { throw new Error('must not publish') }
+  assert.equal(await f.workflow.create(), null)
+  assert.equal(f.blueprints.size, 1)
 })

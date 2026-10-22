@@ -1,8 +1,12 @@
 # Prompt-box creation and construction edits
 
-Use **Add App → Prompt Box** to create a translucent 1 m cube. It starts with its
-bottom on the spawn surface. Position and rotate it using the existing builder
-controls, or the inspector's transform fields.
+Use **Add App → Prompt Box** to preview a translucent 1 m cube following the mouse.
+Click a surface to confirm placement, or press Escape to cancel. Nothing is saved
+until confirmation. On floors, its bottom rests on the surface and its heading
+follows the construction. On walls, a face aligns with the wall and the volume
+straddles the clicked surface. Position and rotate it using the existing builder
+controls, or the inspector's transform fields. Grabbing uses the box's bottom
+center as the placement point, so placing it on the ground keeps it above the surface.
 
 Enter a prompt such as “Create a coffee mug”, “Create a steampunk streetlight”, or
 “Make a window in this timber-frame house”.

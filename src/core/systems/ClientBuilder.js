@@ -14,6 +14,7 @@ import { importApp } from '../extras/appTools'
 import { DEG2RAD, RAD2DEG } from '../extras/general'
 import { createNode } from '../extras/createNode'
 import { detectBuilderFileType, detectSplatFormat } from '../utils/splatFormats'
+import { PromptBoxPlacement } from '../extras/PromptBoxPlacement'
 import { PromptBoxWorkflow } from '../extras/PromptBoxWorkflow'
 import { PromptBoxResizeControls } from '../extras/PromptBoxResizeControls'
 import { isPromptBox, MIN_PROMPT_BOX_SIZE } from '../extras/promptBoxTools'
@@ -106,6 +107,11 @@ export class ClientBuilder extends System {
       return true
     }
     this.control.mouseLeft.onPress = () => {
+      if (this.promptBoxPlacement) {
+        this.promptBoxPlacement.update()
+        this.promptBoxPlacement.finish(true)
+        return true
+      }
       // Let an action under the free cursor receive the click before entering pointer lock.
       if (!this.control.pointer.locked && this.world.actions?.current?.node) return false
       // pointer lock requires user-gesture in safari
@@ -188,6 +194,11 @@ export class ClientBuilder extends System {
   }
 
   update(delta) {
+    if (this.promptBoxPlacement) {
+      if (!this.canBuild() || this.control.escape.pressed) this.promptBoxPlacement.finish(false)
+      else this.promptBoxPlacement.update()
+      return
+    }
     const player = this.world.entities.player
     if (!player) return
     const xr = player.isXR
@@ -640,6 +651,11 @@ export class ClientBuilder extends System {
         const degrees = newY / DEG2RAD
         const snappedDegrees = Math.round(degrees / SNAP_DEGREES) * SNAP_DEGREES
         app.root.rotation.y = snappedDegrees * DEG2RAD
+      }
+      // The grab target is the bottom center of a prompt-box, not its geometry origin.
+      // Use the final rotation and size so rotating/scaling keeps that anchor fixed.
+      if (isPromptBox(app.blueprint)) {
+        app.root.position.add(v2.set(0, app.root.scale.y / 2, 0).applyQuaternion(app.root.quaternion))
       }
       // update matrix
       app.root.clean()
@@ -1744,6 +1760,24 @@ app.on('update', () => {
     })
   }
 
+  placePromptBox() {
+    this.promptBoxPlacement?.finish(false)
+    this.select(null)
+    this.world.ui.togglePane(null)
+    this.control.pointer.unlock()
+    return new Promise(resolve => {
+      this.promptBoxPlacement = new PromptBoxPlacement(this.world, transform => {
+        this.promptBoxPlacement = null
+        this.updateActions()
+        resolve(transform)
+      })
+      this.control.setActions([
+        { type: 'mouseLeft', label: 'Place Prompt Box' },
+        { type: 'escape', label: 'Cancel' },
+      ])
+    })
+  }
+
   getSpawnTransform(atReticle) {
     const hit = atReticle
       ? this.world.stage.raycastReticle()[0]
@@ -1783,6 +1817,7 @@ app.on('update', () => {
   }
 
   destroy() {
+    this.promptBoxPlacement?.finish(false)
     this.detachGizmo()
     this.viewport.removeEventListener('dragover', this.onDragOver)
     this.viewport.removeEventListener('dragenter', this.onDragEnter)

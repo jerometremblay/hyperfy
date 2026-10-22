@@ -26,6 +26,9 @@ export class PromptBoxWorkflow {
   async create() {
     this.requireBuilder()
     const { world } = this
+    const transform = await world.builder.placePromptBox()
+    if (!transform) return null
+    this.requireBuilder()
     const file = new File([promptBoxScript], 'prompt-box.js', { type: 'text/javascript' })
     const url = `asset://${await hashFile(file)}.js`
     await world.network.upload(file)
@@ -46,17 +49,12 @@ export class PromptBoxWorkflow {
       frozen: false,
     }
     world.blueprints.add(blueprint, true)
-    const transform = world.builder.getSpawnTransform(true)
-    // Spawn transforms locate the surface. This cube's origin is at its center.
-    const center = new THREE.Vector3()
-      .fromArray(transform.position)
-      .add(new THREE.Vector3(0, 0.5, 0).applyQuaternion(new THREE.Quaternion().fromArray(transform.quaternion)))
     const app = world.entities.add(
       {
         id: uuid(),
         type: 'app',
         blueprint: blueprint.id,
-        position: center.toArray(),
+        position: transform.position,
         quaternion: transform.quaternion,
         scale: [1, 1, 1],
         mover: null,
