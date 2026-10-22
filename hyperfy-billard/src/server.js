@@ -15,7 +15,7 @@ export function startServer(world, app, preset, playChannel = 'classic-8-ft-pool
     lastAim = -1
   const publish = () => {
     app.state.aim = aim
-    app.state.pool = { ...sim.snapshot(), owner, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) }
+    app.state.pool = { ...sim.snapshot(), owner, aim, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) }
     app.send('pool:snapshot', app.state.pool)
   }
   const playerFor = sender => world.getPlayers().find(p => p.networkId === sender)

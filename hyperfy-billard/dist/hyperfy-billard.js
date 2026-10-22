@@ -11,7 +11,7 @@
   var Q = Quaternion;
   var E = Euler;
 
-  // hyperfy-billard/vendor/tailuge/utils/utils.ts
+  // vendor/tailuge/utils/utils.ts
   function atan2(y, x) {
     return Math.fround(Math.atan2(y, x));
   }
@@ -31,7 +31,7 @@
     return Math.fround(Math.hypot(x, y));
   }
 
-  // hyperfy-billard/vendor/tailuge/utils/three-utils.ts
+  // vendor/tailuge/utils/three-utils.ts
   var zero = new V(0, 0, 0);
   var up = new V(0, 0, 1);
   function vec(v) {
@@ -50,7 +50,7 @@
     return vc.copy(v).add(dv).dot(v) <= 0;
   }
 
-  // hyperfy-billard/vendor/tailuge/model/physics/constants.ts
+  // vendor/tailuge/model/physics/constants.ts
   var mu = 55e-4;
   var muS = 0.126;
   var rho = 0.045;
@@ -86,7 +86,7 @@
     refresh();
   }
 
-  // hyperfy-billard/vendor/tailuge/model/physics/mathavan.ts
+  // vendor/tailuge/model/physics/mathavan.ts
   var Mathavan = class {
     // work done
     P = 0;
@@ -219,7 +219,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/physics.ts
+  // vendor/tailuge/model/physics/physics.ts
   function surfaceVelocity(v, w) {
     return surfaceVelocityFull(v, w).setZ(0);
   }
@@ -361,7 +361,7 @@
     return rvel;
   }
 
-  // hyperfy-billard/vendor/tailuge/model/ball.ts
+  // vendor/tailuge/model/ball.ts
   var Ball = class _Ball {
     pos;
     vel = zero.clone();
@@ -478,7 +478,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/view/tablegeometry.ts
+  // vendor/tailuge/view/tablegeometry.ts
   var TableGeometry = class _TableGeometry {
     static tableX;
     static tableY;
@@ -513,7 +513,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/knuckle.ts
+  // vendor/tailuge/model/physics/knuckle.ts
   var Knuckle = class _Knuckle {
     pos;
     radius;
@@ -539,7 +539,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/pocket.ts
+  // vendor/tailuge/model/physics/pocket.ts
   var Pocket = class _Pocket {
     pos;
     radius;
@@ -594,7 +594,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/view/pocketgeometry.ts
+  // vendor/tailuge/view/pocketgeometry.ts
   var PocketGeometry = class _PocketGeometry {
     static PX;
     static PY;
@@ -787,7 +787,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/cushion.ts
+  // vendor/tailuge/model/physics/cushion.ts
   var Cushion = class _Cushion {
     /**
      * Modify ball state reflecting in cushion if it impacts in time t.
@@ -893,7 +893,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/collisionthrow.ts
+  // vendor/tailuge/model/physics/collisionthrow.ts
   var ab_v = new V();
   var abTangent_v = new V();
   var vPoint_v = new V();
@@ -943,7 +943,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/collision.ts
+  // vendor/tailuge/model/physics/collision.ts
   var Collision = class _Collision {
     static willCollide(a, b, t) {
       return (a.inMotion() || b.inMotion()) && a.onTable() && b.onTable() && a.futurePosition(t).distanceToSquared(b.futurePosition(t)) < 4 * R * R;
@@ -984,7 +984,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/outcome.ts
+  // vendor/tailuge/model/outcome.ts
   var Outcome = class _Outcome {
     type;
     timestamp;
@@ -1124,7 +1124,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/table.ts
+  // vendor/tailuge/model/table.ts
   var Table = class {
     balls;
     cue;
@@ -1242,7 +1242,7 @@
     }
   };
 
-  // hyperfy-billard/src/simulation.js
+  // src/simulation.js
   var BALL_RADIUS = 0.028575;
   var STEP = 1 / 480;
   var MAX_SPEED = 5;
@@ -1369,13 +1369,13 @@
     }
   };
 
-  // hyperfy-billard/src/server.js
+  // src/server.js
   function startServer(world2, app2, preset2, playChannel = "classic-8-ft-pool-table") {
     const sim = new Simulation(preset2);
     let owner = null, lease = 0, seq = 0, rack = 0, elapsed = 0, accumulator = 0, sinceSnapshot = 0, cueHolders = [], aim = null, lastAim = -1;
     const publish = () => {
       app2.state.aim = aim;
-      app2.state.pool = { ...sim.snapshot(), owner, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) };
+      app2.state.pool = { ...sim.snapshot(), owner, aim, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) };
       app2.send("pool:snapshot", app2.state.pool);
     };
     const playerFor = (sender) => world2.getPlayers().find((p) => p.networkId === sender);
@@ -1477,7 +1477,7 @@
     return sim;
   }
 
-  // hyperfy-billard/src/sound.js
+  // src/sound.js
   function createSounds(app2, sources) {
     const voices = [];
     let volume = 1;
@@ -1525,7 +1525,7 @@
     };
   }
 
-  // hyperfy-billard/src/aim.js
+  // src/aim.js
   var AIM_ELEVATION = Math.atan2(0.14, 0.68);
   function avatarStance(position, angle, size, floorY) {
     const forward = new V(Math.cos(angle), 0, -Math.sin(angle));
@@ -1567,7 +1567,7 @@
     return { cameraPosition, cameraQuaternion, cameraTarget: ball, cuePosition, cueQuaternion };
   }
 
-  // hyperfy-billard/src/client.js
+  // src/client.js
   function startClient(world2, app2, { balls, ghost, action, size, playChannel, soundSources }) {
     if (!world2.getPlayer) return;
     const me = world2.getPlayer();
@@ -1640,6 +1640,11 @@
       label();
     };
     const request = (operation, data = {}) => app2.send(`pool:${operation}`, { ...data, seq: latest?.seq });
+    const placeCueBall = () => {
+      if (!control || !latest || latest.moving || !latest.scratched || !hasCue()) return false;
+      request("place", { x: placeX, y: placeY });
+      return true;
+    };
     const begin = () => {
       if (control || !pending || !hasCue() || latest?.moving) return;
       pending = false;
@@ -1656,7 +1661,7 @@
       control.camera.zoom = 0;
       control.space.onPress = () => {
         if (!latest || latest.moving || !hasCue()) return;
-        if (latest.scratched) request("place", { x: placeX, y: placeY });
+        if (latest.scratched) placeCueBall();
         else {
           const ball = latest.balls[0].p;
           me.setCamera?.({ target: worldPosition(new V(ball[0], BALL_RADIUS + ball[2], -ball[1])), zoom: 0.3, duration: 0.45 });
@@ -1664,11 +1669,7 @@
           stop();
         }
       };
-      control.mouseLeft.onPress = () => {
-        if (!control || !latest?.scratched) return;
-        control.space.onPress();
-        return true;
-      };
+      control.mouseLeft.onPress = placeCueBall;
       control.keyR.onPress = () => {
         if (!latest?.moving) request("reset");
       };
@@ -1682,6 +1683,7 @@
     };
     const receive = (snapshot) => {
       if (!snapshot || latest && snapshot.seq <= latest.seq) return;
+      if (Object.hasOwn(snapshot, "aim")) aim = snapshot.aim;
       if (latest && snapshot.scratched !== latest.scratched && !snapshot.moving) frames = [];
       if (latest && snapshot.rack !== latest.rack) {
         frames = [];
@@ -1738,7 +1740,10 @@
       idle.pointer.lock();
       app2.send("pool:claim", { angle });
     };
-    app2.onPointerDown = () => action.onTrigger();
+    app2.onPointerDown = (event) => {
+      if (event?.button === "left" && placeCueBall()) return;
+      action.onTrigger();
+    };
     world2.on(`billard:play:${playChannel}`, action.onTrigger);
     world2.on(`${aimingEvent}:request`, () => app2.emit(aimingEvent, !!control));
     label();
@@ -1861,7 +1866,7 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
     app2.on("destroy", () => stop());
   }
 
-  // hyperfy-billard/src/app.js
+  // src/app.js
   app.configure?.([
     {
       key: "tableSize",

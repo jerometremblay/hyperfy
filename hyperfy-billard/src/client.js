@@ -62,6 +62,11 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     label()
   }
   const request = (operation, data = {}) => app.send(`pool:${operation}`, { ...data, seq: latest?.seq })
+  const placeCueBall = () => {
+    if (!control || !latest || latest.moving || !latest.scratched || !hasCue()) return false
+    request('place', { x: placeX, y: placeY })
+    return true
+  }
   const begin = () => {
     if (control || !pending || !hasCue() || latest?.moving) return
     pending = false
@@ -75,7 +80,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     control.camera.zoom = 0
     control.space.onPress = () => {
       if (!latest || latest.moving || !hasCue()) return
-      if (latest.scratched) request('place', { x: placeX, y: placeY })
+      if (latest.scratched) placeCueBall()
       else {
         const ball = latest.balls[0].p
         me.setCamera?.({ target: worldPosition(new Vector3(ball[0], R + ball[2], -ball[1])), zoom: 0.3, duration: 0.45 })
@@ -83,11 +88,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
         stop()
       }
     }
-    control.mouseLeft.onPress = () => {
-      if (!control || !latest?.scratched) return
-      control.space.onPress()
-      return true
-    }
+    control.mouseLeft.onPress = placeCueBall
     control.keyR.onPress = () => { if (!latest?.moving) request('reset') }
     control.escape.onPress = () => stop()
     ui.active = true
@@ -99,6 +100,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
   }
   const receive = snapshot => {
     if (!snapshot || (latest && snapshot.seq <= latest.seq)) return
+    if (Object.hasOwn(snapshot, 'aim')) aim = snapshot.aim
     if (latest && snapshot.scratched !== latest.scratched && !snapshot.moving) frames = []
     if (latest && snapshot.rack !== latest.rack) {
       frames = []
@@ -144,7 +146,10 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
     idle.pointer.lock()
     app.send('pool:claim', { angle })
   }
-  app.onPointerDown = () => action.onTrigger()
+  app.onPointerDown = event => {
+    if (event?.button === 'left' && placeCueBall()) return
+    action.onTrigger()
+  }
   world.on(`billard:play:${playChannel}`, action.onTrigger)
   world.on(`${aimingEvent}:request`, () => app.emit(aimingEvent, !!control))
   label()
@@ -202,7 +207,7 @@ export function startClient(world, app, { balls, ghost, action, size, playChanne
           placeX + (Math.cos(angle) * forward + Math.sin(angle) * right) * distance))
         placeY = Math.max(-size.width / 2 + 2 * R, Math.min(size.width / 2 - 2 * R,
           placeY + (Math.sin(angle) * forward - Math.cos(angle) * right) * distance))
-        // Preview using the real cue-ball mesh; the server commits on Space.
+        // Preview on the real cue-ball mesh; click or Space asks the server to commit.
         balls[0].active = true
         balls[0].position.set(placeX, R, -placeY)
       } else {
