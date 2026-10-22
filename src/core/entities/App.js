@@ -342,7 +342,7 @@ export class App extends Entity {
         } else {
           this.mode = Modes.ACTIVE
           // Only remove from hot if no hot events are bound
-          const hasHotEvents = hotEventNames.some(name => this.listeners[name]?.length > 0)
+          const hasHotEvents = hotEventNames.some(name => this.listeners[name]?.size > 0)
           if (!hasHotEvents) {
             this.world.setHot(this, false)
           }
