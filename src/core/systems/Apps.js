@@ -1,8 +1,9 @@
 import moment from 'moment'
-import { isArray, isEqual, isFunction, isNumber } from 'lodash-es'
+import { isArray, isEqual, isFunction, isNumber, isPlainObject } from 'lodash-es'
 import * as THREE from '../extras/three'
 
 import { System } from './System'
+import { uuid } from '../utils'
 import { getRef } from '../nodes/Node'
 import { Layers } from '../extras/Layers'
 import { ControlPriorities } from '../extras/ControlPriorities'
@@ -32,6 +33,8 @@ const internalEvents = [
 export class Apps extends System {
   constructor(world) {
     super(world)
+    this.spawnTimes = new WeakMap()
+    this.pendingSpawns = new WeakMap()
     this.initWorldHooks()
     this.initAppHooks()
   }
@@ -67,6 +70,91 @@ export class Apps extends System {
       // ...
     }
     this.worldMethods = {
+      spawnApp(entity, options = {}) {
+        requireServer(world, entity, 'spawnApp')
+        const { name, script, position, quaternion } = options
+        if (typeof name !== 'string' || !name.trim() || name.length > 256) {
+          throw new Error('spawnApp name must be a non-empty string of at most 256 characters')
+        }
+        if (typeof script !== 'string' || !/^asset:\/\/[^/]+\.js$/.test(script)) {
+          throw new Error('spawnApp script must be an asset:// JavaScript URL')
+        }
+        const blueprint = entity.blueprint
+        if (script !== blueprint.script && !Object.values(blueprint.props || {}).some(prop => prop?.url === script)) {
+          throw new Error('spawnApp script must be referenced by the caller blueprint')
+        }
+        const props = copyAppJSON(options.props ?? {}, 'props')
+        for (const prop of Object.values(props)) {
+          const url = prop?.url
+          if (typeof url === 'string' && url.startsWith('asset://') && !/^asset:\/\/[^/]+\.[a-z0-9]+$/.test(url)) {
+            throw new Error('spawnApp props contain an invalid asset URL')
+          }
+        }
+        const transform = copyAppTransform(position, quaternion)
+        const state = copyAppJSON(options.state ?? {}, 'state')
+        const pending = self.pendingSpawns.get(entity) || 0
+        let live = pending
+        for (const child of world.entities.items.values()) {
+          if (child.isApp && child.data.spawnedBy === entity.data.id) live++
+        }
+        if (live >= 50) throw new Error('spawnApp live limit exceeded (50 per parent)')
+        const now = Date.now()
+        const times = (self.spawnTimes.get(entity) || []).filter(time => now - time < 60000)
+        if (times.length >= 10) throw new Error('spawnApp rate limit exceeded (10 per minute per parent)')
+        times.push(now)
+        self.spawnTimes.set(entity, times)
+        const childBlueprint = {
+          id: uuid(),
+          version: 0,
+          name,
+          model: 'script-only',
+          script,
+          props,
+          preload: false,
+          public: false,
+          locked: false,
+          frozen: false,
+          unique: false,
+          scene: false,
+          disabled: false,
+        }
+        const data = {
+          id: uuid(),
+          type: 'app',
+          blueprint: childBlueprint.id,
+          ...transform,
+          scale: [1, 1, 1],
+          mover: null,
+          uploader: null,
+          pinned: false,
+          state,
+          spawnedBy: entity.data.id,
+        }
+        world.blueprints.add(childBlueprint)
+        world.network.send('blueprintAdded', childBlueprint)
+        world.network.dirtyBlueprints.add(childBlueprint.id)
+        // App constructors execute cached scripts before Entities.add registers them.
+        // Reserve capacity so synchronous callbacks into the parent still see the cap.
+        self.pendingSpawns.set(entity, pending + 1)
+        try {
+          world.entities.add(data)
+        } finally {
+          self.pendingSpawns.set(entity, pending)
+        }
+        world.network.send('entityAdded', data)
+        world.network.dirtyApps.add(data.id)
+        return data.id
+      },
+      removeApp(entity, id) {
+        requireServer(world, entity, 'removeApp')
+        const child = world.entities.get(id)
+        if (!child?.isApp || child.data.spawnedBy !== entity.data.id) {
+          throw new Error('removeApp can only remove apps spawned by this app instance')
+        }
+        world.entities.remove(id)
+        world.network.send('entityRemoved', id)
+        world.network.dirtyApps.add(id)
+      },
       add(entity, pNode) {
         const node = getRef(pNode)
         if (!node) return
@@ -309,6 +397,16 @@ export class Apps extends System {
       },
     }
     this.appMethods = {
+      setTransform(entity, position, quaternion) {
+        requireServer(world, entity, 'setTransform')
+        const transform = copyAppTransform(position, quaternion)
+        Object.assign(entity.data, transform)
+        // Applying App.modify here would rebuild and re-run the calling script.
+        entity.root.position.fromArray(transform.position)
+        entity.root.quaternion.fromArray(transform.quaternion)
+        world.network.send('entityModified', { id: entity.data.id, ...transform })
+        world.network.dirtyApps.add(entity.data.id)
+      },
       on(entity, name, callback) {
         entity.on(name, callback)
       },
@@ -448,4 +546,40 @@ export const fileRemaps = {
     field.type = 'file'
     field.kind = 'audio'
   },
+}
+
+function requireServer(world, entity, method) {
+  if (!world.network.isServer) throw new Error(`${method} is server-only`)
+  if (entity.destroyed) throw new Error(`${method} cannot be called by a destroyed app`)
+}
+
+function copyAppTransform(position, quaternion) {
+  if (!position?.isVector3 || ![position.x, position.y, position.z].every(Number.isFinite)) {
+    throw new Error('position must be a finite Vector3')
+  }
+  if (!quaternion?.isQuaternion || ![quaternion.x, quaternion.y, quaternion.z, quaternion.w].every(Number.isFinite)) {
+    throw new Error('quaternion must be a finite Quaternion')
+  }
+  return {
+    position: [position.x, position.y, position.z],
+    quaternion: [quaternion.x, quaternion.y, quaternion.z, quaternion.w],
+  }
+}
+
+function copyAppJSON(value, label) {
+  if (!isPlainObject(value)) throw new Error(`${label} must be a JSON object`)
+  const ancestors = new Set()
+  function validate(item) {
+    if (item === null || typeof item === 'string' || typeof item === 'boolean') return
+    if (typeof item === 'number' && Number.isFinite(item)) return
+    if (!Array.isArray(item) && !isPlainObject(item)) throw new Error(`${label} must be JSON-serializable`)
+    if (ancestors.has(item)) throw new Error(`${label} must be JSON-serializable (circular value)`)
+    ancestors.add(item)
+    for (const child of Array.isArray(item) ? item : Object.values(item)) validate(child)
+    ancestors.delete(item)
+  }
+  validate(value)
+  const json = JSON.stringify(value)
+  if (new TextEncoder().encode(json).length > 64 * 1024) throw new Error(`${label} exceeds 64 KB`)
+  return JSON.parse(json)
 }

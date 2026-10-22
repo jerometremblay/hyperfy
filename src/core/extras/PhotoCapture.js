@@ -4,6 +4,8 @@ import { hashFile } from '../utils-client'
 import { limitLightShadows } from './shadowBudget'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
+export const PHOTO_FILTERS = ['none', 'grayscale', 'sepia']
+
 export function photoOptions(entity, options = {}) {
   const { position, quaternion } = options
   if (!position?.isVector3 || !['x', 'y', 'z'].every(key => Number.isFinite(position[key]))) {
@@ -27,6 +29,8 @@ export function photoOptions(entity, options = {}) {
   if (far <= near) throw new Error('capturePhoto: far must exceed near')
   if (options.format !== undefined && options.format !== 'jpeg') throw new Error('capturePhoto: only jpeg is supported')
   if (options.hide !== undefined && !Array.isArray(options.hide)) throw new Error('capturePhoto: hide must be an array')
+  const filter = options.filter ?? 'none'
+  if (!PHOTO_FILTERS.includes(filter)) throw new Error('capturePhoto: filter must be none, grayscale or sepia')
   const hide = [...new Set((options.hide || []).map(getRef))]
   for (const node of hide) {
     if (!node?.traverse || node.ctx?.entity !== entity) {
@@ -42,6 +46,7 @@ export function photoOptions(entity, options = {}) {
     near,
     far,
     quality: number('quality', 0.85, 0, 1),
+    filter,
     hide,
   }
 }
@@ -162,7 +167,25 @@ export function renderPhoto(graphics, options) {
   return pixels
 }
 
-export function encodePhoto(pixels, { width, height, quality }) {
+// Rec. 709 luma for grayscale; classic sepia matrix. Operates on 8-bit sRGB RGBA in place.
+export function applyPhotoFilter(data, filter) {
+  if (filter !== 'grayscale' && filter !== 'sepia') return data
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+    if (filter === 'grayscale') {
+      data[i] = data[i + 1] = data[i + 2] = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    } else {
+      data[i] = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b)
+      data[i + 1] = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b)
+      data[i + 2] = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b)
+    }
+  }
+  return data
+}
+
+export function encodePhoto(pixels, { width, height, quality, filter = 'none' }) {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
@@ -172,6 +195,7 @@ export function encodePhoto(pixels, { width, height, quality }) {
   for (let y = 0; y < height; y++) {
     image.data.set(pixels.subarray((height - y - 1) * stride, (height - y) * stride), y * stride)
   }
+  applyPhotoFilter(image.data, filter)
   context.putImageData(image, 0, 0)
   return new Promise((resolve, reject) => {
     canvas.toBlob(
@@ -227,7 +251,7 @@ export class PhotoCapture {
     await world.network.upload(file)
     if (hook.dead || this.destroyed) throw new Error('capturePhoto: capture cancelled')
     world.loader.insert('image', url, file)
-    return { url, width: options.width, height: options.height }
+    return { url, width: options.width, height: options.height, filter: options.filter }
   }
 
   destroy() {

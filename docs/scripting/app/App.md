@@ -70,3 +70,24 @@ Gives you control to listen for inputs and modify things like camera position. S
 #### `.configure(fields)`
 
 Configures custom UI for your app. See [Props](/docs/scripting/app/Props.md) for more info.
+
+
+### `.setTransform(position: Vector3, quaternion: Quaternion)`
+
+Server-only. Moves this app in world space, broadcasts the normal entity transform
+update to every client, and persists the position and rotation. Both arguments are
+required and must contain only finite numbers. Values are copied; scale is preserved.
+Late joiners and server restarts use the saved transform. The server script keeps running
+without a rebuild.
+
+```js
+if (world.isServer) {
+  app.on('dropped', () => {
+    app.setTransform(new Vector3(1, 0.05, 0), new Quaternion())
+  })
+}
+```
+
+Use this when a script needs to persist where its entity landed. Changing a node's
+position alone does not update the entity's saved world transform. Calling this method
+(or `world.spawnApp` / `world.removeApp`) on a client throws a `server-only` error.
