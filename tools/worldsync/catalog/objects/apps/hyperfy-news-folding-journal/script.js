@@ -312,18 +312,18 @@ function receiveHtmlBridgeEvent(number, event) {
   if (name !== 'keydown') return
   if (detail?.isTrusted !== true || detail.repeat || detail.isComposing) return
   const escape = detail.key === 'Escape' || detail.code === 'Escape'
-  const keyE = detail.code === 'KeyE' ||
-    (typeof detail.key === 'string' && detail.key.toLowerCase() === 'e')
-  const unmodifiedE =
-    keyE &&
+  const keyX = detail.code === 'KeyX' ||
+    (typeof detail.key === 'string' && detail.key.toLowerCase() === 'x')
+  const unmodifiedX =
+    keyX &&
     !detail.altKey &&
     !detail.ctrlKey &&
     !detail.metaKey &&
     !detail.shiftKey &&
     !target?.isEditable
-  if (!escape && !unmodifiedE) return
+  if (!escape && !unmodifiedX) return
   releaseReadingFocus(number, event)
-  requestClose()
+  if (unmodifiedX) requestClose()
 }
 
 function createPageSurface(number) {
@@ -641,7 +641,15 @@ function animate(dt) {
   applyPaper(progress)
 }
 
+function updateCloseControl() {
+  if (!readingControl?.keyX) return
+  const reading = app.state.open && world.getPlayer()?.id === app.state.readerId
+  readingControl.keyX.onPress = reading ? requestClose : null
+  readingControl.keyX.capture = !!reading
+}
+
 function setOpen(isOpen, pose) {
+  updateCloseControl()
   if (isOpen && pose) {
     captureHome()
     readingPose = pose
@@ -774,6 +782,7 @@ if (world.isServer) {
 }
 
 if (world.isClient) {
+  updateCloseControl()
   action.onTrigger = requestToggle
   app.on('journal:pages', receivePages)
   app.on('journal:page-count', receivePageCount)

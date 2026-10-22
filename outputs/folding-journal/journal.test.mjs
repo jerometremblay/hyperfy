@@ -124,6 +124,7 @@ function fixture() {
           camera: { position: new Vector3(0, 1.6, 1), quaternion: new Quaternion(), zoom: 0 },
           escape: {},
           keyE: {},
+          keyX: {},
           pointer: { locked: false },
         }
       },
@@ -324,7 +325,7 @@ test('3D page presses leave free-cursor clicks to the iframe and ignore other mo
   assert.deepEqual(client.sent, [])
 })
 
-test('focused page keyboard closes the journal with Escape or unmodified E', () => {
+test('Escape releases page focus and only unmodified X closes the journal', () => {
   const f = fixture(),
     server = f.runtime(true),
     client = f.runtime(false)
@@ -343,7 +344,7 @@ test('focused page keyboard closes the journal with Escape or unmodified E', () 
         name: 'keydown',
         detail: {
           key,
-          code: options.code || (key === 'Escape' ? 'Escape' : 'KeyE'),
+          code: options.code || (key === 'Escape' ? 'Escape' : 'Key' + key.toUpperCase()),
           isTrusted: true,
           defaultPrevented: false,
           repeat: false,
@@ -360,17 +361,34 @@ test('focused page keyboard closes the journal with Escape or unmodified E', () 
   }
 
   keydown('Escape', { target: { isEditable: true } })
+  assert.equal(client.sent.filter(([name]) => name === 'journal:toggle').length, 0)
   keydown('e')
-  keydown('e', { target: { isEditable: true } })
-  keydown('e', { shiftKey: true })
+  keydown('x')
+  keydown('x', { target: { isEditable: true } })
+  keydown('x', { shiftKey: true })
 
   const closeRequests = client.sent.filter(([name]) => name === 'journal:toggle')
-  assert.equal(closeRequests.length, 2)
+  assert.equal(closeRequests.length, 1)
   assert.equal(released, 2)
   for (const [, request] of closeRequests) {
     server.events.get('journal:toggle')(request, 'alice')
   }
   assert.equal(server.app.state.open, false)
+})
+
+test('X closes the journal from world controls and is reserved only for its reader', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false), other = f.runtime(false, 'bob')
+  assert.equal(client.get('readingControl.keyX.capture'), false)
+  f.open(server, client, other)
+  assert.equal(client.get('readingControl.keyX.capture'), true)
+  assert.equal(other.get('readingControl.keyX.capture'), false)
+  client.get('readingControl.keyX.onPress()')
+  const request = client.sent.findLast(([name]) => name === 'journal:toggle')
+  server.events.get('journal:toggle')(request[1], 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.deliver(other, server.sent.at(-1))
+  assert.equal(server.app.state.open, false)
+  assert.equal(client.get('readingControl.keyX.capture'), false)
 })
 
 test('server enforces opener ownership, bounds, valid direction and one turn at a time', () => {
