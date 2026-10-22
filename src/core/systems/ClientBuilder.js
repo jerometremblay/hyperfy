@@ -510,6 +510,7 @@ export class ClientBuilder extends System {
           uploader: null,
           pinned: false,
           state: {},
+          ...(entity.data.published ? { published: cloneDeep(entity.data.published) } : {}),
         }
         const dup = this.world.entities.add(data, true)
         this.select(dup)

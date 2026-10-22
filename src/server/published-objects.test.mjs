@@ -623,3 +623,22 @@ test('evicting a package body keeps its check schedule, while installation can r
   assert.equal(calls, 3)
   assert.ok(resolver.cache.get(url).bytes)
 })
+
+test('tracked duplication copies trusted metadata for shared and unique blueprints without sharing mutable data', async t => {
+  const f = await fixture(t)
+  const { app } = await importObject(f)
+  const network = new ServerNetwork(f.world)
+  clearInterval(network.socketIntervalId)
+  network.send = () => {}
+  f.socket.send = () => {}
+  for (const unique of [false, true]) {
+    const blueprint = unique ? { ...structuredClone(app.blueprint), id: 'unique-copy', version: 0 } : app.blueprint
+    if (unique) f.world.blueprints.add(blueprint)
+    const data = { ...structuredClone(app.data), id: `copy-${unique}`, blueprint: blueprint.id }
+    network.onEntityAdded(f.socket, data)
+    const copy = f.entities.get(data.id)
+    assert.deepEqual(copy.data.published, app.data.published)
+    copy.data.published.baselineProps.color = 'custom-copy'
+    assert.equal(app.data.published.baselineProps.color, 'blue')
+  }
+})

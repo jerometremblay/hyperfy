@@ -1,3 +1,4 @@
+import { canonical, implementationDescriptor } from '../extras/publishedObjects'
 import { applyPlayerExpression } from '../extras/playerExpressions'
 import moment from 'moment'
 import { writePacket } from '../packets'
@@ -539,7 +540,11 @@ export class ServerNetwork extends System {
     delete data.publishedRevision
     delete data.published
     if (source) {
-      const original = [...this.world.entities.items.values()].find(app => app.data.blueprint === data.blueprint && isEqual(app.data.published, source))
+      const duplicateBP = this.world.blueprints.get(data.blueprint)
+      const original = [...this.world.entities.items.values()].find(app => {
+        if (!isEqual(app.data.published, source) || !duplicateBP || !app.blueprint) return false
+        return canonical(implementationDescriptor(app.blueprint)) === canonical(implementationDescriptor(duplicateBP)) && isEqual(app.blueprint.props, duplicateBP.props)
+      })
       if (original) data.published = cloneDeep(original.data.published)
     }
     const entity = this.world.entities.add(data)
