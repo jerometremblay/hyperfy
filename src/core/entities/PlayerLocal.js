@@ -1448,24 +1448,42 @@ export class PlayerLocal extends Entity {
     })
   }
 
+  getCamera() {
+    return { quaternion: this.cam.quaternion.clone(), zoom: this.cam.zoom, firstPerson: this.firstPerson }
+  }
+
   // Set the native view once; ordinary player input and collision remain active.
-  setCamera({ target, zoom = THIRD_PERSON_MIN_ZOOM, duration = 0 } = {}) {
-    if (this.isXR || !target || ![target.x, target.y, target.z, zoom, duration].every(Number.isFinite) || duration < 0) return false
+  setCamera({ target, quaternion: orientation, firstPerson = false, zoom = THIRD_PERSON_MIN_ZOOM, duration = 0 } = {}) {
+    const direction = orientation ? [orientation.x, orientation.y, orientation.z, orientation.w] : target && [target.x, target.y, target.z]
+    if (this.isXR || !direction || ![...direction, zoom, duration].every(Number.isFinite) || duration < 0) return false
+    if (orientation && direction.every(value => value === 0)) return false
     this.cameraTransition = duration > 0 ? {
       elapsed: 0, duration: Math.min(duration, 2),
       offset: this.world.rig.position.clone().sub(this.base.position),
       quaternion: this.world.rig.quaternion.clone(), zoom: this.world.camera.position.z,
     } : null
-    this.firstPerson = false
-    this.avatar?.setFirstPerson(false)
+    this.firstPerson = !!firstPerson
+    this.avatar?.setFirstPerson(this.firstPerson)
     if (this.avatar) this.avatar.visible = true
-    this.cam.zoom = clamp(zoom, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
+    this.cam.zoom = firstPerson ? 0 : clamp(zoom, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
     const eye = this.base.position.clone().add(new THREE.Vector3(0, this.camHeight, 0))
+    if (firstPerson && this.getAnchorMatrix?.() && this.avatar) {
+      getAvatarEyePosition(this.avatar, eye) || getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), eye, this.cameraFocusBounds)
+    }
     const rotation = new THREE.Euler(0, 0, 0, 'YXZ')
     const quaternion = new THREE.Quaternion()
-    const pivot = new THREE.Vector3()
+    const pivot = eye.clone()
+    if (orientation) {
+      quaternion.copy(orientation).normalize()
+      rotation.setFromQuaternion(quaternion, 'YXZ')
+      if (!firstPerson) pivot.add(new THREE.Vector3(Math.cos(rotation.y), 0, -Math.sin(rotation.y)).multiplyScalar(0.3))
+    } else if (firstPerson) {
+      const look = new THREE.Vector3().subVectors(target, eye)
+      rotation.set(Math.atan2(look.y, Math.hypot(look.x, look.z)), Math.atan2(-look.x, -look.z), 0, 'YXZ')
+      quaternion.setFromEuler(rotation)
+    }
     // Account for the native shoulder offset and zoom when looking at the target.
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; !orientation && !firstPerson && i < 12; i++) {
       pivot.copy(eye).add(new THREE.Vector3(Math.cos(rotation.y), 0, -Math.sin(rotation.y)).multiplyScalar(0.3))
       const view = pivot.clone().add(new THREE.Vector3(0, 0, this.cam.zoom).applyQuaternion(quaternion))
       const look = new THREE.Vector3().subVectors(target, view)

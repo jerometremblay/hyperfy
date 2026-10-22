@@ -462,6 +462,7 @@ export class ClientControls extends System {
           const idx = this.controls.indexOf(control)
           if (idx === -1) return
           this.controls.splice(idx, 1)
+          if (control.actions?.length) self.buildActions()
           options.onRelease?.()
         },
       },

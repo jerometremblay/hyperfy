@@ -48,3 +48,18 @@ for (const hand of ['left', 'right']) {
     assert.equal(playerTrigger.value, 1)
   })
 }
+
+test('releasing an app control removes its pickup hint without removing another app hint', () => {
+  const emitted = []
+  const world = { emit: (event, data) => emitted.push([event, data]) }
+  const controls = new ClientControls(world)
+  const cue = controls.bind({ priority: 1 }), journal = controls.bind({ priority: 1 })
+  cue.setActions([{ type: 'keyX', label: 'Put the cue away', position: 'bottom-left' }])
+  journal.setActions([{ type: 'keyX', label: 'Put the journal away', position: 'bottom-left' }])
+  assert.equal(controls.actions.length, 2)
+  cue.release()
+  assert.deepEqual(controls.actions.map(action => action.label), ['Put the journal away'])
+  journal.release()
+  assert.deepEqual(controls.actions, [])
+  assert.equal(emitted.at(-1)[0], 'actions')
+})

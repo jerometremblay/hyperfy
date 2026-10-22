@@ -168,11 +168,13 @@ function applyHolders(next) {
   if (nextHeld === localHeld) return
   localHeld = nextHeld
   if (localControls) {
+    localControls.setActions([])
     localControls.release()
     localControls = null
   }
   if (localHeld !== -1 && typeof app.control === 'function') {
     localControls = app.control()
+    localControls.setActions([{ type: 'keyX', label: 'Put the cue away', position: 'bottom-left', opacity: 0.5 }])
     const drop = () => {
       const player = world.getPlayer()
       if (player && localHeld !== -1) app.send('drop-cue', { slot: localHeld })

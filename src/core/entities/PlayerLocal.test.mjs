@@ -430,3 +430,43 @@ test('animated camera handoff eases from the aiming pose, follows walking and re
     assert.equal(player.control.camera.zoom, 0.05)
   }
 })
+
+test('journal first-person transition restores the saved native orientation, zoom and view mode', () => {
+  globalThis.PHYSX = { PxSphereGeometry: class {} }
+  for (const firstPerson of [false, true]) {
+    const rig = new THREE.Object3D()
+    rig.position.set(0.3, 1.7, 1)
+    rig.rotation.set(-0.25, 0.8, 0, 'YXZ')
+    const camera = new THREE.PerspectiveCamera()
+    camera.position.z = firstPerson ? 0 : 4
+    const cam = new THREE.Object3D()
+    cam.position.copy(rig.position)
+    cam.quaternion.copy(rig.quaternion)
+    cam.zoom = camera.position.z
+    const player = {
+      isXR: false, firstPerson, base: { position: new THREE.Vector3(0, 0, 1) },
+      camHeight: 1.7, getAnchorMatrix: () => null, cam,
+      control: { camera: { position: rig.position.clone(), quaternion: rig.quaternion.clone(), zoom: cam.zoom } },
+      world: { rig, camera, physics: { sweep: () => null } },
+    }
+    const saved = PlayerLocal.prototype.getCamera.call(player)
+    const original = saved.quaternion.clone()
+    const target = new THREE.Vector3(0, 1.7, 0.1)
+    assert.equal(PlayerLocal.prototype.setCamera.call(player, { target, firstPerson: true, duration: 0.65 }), true)
+    assert.equal(player.firstPerson, true)
+    PlayerLocal.prototype.lateUpdate.call(player, 0.325)
+    assert.ok(player.control.camera.zoom >= 0 && player.control.camera.zoom < saved.zoom || firstPerson)
+    PlayerLocal.prototype.lateUpdate.call(player, 0.325)
+    assert.equal(player.control.camera.zoom, 0)
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(player.control.camera.quaternion)
+    assert.ok(forward.distanceTo(target.clone().sub(player.control.camera.position).normalize()) < 1e-7)
+    assert.ok(saved.quaternion.equals(original), 'snapshot must not share mutable camera rotation')
+    // Looking around while reading must not replace the original snapshot.
+    cam.rotateY(0.5)
+    PlayerLocal.prototype.setCamera.call(player, { ...saved, duration: 0.65 })
+    PlayerLocal.prototype.lateUpdate.call(player, 0.65)
+    assert.equal(player.firstPerson, firstPerson)
+    assert.equal(player.control.camera.zoom, saved.zoom)
+    assert.ok(player.control.camera.quaternion.angleTo(original) < 1e-7)
+  }
+})

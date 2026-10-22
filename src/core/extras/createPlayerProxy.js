@@ -62,6 +62,10 @@ export function createPlayerProxy(entity, player) {
     get destroyed() {
       return !!player.destroyed
     },
+    getCamera() {
+      if (!world.network.isClient || player.data.owner !== world.network.id) return null
+      return player.getCamera()
+    },
     setCamera(options) {
       if (!world.network.isClient || player.data.owner !== world.network.id) return false
       return player.setCamera(options)

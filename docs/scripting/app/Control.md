@@ -51,7 +51,17 @@ Set `position: 'pointer'` to center a native hint below the mouse or locked reti
 control.setActions([{ type: 'hourglass', position: 'pointer', opacity: 0.5 }])
 ```
 
-Clear the hint with `control.setActions([])` before releasing the control.
+For a held object's return action, use `position: 'bottom-left'`. The hint appears
+below the pointer for 0.75 seconds, then slides to the lower-left corner over
+0.45 seconds and stays until cleared. These hints remain visible when the optional
+controls overlay preference is off.
+
+```javascript
+control.setActions([{ type: 'keyX', label: 'Put the cue away', position: 'bottom-left', opacity: 0.5 }])
+```
+
+Clear the hint with `control.setActions([])` when the object is put away. Releasing
+the control also removes its hints automatically.
 
 ### Pointer
 

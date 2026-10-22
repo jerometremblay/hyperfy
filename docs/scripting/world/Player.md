@@ -171,11 +171,19 @@ Desktop keys **1–5** toggle happy, angry, sad, relaxed, and surprised respecti
 clearing the previous expression. Higher-priority controls take precedence, and shortcuts
 are disabled in build mode, in VR, and while typing in chat or another input.
 
-### .setCamera({ target, zoom = 0.3, duration = 0 })
+### .getCamera()
+
+Returns a copy of the local native camera settings: `{ quaternion, zoom, firstPerson }`.
+Returns null for remote players and servers. Save this object and pass it back to
+`setCamera` to restore the viewing direction, distance and mode later.
+
+### .setCamera({ target, quaternion, firstPerson = false, zoom = 0.3, duration = 0 })
 
 Sets the local desktop player's normal camera once, looking at a world-space
 Vector3 target. Zoom is clamped to the native third-person range (minimum 0.3 m).
-This exits first-person mode and updates the native shoulder view without moving
+Set `firstPerson: true` to use the native eye view with zero zoom. Alternatively,
+pass a saved `quaternion` instead of a target to restore a previous direction.
+By default this exits first-person mode and updates the native shoulder view without moving
 the player or capturing input. Normal mouse look, zoom and collision continue;
 the target is not tracked afterward. Returns false for remote players, servers,
 XR or invalid target/zoom values.

@@ -542,6 +542,7 @@ const action = app.create('action', {
 journalBody.add(action)
 
 // Reading transforms are visual only: the entity's saved placement stays at home.
+let savedCamera = null
 let homePose = null
 let readingPose = app.state.readingPose || null
 const readingControl = world.isClient ? app.control() : null
@@ -641,15 +642,37 @@ function animate(dt) {
   applyPaper(progress)
 }
 
+let closeHintVisible = false
 function updateCloseControl() {
   if (!readingControl?.keyX) return
   const reading = app.state.open && world.getPlayer()?.id === app.state.readerId
   readingControl.keyX.onPress = reading ? requestClose : null
   readingControl.keyX.capture = !!reading
+  if (reading !== closeHintVisible) {
+    closeHintVisible = reading
+    readingControl.setActions(reading ? [{ type: 'keyX', label: 'Put the journal away', position: 'bottom-left', opacity: 0.5 }] : [])
+  }
+}
+
+function updateReadingCamera(isOpen, pose) {
+  if (!world.isClient) return
+  const player = world.getPlayer()
+  if (isOpen && pose && player?.id === app.state.readerId && !savedCamera) {
+    const previous = player.getCamera?.()
+    if (!previous) return
+    const center = new Vector3(-0.31, 0.012, 0).multiplyScalar(1.2)
+      .applyQuaternion(new Quaternion().fromArray(pose.quaternion))
+      .add(new Vector3().fromArray(pose.position))
+    if (player.setCamera({ target: center, firstPerson: true, duration: 0.65 })) savedCamera = previous
+  } else if (!isOpen && savedCamera) {
+    player?.setCamera({ ...savedCamera, duration: 0.65 })
+    savedCamera = null
+  }
 }
 
 function setOpen(isOpen, pose) {
   updateCloseControl()
+  updateReadingCamera(isOpen, pose)
   if (isOpen && pose) {
     captureHome()
     readingPose = pose
@@ -783,6 +806,7 @@ if (world.isServer) {
 
 if (world.isClient) {
   updateCloseControl()
+  updateReadingCamera(app.state.open, readingPose)
   action.onTrigger = requestToggle
   app.on('journal:pages', receivePages)
   app.on('journal:page-count', receivePageCount)

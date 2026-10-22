@@ -1011,7 +1011,6 @@ function ActionsBlock({ world }) {
     }
   }, [])
   if (isTouch) return null
-  if (!showActions) return null
   return (
     <div
       css={css`
@@ -1029,12 +1028,12 @@ function ActionsBlock({ world }) {
         }
       `}
     >
-      <Actions world={world} />
+      <Actions world={world} showActions={showActions} />
     </div>
   )
 }
 
-function Actions({ world }) {
+function Actions({ world, showActions = true }) {
   const [actions, setActions] = useState(() => world.controls.actions)
   useEffect(() => {
     world.on('actions', setActions)
@@ -1048,33 +1047,24 @@ function Actions({ world }) {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        .actions-item {
-          display: flex;
-          align-items: center;
-          margin: 0 0 0.5rem;
-          &-icon {
-            // ...
-          }
-          &-label {
-            margin-left: 0.625em;
-            paint-order: stroke fill;
-            -webkit-text-stroke: 0.25rem rgba(0, 0, 0, 0.2);
-          }
-        }
       `}
     >
-      {actions.map(action => (
-        <ActionHint key={action.id} action={action} world={world} />
+      {actions.filter(action => showActions || action.position === 'bottom-left').map(action => (
+        <ActionHint key={action.id} action={action} world={world} index={actions.filter(item => item.position === action.position).indexOf(action)} />
       ))}
     </div>
   )
 }
 
-function ActionHint({ action, world }) {
+function ActionHint({ action, world, index = 0 }) {
   const ref = useRef()
+  const indexRef = useRef(index)
+  indexRef.current = index
   useLayoutEffect(() => {
-    if (action.position !== 'pointer') return
+    const pickup = action.position === 'bottom-left'
+    if (action.position !== 'pointer' && !pickup) return
     let frame
+    const started = performance.now()
     const move = () => {
       const element = ref.current
       const viewport = world.controls.viewport
@@ -1083,8 +1073,20 @@ function ActionHint({ action, world }) {
         const pointer = world.controls.pointer
         const x = rect.left + (pointer.locked ? rect.width / 2 : pointer.position.x)
         const y = rect.top + (pointer.locked ? rect.height / 2 : pointer.position.y)
-        element.style.left = `${Math.max(rect.left, Math.min(x - element.offsetWidth / 2, rect.right - element.offsetWidth - 8))}px`
-        element.style.top = `${Math.max(rect.top, Math.min(y + 14, rect.bottom - element.offsetHeight - 8))}px`
+        const docking = pickup && performance.now() - started >= 750
+        if (docking) {
+          // Start the slide from the last pointer position; keep its target responsive.
+          const margin = rect.width <= 1200 ? 16 : 32
+          element.style.transition = 'left 450ms ease-in-out, bottom 450ms ease-in-out, transform 450ms ease-in-out'
+          element.style.left = `${margin}px`
+          element.style.bottom = `${margin + indexRef.current * (element.offsetHeight + 8)}px`
+          element.style.transform = 'translateX(0)'
+        } else {
+          element.style.left = `${Math.max(rect.left + element.offsetWidth / 2, Math.min(x, rect.right - element.offsetWidth / 2 - 8))}px`
+          const top = Math.max(rect.top, Math.min(y + 14, rect.bottom - element.offsetHeight - 8))
+          element.style.bottom = `${window.innerHeight - top - element.offsetHeight}px`
+          element.style.transform = 'translateX(-50%)'
+        }
         element.style.visibility = 'visible'
       }
       frame = requestAnimationFrame(move)
@@ -1093,9 +1095,21 @@ function ActionHint({ action, world }) {
     return () => cancelAnimationFrame(frame)
   }, [action.position, world])
   return (
-    <div ref={ref} className='actions-item' style={{
-      position: action.position === 'pointer' ? 'fixed' : undefined,
-      visibility: action.position === 'pointer' ? 'hidden' : undefined,
+    <div ref={ref} className='actions-item' css={css`
+      display: flex;
+      align-items: center;
+      margin: 0 0 0.5rem;
+      .actions-item-label {
+        margin-left: 0.625em;
+        paint-order: stroke fill;
+        -webkit-text-stroke: 0.25rem rgba(0, 0, 0, 0.2);
+      }
+    `} style={{
+      position: ['pointer', 'bottom-left'].includes(action.position) ? 'fixed' : undefined,
+      visibility: ['pointer', 'bottom-left'].includes(action.position) ? 'hidden' : undefined,
+      width: ['pointer', 'bottom-left'].includes(action.position) ? 'max-content' : undefined,
+      height: ['pointer', 'bottom-left'].includes(action.position) ? 'max-content' : undefined,
+      maxWidth: ['pointer', 'bottom-left'].includes(action.position) ? 'calc(100vw - 2rem)' : undefined,
       pointerEvents: 'none',
       opacity: action.opacity ?? 1,
     }}>
@@ -1248,6 +1262,10 @@ function ActionPrompt({ world, visible }) {
   }, [action, pointerLocked, world])
 
   if (!visible || !action || (buildMode && (isTouch || world.xr?.session || pointerLocked))) return null
+
+  if (!isTouch) {
+    return <ActionHint action={{ type: 'mouseLeft', label: action.label, position: 'pointer', opacity: 0.5 }} world={world} />
+  }
 
   const prompt = getActionPrompt(world)
   const progressRatio = Math.max(0, Math.min(1, progress))

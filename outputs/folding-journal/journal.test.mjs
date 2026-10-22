@@ -122,6 +122,7 @@ function fixture() {
       control() {
         return {
           camera: { position: new Vector3(0, 1.6, 1), quaternion: new Quaternion(), zoom: 0 },
+          setActions(value) { app.hints = value },
           escape: {},
           keyE: {},
           keyX: {},
@@ -698,4 +699,44 @@ test('the default journal package and worldsync catalog contain the reviewed scr
   assert.equal(catalog, source)
   const { blueprint, assets } = parseHyp(fs.readFileSync(new URL('../../src/world/collections/default/HyperfyJournal.hyp', import.meta.url)))
   assert.equal(Buffer.from(assets.find(asset => asset.url === blueprint.script).bytes).toString(), source)
+})
+
+test('only the reader transitions to first person and restores the first opening snapshot on close', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false), observer = f.runtime(false, 'bob')
+  for (const runtime of [client, observer]) runtime.get(`
+    world.getPlayer().cameraCalls = []
+    world.getPlayer().getCamera = () => ({ quaternion: new Quaternion(), zoom: 4, firstPerson: false })
+    world.getPlayer().setCamera = options => { world.getPlayer().cameraCalls.push(options); return true }
+  `)
+  f.open(server, client, observer)
+  assert.equal(client.get('world.getPlayer().cameraCalls.length'), 1)
+  assert.equal(observer.get('world.getPlayer().cameraCalls.length'), 0)
+  const opening = client.get('world.getPlayer().cameraCalls[0]')
+  assert.equal(opening.firstPerson, true)
+  assert.equal(opening.duration, 0.65)
+  assert.ok(opening.target.distanceTo(new Vector3(0, 1.6, 0.1)) < 1e-7)
+  f.deliver(client, server.sent.find(([event, data]) => event === 'journal:state' && data.open))
+  assert.equal(client.get('world.getPlayer().cameraCalls.length'), 1, 'duplicate state must preserve snapshot')
+  server.events.get('journal:toggle')({}, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.deliver(observer, server.sent.at(-1))
+  const closing = client.get('world.getPlayer().cameraCalls[1]')
+  assert.equal(closing.firstPerson, false)
+  assert.equal(closing.zoom, 4)
+  assert.equal(closing.duration, 0.65)
+  assert.equal(observer.get('world.getPlayer().cameraCalls.length'), 0)
+})
+
+test('journal X hint appears only for the reader and clears on close without restarting on duplicate state', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false), observer = f.runtime(false, 'bob')
+  f.open(server, client, observer)
+  assert.equal(client.app.hints[0].label, 'Put the journal away')
+  assert.equal(client.app.hints[0].position, 'bottom-left')
+  assert.equal(observer.app.hints, undefined)
+  const hints = client.app.hints
+  f.deliver(client, server.sent.find(([event, data]) => event === 'journal:state' && data.open))
+  assert.equal(client.app.hints, hints)
+  server.events.get('journal:toggle')({}, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.equal(client.app.hints.length, 0)
 })

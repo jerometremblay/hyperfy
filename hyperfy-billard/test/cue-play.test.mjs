@@ -194,3 +194,27 @@ test('clients hide pickup on every rack while holding a cue and aim it on either
   a.emit('destroy')
   assert.ok(b.created.filter(n => n.name === 'action').every(n => n.distance > 0))
 })
+
+test('held cue X hint belongs to the local holder and disappears when returned', () => {
+  const players = [player('alice'), player('bob')]
+  const client = harness({ source, players })
+  client.emit('cue-holders', ['bob', null, null, null])
+  assert.equal(client.actionPrompts.length, 0)
+  client.emit('cue-holders', ['alice', null, null, null])
+  assert.equal(client.actionPrompts[0].label, 'Put the cue away')
+  assert.equal(client.actionPrompts[0].position, 'bottom-left')
+  client.emit('cue-holders', [null, null, null, null])
+  assert.equal(client.actionPrompts.length, 0)
+})
+
+test('fireplace tool hint appears only on a local claim and clears on release', async () => {
+  const hearth = await readFile(new URL('../../outputs/pickup-hints/hearth.js', import.meta.url), 'utf8')
+  const client = harness({ source: hearth, players: [player('alice'), player('bob')] })
+  client.emit('claimed', { kind: 'poker', playerId: 'bob' })
+  assert.equal(client.actionPrompts.length, 0)
+  client.emit('claimed', { kind: 'poker', playerId: 'alice' })
+  assert.equal(client.actionPrompts[0].label, 'Put the poker away')
+  assert.equal(client.actionPrompts[0].position, 'bottom-left')
+  client.emit('released', { kind: 'poker' })
+  assert.equal(client.actionPrompts.length, 0)
+})
