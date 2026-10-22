@@ -30,8 +30,9 @@ const bundle = await build({
 const tempModule = path.resolve(`.cleaner-test-${process.pid}.mjs`)
 await fs.writeFile(tempModule, bundle.outputFiles[0].contents)
 const deleted = []
+let allAssets = ['saved.jpg', 'orphan.jpg']
 globalThis.cleanerAssets = {
-  list: async () => ['saved.jpg', 'orphan.jpg'],
+  list: async () => allAssets,
   delete: async assets => deleted.push(...assets),
 }
 let cleaner
@@ -62,6 +63,57 @@ test('cleaner retains nested storage-only assets, deletes orphans, and fails clo
   } finally {
     if (oldClean === undefined) delete process.env.CLEAN
     else process.env.CLEAN = oldClean
+    await fs.remove(worldDir)
+  }
+})
+
+test('spawned strip assets survive parent deletion; removing the strip cleans its blueprint and photos', async () => {
+  const worldDir = await fs.mkdtemp(path.join(os.tmpdir(), 'spawn-cleaner-'))
+  const oldClean = process.env.CLEAN
+  process.env.CLEAN = 'true'
+  const rows = [
+    {
+      id: 'strip-bp',
+      data: JSON.stringify({
+        id: 'strip-bp',
+        model: 'script-only',
+        script: 'asset://strip.js',
+        props: { photo0: { type: 'image', url: 'asset://photo.jpg' } },
+      }),
+    },
+  ]
+  const entities = [{ data: JSON.stringify({ id: 'strip', blueprint: 'strip-bp', spawnedBy: 'deleted-booth' }) }]
+  const db = table => {
+    if (table === 'blueprints')
+      return {
+        then: resolve => resolve([...rows]),
+        where: (key, id) => ({
+          delete: async () =>
+            rows.splice(
+              rows.findIndex(row => row.id === id),
+              1
+            ),
+        }),
+      }
+    if (table === 'entities') return Promise.resolve(entities)
+    if (table === 'users') return { select: async () => [] }
+    return { where: () => ({ first: async () => ({ value: '{}' }) }) }
+  }
+  allAssets = ['strip.js', 'photo.jpg', 'orphan.jpg']
+  deleted.length = 0
+  try {
+    await cleaner.init({ db, worldDir })
+    assert.deepEqual(deleted, ['orphan.jpg'])
+    assert.equal(rows.length, 1)
+    entities.length = 0
+    deleted.length = 0
+    await cleaner.init({ db, worldDir })
+    assert.equal(rows.length, 0)
+    assert.deepEqual(deleted, allAssets)
+  } finally {
+    if (oldClean === undefined) delete process.env.CLEAN
+    else process.env.CLEAN = oldClean
+    allAssets = ['saved.jpg', 'orphan.jpg']
     await fs.remove(worldDir)
   }
 })
