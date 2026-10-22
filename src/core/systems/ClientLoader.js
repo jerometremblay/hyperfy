@@ -55,6 +55,7 @@ export class ClientLoader extends System {
 
   // Count unique asset work through decoding, rather than just network downloads.
   trackLoading(promise) {
+    if (!this.loading.pending) this.loadingBatchStart = this.loading.completed + this.loading.failed
     this.loading = { ...this.loading, pending: this.loading.pending + 1 }
     this.emit('loading', this.loading)
     const finish = failed => {

@@ -810,6 +810,8 @@ function AssetLoadingStatus({ world }) {
     return () => world.loader.off('loading', setLoading)
   }, [world])
   if (!loading.pending) return null
+  const settled = loading.completed + loading.failed - world.loader.loadingBatchStart
+  const total = settled + loading.pending
   return (
     <div
       role='status'
@@ -819,8 +821,9 @@ function AssetLoadingStatus({ world }) {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        width: 20rem;
         max-width: calc(100% - 2rem);
-        padding: 0.625rem 0.875rem;
+        padding: 0.875rem;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 0.75rem;
         background: rgba(11, 10, 21, 0.9);
@@ -828,17 +831,32 @@ function AssetLoadingStatus({ world }) {
         text-align: center;
         font-size: 0.8125rem;
         pointer-events: none;
-        .asset-loading-detail {
-          margin-top: 0.25rem;
-          color: rgba(255, 255, 255, 0.65);
-          font-size: 0.75rem;
+        progress {
+          display: block;
+          width: 100%;
+          height: 0.5rem;
+          border: none;
+          border-radius: 0.25rem;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.15);
+          accent-color: white;
+          &::-webkit-progress-bar {
+            background: rgba(255, 255, 255, 0.15);
+          }
+          &::-webkit-progress-value {
+            background: white;
+          }
+          &::-moz-progress-bar {
+            background: white;
+          }
+        }
+        .asset-loading-title {
+          margin-bottom: 0.5rem;
         }
       `}
     >
-      <div>{`Loading world assets… ${loading.pending} remaining`}</div>
-      <div className='asset-loading-detail'>
-        {loading.completed} loaded{loading.failed > 0 && ` · ${loading.failed} failed`}
-      </div>
+      <div className='asset-loading-title'>Loading assets</div>
+      <progress aria-label='Loading assets' value={settled} max={total} />
     </div>
   )
 }

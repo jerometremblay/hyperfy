@@ -69,7 +69,7 @@ export class Portal extends Node {
         preview: { value: this.view.target.texture },
         textureMatrix: { value: this.view.textureMatrix },
         linked: { value: false },
-        fallback: { value: new THREE.Color('#46a9b8') },
+        fallback: { value: new THREE.Color('#000000') },
         doubleside: { value: this.doubleside },
         status: { value: null },
         showStatus: { value: false },
