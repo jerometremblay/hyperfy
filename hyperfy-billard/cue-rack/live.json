@@ -1,16 +1,16 @@
 {
   "target": "https://monstre.duckdns.org:3333/api/agent",
-  "checkedAt": "2026-10-21T02:45:43.719Z",
+  "checkedAt": "2026-10-21T22:35:22.879Z",
   "rack": {
     "id": "Duyq2GzY0v",
-    "version": 1,
+    "version": 2,
     "name": "Wall Pool Cue Rack — Four Returning Cues",
     "image": null,
     "author": "OpenAI",
     "url": null,
     "desc": "Wall-mounted hardwood pool-cue rack, four 1.47 m cues, E pickup and X return, multiplayer synchronized.",
     "model": "script-only",
-    "script": "asset://4da98d1f1ab2430c02b4a3d18a959ef1feea431487588888c7445d885b5b4c4b.js",
+    "script": "asset://1bd11cab860387ea9a680561178432befa773bd9403d7a048b721fcaf5819c69.js",
     "props": {
       "promptBoxRequestId": "M2Qzasuh09",
       "promptBoxTargetEntityId": "rpM98Yhyxy",

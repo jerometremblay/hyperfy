@@ -11,6 +11,28 @@ function setup() {
   const game = harness({ server: true, players, bus })
   return { players, rack, game }
 }
+test('rack gaps and frame edges target the nearest available cue through an invisible box', () => {
+  const rack = harness({ source, players: [player('alice')], state: { holders: [null, 'bob', null, null] } })
+  const target = rack.created.find(n => n.name === 'prim' && n.opacity === 0)
+  assert.ok(target)
+  assert.equal(target.physics, null)
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(...target.size), new THREE.MeshBasicMaterial())
+  mesh.position.copy(target.position)
+  mesh.updateMatrixWorld()
+  const actions = rack.created.filter(n => n.name === 'action' && n.distance > 0)
+  for (const [x, expectedSlot] of [[-0.30, 1], [-0.124, 1], [-0.062, 1], [0, 3], [0.124, 3], [0.30, 4]]) {
+    for (const y of [-1.06, -0.22, 0.48]) {
+      const ray = new THREE.Raycaster(new THREE.Vector3(x, y, 1), new THREE.Vector3(0, 0, -1))
+      const hit = ray.intersectObject(mesh)[0]
+      assert.ok(hit, `rack target at ${x}, ${y}`)
+      const nearest = actions.reduce((a, b) => a.position.distanceTo(hit.point) <= b.position.distanceTo(hit.point) ? a : b)
+      assert.ok(nearest.position.distanceTo(hit.point) <= 1, 'within native action target radius')
+      assert.equal(nearest.label, `Take pool cue ${expectedSlot}`)
+      nearest.onTrigger()
+      assert.equal(rack.sent.at(-1)[1].slot, expectedSlot - 1)
+    }
+  }
+})
 test('only a real held rack cue permits claims; pickup/drop use the transport sender', () => {
   const { players, rack, game } = setup()
   const claim = () => game.emit('pool:claim', { heldCue: true, playerId: 'alice' }, 'socket-a')

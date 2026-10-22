@@ -355,9 +355,10 @@ function Chat({ world }) {
   const [activeSince, setActiveSince] = useState(null)
   const [closedAt, setClosedAt] = useState(null)
   const openChat = useCallback(() => {
+    world.ui.toggleVisible(true)
     setActiveSince(Date.now())
     setActive(true)
-  }, [])
+  }, [world])
   const closeChat = useCallback(() => {
     setClosedAt(Date.now())
     setActive(false)
@@ -402,7 +403,9 @@ function Chat({ world }) {
     setMsg('')
     // check for commands
     if (msg.startsWith('/')) {
+      e.preventDefault()
       world.chat.command(msg)
+      closeChat()
       return
     }
     // otherwise post it

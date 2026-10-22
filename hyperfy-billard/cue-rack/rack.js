@@ -48,6 +48,12 @@ function torus(parent, r, tube, position, color, extra) {
   })
 }
 
+// Invisible prims remain raycast targets. Fill the frame's gaps so native
+// actions pick the closest available cue even when pointing between slots.
+box(app, [0.620, 1.560, 0.200], [0, -0.288, 0.130], FINISH.mahogany, {
+  opacity: 0, castShadow: false, receiveShadow: false,
+})
+
 // Wall-facing polished hardwood uprights; rear edges sit against the logs.
 for (const x of [-0.285, 0.285]) {
   box(app, [0.050, 1.55, 0.064], [x, -0.293, 0.067], FINISH.mahogany)
