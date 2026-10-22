@@ -162,3 +162,55 @@ Photos are content-addressed assets, not database records. Share URLs through ap
 state/events as usual. Save retained URLs with server-side `world.set`; the asset
 cleaner preserves `asset://` values nested anywhere in `storage.json`. Unsaved photos
 may be removed by cleaning. As with other assets, anyone with the URL can view them.
+
+
+### `.spawnApp(options)`: String
+
+Server-only. Creates an independent, persistent script-only app and returns its entity
+ID. Builders can select, move, duplicate and delete it normally. Deleting the caller
+does not delete its spawned apps.
+
+```js
+if (world.isServer) {
+  const id = world.spawnApp({
+    name: 'Photo strip',
+    script: props.stripScript.url,
+    props: {
+      photo0: { type: 'image', name: 'photo0.jpg', url: 'asset://PHOTO_HASH.jpg' },
+      // photo1 ... photo4 belong in top-level file props too.
+      names: ['Alice', 'Bob'],
+    },
+    position: new Vector3(1, 1, 0),
+    quaternion: new Quaternion(),
+    state: {}, // optional; defaults to an empty object
+  })
+}
+```
+
+The script must be an `asset://` JavaScript URL already referenced by the caller's
+blueprint script or a top-level `props[key].url`. Uploading arbitrary JavaScript does
+not grant permission to run it. Configure the strip script as a file prop on the booth
+before spawning. The new app runs that script on both server and clients.
+
+`name` is required (1–256 characters, with non-whitespace content). `position` and
+`quaternion` are required finite Vector3/Quaternion values in world space and are copied.
+Props default to `{}`; props and initial state must be JSON objects, at most 64 KiB each
+in UTF-8. Nested values must be plain JSON (no cycles, functions, undefined, or non-finite
+numbers). Top-level file props using `asset://` URLs must have a flat filename and a
+lowercase alphanumeric extension. Keep photos in top-level image props so the existing
+cleaner retains them while the strip exists. Initial state follows normal app lifecycle
+rules: new clients receive it, but server restarts reset transient state. Store lasting
+content in props or world storage.
+
+Each parent instance may have at most 50 live spawned apps and make at most 10 successful
+spawns in a rolling minute. Deleting children frees live capacity, but does not reset the
+rate limit. Rebuilding the caller's script does not reset the rate limit either; restarting
+the server does. Validation and limit failures throw before adding any records.
+
+### `.removeApp(id)`
+
+Server-only. Removes an app spawned by this caller instance, broadcasts its deletion,
+and marks it for database removal. Throws for missing IDs, the caller itself, or apps
+owned by another instance. The existing cleaner removes the orphaned blueprint and
+unreferenced assets on its next enabled run. Builders retain their normal deletion
+permissions for all spawned apps.
