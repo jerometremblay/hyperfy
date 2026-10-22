@@ -101,7 +101,7 @@ Sets a query parameter in the browsers url
 
 Opens a link, defaults to new tab.
 
-### `.capturePhoto(options)`: Promise<{ url, width, height }>
+### `.capturePhoto(options)`: Promise<{ url, width, height, filter }>
 
 Client-only. Takes a JPEG of the current 3D scene from a world-space camera pose,
 then uploads it to the world's normal asset store. The returned `asset://<sha256>.jpg`
@@ -139,6 +139,7 @@ Optional settings:
 | `near`, `far` | 0.05, 50 | 0.01–1000 and 0.02–10000; far must exceed near |
 | `format` | `'jpeg'` | Only JPEG is supported |
 | `quality` | 0.85 | Clamped to 0–1 |
+| `filter` | `'none'` | `'none'`, `'grayscale'` or `'sepia'`; applied to the JPEG pixels and echoed in the result |
 | `hide` | `[]` | Nodes owned by this app; their descendants are hidden during the render |
 
 Captures include loaded avatars (including the local head in first person), meshes,
