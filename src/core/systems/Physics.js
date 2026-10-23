@@ -502,8 +502,13 @@ export class Physics extends System {
     // TODO: this.raycastResult.destroy() on this.destroy()
   }
 
-  sweep(geometry, origin, direction, maxDistance, layerMask) {
+  sweep(geometry, origin, direction, maxDistance, layerMask, rotation) {
     origin.toPxVec3(this.sweepPose.p)
+    const q = this.sweepPose.q
+    q.x = rotation?.x || 0
+    q.y = rotation?.y || 0
+    q.z = rotation?.z || 0
+    q.w = rotation?.w ?? 1
     direction = direction.toPxVec3(this._pv2)
     this.queryFilterData.data.word0 = layerMask
     this.queryFilterData.data.word1 = 0

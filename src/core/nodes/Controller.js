@@ -6,6 +6,10 @@ import { DEG2RAD } from '../extras/general'
 import { Node } from './Node'
 import { Layers } from '../extras/Layers'
 
+const stepOrigin = new THREE.Vector3()
+const stepDirection = new THREE.Vector3()
+const capsuleRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2)
+
 const layers = ['environment', 'prop', 'player', 'tool']
 
 const defaults = {
@@ -39,7 +43,7 @@ export class Controller extends Node {
       const geometry = new THREE.CapsuleGeometry(this._radius, this._height, 2, 8)
       geometry.translate(0, this._height / 2 + this._radius, 0)
       geometry.computeBoundsTree()
-      const material = new THREE.MeshStandardMaterial({ color: 'green' })
+      const material = new THREE.MeshBasicMaterial({ color: '#00ff88', wireframe: true, depthTest: false })
       this.mesh = new THREE.Mesh(geometry, material)
       this.mesh.receiveShadow = true
       this.mesh.castShadow = true
@@ -48,16 +52,37 @@ export class Controller extends Node {
       this.mesh.matrix.copy(this.matrix)
       this.mesh.matrixWorld.copy(this.matrixWorld)
       this.mesh.node = this
-      this.ctx.world.graphics.scene.add(this.mesh)
+      this.ctx.world.stage.scene.add(this.mesh)
     }
     const desc = new PHYSX.PxCapsuleControllerDesc()
     desc.height = this._height
     desc.radius = this._radius
     desc.climbingMode = PHYSX.PxCapsuleClimbingModeEnum.eCONSTRAINED
     desc.slopeLimit = Math.cos(60 * DEG2RAD) // 60 degrees
+    // PhysX reports the contact before asking for its behavior. Let the
+    // rounded foot slide off steep edges that are too high to step onto.
+    // Reachable stair risers and walkable ramps retain the default grip.
+    let hitShape = 0
+    let slide = false
+    this.hitReport = new PHYSX.PxUserControllerHitReportImpl()
+    this.hitReport.onShapeHit = ptr => {
+      const hit = PHYSX.wrapPointer(ptr, PHYSX.PxControllerShapeHit)
+      hitShape = hit.shape.ptr
+      slide = hit.worldNormal.y < Math.cos(60 * DEG2RAD) &&
+        hit.worldPos.y > this.controller.getFootPosition().y + this.controller.getStepOffset()
+    }
+    this.hitReport.onControllerHit = () => {}
+    this.hitReport.onObstacleHit = () => {}
+    this.behavior = new PHYSX.PxControllerBehaviorCallbackImpl()
+    this.behavior.getShapeBehaviorFlags = ptr => ptr === hitShape && slide ? PHYSX.eCCT_SLIDE : 0
+    this.behavior.getControllerBehaviorFlags = () => 0
+    this.behavior.getObstacleBehaviorFlags = () => 0
+    desc.reportCallback = this.hitReport
+    desc.behaviorCallback = this.behavior
     desc.material = this.ctx.world.physics.defaultMaterial
-    desc.contactOffset = 0.1 // PhysX default = 0.1
+    desc.contactOffset = 0.02 // Keep the skin small relative to the 0.3m player radius.
     desc.stepOffset = 0.5 // PhysX default = 0.5m
+    this.stepGeometry = new PHYSX.PxCapsuleGeometry(this._radius, Math.max(0, this._height - desc.stepOffset) / 2)
     this.controller = this.ctx.world.physics.controllerManager.createController(desc) // prettier-ignore
     PHYSX.destroy(desc)
     const worldPosition = this.getWorldPosition()
@@ -122,12 +147,18 @@ export class Controller extends Node {
   unmount() {
     if (this.ctx.world.entities?.player?.controller === this) this.ctx.world.physics.portalCollisions?.clear()
     if (this.mesh) {
-      this.ctx.world.graphics.scene.remove(this.mesh)
+      this.ctx.world.stage.scene.remove(this.mesh)
     }
     this.actorHandle?.destroy()
     this.actorHandle = null
     this.controller?.release()
     this.controller = null
+    if (this.stepGeometry) PHYSX.destroy(this.stepGeometry)
+    this.stepGeometry = null
+    if (this.hitReport) PHYSX.destroy(this.hitReport)
+    if (this.behavior) PHYSX.destroy(this.behavior)
+    this.hitReport = null
+    this.behavior = null
   }
 
   copy(source, recursive) {
@@ -265,7 +296,25 @@ export class Controller extends Node {
       for (const portal of portals) portal.updateTraversal(player)
       this.ctx.world.physics.portalCollisions?.update(this, vec3)
     }
-    this.moveFlags = this.controller.move(vec3.toPxVec3(), 0, delta, this.ctx.world.physics.controllerFilters)
+    // Check forward clearance above the step band and below the current head.
+    // PhysX still handles overhead clearance during its own upward sweep.
+    const stepOffset = this.controller.getStepOffset()
+    const horizontal = stepDirection.set(vec3.x, 0, vec3.z).length()
+    let blockedStep = false
+    if (horizontal > 0 && vec3.y <= 0) {
+      stepDirection.multiplyScalar(1 / horizontal)
+      stepOrigin.copy(this.position)
+      stepOrigin.y += stepOffset + this._radius + Math.max(0, this._height - stepOffset) / 2 + this.controller.getContactOffset()
+      const hit = this.ctx.world.physics.sweep(this.stepGeometry, stepOrigin, stepDirection,
+        this._radius + horizontal, Layers.environment.group | Layers.prop.group, capsuleRotation)
+      blockedStep = !!hit && hit.normal.y < Math.cos(60 * DEG2RAD)
+    }
+    if (blockedStep) this.controller.setStepOffset(0)
+    try {
+      this.moveFlags = this.controller.move(vec3.toPxVec3(), 0, delta, this.ctx.world.physics.controllerFilters)
+    } finally {
+      if (blockedStep) this.controller.setStepOffset(stepOffset)
+    }
     // this.isGrounded = moveFlags.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_DOWN) // prettier-ignore
     const pos = this.controller.getFootPosition()
     this.position.copy(pos)

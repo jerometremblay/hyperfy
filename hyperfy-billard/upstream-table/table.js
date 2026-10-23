@@ -61,37 +61,26 @@ if (world.isClient && !world.isPreview) {
   const sendVolume = () => app.emit(volumeEvent, props.soundVolume ?? 1)
   world.on(`${volumeEvent}:request`, sendVolume)
   sendVolume()
-  // One detached structural collider for avatars; ball physics stays numerical.
-  const colliderSize = [2.72, 0.70, 1.53]
-  const colliderTransform = () => {
-    const position = app.position.clone()
-    const offset = app.position.clone().set(0, colliderSize[1] / 2, 0)
-      .multiply(app.scale).applyQuaternion(app.quaternion)
-    position.add(offset)
-    return { position, quaternion: app.quaternion.clone(), scale: app.scale.clone() }
-  }
-  const initial = colliderTransform()
-  const collider = app.create('prim', {
-    type: 'box', size: colliderSize,
-    position: initial.position.toArray(),
-    quaternion: initial.quaternion.toArray(),
-    scale: initial.scale.toArray(),
-    opacity: 0, castShadow: false, receiveShadow: false, physics: 'static',
-  })
-  world.add(collider)
-  const previousScale = initial.scale.clone()
+  // Physics-only nodes never enter the stage octree used for action clicks.
+  // A continuous floor-to-rail box gives avatars no intermediate steps.
+  const colliderSize = [2.72, 0.76, 1.53]
+  const body = app.create('rigidbody', { type: 'static' })
+  const collider = app.create('collider', { type: 'box' })
+  body.add(collider)
+  const previousScale = app.scale.clone().set(0, 0, 0)
   const syncCollider = () => {
-    const transform = colliderTransform()
-    collider.position.copy(transform.position)
-    collider.quaternion.copy(transform.quaternion)
-    collider.scale.copy(transform.scale)
-    if (!transform.scale.equals(previousScale)) {
-      previousScale.copy(transform.scale)
-      const physics = collider.physics
-      collider.physics = null
-      collider.physics = physics
+    body.position.copy(app.position)
+    body.quaternion.copy(app.quaternion)
+    if (!app.scale.equals(previousScale)) {
+      previousScale.copy(app.scale)
+      collider.width = colliderSize[0] * app.scale.x
+      collider.height = colliderSize[1] * app.scale.y
+      collider.depth = colliderSize[2] * app.scale.z
+      collider.position.set(0, collider.height / 2, 0)
     }
   }
+  syncCollider()
+  world.add(body)
   app.on('update', syncCollider)
-  app.on('destroy', () => world.remove(collider))
+  app.on('destroy', () => world.remove(body))
 }

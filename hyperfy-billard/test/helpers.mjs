@@ -17,7 +17,7 @@ export const physics = await import(`${temp}/simulation.mjs`)
 await build({
   stdin: {
     contents:
-      ['Prim', 'Group', 'Action', 'UI', 'UIText', 'Audio', 'Light']
+      ['Prim', 'Group', 'Action', 'UI', 'UIText', 'Audio', 'Light', 'RigidBody', 'Collider']
         .map(n => `export { ${n} } from './src/core/nodes/${n}.js'`)
         .join(';') + "; export { importApp, exportApp } from './src/core/extras/appTools.js'",
     resolveDir: `${root}..`,
@@ -28,7 +28,7 @@ await build({
   outfile: `${temp}/nodes.mjs`,
 })
 export const nodes = await import(`${temp}/nodes.mjs`)
-const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText, audio: nodes.Audio, light: nodes.Light }
+const constructors = { prim: nodes.Prim, group: nodes.Group, action: nodes.Action, ui: nodes.UI, uitext: nodes.UIText, audio: nodes.Audio, light: nodes.Light, rigidbody: nodes.RigidBody, collider: nodes.Collider }
 export const code = await readFile(`${root}dist/hyperfy-billard.js`, 'utf8')
 let nextInstanceId = 0
 export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders, modelNodes = {} } = {}) {

@@ -49,5 +49,7 @@ test('table furniture has no Play action or broad pointer handler', async () => 
   const actions = h.created.filter(n => n.name === 'action')
   assert.equal(actions.length, 0)
   assert.equal(h.app.onPointerDown, undefined)
-  assert.equal(h.created.filter(n => n.name === 'prim' && n.physics === 'static').length, 1)
+  assert.equal(h.created.filter(n => n.name === 'prim').length, 0)
+  assert.equal(h.created.filter(n => n.name === 'rigidbody' && n.type === 'static').length, 1)
+  assert.equal(h.created.filter(n => n.name === 'collider' && n.type === 'box').length, 1)
 })

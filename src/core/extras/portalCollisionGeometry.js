@@ -34,14 +34,14 @@ export function cutPortalCollision(geometry, matrix, apertures) {
   }
   let changed = false
   for (const { portal, side = 1, depth = 2.5 } of apertures) {
-    // The 12cm front clearance includes the CCT's 10cm contact skin. Behind
-    // the plane, the visible body belongs to the other opening, not this room.
+    // Join the two collision spaces at the portal plane. A clearance gap
+    // removes nearby stair treads and the landing that must support crossing.
     const planes = [
       new THREE.Plane(new THREE.Vector3(1, 0, 0), portal.width / 2),
       new THREE.Plane(new THREE.Vector3(-1, 0, 0), portal.width / 2),
       new THREE.Plane(new THREE.Vector3(0, 1, 0), portal.height / 2),
       new THREE.Plane(new THREE.Vector3(0, -1, 0), portal.height / 2),
-      new THREE.Plane(new THREE.Vector3(0, 0, -side), 0.12),
+      new THREE.Plane(new THREE.Vector3(0, 0, -side), 0.001),
       new THREE.Plane(new THREE.Vector3(0, 0, side), depth),
     ].map(plane => plane.applyMatrix4(portal.matrixWorld))
     const result = []
@@ -79,13 +79,13 @@ export function cutPortalCollision(geometry, matrix, apertures) {
 }
 
 /** Keep only the other room's geometry that occupies the crossed body volume. */
-export function clipPortalCollision(geometry, matrix, portal, side = 1) {
+export function clipPortalCollision(geometry, matrix, portal, side = 1, margin = 0) {
   const planes = [
-    new THREE.Plane(new THREE.Vector3(1, 0, 0), portal.width / 2),
-    new THREE.Plane(new THREE.Vector3(-1, 0, 0), portal.width / 2),
-    new THREE.Plane(new THREE.Vector3(0, 1, 0), portal.height / 2),
-    new THREE.Plane(new THREE.Vector3(0, -1, 0), portal.height / 2),
-    new THREE.Plane(new THREE.Vector3(0, 0, -side), -0.12),
+    new THREE.Plane(new THREE.Vector3(1, 0, 0), portal.width / 2 + margin),
+    new THREE.Plane(new THREE.Vector3(-1, 0, 0), portal.width / 2 + margin),
+    new THREE.Plane(new THREE.Vector3(0, 1, 0), portal.height / 2 + margin),
+    new THREE.Plane(new THREE.Vector3(0, -1, 0), portal.height / 2 + margin),
+    new THREE.Plane(new THREE.Vector3(0, 0, -side), -0.001),
     new THREE.Plane(new THREE.Vector3(0, 0, side), 2.5),
   ].map(plane => plane.applyMatrix4(portal.matrixWorld))
   if (!geometry.boundingBox) geometry.computeBoundingBox()

@@ -95,7 +95,7 @@ export class PortalCollisions {
       const cut = nearby.length ? cutPortalCollision(geometry, matrix, nearby) : null
       const bridges = apertures
         .map(({ portal, destination, side }) =>
-          clipPortalCollision(geometry, getPortalTransform(destination, portal).multiply(matrix), portal, side)
+          clipPortalCollision(geometry, getPortalTransform(destination, portal).multiply(matrix), portal, side, controller.radius + controller.controller.getContactOffset())
         )
         .filter(Boolean)
       if (!isPrim && collider.type === 'box') geometry.dispose()
