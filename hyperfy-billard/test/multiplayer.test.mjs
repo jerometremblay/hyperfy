@@ -8,6 +8,7 @@ const setup = () => {
 
 test('sender authentication, exclusive claim, distance, duplicate and stale commands', () => {
   const { server, players } = setup()
+  assert.equal(server.handlers.update?.length || 0, 0, 'stationary servers have no frame callback')
   const send = (op, body, who = 'socket-a') => server.emit(`pool:${op}`, body, who)
   send('shoot', { seq: 1, angle: 0, speed: 5, playerId: 'alice' }, 'forged')
   assert.equal(server.app.state.pool.shots, 0)
@@ -19,6 +20,7 @@ test('sender authentication, exclusive claim, distance, duplicate and stale comm
   send('shoot', { seq, angle: 0, speed: 5 }, 'socket-b')
   assert.equal(server.app.state.pool.shots, 0)
   send('shoot', { seq, angle: 0, speed: 5 })
+  assert.equal(server.handlers.update?.length, 1, 'a shot attaches the simulation callback')
   assert.equal(server.app.state.pool.shots, 1)
   assert.equal(server.app.state.pool.owner, null)
   send('shoot', { seq, angle: 0, speed: 5 })
@@ -32,8 +34,11 @@ test('sender authentication, exclusive claim, distance, duplicate and stale comm
   send('claim', {}, 'socket-b')
   assert.equal(server.app.state.pool.owner, null, 'cannot aim while balls move')
   for (let i = 0; i < 1200; i++) server.emit('update', 1 / 60)
+  assert.equal(server.handlers.update?.length || 0, 0, 'the simulation callback detaches at rest')
   send('claim', {}, 'socket-b')
   assert.equal(server.app.state.pool.owner, 'bob')
+  server.advance(60_001)
+  assert.equal(server.app.state.pool.owner, null, 'idle lease expires without a server frame loop')
 })
 test('late join, two real-node clients, interpolation, input release, snapshots at rest', () => {
   const { server, players } = setup()
@@ -63,6 +68,9 @@ test('late join, two real-node clients, interpolation, input release, snapshots 
   }
   assert.equal(server.app.state.pool.error, null)
   assert.equal(server.app.state.pool.moving, false)
+  assert.equal(server.handlers.update?.length || 0, 0)
+  assert.equal(alice.handlers.update?.length || 0, 0)
+  assert.equal(bob.handlers.update?.length || 0, 0)
   // Both clients render the exact same authoritative final positions.
   const groups = c => c.created.filter(n => n.name === 'group')
   for (let i = 0; i < 16; i++) {
@@ -85,6 +93,7 @@ test('late join, two real-node clients, interpolation, input release, snapshots 
 })
 test('disconnect and abandoned lease release ownership without stopping a shot', () => {
   const { server, players } = setup()
+  assert.equal(server.handlers.update?.length || 0, 0)
   server.emit('pool:claim', {}, 'socket-a')
   server.emit('pool:shoot', { seq: server.app.state.pool.seq, angle: 0, speed: 5 }, 'socket-a')
   players.shift()
@@ -96,16 +105,17 @@ test('disconnect and abandoned lease release ownership without stopping a shot',
   for (let i = 0; i < 1200; i++) server.emit('update', 1 / 60)
   server.emit('pool:claim', {}, 'socket-b')
   assert.equal(server.app.state.pool.owner, 'bob')
-  server.emit('update', 61)
+  server.advance(60_001)
   assert.equal(server.app.state.pool.owner, null)
 })
 test('client initializes after its local player arrives', () => {
   const players = []
   const client = harness({ players })
   assert.equal(client.created.filter(n => n.name === 'ui').length, 0)
+  assert.equal(client.handlers.update?.length || 0, 0, 'waiting for the local player is event-driven')
   players.push(player('late'))
-  client.emit('update', 1 / 60)
+  client.world.emit('player')
   assert.equal(client.created.filter(n => n.name === 'ui').length, 1)
-  client.emit('update', 1 / 60)
+  assert.equal(client.handlers.update?.length || 0, 0, 'settled clients start idle')
   assert.equal(client.created.filter(n => n.name === 'ui').length, 1)
 })

@@ -1,5 +1,6 @@
 import * as THREE from '../extras/three'
 import { System } from './System'
+import { createProfilerReport, PROFILER_REPORT_INTERVAL_MS } from '../extras/profilerReports'
 import { ProfilerOverlay } from '../extras/ProfilerOverlay'
 
 // Counts describe mounted resources, not GPU work or per-body simulation time.
@@ -14,6 +15,7 @@ export class ClientProfiler extends System {
     this.stack = []
     this.selected = null
     this.elapsed = 0
+    this.serverReport = null
   }
 
   start() {
@@ -38,16 +40,19 @@ export class ClientProfiler extends System {
     this.active = value
     this.pending = new Map()
     this.lastTick = undefined
+    this.lastReportAt = undefined
     this.history.clear()
     this.rows = []
     this.elapsed = 0
     this.selected = null
+    this.serverReport = null
     if (value) {
       this.overlay = new ProfilerOverlay(this.world, this)
     } else {
       this.overlay?.destroy()
       this.overlay = null
     }
+    if (!value && this.world.network?.ws?.readyState === 1) this.world.network.send('profilerReport', { active: false })
     this.publish()
     return this.active
   }
@@ -99,9 +104,36 @@ export class ClientProfiler extends System {
   }
 
   setMetric(metric) {
-    if (!['cpu', 'triangles', 'bodies', 'network', 'lights'].includes(metric)) return
+    if (!['cpu', 'serverCpu', 'triangles', 'bodies', 'network', 'lights'].includes(metric)) return
     this.metric = metric
     this.publish()
+  }
+
+  receiveServerReport(report) {
+    if (!this.active || !this.allowed() || report?.source !== 'server' || !Array.isArray(report.rows)) return
+    this.serverReport = { ...report, receivedAt: performance.now() }
+    this.applyServerReport()
+    this.overlay?.update(this.rows, this.metric, this.selected)
+    this.publish()
+  }
+
+  serverReady() {
+    return !!(
+      this.serverReport?.active &&
+      !this.serverReport.stale &&
+      performance.now() - this.serverReport.receivedAt <= 10000
+    )
+  }
+
+  applyServerReport() {
+    const samples = new Map(this.serverReady() ? this.serverReport.rows.map(row => [row.id, row]) : [])
+    for (const row of this.rows) {
+      const sample = samples.get(row.id)
+      const valid = sample?.blueprintVersion === row.blueprintVersion
+      row.serverCpu = valid ? sample.cpuMsPerSecond : null
+      row.serverPeak = valid ? sample.peakCallbackMs : null
+      row.serverCallbacks = valid ? sample.callbackMsPerSecond : null
+    }
   }
 
   select(id) {
@@ -145,6 +177,7 @@ export class ClientProfiler extends System {
       const row = {
         id,
         name: entity.blueprint?.name || id,
+        blueprintVersion: entity.blueprint?.version ?? 0,
         cpu: smooth('cpu', activity.cpu / seconds),
         peak: activity.peak,
         callbacks: Object.fromEntries(Object.entries(activity.callbacks).map(([key, value]) => [key, value / seconds])),
@@ -215,10 +248,19 @@ export class ClientProfiler extends System {
       delete row.bounds
     }
     this.rows = [...rows.values()]
+    this.applyServerReport()
     this.history = rows
     this.pending.clear()
     if (!rows.has(this.selected)) this.selected = null
     this.overlay?.update(this.rows, this.metric, this.selected)
+    const now = performance.now()
+    if (
+      this.world.network?.ws?.readyState === 1 &&
+      (this.lastReportAt === undefined || now - this.lastReportAt >= PROFILER_REPORT_INTERVAL_MS)
+    ) {
+      this.world.network.send('profilerReport', createProfilerReport(this.rows, seconds))
+      this.lastReportAt = now
+    }
     this.publish()
   }
 

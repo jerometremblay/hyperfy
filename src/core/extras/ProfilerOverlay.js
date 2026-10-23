@@ -38,7 +38,7 @@ export class ProfilerOverlay {
       this.hitHandle = this.world.stage.insertRaycastObject({ object: this.mesh, node })
     }
     this.rows = rows
-    const max = rows.reduce((max, row) => Math.max(max, row[metric]), 0)
+    const max = rows.reduce((max, row) => Math.max(max, row[metric] ?? 0), 0)
     const matrix = new THREE.Matrix4()
     const color = new THREE.Color()
     rows.forEach((row, index) => {
@@ -46,6 +46,7 @@ export class ProfilerOverlay {
       matrix.setPosition(row.position)
       this.mesh.setMatrixAt(index, matrix)
       color.setHSL(max ? (1 - row[metric] / max) * 0.33 : 0.33, 0.85, 0.55)
+      if (row[metric] == null) color.set('#737b88')
       this.mesh.setColorAt(index, color)
     })
     this.mesh.count = rows.length

@@ -1,4 +1,5 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
+import { getProfilerReports } from '../core/extras/profilerReports.js'
 import { isEqual } from 'lodash-es'
 
 const vector = length => ({ type: 'array', items: { type: 'number' }, minItems: length, maxItems: length })
@@ -9,7 +10,11 @@ const sourceAsset = { anyOf: [asset, externalAsset] }
 const optionalString = { anyOf: [{ type: 'string' }, { type: 'null' }] }
 const descriptor = {
   anyOf: [
-    { type: 'object', properties: { type: { type: 'string' }, name: { type: 'string' }, url: sourceAsset }, required: ['url'] },
+    {
+      type: 'object',
+      properties: { type: { type: 'string' }, name: { type: 'string' }, url: sourceAsset },
+      required: ['url'],
+    },
     { type: 'null' },
   ],
 }
@@ -173,7 +178,10 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
         const data = world.storage?.data || {}
         const entries = Object.fromEntries(
           Object.keys(data)
-            .filter(key => key.startsWith('seatPose:') || key.startsWith('seatPoseProfile:') || key.startsWith('seatPoseStyles:'))
+            .filter(
+              key =>
+                key.startsWith('seatPose:') || key.startsWith('seatPoseProfile:') || key.startsWith('seatPoseStyles:')
+            )
             .sort()
             .map(key => [key, structuredClone(data[key])])
         )
@@ -198,40 +206,86 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
         position: player.data.position,
       }))
   })
+  route(
+    'GET',
+    '/profiling',
+    'getProfiling',
+    {
+      querystring: body({ entityId: { type: 'string', minLength: 1, maxLength: 256 } }),
+    },
+    async request => {
+      if (!request.agentWrite) fail(403, 'Write token required')
+      return getProfilerReports(world, { entityId: request.query.entityId })
+    }
+  )
+  route(
+    'POST',
+    '/profiling',
+    'setServerProfiling',
+    { body: body({ enabled: { type: 'boolean' } }, ['enabled']) },
+    async request => {
+      if (!world.profiler) fail(503, 'Server profiling unavailable')
+      return { source: 'server', enabled: world.profiler.toggle(request.body.enabled) }
+    }
+  )
+  route(
+    'POST',
+    '/players/:id/profiling',
+    'setPlayerProfiling',
+    {
+      params,
+      body: body({ enabled: { type: 'boolean' } }, ['enabled']),
+    },
+    async (request, reply) => {
+      const player = world.entities.players.get(request.params.id)
+      if (!player || !world.network.sockets.has(player.data.owner)) fail(404, 'Connected player not found')
+      if (!player.isAdmin()) fail(403, 'Profiling requires an admin client')
+      world.network.profilingReports?.delete(player.data.owner)
+      world.network.sendTo(player.data.owner, 'profilerControl', { enabled: request.body.enabled })
+      return reply.code(202).send({ playerId: player.data.id, enabled: request.body.enabled, status: 'requested' })
+    },
+    202
+  )
   route('GET', '/entities/:id', 'getEntity', { params }, async request => entity(request.params.id).serialize())
-  route('POST', '/apps', 'createApp', { body: body({ id: uuid, ...blueprintFields }, ['name', 'model']) }, async (request, reply) => {
-    await checkAssets(request.body)
-    const { id: requestedId, ...fields } = request.body
-    const data = {
-      image: null,
-      author: null,
-      url: null,
-      desc: '',
-      script: null,
-      props: {},
-      preload: false,
-      public: false,
-      locked: false,
-      unique: false,
-      frozen: false,
-      scene: false,
-      disabled: false,
-      ...fields,
-      id: requestedId || randomUUID(),
-      version: 0,
+  route(
+    'POST',
+    '/apps',
+    'createApp',
+    { body: body({ id: uuid, ...blueprintFields }, ['name', 'model']) },
+    async (request, reply) => {
+      await checkAssets(request.body)
+      const { id: requestedId, ...fields } = request.body
+      const data = {
+        image: null,
+        author: null,
+        url: null,
+        desc: '',
+        script: null,
+        props: {},
+        preload: false,
+        public: false,
+        locked: false,
+        unique: false,
+        frozen: false,
+        scene: false,
+        disabled: false,
+        ...fields,
+        id: requestedId || randomUUID(),
+        version: 0,
+      }
+      if (data.id === '$scene') fail(409, 'The protected scene blueprint cannot be created as an app')
+      const existing = world.blueprints.get(data.id)
+      if (existing) {
+        const same = Object.keys(blueprintFields).every(key => isEqual(existing[key], data[key]))
+        if (existing.scene || !same) fail(409, 'App blueprint id already exists')
+        return reply.code(200).send(existing)
+      }
+      world.blueprints.add(data)
+      world.network.send('blueprintAdded', data)
+      world.network.dirtyBlueprints.add(data.id)
+      return reply.code(201).send(data)
     }
-    if (data.id === '$scene') fail(409, 'The protected scene blueprint cannot be created as an app')
-    const existing = world.blueprints.get(data.id)
-    if (existing) {
-      const same = Object.keys(blueprintFields).every(key => isEqual(existing[key], data[key]))
-      if (existing.scene || !same) fail(409, 'App blueprint id already exists')
-      return reply.code(200).send(existing)
-    }
-    world.blueprints.add(data)
-    world.network.send('blueprintAdded', data)
-    world.network.dirtyBlueprints.add(data.id)
-    return reply.code(201).send(data)
-  })
+  )
   route(
     'PATCH',
     '/apps/:id',
@@ -269,30 +323,24 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
       return world.blueprints.get('$scene')
     }
   )
-  route(
-    'PATCH',
-    '/world',
-    'updateWorld',
-    { body: body({ settings: body(settingsFields), spawn }) },
-    async request => {
-      const settings = request.body.settings || {}
-      await checkAssets(settings)
-      if (settings.timeZone) {
-        try {
-          new Intl.DateTimeFormat('en', { timeZone: settings.timeZone })
-        } catch {
-          fail(400, 'Invalid timeZone')
-        }
+  route('PATCH', '/world', 'updateWorld', { body: body({ settings: body(settingsFields), spawn }) }, async request => {
+    const settings = request.body.settings || {}
+    await checkAssets(settings)
+    if (settings.timeZone) {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: settings.timeZone })
+      } catch {
+        fail(400, 'Invalid timeZone')
       }
-      if (request.body.spawn) checkTransform({ ...request.body.spawn, scale: [1, 1, 1] })
-      for (const [key, value] of Object.entries(settings)) {
-        if (world.settings.set(key, value, true) === false) fail(400, 'Invalid setting: ' + key)
-      }
-      if (Object.keys(settings).length) await world.network.saveSettings()
-      if (request.body.spawn) await world.network.setSpawn(request.body.spawn)
-      return { settings: world.settings.serialize(), spawn: world.network.spawn }
     }
-  )
+    if (request.body.spawn) checkTransform({ ...request.body.spawn, scale: [1, 1, 1] })
+    for (const [key, value] of Object.entries(settings)) {
+      if (world.settings.set(key, value, true) === false) fail(400, 'Invalid setting: ' + key)
+    }
+    if (Object.keys(settings).length) await world.network.saveSettings()
+    if (request.body.spawn) await world.network.setSpawn(request.body.spawn)
+    return { settings: world.settings.serialize(), spawn: world.network.spawn }
+  })
   route(
     'POST',
     '/entities',
@@ -390,46 +438,34 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     world.network.dirtyApps.add(item.data.id)
     return reply.code(204).send()
   })
-  route(
-    'POST',
-    '/assets',
-    'uploadAsset',
-    {},
-    async (request, reply) => {
-      const part = await request.file({ limits: { files: 1, fileSize: 256 * 1024 * 1024 } })
-      if (!part) fail(400, 'Asset file is required')
-      const match = /^([a-f0-9]{64})[.]([a-z0-9]+)$/.exec(part.filename)
-      if (!match) fail(400, 'Asset filename must be a content hash and extension')
-      let bytes
-      try {
-        bytes = await part.toBuffer()
-      } catch {
-        fail(413, 'Asset exceeds the 256 MiB upload limit')
-      }
-      if (createHash('sha256').update(bytes).digest('hex') !== match[1]) {
-        fail(400, 'Asset content hash does not match its filename')
-      }
-      await assets.upload(new File([bytes], part.filename, { type: part.mimetype || 'application/octet-stream' }))
-      return reply.code(201).send({ url: 'asset://' + part.filename })
+  route('POST', '/assets', 'uploadAsset', {}, async (request, reply) => {
+    const part = await request.file({ limits: { files: 1, fileSize: 256 * 1024 * 1024 } })
+    if (!part) fail(400, 'Asset file is required')
+    const match = /^([a-f0-9]{64})[.]([a-z0-9]+)$/.exec(part.filename)
+    if (!match) fail(400, 'Asset filename must be a content hash and extension')
+    let bytes
+    try {
+      bytes = await part.toBuffer()
+    } catch {
+      fail(413, 'Asset exceeds the 256 MiB upload limit')
     }
-  )
-  route(
-    'GET',
-    '/assets/:filename',
-    'getAsset',
-    { params: assetParams },
-    async (request, reply) => {
-      const { filename } = request.params
-      const bytes = await assets.read(filename)
-      if (!bytes) fail(404, 'Asset not found')
-      if (bytes.byteLength > 256 * 1024 * 1024) fail(413, 'Asset exceeds the 256 MiB read limit')
-      const match = /^([a-f0-9]{64})\.[a-z0-9]+$/.exec(filename)
-      if (match && createHash('sha256').update(bytes).digest('hex') !== match[1]) {
-        fail(409, 'Stored asset content hash does not match its filename')
-      }
-      return reply.type('application/octet-stream').header('Cache-Control', 'no-store').send(bytes)
+    if (createHash('sha256').update(bytes).digest('hex') !== match[1]) {
+      fail(400, 'Asset content hash does not match its filename')
     }
-  )
+    await assets.upload(new File([bytes], part.filename, { type: part.mimetype || 'application/octet-stream' }))
+    return reply.code(201).send({ url: 'asset://' + part.filename })
+  })
+  route('GET', '/assets/:filename', 'getAsset', { params: assetParams }, async (request, reply) => {
+    const { filename } = request.params
+    const bytes = await assets.read(filename)
+    if (!bytes) fail(404, 'Asset not found')
+    if (bytes.byteLength > 256 * 1024 * 1024) fail(413, 'Asset exceeds the 256 MiB read limit')
+    const match = /^([a-f0-9]{64})\.[a-z0-9]+$/.exec(filename)
+    if (match && createHash('sha256').update(bytes).digest('hex') !== match[1]) {
+      fail(409, 'Stored asset content hash does not match its filename')
+    }
+    return reply.type('application/octet-stream').header('Cache-Control', 'no-store').send(bytes)
+  })
   route(
     'POST',
     '/scripts',

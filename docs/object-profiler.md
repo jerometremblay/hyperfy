@@ -59,4 +59,8 @@ change ranking metrics, select an orb, toggle off/on, and confirm two clients ha
 independent state. The profiler is not registered in server or portal-preview
 worlds.
 
+Active admin clients also expose their measurements through the authenticated [Agent API](agent-api.md#client-profiling). Samples remain separated by reporting client and include freshness; they are not server timings.
+
 The ranked inspector currently uses the desktop/touch interface; an immersive XR inspector is deferred.
+
+Server script timing is available separately through the [Agent API](agent-api.md#server-profiling): enable it with `POST /profiling`, then read the `server` section of `GET /profiling`. It needs no browser and measures synchronous server app callbacks in ms/s, not engine physics or whole-process CPU. The on-screen metric selector includes Client script CPU and Server script CPU; the selected object shows separate peaks and callback breakdowns. Missing or stale server samples display a dash and gray orbs, not zero. Opening an admin profiler automatically enables server sampling while fresh client reports are arriving. Server samples arrive about once a second; reloading an older browser is required.

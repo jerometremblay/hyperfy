@@ -169,4 +169,4 @@ for (const fn of events.get('update') || []) fn(0)
 
 let rootCount=0
 ;(function walk(ns){for(const n of ns){rootCount++;walk(n.children||[])}})(rootNodes)
-console.log(JSON.stringify({ok:true,nodes:rootCount+worldNodes.length,appNodes:rootCount,worldNodes:worldNodes.length}))
+console.log(JSON.stringify({ok:true,nodes:rootCount+worldNodes.length,appNodes:rootCount,worldNodes:worldNodes.length,updateCallbacks:(events.get('update') || []).length+(events.get('fixedUpdate') || []).length}))

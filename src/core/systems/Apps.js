@@ -74,6 +74,7 @@ export class Apps extends System {
     }
     this.worldMethods = {
       toggleProfiler(entity, enabled) {
+        if (world.network.isServer) return false
         if (enabled !== undefined && typeof enabled !== 'boolean') return false
         return world.profiler?.toggle(enabled) ?? false
       },

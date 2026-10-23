@@ -43,7 +43,8 @@ Key rules:
 - Hyperfy 0.16.0 dereferences `blueprint.model` before running the script, so `model: null` is invalid there. Use a tiny valid geometry-free GLB compatibility bootstrap while keeping all visible geometry in JavaScript primitives.
 - Package script assets using the target runtime's canonical convention; for 0.16.0, use a `.js` file with `text/plain`, SHA-256 the exact bytes, and reference it as `asset://<sha256>.js`.
 - Dense primitive scenes are visual-only by default. Do not attach one detached collider and one per-frame synchronization callback to every visual primitive.
-- Add physics only when required, using the smallest practical structural collision representation.
+- Add physics only when required, using the smallest practical app-owned structural collision representation. The starter template has no detached nodes or idle callbacks.
+- Follow [performance guidance](docs/performance.md): client-only decorative animation, in-place brightness setters, guarded exceptional synchronization, and before/after runtime profiling.
 - Treat missing `/assets/<hash>.js` or `ENOENT .../world/assets/<hash>.js` as an upload/persistence or stale-blueprint issue before changing geometry.
 - For heap growth, repeated world saves, or crashes, reduce to a static baseline with no update handlers, detached world nodes, or per-primitive physics before adding features back incrementally.
 
@@ -56,6 +57,7 @@ The package retains the orientation discipline introduced in 2.2.0: define struc
 - `docs/extrusion.md`
 - `docs/orientation.md`
 - `docs/physics.md`
+- `docs/performance.md`
 - `docs/portals.md`
 - `docs/sitting.md`
 - `docs/agent-api.md`

@@ -141,3 +141,7 @@ blueprint and their world/box-local transforms.
 For construction edits, return a wall/house with a real opening, confirm its root
 placement stays fixed while the prompt-box disappears, then undo to restore both.
 Check rotated/scaled houses and boxes with small offsets or stray rotation.
+
+## Generated object performance
+
+The exported authoring guide and bundled skill require app-owned static colliders, zero idle callbacks for static objects, client-only decorative animation, and in-place brightness animation instead of per-frame primitive rebuilds. The starter template follows these defaults. See [App performance](scripting/performance.md). Validate runtime performance as well as package syntax; the package validator cannot establish idle CPU or collision behavior.

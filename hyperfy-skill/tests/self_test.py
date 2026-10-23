@@ -57,7 +57,8 @@ def test_pack_preview_roundtrip(tmp):
     smoke = json.loads(run(NODE, str(ROOT/'tools/smoke_test.js'), str(app)))
     assert smoke['ok']
     assert smoke['appNodes'] >= 1
-    assert smoke['worldNodes'] >= 1, 'default physics must create detached world collider'
+    assert smoke['worldNodes'] == 0, 'static template must stay app-owned'
+    assert smoke['updateCallbacks'] == 0, 'static template must not poll'
 
     data = hyp.read_bytes()
     hs = struct.unpack('<I', data[:4])[0]

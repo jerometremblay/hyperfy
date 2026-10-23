@@ -262,6 +262,14 @@ export class ClientNetwork extends System {
     this.nextTimeSync = 0
   }
 
+  onProfilerReport = data => {
+    this.world.profiler?.receiveServerReport(data)
+  }
+
+  onProfilerControl = data => {
+    if (typeof data?.enabled === 'boolean') this.world.profiler?.toggle(data.enabled)
+  }
+
   onKick = code => {
     this.world.emit('kick', code)
   }

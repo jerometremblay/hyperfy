@@ -10,10 +10,10 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
   if (!me) {
     const ready = () => {
       if (!world.getPlayer()) return
-      app.off('update', ready)
+      world.off('player', ready)
       startClient(world, app, { balls, ghost, surfaceTarget, size, playChannel, soundSources })
     }
-    app.on('update', ready)
+    world.on('player', ready)
     return
   }
   let latest = app.state?.pool, frames = [], clock = 0, control = null, idle = null
@@ -44,6 +44,25 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
   let playHintControl = null
   let hintMode = null
   let hoverRefreshPending = false
+  let updateAttached = false
+  let update
+  const wake = () => {
+    if (!update || updateAttached) return
+    updateAttached = true
+    app.on('update', update)
+  }
+  const isNearby = () => me.position.distanceTo(app.position) < 15
+  const setBallsActive = active => {
+    for (const ball of balls) ball.active = active
+  }
+  setBallsActive(isNearby())
+  const renderPositions = snapshot => {
+    snapshot?.balls?.forEach((state, i) => {
+      balls[i].position.set(state.p[0], R + state.p[2], -state.p[1])
+      if (isNearby()) balls[i].active = state.state !== 'InPocket'
+    })
+  }
+  renderPositions(latest)
   const hoveredTargets = new Set()
   const clearPlayHint = () => {
     playHintControl?.setActions([])
@@ -69,12 +88,14 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
     target.onPointerEnter = () => {
       hoveredTargets.add(target)
       hoverRefreshPending = false
+      if (isNearby()) setBallsActive(true)
       refresh()
     }
     target.onPointerLeave = () => {
       hoveredTargets.delete(target)
       // Pointer leave runs before enter when crossing between cloth and balls.
       hoverRefreshPending = true
+      wake()
     }
   }
   const clearPose = () => {
@@ -157,13 +178,15 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
     if (!latest.owner || latest.moving) clearPose()
     if (!pending && idle) { idle.release(); idle = null }
     refresh()
+    wake()
   }
   app.on('pool:snapshot', receive)
-  app.on('pool:aim', next => { aim = next })
+  app.on('pool:aim', next => { aim = next; wake() })
   watchCues(world, holders => {
     cueHolders = holders
     if (!hasCue() && control) stop()
     refresh()
+    wake()
   })
   if (latest) frames = [{ at: clock, snapshot: latest }]
   const play = () => {
@@ -173,10 +196,12 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
     angle = Math.atan2(ball[1] + local.z, ball[0] - local.x)
     pending = true
     requestedAt = clock
+    if (isNearby()) setBallsActive(true)
     idle = app.control()
     idle.pointer.lock()
     app.send('pool:claim', { angle })
     refresh()
+    wake()
   }
   const playOrPlace = event => {
     if (event?.button !== 'left') return
@@ -188,7 +213,7 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
   app.emit(`${cueEvent}:request`)
   const axis = new Vector3()
   const worldPosition = local => local.clone().multiply(app.scale).applyQuaternion(app.quaternion).add(app.position)
-  app.on('update', dt => {
+  update = dt => {
     if (!Number.isFinite(dt) || dt <= 0) return
     clock += dt
     if (hoverRefreshPending) {
@@ -196,9 +221,8 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
       refresh()
     }
     if (pending && clock - requestedAt > 2) stop(false)
-    sounds.update(clock)
-    const nearby = me.position.distanceTo(app.position) < 15
-    for (const ball of balls) ball.active = nearby
+    const nearby = isNearby()
+    if (nearby) setBallsActive(true)
     if (!nearby) { if (control) stop(); clearPose(); sounds.clear(); soundEvents = [] }
     const renderAt = clock - 0.1
     while (frames.length > 1 && frames[1].at <= renderAt) frames.shift()
@@ -215,7 +239,7 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
       a.snapshot.balls.forEach((state, i) => {
         const next = b.snapshot.balls[i]
         const p = state.p.map((v, j) => v + (next.p[j] - v) * alpha)
-        balls[i].active = nearby && state.state !== 'InPocket'
+        if (nearby) balls[i].active = state.state !== 'InPocket'
         balls[i].position.set(p[0], R + p[2], -p[1])
         axis.set(state.w[0], state.w[2], -state.w[1])
         const rotationSpeed = axis.length()
@@ -223,8 +247,8 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
           new Quaternion().setFromAxisAngle(axis.multiplyScalar(1 / rotationSpeed), rotationSpeed * Math.min(dt, 0.1)))
       })
     }
-    if (!nearby) return
-    if (control && (me.position.distanceTo(app.position) > 5 || !hasCue())) stop()
+    const soundsActive = sounds.update(clock)
+    if (nearby && control && (me.position.distanceTo(app.position) > 5 || !hasCue())) stop()
     if (control) {
       ping += dt
       if (ping > 15) { ping = 0; app.send('pool:ping', {}) }
@@ -287,7 +311,13 @@ export function startClient(world, app, { balls, ghost, surfaceTarget, size, pla
       app.emit(poseEvent, { playerId: shooter, tableId: app.instanceId, position: worldPosition(pose.cuePosition).toArray(),
         quaternion: app.quaternion.clone().multiply(pose.cueQuaternion).toArray() })
     } else clearPose()
-  })
+    if (!control && !pending && !hoverRefreshPending && !latest?.moving && frames.length <= 1 &&
+      soundEvents.length === 0 && !soundsActive) {
+      app.off('update', update)
+      updateAttached = false
+    }
+  }
+  if (latest?.moving || latest?.owner) wake()
   app.on('destroy', () => {
     stop()
     clearPlayHint()

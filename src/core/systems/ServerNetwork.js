@@ -1,3 +1,4 @@
+import { receiveProfilerReport } from '../extras/profilerReports'
 import { applyPlayerExpression } from '../extras/playerExpressions'
 import moment from 'moment'
 import { writePacket } from '../packets'
@@ -44,6 +45,7 @@ export class ServerNetwork extends System {
     this.id = 0
     this.ids = -1
     this.sockets = new Map()
+    this.profilingReports = new Map()
     this.socketIntervalId = setInterval(() => this.checkSockets(), PING_RATE * 1000)
     this.saveTimerId = null
     this.dirtyBlueprints = new Set()
@@ -527,6 +529,10 @@ export class ServerNetwork extends System {
     if (entity.isApp) this.dirtyApps.add(entity.data.id)
   }
 
+  onProfilerReport = (socket, data) => {
+    if (receiveProfilerReport(this, socket, data)) this.world.profiler?.refreshActive()
+  }
+
   onPlayerExpression = (socket, data) => {
     if (!data || typeof data !== 'object') return
     const player = this.world.entities.get(data.id)
@@ -806,6 +812,7 @@ export class ServerNetwork extends System {
   }
 
   destroy() {
+    this.profilingReports.clear()
     this.portalPreviews?.destroy()
     clearInterval(this.socketIntervalId)
     clearTimeout(this.saveTimerId)
@@ -815,5 +822,6 @@ export class ServerNetwork extends System {
     this.world.livekit.clearModifiers(socket.id)
     socket.player.destroy(true)
     this.sockets.delete(socket.id)
+    this.profilingReports.delete(socket.id)
   }
 }

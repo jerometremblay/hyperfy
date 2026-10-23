@@ -361,3 +361,9 @@ app.add(triggerZone)
 - Create the node once, add it with `app.add()`, and avoid per-frame geometry creation. `app.create()` alone does not make a node visible.
 - A red crash block means the app failed while loading or executing. For this extension, `[prim] type invalid` indicates that the running client/server build predates `type: 'extrude'`; rebuild the runtime and reload the world.
 - When packaging a `.hyp`, the script asset must be included and the blueprint's `script` URL must match the packaged script bytes. See [.hyp File Format](../../../supported-files/hyp-format.md) for the container contract.
+
+## Avoid idle update work
+
+Parent static collision primitives to the app with `app.add`, just like visible geometry. Native transforms already propagate parent movement, rotation and scale. Do not detach static colliders and copy their transforms every frame. Detached world nodes are appropriate only when the object needs independent world-space behavior; guard their updates on actual transform changes.
+
+Visual animation belongs on clients. Prefer in-place properties such as `emissiveIntensity` and native light intensity for flicker. Primitive `opacity`, roughness, metalness, geometry and physics changes rebuild the primitive; avoid animating them every frame. Objects with no ongoing work should not register update callbacks.

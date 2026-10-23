@@ -3,14 +3,15 @@ import { css } from '@firebolt-dev/css'
 import { useEffect, useState } from 'react'
 
 const metrics = {
-  cpu: 'Script CPU (ms/s)',
+  cpu: 'Client script CPU (ms/s)',
+  serverCpu: 'Server script CPU (ms/s)',
   triangles: 'Triangles',
   bodies: 'Physics bodies',
   network: 'Network (B/s)',
   lights: 'Lights',
 }
 // SES deliberately tames locale formatting; round before string conversion.
-const number = value => String(Math.round(value * 100) / 100)
+const number = value => (value == null ? '—' : String(Math.round(value * 100) / 100))
 
 export function ProfilerPanel({ world }) {
   const profiler = world.profiler
@@ -21,7 +22,9 @@ export function ProfilerPanel({ world }) {
     return () => profiler.off('change', change)
   }, [profiler])
   if (!profiler.active || !world.ui.state.visible) return null
-  const rows = [...profiler.rows].sort((a, b) => b[profiler.metric] - a[profiler.metric] || a.id.localeCompare(b.id))
+  const rows = [...profiler.rows].sort(
+    (a, b) => (b[profiler.metric] ?? -1) - (a[profiler.metric] ?? -1) || a.id.localeCompare(b.id)
+  )
   const selected = rows.find(row => row.id === profiler.selected)
   return (
     <section
@@ -101,7 +104,7 @@ export function ProfilerPanel({ world }) {
         <h2>Object profiler</h2>
         <button onClick={() => profiler.toggle(false)}>Turn off</button>
       </header>
-      <small>Client only · refreshes twice a second · green → red relative to this scene</small>
+      <small>Client + server · green → red relative to this scene; gray = unavailable</small>
       <label>
         Rank and color by
         <select aria-label='Profiler metric' value={profiler.metric} onChange={e => profiler.setMetric(e.target.value)}>
@@ -112,6 +115,12 @@ export function ProfilerPanel({ world }) {
           ))}
         </select>
       </label>
+      <small>
+        {profiler.serverReady()
+          ? 'Server sample received · updates about once a second'
+          : 'Waiting for a fresh server sample…'}
+      </small>
+      <br />
       <small>{rows.length} apps · select an orb or a row to inspect</small>
       <ol>
         {rows.map(row => (
@@ -128,10 +137,14 @@ export function ProfilerPanel({ world }) {
           <h3>{selected.name}</h3>
           <small>App {selected.id}</small>
           <dl>
-            <dt>Script CPU (smoothed)</dt>
+            <dt>Client script CPU (smoothed)</dt>
             <dd>{number(selected.cpu)} ms/s</dd>
-            <dt>Peak callback (last sample)</dt>
+            <dt>Client peak callback</dt>
             <dd>{number(selected.peak)} ms</dd>
+            <dt>Server script CPU</dt>
+            <dd>{number(selected.serverCpu)} ms/s</dd>
+            <dt>Server peak callback</dt>
+            <dd>{number(selected.serverPeak)} ms</dd>
             <dt>Mounted triangles / meshes</dt>
             <dd>
               {number(selected.triangles)} / {selected.meshes}
@@ -158,12 +171,24 @@ export function ProfilerPanel({ world }) {
             <dd>{number(selected.messages)}/s</dd>
           </dl>
           <details>
-            <summary>Callback CPU in last sample</summary>
+            <summary>Client callback CPU in last sample</summary>
             {Object.entries(selected.callbacks).map(([key, value]) => (
               <div key={key}>
                 {key}: {number(value)} ms/s
               </div>
             ))}
+          </details>
+          <details>
+            <summary>Server callback CPU in last sample</summary>
+            {selected.serverCallbacks ? (
+              Object.entries(selected.serverCallbacks).map(([key, value]) => (
+                <div key={key}>
+                  {key}: {number(value)} ms/s
+                </div>
+              ))
+            ) : (
+              <small>Waiting for a matching server sample.</small>
+            )}
           </details>
         </>
       )}
@@ -172,7 +197,8 @@ export function ProfilerPanel({ world }) {
           CPU measures synchronous app events, world events and timers; excludes async continuations and native node
           handlers. Geometry and physics are mounted counts, not GPU or per-body milliseconds. Network counts app entity
           packets including MessagePack headers, excluding WebSocket overhead, assets and shared traffic. Rates use a
-          2-second moving average. GPU, splat rendering and server costs are not measured.
+          2-second moving average for client CPU and byte rates. Server CPU uses its actual sample window. GPU, splat
+          rendering and engine physics time are not measured.
         </small>
       </p>
     </section>

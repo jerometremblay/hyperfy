@@ -269,3 +269,58 @@ test('bundled physical switch matches its readable script source and content has
   assert.deepEqual(script, await readFile(new URL('../../../scripts/profiler-switch.js', import.meta.url)))
   assert.equal(header.blueprint.script, `asset://${createHash('sha256').update(script).digest('hex')}.js`)
 })
+
+test('enabled profiler reports at most once per second, handles API control and clears reports on disable', t => {
+  const { world, profiler, app, setAdmin } = fixture()
+  app('a')
+  let now = 0
+  t.mock.method(performance, 'now', () => now)
+  const sent = []
+  world.network = { ws: { readyState: 1 }, send: (...args) => sent.push(args) }
+  const network = new ClientNetwork(world)
+  network.onProfilerControl({ enabled: true })
+  profiler.sample(0.5)
+  now = 500
+  profiler.sample(0.5)
+  assert.equal(sent.length, 1)
+  assert.equal(sent[0][0], 'profilerReport')
+  assert.equal(sent[0][1].rows[0].id, 'a')
+  now = 1000
+  profiler.sample(0.5)
+  assert.equal(sent.length, 2)
+  network.onProfilerControl({ enabled: false })
+  assert.deepEqual(sent.at(-1), ['profilerReport', { active: false }])
+  assert.equal(profiler.active, false)
+  setAdmin(false)
+  network.onProfilerControl({ enabled: true })
+  assert.equal(profiler.active, false)
+  assert.equal(sent.length, 3)
+  profiler.destroy()
+})
+
+test('server samples rank matching app versions and expire to unavailable rather than zero', t => {
+  let clock = 0
+  t.mock.method(performance, 'now', () => clock)
+  const { profiler, app } = fixture()
+  app('a').blueprint.version = 2
+  profiler.toggle(true)
+  profiler.sample(0.5)
+  assert.equal(profiler.rows[0].serverCpu, null)
+  profiler.receiveServerReport({
+    source: 'server',
+    active: true,
+    stale: false,
+    rows: [{ id: 'a', blueprintVersion: 2, cpuMsPerSecond: 4, peakCallbackMs: 1, callbackMsPerSecond: { update: 4 } }],
+  })
+  profiler.setMetric('serverCpu')
+  assert.equal(profiler.metric, 'serverCpu')
+  assert.equal(profiler.rows[0].serverCpu, 4)
+  assert.deepEqual(profiler.rows[0].serverCallbacks, { update: 4 })
+  clock = 11000
+  profiler.sample(0.5)
+  assert.equal(profiler.rows[0].serverCpu, null)
+  assert.equal(profiler.serverReady(), false)
+  profiler.toggle(false)
+  profiler.receiveServerReport({ source: 'server', active: true, rows: [] })
+  assert.equal(profiler.serverReport, null)
+})

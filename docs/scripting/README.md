@@ -56,3 +56,7 @@ Hyperfy [Networking](./Networking.md) happens inside of Apps, using methods from
 - [world](./world/World.md)
 - [props](./app/Props.md)
 - [utils](./utils.md)
+
+## Performance
+
+Follow [App performance](performance.md) when adding static objects, colliders or animation.
