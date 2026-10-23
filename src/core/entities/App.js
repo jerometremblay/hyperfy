@@ -440,26 +440,39 @@ export class App extends Entity {
   emit(name, a1, a2) {
     if (!this.listeners[name]) return
     for (const callback of this.listeners[name]) {
-      callback(a1, a2)
+      if (this.world.profiler?.active) this.world.profiler.measure(this.data.id, name, callback, [a1, a2])
+      else callback(a1, a2)
     }
   }
 
   onWorldEvent(name, callback) {
-    this.worldListeners.set(callback, name)
-    this.world.events.on(name, callback)
+    let entries = this.worldListeners.get(callback)
+    if (!entries) this.worldListeners.set(callback, (entries = new Map()))
+    if (entries.has(name)) return
+    const wrapped = (...args) => {
+      if (this.world.profiler?.active)
+        return this.world.profiler.measure(this.data.id, `world:${name}`, callback, args, this.world.events)
+      return callback.apply(this.world.events, args)
+    }
+    entries.set(name, wrapped)
+    this.world.events.on(name, wrapped)
   }
 
   offWorldEvent(name, callback) {
-    this.worldListeners.delete(callback)
-    this.world.events.off(name, callback)
+    const entries = this.worldListeners.get(callback)
+    const wrapped = entries?.get(name)
+    if (!wrapped) return
+    entries.delete(name)
+    if (!entries.size) this.worldListeners.delete(callback)
+    this.world.events.off(name, wrapped)
   }
 
   clearEventListeners() {
     // local
     this.listeners = {}
     // world
-    for (const [callback, name] of this.worldListeners) {
-      this.world.events.off(name, callback)
+    for (const entries of this.worldListeners.values()) {
+      for (const [name, wrapped] of entries) this.world.events.off(name, wrapped)
     }
     this.worldListeners.clear()
   }
@@ -504,7 +517,8 @@ export class App extends Entity {
     const hook = this.getDeadHook()
     const timerId = setTimeout(() => {
       if (hook.dead) return
-      fn()
+      if (this.world.profiler?.active) this.world.profiler.measure(this.data.id, 'timer', fn)
+      else fn()
     }, ms)
     return timerId
   }

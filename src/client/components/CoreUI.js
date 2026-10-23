@@ -17,6 +17,7 @@ import { getActionPrompt } from '../../core/systems/ClientActions'
 // import { MenuMain } from './MenuMain'
 // import { MenuApp } from './MenuApp'
 import { ChevronDoubleUpIcon, HandIcon } from './Icons'
+import { ProfilerPanel } from './ProfilerPanel'
 import { Sidebar } from './Sidebar'
 import { XRSidebar } from './XRSidebar'
 import { PoseEditorPanel, SittingPoseButton } from './PoseEditorPanel'
@@ -114,6 +115,7 @@ export function CoreUI({ world }) {
       {ready && <ActionsBlock world={world} />}
       {ready && <SittingPoseButton world={world} player={player} />}
       {ready && <PoseEditorPanel world={world} />}
+      {ready && <ProfilerPanel world={world} />}
       {ready && !xr && <Sidebar world={world} ui={ui} />}
       {ready && xr && (
         <XRSidebar world={world} ui={ui}>

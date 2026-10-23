@@ -12,6 +12,7 @@ import { ClientCSS } from './systems/ClientCSS'
 import { ClientGraphics } from './systems/ClientGraphics'
 import { ClientEnvironment } from './systems/ClientEnvironment'
 import { ClientAudio } from './systems/ClientAudio'
+import { ClientProfiler } from './systems/ClientProfiler'
 import { ClientStats } from './systems/ClientStats'
 import { ClientBuilder } from './systems/ClientBuilder'
 import { ClientActions } from './systems/ClientActions'
@@ -41,6 +42,7 @@ export function createClientWorld() {
   world.register('environment', ClientEnvironment)
   world.register('audio', ClientAudio)
   world.register('stats', ClientStats)
+  world.register('profiler', ClientProfiler)
   world.register('builder', ClientBuilder)
   world.register('actions', ClientActions)
   world.register('target', ClientTarget)
