@@ -62,6 +62,7 @@ export class ServerProfiler extends System {
   }
 
   postTick() {
+    if (!this.active) return
     this.refreshActive()
     if (!this.active) return
     const now = performance.now()

@@ -47,6 +47,7 @@ export class ClientProfiler extends System {
     this.selected = null
     this.serverReport = null
     if (value) {
+      this.world.stats?.toggle(true)
       this.overlay = new ProfilerOverlay(this.world, this)
     } else {
       this.overlay?.destroy()

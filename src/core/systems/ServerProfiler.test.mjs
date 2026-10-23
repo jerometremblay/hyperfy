@@ -106,3 +106,22 @@ test('fresh admin viewers enable server sampling and receive reports; disconnect
   profiler.toggle(false)
   assert.equal(profiler.active, false)
 })
+
+test('disabled server profiler does not poll viewers or read clocks each frame', t => {
+  const { profiler } = fixture()
+  t.mock.method(Date, 'now', () => {
+    throw Error('idle wall clock read')
+  })
+  t.mock.method(performance, 'now', () => {
+    throw Error('idle timing read')
+  })
+  t.mock.method(profiler, 'refreshActive', () => {
+    throw Error('idle viewer scan')
+  })
+  profiler.postTick()
+  assert.equal(
+    profiler.measure('a', 'update', () => 42),
+    42
+  )
+  assert.equal(profiler.pending.size, 0)
+})

@@ -1,10 +1,11 @@
 # Object performance profiler
 
-Administrators can enable **Preferences → Object Profiler**, or place **Add App →
-Default → Performance Switch** and click it (or aim at it and use its interaction action). The switch controls only the
-current browser. It does not change other visitors' settings or save an enabled
-state. Losing admin permission, disconnecting, or turning it off clears readings
-and disposes the overlay. Existing global Stats remain available separately.
+Administrators can enable **View Stats**, then click **Show details** in the
+Object profiler bar below the FPS, CPU, GPU and ping graphs. The graphs remain
+visible above the expanded panel. **Hide details**, hiding Stats or the interface,
+losing admin permission, or disconnecting stops profiling and clears readings.
+Showing Stats again leaves profiling off until details are explicitly opened.
+The control affects only the current browser and does not save an enabled state.
 
 The inspector ranks individual app instances. Select a row or click an orb to
 inspect its raw readings. The chosen metric controls both ranking and orb color:
@@ -35,7 +36,9 @@ CPU and network rates use a time-based exponentially weighted moving average wit
 a two-second time constant. Callback breakdown and message counts describe only
 the last sample. Overlay and inspector work add diagnostic overhead. Turning the
 profiler off skips timing, sampling, packet attribution and rendering; event
-wrappers retain a cheap disabled check.
+wrappers retain a cheap disabled check. Disabled network hooks skip packet
+attribution entirely, and the idle server profiler does not poll viewers or read
+clocks each frame. Explicit Agent API server profiling remains independent.
 
 This first version does not measure GPU time, Gaussian splat rendering, portals'
 render passes, memory, server scripts or server physics. It makes no claim that
@@ -47,9 +50,6 @@ removing an object will recover a displayed amount of frame time.
 enables or disables it. It returns the resulting enabled state. Invalid arguments,
 non-admin enable attempts, and server calls return `false`. `world.isProfiling`
 reports this client's enabled state. Permissions are checked in the engine.
-
-The bundled switch's readable source is `scripts/profiler-switch.js`. Rebuild its
-native `.hyp` container with `node scripts/build-profiler-switch.mjs` after edits.
 
 ## Verification
 

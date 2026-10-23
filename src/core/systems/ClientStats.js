@@ -27,6 +27,10 @@ export class ClientStats extends System {
 
   init({ ui }) {
     this.ui = ui
+    this.container = document.createElement('div')
+    this.container.style.cssText =
+      'position:absolute;top:0;right:0;width:360px;max-width:100vw;display:flex;flex-direction:column;pointer-events:auto;z-index:35;'
+    this.extension = document.createElement('div')
   }
 
   start() {
@@ -57,14 +61,21 @@ export class ClientStats extends System {
           mode: 0,
         })
         this.stats.dom.style.zIndex = null
+        this.stats.dom.style.position = 'relative'
+        this.stats.dom.style.flexShrink = '0'
+        this.stats.dom.style.overflowX = 'auto'
         this.stats.init(this.world.graphics.renderer, false)
         this.ping = new Panel('PING', '#f00', '#200')
         this.stats.addPanel(this.ping, 3)
+        this.container.appendChild(this.stats.dom)
+        this.container.appendChild(this.extension)
       }
-      this.ui.appendChild(this.stats.dom)
+      this.ui.appendChild(this.container)
     } else {
-      this.ui.removeChild(this.stats.dom)
+      this.world.profiler?.toggle(false)
+      this.container.remove()
     }
+    this.emit('change')
   }
 
   preTick() {
@@ -156,5 +167,9 @@ export class ClientStats extends System {
 
   destroy() {
     this.toggle(false)
+    this.world.prefs.off('change', this.onPrefsChange)
+    this.world.off('ui', this.onUIState)
+    this.world.off('ready', this.onReady)
+    this.removeAllListeners()
   }
 }

@@ -6,7 +6,7 @@ import * as THREE from 'three'
 
 const bundle = await build({
   stdin: {
-    contents: `export { ClientProfiler } from './src/core/systems/ClientProfiler'; export { App } from './src/core/entities/App'; export { Apps } from './src/core/systems/Apps'; export { ClientNetwork } from './src/core/systems/ClientNetwork';`,
+    contents: `export { ClientStats } from './src/core/systems/ClientStats'; export { ClientProfiler } from './src/core/systems/ClientProfiler'; export { App } from './src/core/entities/App'; export { Apps } from './src/core/systems/Apps'; export { ClientNetwork } from './src/core/systems/ClientNetwork';`,
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -16,7 +16,8 @@ const bundle = await build({
 })
 await mkdir('build', { recursive: true })
 await writeFile('build/profiler-test-bundle.mjs', bundle.outputFiles[0].contents)
-const { ClientProfiler, App, Apps, ClientNetwork } = await import('../../../build/profiler-test-bundle.mjs')
+const { ClientStats, ClientProfiler, App, Apps, ClientNetwork } =
+  await import('../../../build/profiler-test-bundle.mjs')
 const { default: EventEmitter } = await import('eventemitter3')
 
 function fixture() {
@@ -259,17 +260,6 @@ test('sandbox API validates arguments and gates every toggle on local admin perm
   profiler.destroy()
 })
 
-test('bundled physical switch matches its readable script source and content hash', async () => {
-  const { readFile } = await import('node:fs/promises')
-  const { createHash } = await import('node:crypto')
-  const bytes = await readFile(new URL('../../world/collections/default/PerformanceSwitch.hyp', import.meta.url))
-  const size = bytes.readUInt32LE(0)
-  const header = JSON.parse(bytes.subarray(4, 4 + size))
-  const script = bytes.subarray(4 + size)
-  assert.deepEqual(script, await readFile(new URL('../../../scripts/profiler-switch.js', import.meta.url)))
-  assert.equal(header.blueprint.script, `asset://${createHash('sha256').update(script).digest('hex')}.js`)
-})
-
 test('enabled profiler reports at most once per second, handles API control and clears reports on disable', t => {
   const { world, profiler, app, setAdmin } = fixture()
   app('a')
@@ -323,4 +313,59 @@ test('server samples rank matching app versions and expire to unavailable rather
   profiler.toggle(false)
   profiler.receiveServerReport({ source: 'server', active: true, rows: [] })
   assert.equal(profiler.serverReport, null)
+})
+
+test('hiding Stats stops profiling, preserves graph placement and removes subscriptions', () => {
+  const { world, profiler, app } = fixture()
+  app('a')
+  world.prefs = new EventEmitter()
+  const stats = (world.stats = new ClientStats(world))
+  const children = []
+  stats.ui = { appendChild: child => children.push(child) }
+  stats.container = { remove: () => children.splice(children.indexOf(stats.container), 1) }
+  stats.stats = { dom: {}, begin() {}, end() {}, update() {} }
+  stats.start()
+  profiler.toggle(true)
+  assert.equal(stats.active, true)
+  assert.deepEqual(children, [stats.container])
+  profiler.sample(1)
+  world.emit('ui', { visible: false })
+  assert.equal(stats.active, false)
+  assert.equal(profiler.active, false)
+  assert.equal(profiler.overlay, null)
+  assert.equal(profiler.rows.length, 0)
+  assert.equal(children.length, 0)
+  world.emit('ui', { visible: true })
+  assert.equal(stats.active, true)
+  assert.equal(profiler.active, false)
+  profiler.toggle(true)
+  world.prefs.emit('change', { stats: { value: false } })
+  assert.equal(profiler.active, false)
+  stats.destroy()
+  assert.equal(world.prefs.listenerCount('change'), 0)
+  assert.equal(world.listenerCount('ui'), 0)
+  profiler.destroy()
+})
+
+test('disabled profiler does not read clocks, traverse the scene or inspect network packets', t => {
+  const { world, profiler } = fixture()
+  t.mock.method(performance, 'now', () => {
+    throw Error('idle clock read')
+  })
+  world.entities.items = {
+    get() {
+      throw Error('idle entity lookup')
+    },
+    values() {
+      throw Error('idle scene traversal')
+    },
+  }
+  profiler.postTick()
+  profiler.network('entityEvent', ['a'], 10, true)
+  assert.equal(
+    profiler.measure('a', 'update', () => 42),
+    42
+  )
+  assert.equal(profiler.pending.size, 0)
+  assert.equal(profiler.overlay, undefined)
 })

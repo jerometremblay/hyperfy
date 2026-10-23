@@ -457,7 +457,7 @@ const shadowOptions = [
 ]
 function Prefs({ world, hidden }) {
   const player = world.entities.player
-  const { isAdmin, isBuilder } = useRank(world, player)
+  const { isBuilder } = useRank(world, player)
   const [name, setName] = useState(() => player.data.name)
   const [serverAvatars, setServerAvatars] = useState([])
   const [loadingServerAvatars, setLoadingServerAvatars] = useState(false)
@@ -473,12 +473,6 @@ function Prefs({ world, hidden }) {
   const [canFullscreen, isFullscreen, toggleFullscreen] = useFullscreen()
   const [actions, setActions] = useState(world.prefs.actions)
   const [stats, setStats] = useState(world.prefs.stats)
-  const [profiling, setProfiling] = useState(world.profiler.active)
-  useEffect(() => {
-    const update = () => setProfiling(world.profiler.active)
-    world.profiler.on('change', update)
-    return () => world.profiler.off('change', update)
-  }, [world])
   const changeName = name => {
     if (!name) return setName(player.data.name)
     player.setName(name)
@@ -622,16 +616,6 @@ function Prefs({ world, hidden }) {
           trueLabel='Visible'
           falseLabel='Hidden'
         />
-        {isAdmin && (
-          <FieldToggle
-            label='Object Profiler'
-            hint='Measure local app costs and show performance orbs'
-            value={profiling}
-            onChange={value => world.profiler.toggle(value)}
-            trueLabel='Enabled'
-            falseLabel='Disabled'
-          />
-        )}
         {!isTouch && (
           <FieldBtn
             label='Hide Interface'
