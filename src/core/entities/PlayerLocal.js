@@ -1039,33 +1039,7 @@ export class PlayerLocal extends Entity {
       this.cam.rotation.x = clamp(this.cam.rotation.x, -89 * DEG2RAD, 89 * DEG2RAD)
     }
 
-    // Zoom to the closest third-person view before a further inward scroll enters first person.
-    if (!xr) {
-      const zoomDelta = -this.control.scrollDelta.value * ZOOM_SPEED * delta
-      if (zoomDelta !== 0) {
-        const now = this.world.time
-        if (this.firstPerson) {
-          if (zoomDelta > 0) {
-            this.cam.zoom = THIRD_PERSON_MIN_ZOOM
-            this.firstPerson = false
-            this.avatar?.setFirstPerson(false)
-            if (this.avatar) this.avatar.visible = true
-          }
-        } else if (
-          zoomDelta < 0 &&
-          this.cam.zoom <= THIRD_PERSON_MIN_ZOOM &&
-          now - this.lastZoomAt >= FIRST_PERSON_SCROLL_DELAY
-        ) {
-          this.cam.zoom = 0
-          this.firstPerson = true
-          if (this.avatar) this.avatar.visible = true
-          this.avatar?.setFirstPerson(true)
-        } else {
-          this.cam.zoom = clamp(this.cam.zoom + zoomDelta, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
-        }
-        this.lastZoomAt = now
-      }
-    }
+    this.updateZoom(delta)
 
     // stick movement threshold
     if (this.stick && !this.stick.active) {
@@ -1448,6 +1422,40 @@ export class PlayerLocal extends Entity {
     })
   }
 
+  updateZoom(delta) {
+    if (!this.isXR) {
+      const zoomDelta = -this.control.scrollDelta.value * ZOOM_SPEED * delta
+      if (zoomDelta !== 0) {
+        const now = this.world.time
+        if (this.firstPerson) {
+          if (zoomDelta > 0) {
+            this.cam.zoom = THIRD_PERSON_MIN_ZOOM
+            this.zoomExitPending = true
+            this.firstPerson = false
+            this.avatar?.setFirstPerson(false)
+            if (this.avatar) this.avatar.visible = true
+          }
+        } else if (this.zoomExitPending && zoomDelta > 0 && now - this.lastZoomAt < FIRST_PERSON_SCROLL_DELAY) {
+          // Consume the rest of the gesture that exited first person.
+        } else if (
+          zoomDelta < 0 &&
+          this.cam.zoom <= THIRD_PERSON_MIN_ZOOM &&
+          now - this.lastZoomAt >= FIRST_PERSON_SCROLL_DELAY
+        ) {
+          this.cam.zoom = 0
+          this.firstPerson = true
+          if (this.avatar) this.avatar.visible = true
+          this.avatar?.setFirstPerson(true)
+        } else {
+          this.zoomExitPending = false
+          this.cam.zoom = clamp(this.cam.zoom + zoomDelta, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
+        }
+        this.lastZoomAt = now
+      }
+    }
+
+  }
+
   getCamera() {
     return { quaternion: this.cam.quaternion.clone(), zoom: this.cam.zoom, firstPerson: this.firstPerson }
   }
@@ -1457,10 +1465,20 @@ export class PlayerLocal extends Entity {
     const direction = orientation ? [orientation.x, orientation.y, orientation.z, orientation.w] : target && [target.x, target.y, target.z]
     if (this.isXR || !direction || ![...direction, zoom, duration].every(Number.isFinite) || duration < 0) return false
     if (orientation && direction.every(value => value === 0)) return false
+    // Leave first person at the nearest shoulder view before animating out.
+    // Restoring the full avatar while the camera is still inside it clips the body.
+    if (this.firstPerson && !firstPerson && duration > 0) {
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.cam.quaternion)
+      right.y = 0
+      right.normalize()
+      this.control.camera.position.copy(this.cam.position).addScaledVector(right, 0.3)
+      this.control.camera.quaternion.copy(this.cam.quaternion)
+      this.control.camera.zoom = THIRD_PERSON_MIN_ZOOM
+    }
     this.cameraTransition = duration > 0 ? {
       elapsed: 0, duration: Math.min(duration, 2),
-      offset: this.world.rig.position.clone().sub(this.base.position),
-      quaternion: this.world.rig.quaternion.clone(), zoom: this.world.camera.position.z,
+      offset: this.control.camera.position.clone().sub(this.base.position),
+      quaternion: this.control.camera.quaternion.clone(), zoom: this.control.camera.zoom,
     } : null
     this.firstPerson = !!firstPerson
     this.avatar?.setFirstPerson(this.firstPerson)

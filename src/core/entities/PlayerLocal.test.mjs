@@ -449,11 +449,14 @@ test('journal first-person transition restores the saved native orientation, zoo
       control: { camera: { position: rig.position.clone(), quaternion: rig.quaternion.clone(), zoom: cam.zoom } },
       world: { rig, camera, physics: { sweep: () => null } },
     }
+    const modes = []
+    player.avatar = { visible: true, setFirstPerson: active => modes.push(active), getBoneTransform: () => null }
     const saved = PlayerLocal.prototype.getCamera.call(player)
     const original = saved.quaternion.clone()
     const target = new THREE.Vector3(0, 1.7, 0.1)
     assert.equal(PlayerLocal.prototype.setCamera.call(player, { target, firstPerson: true, duration: 0.65 }), true)
     assert.equal(player.firstPerson, true)
+    assert.equal(modes.at(-1), true, 'journal uses the normal hands-and-feet first-person mode')
     PlayerLocal.prototype.lateUpdate.call(player, 0.325)
     assert.ok(player.control.camera.zoom >= 0 && player.control.camera.zoom < saved.zoom || firstPerson)
     PlayerLocal.prototype.lateUpdate.call(player, 0.325)
@@ -464,9 +467,37 @@ test('journal first-person transition restores the saved native orientation, zoo
     // Looking around while reading must not replace the original snapshot.
     cam.rotateY(0.5)
     PlayerLocal.prototype.setCamera.call(player, { ...saved, duration: 0.65 })
+    assert.equal(modes.at(-1), firstPerson)
+    assert.equal(player.control.camera.zoom, firstPerson ? 0 : 0.3)
+    assert.equal(player.cameraTransition.zoom, firstPerson ? 0 : 0.3)
+    assert.ok(player.cameraTransition.quaternion.angleTo(cam.quaternion) > 0 || firstPerson)
     PlayerLocal.prototype.lateUpdate.call(player, 0.65)
     assert.equal(player.firstPerson, firstPerson)
     assert.equal(player.control.camera.zoom, saved.zoom)
     assert.ok(player.control.camera.quaternion.angleTo(original) < 1e-7)
   }
+})
+
+test('leaving first person stops at the nearest third-person distance for the whole scroll gesture', () => {
+  const player = {
+    isXR: false, firstPerson: true, cam: { zoom: 0 }, lastZoomAt: -Infinity,
+    world: { time: 1 }, control: { scrollDelta: { value: -10 } },
+    avatar: { visible: true, setFirstPerson(value) { this.firstPerson = value } },
+  }
+  const zoom = () => PlayerLocal.prototype.updateZoom.call(player, 1 / 60)
+  zoom()
+  const nearest = player.cam.zoom
+  assert.ok(nearest > 0)
+  assert.equal(player.firstPerson, false)
+  for (let i = 0; i < 20; i++) { player.world.time += 0.05; zoom() }
+  assert.equal(player.cam.zoom, nearest)
+  player.world.time += 0.31
+  zoom()
+  assert.ok(player.cam.zoom > nearest, 'a fresh outward gesture zooms out normally')
+  player.cam.zoom = nearest
+  player.control.scrollDelta.value = 10
+  player.world.time += 0.31
+  zoom()
+  assert.equal(player.firstPerson, true)
+  assert.equal(player.cam.zoom, 0)
 })
