@@ -457,7 +457,7 @@ const shadowOptions = [
 ]
 function Prefs({ world, hidden }) {
   const player = world.entities.player
-  const { isAdmin, isBuilder } = useRank(world, player)
+  const { isBuilder } = useRank(world, player)
   const [name, setName] = useState(() => player.data.name)
   const [serverAvatars, setServerAvatars] = useState([])
   const [loadingServerAvatars, setLoadingServerAvatars] = useState(false)

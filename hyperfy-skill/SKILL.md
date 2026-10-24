@@ -174,6 +174,17 @@ Every generated object must pass this audit before delivery. Follow the detailed
 5. **Visual inspection:** Inspect front, back, left, right, top, and isometric views. Check text orientation, slopes, surface normals, occlusion, intersections, offsets, and structural alignment. Correct visible errors before packaging the final artifact.
 6. **Numerical orientation tests:** For every endpoint-derived element, compare transformed endpoints with target coordinates within an appropriate tolerance. For every inclined surface, verify that the transformed top and bottom edges have the intended relative depth. Any failed check is a generation failure; correct it and repeat the audit.
 
+## Object performance
+
+- Static objects should have zero `update`/`fixedUpdate` callbacks. Create nodes once; subscribe only while ongoing animation or gameplay needs work, and unsubscribe when it ends.
+- Parent ordinary geometry and static colliders with `app.add()` (or an app-owned group). Let native transforms propagate movement. Do not create a detached collider and a synchronization callback for each primitive.
+- Use `world.add()` only for required independent world-space behavior or a verified builder-physics requirement. Compare position, quaternion and scale before writing them; copying unchanged transforms still dirties nodes and can cause PhysX pose work. Rebuild physics only on actual shape/scale changes, and remove detached nodes on destruction.
+- Run decorative animation only on clients (`world.isClient`). Keep authoritative simulation on the server when gameplay requires it.
+- Animate existing nodes with supported in-place setters: primitive `emissiveIntensity`, light `intensity`, or transforms for actual motion. In this fork, changing primitive `opacity`, `roughness`, `metalness`, geometry or physics rebuilds the primitive. Keep those values fixed during flicker; do not rebuild meshes/materials every frame. Check the target runtime's setters before choosing other animated properties.
+- Preserve real animation and gameplay. Validate idle callbacks and rebuilds, then move, rotate and scale the app and check collisions. For live changes, compare before/after Object Profiler samples or Agent API profiling reports. CPU is milliseconds per second; client reports do not measure server CPU, GPU time or per-body physics time. Report unavailable runtime checks honestly; syntax/package validation alone does not prove performance.
+
+Read [docs/performance.md](docs/performance.md) before adding callbacks, collision synchronization or animated material properties.
+
 ## Physics discipline
 
 Hyperfy app instances can be translated, rotated, uniformly scaled, or non-uniformly distorted in the builder. Physics must continue to match the visible primitives after those edits.
@@ -186,14 +197,18 @@ Do not create a detached `world.add()` collider plus an `update` callback for ev
 
 When collision is needed, prefer a few simple structural colliders for floors, walls, stairs, or major obstacles. Decorative logs, trim, shingles, panes, bolts, and similar details normally do not need individual colliders.
 
-### Transform-safe exact-shape rule
+### Default collision ownership
+
+Use app-owned static primitives/colliders when collision is required. The starter template follows this native hierarchy and has no update handlers. Validate the final builder transforms as described below; temporary physics suppression while selected is not a reason to detach every collider. Read [docs/physics.md](docs/physics.md) before using an exceptional detached collider.
+
+### Exceptional detached exact-shape rule
 
 Use the detached exact-shape pattern only when exact primitive collision under arbitrary app transforms is genuinely required:
 
 1. Create the **visible primitive** under `app` with `physics: null`.
 2. Create an **exact invisible collider primitive** with the same primitive `type` and `size`; do not approximate it with AABBs, strips, or generic boxes.
 3. Add that collider with `world.add(collider)` instead of `app.add(collider)`. Hyperfy marks the app root as moving for the whole time it is selected in the builder, and app-owned `Prim` nodes skip physics mounting in that moving context. A detached world node can still mount and rebuild PhysX while the app is being edited.
-4. Synchronize the collider from the visible primitive plus the app transform:
+4. Synchronize only when the source position, quaternion or scale actually changes. Compare before copying; unchanged copies still dirty transforms. Share synchronization work rather than adding one callback per primitive. Derive the collider from the visible primitive plus the app transform:
    - world position = app position + rotated(app scale × local position);
    - world quaternion = app quaternion × local quaternion;
    - world scale = app scale × local scale.
@@ -238,7 +253,7 @@ The collider must preserve the primitive's transformed shape in all cases. Delet
 - Represent openings as actual gaps where practical rather than painting them onto solid walls.
 - Prefer continuous rails, beams, trim, and edges over many tiny disconnected pieces when a single primitive is sufficient.
 - Keep scale believable relative to a roughly human-sized avatar unless the user requests another scale.
-- Use transparent/invisible primitives only when needed for collision or interaction; exact-package previews skip `opacity <= 0` geometry. For colliders, prefer the detached exact-primitive pattern above.
+- Use transparent/invisible primitives only when needed for collision or interaction; exact-package previews skip `opacity <= 0` geometry. For static colliders, prefer the app-owned hierarchy above.
 - For a static `extrude`, keep `physics: null` unless collision is required. If collision is required, duplicate the complete profile/depth/bevel configuration for the collider; a generic `size` array is not an extrusion definition.
 - Avoid per-frame work for static generated models. Static cabins, buildings, furniture, props, and sculptures should normally have zero `update`/`fixedUpdate` handlers.
 - Avoid `world.add()` for ordinary visual geometry. Add visible primitives under `app`; reserve detached world nodes for features that specifically require them.
@@ -268,7 +283,7 @@ Supported primitive material properties include `color`, `emissive`, `emissiveIn
 
 ### Emissive geometry and real lights
 
-Do not assume an emissive primitive illuminates nearby geometry. The current Hyperfy script-node API does not expose a general `PointLight`/`SpotLight` primitive equivalent, and the normal `glbToNodes` path does not convert GLTF punctual lights into usable Hyperfy app nodes. Resolve these capabilities against the target runtime before relying on actual lights.
+Do not assume an emissive primitive illuminates nearby geometry. This fork provides native `app.create('light', ...)` nodes; use them when actual illumination is needed, and animate `intensity` in place. Other runtimes may differ, and the normal `glbToNodes` path does not necessarily convert GLTF punctual lights into usable app nodes. Resolve these capabilities against the target runtime before relying on actual lights.
 
 For script-only apps, treat emissive objects primarily as visible luminous surfaces. A convincing fire can combine:
 
@@ -280,7 +295,7 @@ For script-only apps, treat emissive objects primarily as visible luminous surfa
 
 Bloom/post-processing, when enabled, can make these surfaces appear to cast light visually even without actual punctual lights. Do not describe an emissive halo as a physically real point light unless the target runtime actually provides one.
 
-For flicker or moving sparks, create the geometry once and animate existing nodes with a shared update handler. Change `emissiveIntensity` directly for brightness animation; do not recreate primitives every frame.
+For flicker or moving sparks, create the geometry once and animate existing nodes with a shared client-only update handler. Keep opacity fixed; animate emissive intensity instead of rebuilding materials every frame. Change `emissiveIntensity` directly for brightness animation; do not recreate primitives every frame.
 
 ## Sitting positions, action markers, and seat behavior
 
@@ -335,7 +350,7 @@ Hash the exact JavaScript bytes with SHA-256 and name the asset `<sha256>.js`. T
 
 For Hyperfy v0.16.0, mirror the built-in Script Editor: create the JavaScript `File` with filename `script.js` and MIME `text/plain`; the uploaded/canonical filename is then the SHA-256 name with `.js` extension.
 
-Use `tools/hyp_pack.py` and `tools/hyp_extract.py`. Use `tools/make_embedded_preview.py` so the preview embeds the exact final `.hyp` bytes. The bundled viewer 2.3.0 mock runtime supports app transforms, quaternion composition, `world.add()`/`world.remove()`, update hooks, and detached invisible colliders used by the default physics pattern.
+Use `tools/hyp_pack.py` and `tools/hyp_extract.py`. Use `tools/make_embedded_preview.py` so the preview embeds the exact final `.hyp` bytes. The bundled viewer 2.3.0 mock runtime supports app transforms, quaternion composition, `world.add()`/`world.remove()`, update hooks, and detached invisible colliders used by exceptional independent physics patterns.
 
 ## Validation
 

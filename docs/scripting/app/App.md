@@ -33,6 +33,32 @@ Custom networked events are received when a different client/server sends an eve
 
 IMPORTANT: Only subscribe to update events when they are needed. The engine is optimized to completely skip over large amounts of apps that don't need to receive update events.
 
+#### `transform`
+
+`app.on('transform', callback)` reports changes to this app root's position,
+rotation or scale on the current client/server. The payload contains boolean
+flags `{ position, rotation, scale }`; read the new values from `app.position`,
+`app.quaternion` and `app.scale`.
+
+Notifications use the existing dirty-transform pass and coalesce changes made
+before that pass. Assigning unchanged values, changing only a child node, or
+returning to the previous transform before the pass does not notify. Initial
+placement is available during script initialization and does not generate a
+notification. Subscribing does not put the app in the frame-update loop.
+
+The callback runs before committing root and child matrices, so it can adjust
+children in the same pass. World matrices still describe the previous commit
+inside the callback. Editor transforms, remote movement interpolation, and
+`app.setTransform()` all use this path.
+
+```js
+app.on('transform', changed => {
+  if (changed.rotation) northGroup.quaternion.copy(app.quaternion).invert()
+})
+```
+
+This engine event is local and cannot be sent with `app.send()`.
+
 ### `.off(name, callback)`
 
 Unsubscribes from custom events and update events.

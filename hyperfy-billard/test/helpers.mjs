@@ -34,21 +34,31 @@ let nextInstanceId = 0
 export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = false, state = {}, props = {}, players = [], source = code, bus = {}, cueHolders, modelNodes = {} } = {}) {
   const handlers = {},
     created = [],
+    appChildren = [],
     sent = [],
     audioPlays = []
+  let now = 0, nextTimer = 0
+  const timers = []
+  const setTimeout = (fn, delay) => {
+    const id = ++nextTimer
+    timers.push({ id, fn, at: now + delay })
+    return id
+  }
+  const advance = ms => {
+    now += ms
+    let calls = 0
+    while (true) {
+      timers.sort((a, b) => a.at - b.at)
+      const timer = timers[0]
+      if (!timer || timer.at > now) break
+      timers.shift()
+      timer.fn()
+      if (++calls > 1000) throw new Error('timer runaway')
+    }
+  }
   let actionPrompts = []
   let released = 0
   let control = null, activeControl = null
-  let now = 0
-  const timers = []
-  const advanceTime = seconds => {
-    now += seconds * 1000
-    for (let i = 0; i < timers.length;) {
-      if (timers[i].at > now) { i++; continue }
-      const [timer] = timers.splice(i, 1)
-      timer.fn()
-    }
-  }
   const pointer = { coords: new THREE.Vector3(0.5, 0.5, 0), position: new THREE.Vector3(), delta: new THREE.Vector3(), locked: false,
     lock() { this.locked = true }, unlock() { this.locked = false } }
   const app = {
@@ -59,7 +69,7 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
     state,
     configure() {},
     get(id) { return modelNodes[id] || null },
-    add() {},
+    add(node) { appChildren.push(node) },
     remove() {},
     create(type, data) {
       const n = new constructors[type](data)
@@ -134,10 +144,8 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
     world.on(`${cueEvent}:request`, () => world.emit(cueEvent, { rackId: 'test-rack', holders: cueHolders }))
   }
   vm.runInNewContext(
-    `(function(world, app, props) { const config = props\n${source}\n})(world, app, props)`,
-    { app, world, props, console, Vector3: THREE.Vector3, Quaternion: THREE.Quaternion, Euler: THREE.Euler,
-      Date: { now: () => now },
-      setTimeout: (fn, ms) => timers.push({ fn, at: now + ms }) },
+    `(function(world, app, fetch, props, setTimeout) { const config = props\n${source}\n})(world, app, undefined, props, setTimeout)`,
+    { app, world, props, setTimeout, Date: { now: () => now }, console, Vector3: THREE.Vector3, Quaternion: THREE.Quaternion, Euler: THREE.Euler },
     { timeout: 5000 }
   )
   return {
@@ -145,9 +153,11 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
     world,
     handlers,
     created,
+    appChildren,
     sent,
     audioPlays,
-    advanceTime,
+    advance,
+    advanceTime: seconds => advance(seconds * 1000),
     get pendingTimers() { return timers.length },
     get actionPrompts() { return actionPrompts },
     get activeControl() { return activeControl },
@@ -159,7 +169,7 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
       return released
     },
     emit(name, value, sender) {
-      if (name === 'update' && Number.isFinite(value) && value > 0) advanceTime(value)
+      if (name === 'update' && Number.isFinite(value) && value > 0) advance(value * 1000)
       for (const fn of handlers[name] || []) fn(value, sender)
     },
   }

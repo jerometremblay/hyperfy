@@ -1,5 +1,6 @@
 import { World } from './World'
 
+import { ServerProfiler } from './systems/ServerProfiler'
 import { Server } from './systems/Server'
 import { ServerLiveKit } from './systems/ServerLiveKit'
 import { ServerNetwork } from './systems/ServerNetwork'
@@ -17,5 +18,6 @@ export function createServerWorld() {
   world.register('environment', ServerEnvironment)
   world.register('monitor', ServerMonitor)
   world.register('ai', ServerAI)
+  world.register('profiler', ServerProfiler)
   return world
 }
