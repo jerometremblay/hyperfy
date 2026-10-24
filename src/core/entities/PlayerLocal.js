@@ -215,6 +215,11 @@ export class PlayerLocal extends Entity {
     this.applyAvatar()
     this.initCapsule()
     this.initControl()
+    if (this.data.resumeCamera) {
+      const camera = this.data.resumeCamera
+      this.setCamera({ ...camera, quaternion: new THREE.Quaternion().fromArray(camera.quaternion) })
+      delete this.data.resumeCamera
+    }
 
     this.world.setHot(this, true)
     this.world.on('xrSession', this.onXRSession)

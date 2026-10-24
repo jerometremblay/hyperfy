@@ -15,7 +15,7 @@ import { System } from './System'
 
 const RES = 2
 const NAMETAG_WIDTH = 200 * RES
-const NAMETAG_HEIGHT = 35 * RES
+const NAMETAG_HEIGHT = 55 * RES
 const NAMETAG_BORDER_RADIUS = 10 * RES
 
 const NAME_FONT_SIZE = 16 * RES
@@ -178,6 +178,8 @@ export class Nametags extends System {
       `,
     })
     this.geometry = new THREE.PlaneGeometry(1, NAMETAG_HEIGHT / NAMETAG_WIDTH)
+    // Keep the name at its existing height; the extra space extends below it.
+    this.geometry.translate(0, -(20 * RES) / NAMETAG_WIDTH / 2, 0)
     this.geometry.setAttribute('coords', new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 2), 2)) // xy coordinates in atlas
     this.mesh = new THREE.InstancedMesh(this.geometry, this.material, MAX_INSTANCES)
     this.mesh.renderOrder = 9999
@@ -192,7 +194,7 @@ export class Nametags extends System {
     this.world.on('xrSession', this.onXRSession)
   }
 
-  add({ name, health }) {
+  add({ name, health, loading = null }) {
     const idx = this.nametags.length
     if (idx >= MAX_INSTANCES) return console.error('nametags: reached max')
 
@@ -212,6 +214,7 @@ export class Nametags extends System {
       idx,
       name,
       health,
+      loading,
       matrix,
       move: newMatrix => {
         // copy over just position
@@ -231,6 +234,11 @@ export class Nametags extends System {
         nametag.health = health
         this.draw(nametag)
         console.log('SET HEALTH', health)
+      },
+      setLoading: loading => {
+        if (nametag.loading === loading) return
+        nametag.loading = loading
+        this.draw(nametag)
       },
       destroy: () => {
         this.remove(nametag)
@@ -329,6 +337,22 @@ export class Nametags extends System {
         const top = y + NAME_FONT_SIZE + 5 + HEALTH_BORDER
         const borderRadius = HEALTH_BORDER_RADIUS
         fillRoundRect(this.ctx, left, top, width, height, borderRadius, fillStyle)
+      }
+    }
+    if (nametag.loading !== null && nametag.loading !== undefined) {
+      const top = y + NAME_FONT_SIZE + 5 + (nametag.health < HEALTH_MAX ? HEALTH_HEIGHT + 4 : 0)
+      this.ctx.font = `500 ${10 * RES}px Rubik`
+      this.ctx.strokeStyle = 'rgba(0,0,0,0.8)'
+      this.ctx.lineWidth = 2 * RES
+      const label = `Loading assets ${nametag.loading}%`
+      this.ctx.strokeText(label, x + NAMETAG_WIDTH / 2, top)
+      this.ctx.fillStyle = 'white'
+      this.ctx.fillText(label, x + NAMETAG_WIDTH / 2, top)
+      const left = x + (NAMETAG_WIDTH - HEALTH_WIDTH) / 2
+      const barTop = top + 12 * RES
+      fillRoundRect(this.ctx, left, barTop, HEALTH_WIDTH, 4 * RES, 2 * RES, 'rgba(0,0,0,0.6)')
+      if (nametag.loading > 0) {
+        fillRoundRect(this.ctx, left, barTop, (HEALTH_WIDTH * nametag.loading) / 100, 4 * RES, 2 * RES, 'white')
       }
     }
     // update texture

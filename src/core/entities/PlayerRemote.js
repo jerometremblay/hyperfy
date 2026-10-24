@@ -50,7 +50,12 @@ export class PlayerRemote extends Entity {
     // this.base.add(this.caps)
 
     this.aura = createNode('group')
-    this.nametag = createNode('nametag', { label: this.data.name, health: this.data.health, active: false })
+    this.nametag = createNode('nametag', {
+      label: this.data.name,
+      health: this.data.health,
+      loading: this.data.loading ?? null,
+      active: false,
+    })
     this.aura.add(this.nametag)
 
     this.bubble = createNode('ui', {
@@ -256,6 +261,10 @@ export class PlayerRemote extends Entity {
     }
     if (Object.hasOwn(data, 'seatPose')) {
       this.data.seatPose = data.seatPose
+    }
+    if (Object.hasOwn(data, 'loading')) {
+      this.data.loading = data.loading
+      this.nametag.loading = data.loading
     }
     if (data.hasOwnProperty('rank')) {
       this.data.rank = data.rank

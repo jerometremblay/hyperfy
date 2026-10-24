@@ -1,6 +1,7 @@
 import { receiveProfilerReport } from '../extras/profilerReports'
 import { applyPlayerExpression } from '../extras/playerExpressions'
 import moment from 'moment'
+import { sanitizePlayerSession } from '../extras/playerSession'
 import { writePacket } from '../packets'
 import { Socket } from '../Socket'
 import { uuid } from '../utils'
@@ -318,28 +319,40 @@ export class ServerNetwork extends System {
       const socket = new Socket({ id: user.id, ws, network: this })
 
       const arrival = this.getPortalSpawn(params.portalId, params.portalPose)
-      const spawn = arrival || this.spawn
-      // spawn player
-      socket.player = this.world.entities.add(
-        {
-          id: user.id,
-          type: 'player',
-          position: spawn.position.slice(),
-          quaternion: spawn.quaternion.slice(),
-          owner: socket.id, // deprecated, same as userId
-          userId: user.id, // deprecated, same as userId
-          name: name || user.name,
-          health: HEALTH_MAX,
-          avatar: user.avatar || this.world.settings.avatar?.url || 'asset://avatar.vrm',
-          sessionAvatar: avatar || null,
-          rank: user.rank,
-          enteredAt: Date.now(),
-        },
-        true
+      const saved = this.world.storage?.get(`playerSession:${user.id}`)
+      const session = !arrival && sanitizePlayerSession(saved)
+      const spawn = arrival || session || this.spawn
+      const anchorId = saved?.effect?.anchorId
+      const occupied = anchorId && [...this.world.entities.items.values()].some(
+        entity => entity.isPlayer && entity.data.effect?.anchorId === anchorId
       )
+      const effect = session && anchorId && this.world.anchors?.get(anchorId) && !occupied
+        ? { anchorId, snare: 1, cancellable: true }
+        : null
+      // spawn player
+      const playerData = {
+        id: user.id,
+        type: 'player',
+        position: spawn.position.slice(),
+        quaternion: spawn.quaternion.slice(),
+        owner: socket.id, // deprecated, same as userId
+        userId: user.id, // deprecated, same as userId
+        name: name || user.name,
+        health: HEALTH_MAX,
+        avatar: user.avatar || this.world.settings.avatar?.url || 'asset://avatar.vrm',
+        sessionAvatar: avatar || null,
+        rank: user.rank,
+        enteredAt: Date.now(),
+        effect,
+        loading: params.loading === '1' ? 0 : null,
+      }
+      // Entity construction broadcasts immediately; include the saved pose before adding it.
+      if (effect) playerData.seatPose = getStoredSeatPose(this.world, { data: playerData })
+      socket.player = this.world.entities.add(playerData, true)
 
       // send snapshot
       socket.send('snapshot', {
+        playerSession: session || null,
         id: socket.id,
         serverTime: performance.now(),
         serverTimestamp: this.getServerTime(),
@@ -548,6 +561,12 @@ export class ServerNetwork extends System {
       return console.error('player attempted to modify another player', { socketId: socket.id, playerId: data.id })
     }
     if (entity.isPlayer && Object.hasOwn(data, 'x')) return
+    if (
+      entity.isPlayer &&
+      Object.hasOwn(data, 'loading') &&
+      data.loading !== null &&
+      (!Number.isInteger(data.loading) || data.loading < 0 || data.loading > 100)
+    ) return
     if (entity.isPlayer && Object.hasOwn(data, 'seatPose')) {
       return console.error('player attempted to modify authoritative seat pose data', { playerId: data.id })
     }
@@ -564,6 +583,7 @@ export class ServerNetwork extends System {
     this.send('entityModified', changes, socket.id)
     if (seatContextChanged) {
       socket.send('entityModified', { id: entity.data.id, seatPose: changes.seatPose })
+      this.persistPlayerSession(socket)
     }
     if (entity.isApp) {
       // mark for saving
@@ -819,9 +839,31 @@ export class ServerNetwork extends System {
   }
 
   onDisconnect = (socket, code) => {
+    this.persistPlayerSession(socket)
     this.world.livekit.clearModifiers(socket.id)
     socket.player.destroy(true)
     this.sockets.delete(socket.id)
     this.profilingReports.delete(socket.id)
+  }
+
+  onPlayerSession = (socket, data) => {
+    const session = sanitizePlayerSession(data)
+    if (!session || !socket.player) return
+    socket.playerSession = session
+    this.persistPlayerSession(socket)
+  }
+
+  persistPlayerSession(socket) {
+    if (!socket.playerSession || !socket.player) return
+    const session = {
+      ...socket.playerSession,
+      effect: socket.player.data.effect?.anchorId
+        ? { anchorId: socket.player.data.effect.anchorId }
+        : null,
+    }
+    const serialized = JSON.stringify(session)
+    if (serialized === socket.savedPlayerSession) return
+    this.world.storage?.set(`playerSession:${socket.id}`, session)
+    socket.savedPlayerSession = serialized
   }
 }

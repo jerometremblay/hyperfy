@@ -34,6 +34,7 @@ const names = [
   'playerExpression',
   'profilerReport',
   'profilerControl',
+  'playerSession',
 ]
 
 const byName = {}

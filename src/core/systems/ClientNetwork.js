@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { throttle } from 'lodash-es'
 import { emoteUrls } from '../extras/playerEmotes'
 import { readPacket, writePacket } from '../packets'
 import { storage } from '../storage'
@@ -25,11 +26,16 @@ export class ClientNetwork extends System {
     this.serverTimestamp = null
     this.clientTimestamp = 0
     this.nextTimeSync = 0
+    this.nextSessionSave = 0
+    this.playerReady = false
+    this.lastLoading = undefined
+    this.sendLoading = throttle(this.publishLoading, 250)
   }
 
   init({ wsUrl, name, avatar }) {
     const authToken = storage.get('authToken')
     let url = `${wsUrl}?authToken=${authToken}`
+    if (this.world.loader?.loading) url += '&loading=1'
     if (name) url += `&name=${encodeURIComponent(name)}`
     if (avatar) url += `&avatar=${encodeURIComponent(avatar)}`
     const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
@@ -42,11 +48,18 @@ export class ClientNetwork extends System {
     this.ws.addEventListener('message', this.onPacket)
     this.ws.addEventListener('close', this.onClose)
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.onVisibilityChange)
+    if (typeof window !== 'undefined') window.addEventListener?.('pagehide', this.savePlayerSession)
+    this.world.loader?.on?.('loading', this.onLoadingChanged)
+    this.world.on?.('ready', this.onPlayerReady)
   }
 
   preFixedUpdate() {
     this.flush()
     const now = performance.now()
+    if (now >= this.nextSessionSave) {
+      this.nextSessionSave = now + 2000
+      this.savePlayerSession()
+    }
     if (this.ws?.readyState === 1 && now >= this.nextTimeSync) {
       this.nextTimeSync = now + 10000
       this.send('ping', { clientTime: now })
@@ -172,9 +185,37 @@ export class ClientNetwork extends System {
     this.world.chat.deserialize(data.chat)
     this.world.ai.deserialize(data.ai)
     this.world.blueprints.deserialize(data.blueprints)
+    if (data.playerSession) {
+      const player = data.entities.find(entity => entity.type === 'player' && entity.id === data.id)
+      if (player) player.resumeCamera = data.playerSession.camera
+    }
     this.world.entities.deserialize(data.entities)
     this.world.livekit?.deserialize(data.livekit)
     storage.set('authToken', data.authToken)
+    this.onLoadingChanged()
+  }
+
+  onLoadingChanged = () => {
+    this.sendLoading()
+  }
+
+  onPlayerReady = ready => {
+    this.playerReady = !!ready
+    this.sendLoading.cancel()
+    this.publishLoading()
+  }
+
+  publishLoading = () => {
+    if (!this.id || this.ws?.readyState !== 1) return
+    const status = this.world.loader?.loading
+    if (!status) return
+    const settled = status.completed + status.failed - (this.world.loader.loadingBatchStart || 0)
+    const total = settled + status.pending
+    const progress = total > 0 ? Math.floor((settled / total) * 100) : 0
+    const loading = status.pending || !this.playerReady ? Math.min(progress, 99) : null
+    if (loading === this.lastLoading) return
+    this.lastLoading = loading
+    this.send('entityModified', { id: this.id, loading })
   }
 
   onSettingsModified = data => {
@@ -260,6 +301,23 @@ export class ClientNetwork extends System {
 
   onVisibilityChange = () => {
     this.nextTimeSync = 0
+    this.savePlayerSession()
+  }
+
+  savePlayerSession = () => {
+    const player = this.world.entities?.player
+    if (this.ws?.readyState !== 1 || !player?.control || !player.cam) return
+    const orientation = player.cam.quaternion.clone()
+    if (player.isXR) this.world.camera.getWorldQuaternion(orientation)
+    this.send('playerSession', {
+      position: player.base.position.toArray(),
+      quaternion: player.base.quaternion.toArray(),
+      camera: {
+        quaternion: orientation.toArray(),
+        zoom: player.cam.zoom,
+        firstPerson: player.firstPerson,
+      },
+    })
   }
 
   onProfilerReport = data => {
@@ -275,6 +333,7 @@ export class ClientNetwork extends System {
   }
 
   onClose = code => {
+    this.sendLoading.cancel()
     this.world.chat.add({
       id: uuid(),
       from: null,
@@ -287,6 +346,11 @@ export class ClientNetwork extends System {
   }
 
   destroy() {
+    this.sendLoading.cancel()
+    this.world.loader?.off?.('loading', this.onLoadingChanged)
+    this.world.off?.('ready', this.onPlayerReady)
+    this.savePlayerSession()
+    if (typeof window !== 'undefined') window.removeEventListener?.('pagehide', this.savePlayerSession)
     if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.onVisibilityChange)
     if (this.ws) {
       this.ws.removeEventListener('message', this.onPacket)

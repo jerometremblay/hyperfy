@@ -13,11 +13,12 @@ export class Nametag extends Node {
 
     this.label = data.label
     this.health = data.health
+    this.loading = data.loading
   }
 
   mount() {
     if (this.ctx.world.nametags) {
-      this.handle = this.ctx.world.nametags.add({ name: this._label, health: this._health })
+      this.handle = this.ctx.world.nametags.add({ name: this._label, health: this._health, loading: this._loading })
       this.handle?.move(this.matrixWorld)
     }
   }
@@ -36,6 +37,7 @@ export class Nametag extends Node {
   copy(source, recursive) {
     super.copy(source, recursive)
     this._label = source._label
+    this._loading = source._loading
     return this
   }
 
@@ -89,5 +91,18 @@ export class Nametag extends Node {
       this.proxy = proxy
     }
     return this.proxy
+  }
+
+  get loading() {
+    return this._loading
+  }
+
+  set loading(value = null) {
+    if (value !== null && (!Number.isFinite(value) || value < 0 || value > 100)) {
+      throw new Error('[nametag] loading invalid')
+    }
+    if (this._loading === value) return
+    this._loading = value
+    this.handle?.setLoading(value)
   }
 }
