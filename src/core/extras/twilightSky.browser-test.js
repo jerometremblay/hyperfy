@@ -62,7 +62,22 @@ export function testTwilightSky(renderer, check, photo) {
   check('Earth shadow rises through the antisolar sky', luminance(risingShadow) < luminance(lowShadow) * 0.8)
   const belt = sample(-2, 23, 180)
   const shadow = sample(-2, 3, 180)
-  check('Broad Belt of Venus is pinker than the shadow below', belt[0] / belt[2] > (shadow[0] / shadow[2]) * 1.3)
+  check('Broad Belt of Venus is pinker than the shadow below', belt[0] / belt[2] > (shadow[0] / shadow[2]) * 1.1, {
+    belt,
+    shadow,
+  })
+  const horizon = sample(-1, 0)
+  check('Evening horizon stays warm without saturated orange', horizon[0] > horizon[2] && horizon[0] / horizon[2] < 2)
+  const shadowSteps = [10, 11, 12, 13, 14, 15, 16].map(altitude => luminance(sample(-3, altitude, 180)))
+  const shadowContrast = Math.max(...shadowSteps.slice(1).map((value, i) => Math.abs(value / shadowSteps[i] - 1)))
+  check('Earth shadow blends gradually across viewing elevations', shadowContrast < 0.06, { shadowContrast })
+  const beforeGlowFade = sample(-2.99, 15)
+  const atGlowFade = sample(-3, 15)
+  const afterGlowFade = sample(-3.01, 15)
+  const glowSlopeChange = Math.max(
+    ...atGlowFade.map((value, i) => Math.abs(beforeGlowFade[i] + afterGlowFade[i] - 2 * value) / 0.01)
+  )
+  check('Warm glow starts fading without a sudden change of slope', glowSlopeChange < 0.005, { glowSlopeChange })
   check('Twilight has no azimuth seam', near(sample(-3, 15, 179.999), sample(-3, 15, -179.999)))
   check('Twilight converges to one zenith color', near(sample(-3, 89.999, 0), sample(-3, 89.999, 180)))
   check(

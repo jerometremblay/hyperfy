@@ -5,7 +5,7 @@ The day/night sky uses one continuous, empirical linear-RGB radiance function in
 the viewing direction and the astronomical Sun direction/elevation. Dawn and dusk
 use the same function. It adds no textures, draw calls, dependencies, or saved
 settings. It blends into the existing daylight sky between solar elevations
-−1.5° and +6°, and into the existing night background from −6° to −18°.
+−3° and +8°, and into the existing night background from −6° to −18°.
 
 The function combines a blue diffuse background, a broad warm solar twilight arch,
 subtle purple light, and a rising antisolar blue shadow with a broad pink Belt of
@@ -13,6 +13,10 @@ Venus above it. All contributions share the same direction, solar elevation, nig
 floor, and fading envelope. The solar arch contracts downward as the Sun descends;
 the antisolar belt rises and loses contrast by −6°. Horizontal directional weights
 vanish at the zenith, avoiding an azimuth seam or a colored pole singularity.
+The evening palette uses a pale blue fill and muted peach glow. The shadow blends
+over 16° of viewing elevation at reduced strength, and the purple light has a
+broader, fainter profile. The warm glow starts fading smoothly as the Sun passes
+−3°, keeping both the spatial gradient and the progression through dusk gentle.
 
 The shader returns linear RGB before the existing tone mapping and output color
 conversion. The Milky Way's visibility uses the resulting local sky luminance, so
@@ -83,8 +87,11 @@ refraction, cloud shadowing, or physical multiple-scattering computation.
 Run `node scripts/test-night-sky.mjs` and open the printed URL. The harness tests
 the shipped GLSL on the GPU for solar/antisolar brightness, rising shadow, belt
 color contrast, azimuth rotation, seam and zenith continuity, finite nonnegative
-radiance, and the night transition. It displays full 360° upper-hemisphere
-panoramas at solar elevations −1°, −3°, −5°, −12°, and −18°. The existing WebGL
-checks also exercise Milky Way contrast, catalog visibility, stereo, portal,
+radiance, the muted horizon palette, gradual shadow and glow transitions, and the
+night transition. It displays full 360° upper-hemisphere
+panoramas at solar elevations −1°, −3°, −5°, −12°, and −18°. The WebGL
+harness also previews the actual daylight/twilight blend at +6°, +3°, 0°, −3°,
+and −6°, and the opposite horizon at −2°, and checks small time steps through sunset.
+The remaining WebGL checks exercise Milky Way contrast, catalog visibility, stereo, portal,
 occlusion, and tone-mapping behavior. Actual headset appearance and performance
 still need a hardware check.

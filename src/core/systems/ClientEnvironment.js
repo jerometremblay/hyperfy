@@ -200,7 +200,7 @@ export class ClientEnvironment extends System {
       this.solarSky.material.fragmentShader = this.solarSky.material.fragmentShader.replace(
         '#include <tonemapping_fragment>',
         `
-          float daylight = smoothstep(-1.5, 6.0, sunAltitude);
+          float daylight = smoothstep(-3.0, 8.0, sunAltitude);
           vec3 nightSky = vec3(0.0015, 0.002, 0.006);
           vec3 scatteringSky = max(gl_FragColor.rgb, vec3(0.0)) * 0.05;
           vec3 twilightSky = getTwilightSky(direction, vSunDirection, sunAltitude);

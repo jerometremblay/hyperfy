@@ -17,31 +17,34 @@ export const twilightSkyShader = /* glsl */ `
     // Horizontal dot times cos(view elevation): no azimuth seam or zenith singularity.
     vec2 solarAzimuth = sunDirection.xz / max(length(sunDirection.xz), 0.0001);
     float solarFacing = clamp(dot(direction.xz, solarAzimuth), -1.0, 1.0);
-    float sunward = pow(0.5 + 0.5 * solarFacing, 2.0);
+    float sunward = pow(0.5 + 0.5 * solarFacing, 1.5);
     float antisolar = pow(max(0.0, -solarFacing), 2.0);
     float horizon = exp(-altitude / 18.0);
     float night = 1.0 - smoothstep(-18.0, -6.0, sunAltitude);
     float shallow = smoothstep(-1.0, 0.5, depression) * (1.0 - smoothstep(3.0, 6.0, depression));
     vec2 bounds = getAntitwilightBounds(depression);
-    float shadow = (1.0 - smoothstep(bounds.x - 3.0, bounds.x + 3.0, altitude))
+    float shadow = (1.0 - smoothstep(bounds.x - 8.0, bounds.x + 8.0, altitude))
       * smoothstep(0.0, 1.0, depression) * antisolar * shallow;
     float beltPosition = clamp((altitude - bounds.x) / (bounds.y - bounds.x), 0.0, 1.0);
     float belt = pow(sin(beltPosition * 3.14159265359), 2.0) * antisolar * shallow;
 
     // Display-scaled diffuse fill stands in for multiple scattering and blue-hour ozone.
     vec3 sky = mix(vec3(0.018, 0.030, 0.070), vec3(0.030, 0.045, 0.080), horizon);
-    sky *= 1.0 - 0.5 * shadow;
-    sky += vec3(0.040, 0.013, 0.018) * belt;
+    // A pale blue dusk fill keeps the warm horizon from reading as a separate band.
+    sky += mix(vec3(0.025, 0.040, 0.055), vec3(0.035, 0.040, 0.040), horizon)
+      * (1.0 - smoothstep(0.0, 6.0, depression));
+    sky *= 1.0 - 0.25 * shadow;
+    sky += vec3(0.032, 0.012, 0.016) * belt;
 
     // Broad twilight arch contracts toward the solar horizon as twilight deepens.
-    float glowHeight = mix(28.0, 4.0, smoothstep(0.0, 15.0, depression));
+    float glowHeight = mix(24.0, 4.0, smoothstep(0.0, 15.0, depression));
     float glow = sunward * exp(-altitude / glowHeight)
-      * exp(-0.55 * max(0.0, depression - 3.0));
-    sky += vec3(0.42, 0.18, 0.055) * glow;
+      * exp(-0.55 * max(0.0, depression - 3.0) * smoothstep(3.0, 5.0, depression));
+    sky += vec3(0.28, 0.17, 0.095) * glow;
     float purpleHeight = mix(24.0, 10.0, smoothstep(2.0, 6.0, depression));
     float purple = smoothstep(2.0, 4.0, depression) * (1.0 - smoothstep(4.0, 6.0, depression))
-      * pow(sunward, 3.0) * exp(-pow((altitude - purpleHeight) / 8.0, 2.0));
-    sky += vec3(0.065, 0.014, 0.045) * purple;
+      * pow(sunward, 2.0) * exp(-pow((altitude - purpleHeight) / 12.0, 2.0));
+    sky += vec3(0.035, 0.020, 0.036) * purple;
     // One shared floor and fade, also used for diffuse celestial contrast.
     return vec3(0.0015, 0.002, 0.006) + sky * (1.0 - night);
   }

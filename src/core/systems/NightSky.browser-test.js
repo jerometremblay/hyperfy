@@ -97,6 +97,47 @@ function aim(direction) {
   env.lateUpdate()
 }
 testTwilightSky(renderer, check, photo)
+// Preview and exercise the actual Three.js daylight/twilight blend, including output conversion.
+const sunsetUniforms = env.solarSky.material.uniforms
+const savedSunset = {
+  altitude: sunsetUniforms.sunAltitude.value,
+  position: sunsetUniforms.sunPosition.value.clone(),
+  exposure: env.renderExposure,
+  stars: env.stars.visible,
+  moon: env.moon.visible,
+  planets: env.planets.visible,
+}
+env.stars.visible = env.moon.visible = env.planets.visible = false
+env.renderExposure = 1
+function renderSunset(altitude, azimuth = 0) {
+  const angle = THREE.MathUtils.degToRad(altitude)
+  sunsetUniforms.sunAltitude.value = altitude
+  sunsetUniforms.sunPosition.value.set(0, Math.sin(angle), -Math.cos(angle)).multiplyScalar(450000)
+  aim(new THREE.Vector3(Math.sin(azimuth), 0.3, -Math.cos(azimuth)))
+  return read()
+}
+for (const altitude of [6, 3, 0, -3, -6]) {
+  renderSunset(altitude)
+  photo(`Evening ${altitude}° · actual daylight/twilight sky · facing sunset`)
+}
+renderSunset(-2, Math.PI)
+photo('Evening -2° · actual daylight/twilight sky · opposite sunset')
+const sunsetStepEnergies = [-3, -1.5, 0, 3, 6, 8].map(altitude =>
+  differenceEnergy(renderSunset(altitude - 0.05), renderSunset(altitude + 0.05))
+)
+check(
+  'Actual daylight/twilight sky changes gradually through sunset',
+  sunsetStepEnergies.every(energy => energy < 3),
+  {
+    sunsetStepEnergies,
+  }
+)
+sunsetUniforms.sunAltitude.value = savedSunset.altitude
+sunsetUniforms.sunPosition.value.copy(savedSunset.position)
+env.renderExposure = savedSunset.exposure
+env.stars.visible = savedSunset.stars
+env.moon.visible = savedSunset.moon
+env.planets.visible = savedSunset.planets
 aim(new THREE.Vector3(0, 0.55, -1))
 const night = read()
 photo('Shipped catalog · looking north · direct/XR tone mapping')
