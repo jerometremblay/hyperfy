@@ -199,6 +199,30 @@ Menu button (Y if reserved), or by touching the Menu button beside your left
 wrist. Point with a tracked hand and pinch, or use controller triggers, to interact
 with the existing sidebar, with Recenter and scrolling controls on the panel.
 
+## Find expensive objects with the profiler
+
+As an administrator, enable **View Stats**, then click **Show details** in the
+Object profiler bar below the performance graphs. Rank apps by client or server
+script CPU, triangles, physics bodies, network traffic, or lights. Colored orbs
+identify the same objects in the world: green marks lower readings and red marks
+the highest reading for the selected metric. Click a row or an orb to inspect
+that app's callbacks, geometry, physics, lights, and network activity.
+
+![Object profiler ranking apps by client script CPU inside the cabin](profiler.png)
+
+*The fireplace leads this scene's client script CPU ranking. Change the metric
+to investigate a different resource; the colors are relative to this scene.*
+
+For a selected app, **Measure GPU cost** compares scene rendering with and
+without its rendering and light shadows. Keep the camera still and the tab
+visible during the measurement; results include uncertainty and can be
+inconclusive. Script CPU is measured in milliseconds per second, while GPU
+comparisons use milliseconds per frame.
+
+**Hide details** stops local profiling. See the
+[object profiler guide](docs/object-profiler.md) for measurement limits, GPU
+comparison details, and access through the Agent API.
+
 ## Explore further
 
 - [Object profiler](docs/object-profiler.md) — local per-app CPU, geometry, physics and network readings.
