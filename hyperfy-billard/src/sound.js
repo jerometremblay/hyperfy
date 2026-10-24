@@ -37,6 +37,7 @@ export function createSounds(app, sources) {
       for (const voice of voices) {
         if (voice.until && voice.until <= clock) { voice.node.stop(); voice.until = 0 }
       }
+      return voices.some(voice => voice.until > clock)
     },
     clear() {
       for (const voice of voices) { voice.node.stop(); voice.until = 0 }

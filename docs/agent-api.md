@@ -24,6 +24,9 @@ With neither set, the routes do not exist. A read token allows GET requests. A w
 | POST | `/entities` | Instantiate an existing `blueprint` |
 | PATCH | `/entities/:id` | Set position, quaternion, scale or pinned |
 | DELETE | `/entities/:id` | Remove an app instance |
+| GET | `/profiling` | Separate server and per-admin-client profiler samples with units and freshness (write token required); optional `?entityId=...` |
+| POST | `/profiling` | Enable/disable server script profiling; body `{ "enabled": true }` (write token required) |
+| POST | `/players/:id/profiling` | Request local profiling on/off on a connected admin browser; body `{ "enabled": true }` (write token required) |
 | GET | `/players` | List connected players (write token required) |
 | POST | `/players/:id/teleport` | Teleport a connected player (write token required) |
 | POST | `/scripts` | Upload JavaScript source through existing local/S3 storage |
@@ -72,3 +75,19 @@ Verification:
 ```sh
 node --test src/server/agent-api.test.mjs
 ```
+
+## Server profiling
+
+Send `POST /profiling` with `{ "enabled": true }` using the write token. Server profiling is off by default and does not require a connected browser when enabled through the API. Fresh connected admin Object Profiler viewers also enable sampling automatically; only these viewers receive server samples over the existing WebSocket. Automatic sampling stops when no fresh admin viewer remains (within ten seconds), unless explicitly enabled through the API. After at least one second, `GET /profiling` returns `server` with `source: "server"`, `active`, `sampledAt` (server Unix milliseconds), `ageMs`, `stale`, `sampleSeconds`, and per-app `rows`. Before the first sample, timestamps and sample duration are null and rows are empty. Use `?entityId=...` to filter both server and client rows. Send `{ "enabled": false }` to release the API request; sampling stops and clears once there are also no fresh admin profiler viewers. App scripts cannot switch server profiling through `world.toggleProfiler()`.
+
+Server rows contain app identity/version, `cpuMsPerSecond`, `peakCallbackMs`, and `callbackMsPerSecond`. These are exclusive synchronous callback durations measured on the server, divided by the actual sample window, without client smoothing. Nested app callbacks are not counted twice. Idle apps appear with zero callback time; removed apps and outdated blueprint samples are excluded. Server samples remain separate from client samples and are not added to them. This is script wall-clock time, not whole-process CPU usage; it excludes asynchronous continuations, native node callbacks, and engine/PhysX simulation time. A sample older than ten seconds is stale.
+
+## Client profiling
+
+`GET /profiling` returns browser-reported diagnostics in `clients` and server-measured script timings in `server`. It requires the write token, like player inspection. Each `clients` entry identifies its reporting `playerId` and includes server `receivedAt`, `ageMs`, `stale`, `sampleSeconds`, `smoothingSeconds`, `totalApps`, `truncated`, and per-app `rows`. Reports older than ten seconds are explicitly stale; disconnected or no-longer-admin clients are excluded. Removed apps and samples for an outdated blueprint version are excluded. No reports means no compatible connected admin client is currently profiling.
+
+An admin enables the existing Object Profiler, or an agent sends `POST /players/:id/profiling` with `{ "enabled": true }`. The 202 response means requested, not that a sample has arrived. Poll `GET /profiling` for a fresh sample, optionally filtered with `?entityId=...`. Use `{ "enabled": false }` to stop. The target must be a connected admin; this cannot enable profiling for a non-admin. Updated client and server builds are both required; an older browser must reload before it can report.
+
+Rows expose `cpuMsPerSecond`, `peakCallbackMs`, `callbackMsPerSecond`, `sentBytesPerSecond`, `receivedBytesPerSecond`, `messagesPerSecond`, and mounted geometry, material, physics-body/collider/activity/contact-link, light and shadow-caster counts. CPU and byte rates use the profiler's two-second smoothing; callback breakdown and message rates are from the last sample. API queries do not trigger extra sampling. Reports are sent at most once a second while profiling is enabled; disabled clients send no periodic diagnostics. Worlds above 2,048 apps report the highest-CPU rows with explicit truncation.
+
+These measurements include synchronous app callbacks and exclude async continuations, native node handlers, GPU timings, per-body physics milliseconds, server CPU and unrelated network traffic. Client reports are diagnostic data, not a trusted accounting mechanism. App names and blueprint identities come from the server. Reports contain no camera or player positions and are held only in memory.

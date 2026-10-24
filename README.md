@@ -201,6 +201,7 @@ with the existing sidebar, with Recenter and scrolling controls on the panel.
 
 ## Explore further
 
+- [Object profiler](docs/object-profiler.md) — local per-app CPU, geometry, physics and network readings.
 - [Creator documentation](docs/README.md) — asset creation and app scripting.
 - [Deployment guide](docs/deployment.md) — run your own instance or multiple named worlds.
 - [Worldsync](tools/worldsync/README.md) — capture and manage world content from the command line.

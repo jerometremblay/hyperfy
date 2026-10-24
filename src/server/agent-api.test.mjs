@@ -88,9 +88,7 @@ test('create, move, and remove use broadcasts and persistence tracking', async t
 test('write-only player inspection and teleport target connected players', async t => {
   const { call, world, sentTo, sockets } = await setup(t)
   assert.equal((await call('GET', '/players', undefined, 'reader')).statusCode, 403)
-  assert.deepEqual((await call('GET', '/players')).json(), [
-    { id: 'player-1', name: 'Jerome', position: [0, 0, 0] },
-  ])
+  assert.deepEqual((await call('GET', '/players')).json(), [{ id: 'player-1', name: 'Jerome', position: [0, 0, 0] }])
   assert.equal((await call('POST', '/players/missing/teleport', { position: [1, 2, 3] })).statusCode, 404)
   assert.equal(
     (await call('POST', '/players/player-1/teleport', { position: [1, 2, 3], unexpected: true })).statusCode,
@@ -102,9 +100,7 @@ test('write-only player inspection and teleport target connected players', async
   })
   assert.equal(moved.statusCode, 200)
   assert.deepEqual(moved.json(), { id: 'player-1', name: 'Jerome', position: [4, 5, 6], rotationY: 1.25 })
-  assert.deepEqual(sentTo, [
-    ['player-owner', 'playerTeleport', { position: [4, 5, 6], rotationY: 1.25 }],
-  ])
+  assert.deepEqual(sentTo, [['player-owner', 'playerTeleport', { position: [4, 5, 6], rotationY: 1.25 }]])
   assert.equal(world.network.dirtyApps.size, 0)
   world.entities.players.get('player-1').data.effect = { anchorId: 'seat-1' }
   assert.equal((await call('POST', '/players/player-1/teleport', { position: [1, 2, 3] })).statusCode, 409)
@@ -148,4 +144,49 @@ test('script storage, app creation and OpenAPI describe the usable workflow', as
   assert.equal(schema.paths['/players'].get.operationId, 'listPlayers')
   assert.equal(schema.paths['/players/{id}/teleport'].post.responses['200'].description, 'Success')
   assert.equal(schema.components.securitySchemes.bearerAuth.scheme, 'bearer')
+})
+
+test('profiling requires write permission and controls only connected admin clients', async t => {
+  const { call, world, sockets, sentTo } = await setup(t)
+  assert.equal((await call('GET', '/profiling', undefined, 'reader')).statusCode, 403)
+  assert.equal((await call('GET', '/profiling')).statusCode, 200)
+  assert.equal((await call('GET', '/profiling')).json().clients.length, 0)
+  assert.equal((await call('POST', '/players/missing/profiling', { enabled: true })).statusCode, 404)
+  const player = world.entities.players.get('player-1')
+  player.isAdmin = () => false
+  sockets.set('player-owner', { player })
+  assert.equal((await call('POST', '/players/player-1/profiling', { enabled: true })).statusCode, 403)
+  player.isAdmin = () => true
+  assert.equal((await call('POST', '/players/player-1/profiling', { enabled: 'yes' })).statusCode, 400)
+  assert.equal((await call('POST', '/players/player-1/profiling', { enabled: true, unexpected: true })).statusCode, 400)
+  const enabled = await call('POST', '/players/player-1/profiling', { enabled: true })
+  assert.equal(enabled.statusCode, 202)
+  assert.deepEqual(enabled.json(), { playerId: 'player-1', enabled: true, status: 'requested' })
+  assert.deepEqual(sentTo, [['player-owner', 'profilerControl', { enabled: true }]])
+  assert.equal((await call('POST', '/players/player-1/profiling', { enabled: false })).statusCode, 202)
+  const schema = (await call('GET', '/openapi.json')).json()
+  assert.ok(schema.paths['/profiling'].get)
+  assert.ok(schema.paths['/players/{id}/profiling'].post)
+})
+
+test('server profiling requires write access and returns server samples separately', async t => {
+  const { call, world } = await setup(t)
+  assert.equal((await call('POST', '/profiling', { enabled: true }, 'reader')).statusCode, 403)
+  assert.equal((await call('POST', '/profiling', { enabled: true })).statusCode, 503)
+  let enabled = false
+  world.profiler = {
+    toggle(value) {
+      enabled = value
+      return value
+    },
+    getReport({ entityId }) {
+      return { source: 'server', active: enabled, rows: entityId ? [{ id: entityId }] : [] }
+    },
+  }
+  assert.equal((await call('POST', '/profiling', { enabled: 'yes' })).statusCode, 400)
+  assert.deepEqual((await call('POST', '/profiling', { enabled: true })).json(), { source: 'server', enabled: true })
+  const report = (await call('GET', '/profiling?entityId=a')).json()
+  assert.deepEqual(report.server, { source: 'server', active: true, rows: [{ id: 'a' }] })
+  assert.deepEqual(report.clients, [])
+  assert.deepEqual((await call('POST', '/profiling', { enabled: false })).json(), { source: 'server', enabled: false })
 })

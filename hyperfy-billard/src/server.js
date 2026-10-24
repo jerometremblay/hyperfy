@@ -5,15 +5,16 @@ import { CUE_EVENT, watchCues } from './cues.js'
 export function startServer(world, app, preset) {
   const sim = new Simulation(preset)
   let owner = null,
-    lease = 0,
+    leaseUntil = 0,
     seq = 0,
     rack = 0,
-    elapsed = 0,
     accumulator = 0,
     sinceSnapshot = 0,
     cueHolders = [],
     aim = null,
-    lastAim = -1
+    lastAimAt = -Infinity,
+    updateAttached = false,
+    leaseTimerScheduled = false
   const publish = () => {
     app.state.aim = aim
     app.state.pool = { ...sim.snapshot(), owner, aim, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) }
@@ -29,12 +30,28 @@ export function startServer(world, app, preset) {
     const player = playerFor(sender)
     return player && player.id === owner && cueHolders.includes(player.id) && nearby(player)
   }
+  const scheduleLeaseExpiry = () => {
+    if (leaseTimerScheduled || !owner) return
+    leaseTimerScheduled = true
+    setTimeout(() => {
+      leaseTimerScheduled = false
+      expire()
+      if (owner) scheduleLeaseExpiry()
+    }, Math.max(1, leaseUntil - Date.now()))
+  }
+  const renewLease = () => {
+    leaseUntil = Date.now() + 60_000
+    scheduleLeaseExpiry()
+  }
   const cueEvent = CUE_EVENT
   // Only local server apps can emit this event; clients cannot self-report a cue.
   watchCues(world, next => {
     if (JSON.stringify(next) === JSON.stringify(cueHolders)) return
     cueHolders = next
-    if (owner && !cueHolders.includes(owner)) owner = aim = null
+    if (owner && !cueHolders.includes(owner)) {
+      owner = aim = null
+      leaseUntil = 0
+    }
     publish()
   })
   const refreshCues = () => app.emit(`${cueEvent}:request`)
@@ -42,68 +59,18 @@ export function startServer(world, app, preset) {
     Math.abs(data.angle) <= Math.PI * 2 && Math.hypot(data.side ?? 0, data.top ?? 0) <= 0.450001
   const expire = () => {
     const player = owner && world.getPlayer(owner)
-    if (owner && (elapsed > lease || !nearby(player) || !cueHolders.includes(owner))) {
+    if (owner && (Date.now() >= leaseUntil || !nearby(player) || !cueHolders.includes(owner))) {
       owner = aim = null
+      leaseUntil = 0
       publish()
     }
   }
-  app.on('pool:claim', (request, sender) => {
-    refreshCues()
-    expire()
-    const player = playerFor(sender)
-    if (!sim.moving && nearby(player) && cueHolders.includes(player.id) && (!owner || owner === player.id)) {
-      owner = player.id
-      aim = { playerId: owner, angle: validAim(request) ? request.angle : 0, side: 0, top: 0 }
-      lease = elapsed + 60
-      publish()
-    }
-  })
-  app.on('pool:release', (_, sender) => {
-    if (authorized(sender)) {
-      owner = aim = null
-      publish()
-    }
-  })
-  app.on('pool:ping', (_, sender) => {
-    if (authorized(sender)) lease = elapsed + 60
-  })
-  app.on('pool:aim', (request, sender) => {
-    if (!authorized(sender) || sim.moving || !validAim(request) || elapsed - lastAim < 0.05) return
-    lastAim = elapsed
-    aim = { playerId: owner, angle: request.angle, side: request.side ?? 0, top: request.top ?? 0 }
-    app.state.aim = aim
-    // Aim poses do not change the shot sequence: a pose in flight must not
-    // invalidate the following strike on the same ordered connection.
-    app.send('pool:aim', aim)
-  })
-  // Every mutating request includes the last authoritative sequence. This also
-  // rejects duplicated shots and delayed reset/place packets from an old rack.
-  for (const operation of ['shoot', 'reset', 'place']) {
-    app.on(`pool:${operation}`, (request, sender) => {
-      refreshCues()
-      expire()
-      if (!authorized(sender) || !request || request.seq !== seq) return
-      lease = elapsed + 60
-      let accepted = false
-      if (operation === 'shoot') {
-        accepted = sim.shoot(request)
-        if (accepted) owner = aim = null
-      }
-      if (operation === 'place') accepted = sim.place(request.x, request.y)
-      if (operation === 'reset' && !sim.moving) {
-        sim.reset()
-        rack++
-        accepted = true
-      }
-      if (accepted) publish()
-    })
-  }
-  app.on('update', dt => {
+  const update = dt => {
     if (!Number.isFinite(dt) || dt <= 0) return
-    elapsed += dt
-    expire()
     if (!sim.moving) {
       accumulator = 0
+      app.off('update', update)
+      updateAttached = false
       return
     }
     // At most 0.25 s of work per frame. A stall slows simulation; no giant step.
@@ -117,7 +84,76 @@ export function startServer(world, app, preset) {
       sinceSnapshot = 0
       publish()
     }
+    if (!sim.moving) {
+      app.off('update', update)
+      updateAttached = false
+    }
+  }
+  const startUpdates = () => {
+    if (sim.moving && !updateAttached) {
+      updateAttached = true
+      app.on('update', update)
+    }
+  }
+  app.on('pool:claim', (request, sender) => {
+    refreshCues()
+    expire()
+    const player = playerFor(sender)
+    if (!sim.moving && nearby(player) && cueHolders.includes(player.id) && (!owner || owner === player.id)) {
+      owner = player.id
+      aim = { playerId: owner, angle: validAim(request) ? request.angle : 0, side: 0, top: 0 }
+      renewLease()
+      publish()
+    }
   })
+  app.on('pool:release', (_, sender) => {
+    expire()
+    if (authorized(sender)) {
+      owner = aim = null
+      leaseUntil = 0
+      publish()
+    }
+  })
+  app.on('pool:ping', (_, sender) => {
+    expire()
+    if (authorized(sender)) renewLease()
+  })
+  app.on('pool:aim', (request, sender) => {
+    expire()
+    const now = Date.now()
+    if (!authorized(sender) || sim.moving || !validAim(request) || now - lastAimAt < 50) return
+    lastAimAt = now
+    aim = { playerId: owner, angle: request.angle, side: request.side ?? 0, top: request.top ?? 0 }
+    app.state.aim = aim
+    // Aim poses do not change the shot sequence: a pose in flight must not
+    // invalidate the following strike on the same ordered connection.
+    app.send('pool:aim', aim)
+  })
+  // Every mutating request includes the last authoritative sequence. This also
+  // rejects duplicated shots and delayed reset/place packets from an old rack.
+  for (const operation of ['shoot', 'reset', 'place']) {
+    app.on(`pool:${operation}`, (request, sender) => {
+      refreshCues()
+      expire()
+      if (!authorized(sender) || !request || request.seq !== seq) return
+      renewLease()
+      let accepted = false
+      if (operation === 'shoot') {
+        accepted = sim.shoot(request)
+        if (accepted) owner = aim = null
+      }
+      if (operation === 'place') accepted = sim.place(request.x, request.y)
+      if (operation === 'reset' && !sim.moving) {
+        sim.reset()
+        rack++
+        accepted = true
+      }
+      if (accepted) {
+        publish()
+        startUpdates()
+      }
+    })
+  }
   refreshCues()
   publish()
   return sim

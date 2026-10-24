@@ -1,16 +1,16 @@
 {
   "target": "https://monstre.duckdns.org:3333/api/agent",
-  "checkedAt": "2026-10-22T15:14:15.956Z",
+  "checkedAt": "2026-10-23T20:54:20.055Z",
   "rack": {
     "id": "Duyq2GzY0v",
-    "version": 2,
+    "version": 5,
     "name": "Wall Pool Cue Rack — Four Returning Cues",
     "image": null,
     "author": "OpenAI",
     "url": null,
     "desc": "Wall-mounted hardwood pool-cue rack, four 1.47 m cues, E pickup and X return, multiplayer synchronized.",
     "model": "script-only",
-    "script": "asset://1bd11cab860387ea9a680561178432befa773bd9403d7a048b721fcaf5819c69.js",
+    "script": "asset://b8b0d8e185a21d28ec0a0069229dc096a1784da1ac07c6b4a3fa4bd37f2188fd.js",
     "props": {
       "promptBoxRequestId": "M2Qzasuh09",
       "promptBoxTargetEntityId": "rpM98Yhyxy",
@@ -21,14 +21,15 @@
     "locked": false,
     "unique": true,
     "scene": false,
-    "disabled": false
+    "disabled": false,
+    "frozen": false
   },
   "game": {
     "image": null,
     "author": "jerometremblay-bot",
     "url": null,
     "desc": "Server-owned pool practice, Tailuge physics, WPA 8/9-foot surface. GPL-3.0-only.",
-    "script": "asset://3db886abebbf66c3fe558c9985651ef6368681a80fcbb4cbd96aba5ed6faf0e5.js",
+    "script": "asset://ea6244d5c235b40b1a824e6a1a9924fb8808ed7fb8ae96afcf118ce35ec1d3bc.js",
     "props": {
       "tableSize": "8",
       "showSurface": false,
@@ -120,6 +121,6 @@
     "name": "Hyperfy Billard — Pool Table Overlay",
     "model": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
     "id": "da0d2cbe-f18f-40dc-8b7b-3d2ba8e35e9d",
-    "version": 25
+    "version": 37
   }
 }

@@ -67,20 +67,10 @@ if (world.isClient && !world.isPreview) {
   const body = app.create('rigidbody', { type: 'static' })
   const collider = app.create('collider', { type: 'box' })
   body.add(collider)
-  const previousScale = app.scale.clone().set(0, 0, 0)
-  const syncCollider = () => {
-    body.position.copy(app.position)
-    body.quaternion.copy(app.quaternion)
-    if (!app.scale.equals(previousScale)) {
-      previousScale.copy(app.scale)
-      collider.width = colliderSize[0] * app.scale.x
-      collider.height = colliderSize[1] * app.scale.y
-      collider.depth = colliderSize[2] * app.scale.z
-      collider.position.set(0, collider.height / 2, 0)
-    }
-  }
-  syncCollider()
-  world.add(body)
-  app.on('update', syncCollider)
-  app.on('destroy', () => world.remove(body))
+  collider.width = colliderSize[0] * app.scale.x
+  collider.height = colliderSize[1] * app.scale.y
+  collider.depth = colliderSize[2] * app.scale.z
+  collider.position.set(0, collider.height / 2, 0)
+  // Parent the static body so Hyperfy carries it with the table's transform.
+  app.add(body)
 }

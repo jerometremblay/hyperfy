@@ -12,6 +12,7 @@
     "PoolTable.hyp",
     "CueRack.hyp",
     "PoolLight.hyp",
-    "WallLightSwitch.hyp"
+    "WallLightSwitch.hyp",
+    "PerformanceSwitch.hyp"
   ]
 }

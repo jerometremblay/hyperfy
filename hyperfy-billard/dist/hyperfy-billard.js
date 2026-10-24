@@ -11,7 +11,7 @@
   var Q = Quaternion;
   var E = Euler;
 
-  // hyperfy-billard/vendor/tailuge/utils/utils.ts
+  // vendor/tailuge/utils/utils.ts
   function atan2(y, x) {
     return Math.fround(Math.atan2(y, x));
   }
@@ -31,7 +31,7 @@
     return Math.fround(Math.hypot(x, y));
   }
 
-  // hyperfy-billard/vendor/tailuge/utils/three-utils.ts
+  // vendor/tailuge/utils/three-utils.ts
   var zero = new V(0, 0, 0);
   var up = new V(0, 0, 1);
   function vec(v) {
@@ -50,7 +50,7 @@
     return vc.copy(v).add(dv).dot(v) <= 0;
   }
 
-  // hyperfy-billard/vendor/tailuge/model/physics/constants.ts
+  // vendor/tailuge/model/physics/constants.ts
   var mu = 55e-4;
   var muS = 0.126;
   var rho = 0.045;
@@ -86,7 +86,7 @@
     refresh();
   }
 
-  // hyperfy-billard/vendor/tailuge/model/physics/mathavan.ts
+  // vendor/tailuge/model/physics/mathavan.ts
   var Mathavan = class {
     // work done
     P = 0;
@@ -219,7 +219,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/physics.ts
+  // vendor/tailuge/model/physics/physics.ts
   function surfaceVelocity(v, w) {
     return surfaceVelocityFull(v, w).setZ(0);
   }
@@ -361,7 +361,7 @@
     return rvel;
   }
 
-  // hyperfy-billard/vendor/tailuge/model/ball.ts
+  // vendor/tailuge/model/ball.ts
   var Ball = class _Ball {
     pos;
     vel = zero.clone();
@@ -478,7 +478,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/view/tablegeometry.ts
+  // vendor/tailuge/view/tablegeometry.ts
   var TableGeometry = class _TableGeometry {
     static tableX;
     static tableY;
@@ -513,7 +513,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/knuckle.ts
+  // vendor/tailuge/model/physics/knuckle.ts
   var Knuckle = class _Knuckle {
     pos;
     radius;
@@ -539,7 +539,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/pocket.ts
+  // vendor/tailuge/model/physics/pocket.ts
   var Pocket = class _Pocket {
     pos;
     radius;
@@ -594,7 +594,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/view/pocketgeometry.ts
+  // vendor/tailuge/view/pocketgeometry.ts
   var PocketGeometry = class _PocketGeometry {
     static PX;
     static PY;
@@ -787,7 +787,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/cushion.ts
+  // vendor/tailuge/model/physics/cushion.ts
   var Cushion = class _Cushion {
     /**
      * Modify ball state reflecting in cushion if it impacts in time t.
@@ -893,7 +893,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/collisionthrow.ts
+  // vendor/tailuge/model/physics/collisionthrow.ts
   var ab_v = new V();
   var abTangent_v = new V();
   var vPoint_v = new V();
@@ -943,7 +943,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/physics/collision.ts
+  // vendor/tailuge/model/physics/collision.ts
   var Collision = class _Collision {
     static willCollide(a, b, t) {
       return (a.inMotion() || b.inMotion()) && a.onTable() && b.onTable() && a.futurePosition(t).distanceToSquared(b.futurePosition(t)) < 4 * R * R;
@@ -984,7 +984,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/outcome.ts
+  // vendor/tailuge/model/outcome.ts
   var Outcome = class _Outcome {
     type;
     timestamp;
@@ -1124,7 +1124,7 @@
     }
   };
 
-  // hyperfy-billard/vendor/tailuge/model/table.ts
+  // vendor/tailuge/model/table.ts
   var Table = class {
     balls;
     cue;
@@ -1242,7 +1242,7 @@
     }
   };
 
-  // hyperfy-billard/src/simulation.js
+  // src/simulation.js
   var BALL_RADIUS = 0.028575;
   var STEP = 1 / 480;
   var MAX_SPEED = 5;
@@ -1369,7 +1369,7 @@
     }
   };
 
-  // hyperfy-billard/src/cues.js
+  // src/cues.js
   var CUE_EVENT = "billard:cues";
   var POSE_EVENT = "billard:cue-pose";
   function watchCues(world2, changed) {
@@ -1382,10 +1382,10 @@
     });
   }
 
-  // hyperfy-billard/src/server.js
+  // src/server.js
   function startServer(world2, app2, preset2) {
     const sim = new Simulation(preset2);
-    let owner = null, lease = 0, seq = 0, rack = 0, elapsed = 0, accumulator = 0, sinceSnapshot = 0, cueHolders = [], aim = null, lastAim = -1;
+    let owner = null, leaseUntil = 0, seq = 0, rack = 0, accumulator = 0, sinceSnapshot = 0, cueHolders = [], aim = null, lastAimAt = -Infinity, updateAttached = false, leaseTimerScheduled = false;
     const publish = () => {
       app2.state.aim = aim;
       app2.state.pool = { ...sim.snapshot(), owner, aim, cueHolders: cueHolders.slice(), seq: ++seq, rack, events: sim.events.splice(0) };
@@ -1401,75 +1401,45 @@
       const player = playerFor(sender);
       return player && player.id === owner && cueHolders.includes(player.id) && nearby(player);
     };
+    const scheduleLeaseExpiry = () => {
+      if (leaseTimerScheduled || !owner) return;
+      leaseTimerScheduled = true;
+      setTimeout(() => {
+        leaseTimerScheduled = false;
+        expire();
+        if (owner) scheduleLeaseExpiry();
+      }, Math.max(1, leaseUntil - Date.now()));
+    };
+    const renewLease = () => {
+      leaseUntil = Date.now() + 6e4;
+      scheduleLeaseExpiry();
+    };
     const cueEvent = CUE_EVENT;
     watchCues(world2, (next) => {
       if (JSON.stringify(next) === JSON.stringify(cueHolders)) return;
       cueHolders = next;
-      if (owner && !cueHolders.includes(owner)) owner = aim = null;
+      if (owner && !cueHolders.includes(owner)) {
+        owner = aim = null;
+        leaseUntil = 0;
+      }
       publish();
     });
     const refreshCues = () => app2.emit(`${cueEvent}:request`);
     const validAim = (data) => data && [data.angle, data.side ?? 0, data.top ?? 0].every(Number.isFinite) && Math.abs(data.angle) <= Math.PI * 2 && Math.hypot(data.side ?? 0, data.top ?? 0) <= 0.450001;
     const expire = () => {
       const player = owner && world2.getPlayer(owner);
-      if (owner && (elapsed > lease || !nearby(player) || !cueHolders.includes(owner))) {
+      if (owner && (Date.now() >= leaseUntil || !nearby(player) || !cueHolders.includes(owner))) {
         owner = aim = null;
+        leaseUntil = 0;
         publish();
       }
     };
-    app2.on("pool:claim", (request, sender) => {
-      refreshCues();
-      expire();
-      const player = playerFor(sender);
-      if (!sim.moving && nearby(player) && cueHolders.includes(player.id) && (!owner || owner === player.id)) {
-        owner = player.id;
-        aim = { playerId: owner, angle: validAim(request) ? request.angle : 0, side: 0, top: 0 };
-        lease = elapsed + 60;
-        publish();
-      }
-    });
-    app2.on("pool:release", (_, sender) => {
-      if (authorized(sender)) {
-        owner = aim = null;
-        publish();
-      }
-    });
-    app2.on("pool:ping", (_, sender) => {
-      if (authorized(sender)) lease = elapsed + 60;
-    });
-    app2.on("pool:aim", (request, sender) => {
-      if (!authorized(sender) || sim.moving || !validAim(request) || elapsed - lastAim < 0.05) return;
-      lastAim = elapsed;
-      aim = { playerId: owner, angle: request.angle, side: request.side ?? 0, top: request.top ?? 0 };
-      app2.state.aim = aim;
-      app2.send("pool:aim", aim);
-    });
-    for (const operation of ["shoot", "reset", "place"]) {
-      app2.on(`pool:${operation}`, (request, sender) => {
-        refreshCues();
-        expire();
-        if (!authorized(sender) || !request || request.seq !== seq) return;
-        lease = elapsed + 60;
-        let accepted = false;
-        if (operation === "shoot") {
-          accepted = sim.shoot(request);
-          if (accepted) owner = aim = null;
-        }
-        if (operation === "place") accepted = sim.place(request.x, request.y);
-        if (operation === "reset" && !sim.moving) {
-          sim.reset();
-          rack++;
-          accepted = true;
-        }
-        if (accepted) publish();
-      });
-    }
-    app2.on("update", (dt) => {
+    const update = (dt) => {
       if (!Number.isFinite(dt) || dt <= 0) return;
-      elapsed += dt;
-      expire();
       if (!sim.moving) {
         accumulator = 0;
+        app2.off("update", update);
+        updateAttached = false;
         return;
       }
       accumulator = Math.min(accumulator + dt, 0.25);
@@ -1482,13 +1452,78 @@
         sinceSnapshot = 0;
         publish();
       }
+      if (!sim.moving) {
+        app2.off("update", update);
+        updateAttached = false;
+      }
+    };
+    const startUpdates = () => {
+      if (sim.moving && !updateAttached) {
+        updateAttached = true;
+        app2.on("update", update);
+      }
+    };
+    app2.on("pool:claim", (request, sender) => {
+      refreshCues();
+      expire();
+      const player = playerFor(sender);
+      if (!sim.moving && nearby(player) && cueHolders.includes(player.id) && (!owner || owner === player.id)) {
+        owner = player.id;
+        aim = { playerId: owner, angle: validAim(request) ? request.angle : 0, side: 0, top: 0 };
+        renewLease();
+        publish();
+      }
     });
+    app2.on("pool:release", (_, sender) => {
+      expire();
+      if (authorized(sender)) {
+        owner = aim = null;
+        leaseUntil = 0;
+        publish();
+      }
+    });
+    app2.on("pool:ping", (_, sender) => {
+      expire();
+      if (authorized(sender)) renewLease();
+    });
+    app2.on("pool:aim", (request, sender) => {
+      expire();
+      const now = Date.now();
+      if (!authorized(sender) || sim.moving || !validAim(request) || now - lastAimAt < 50) return;
+      lastAimAt = now;
+      aim = { playerId: owner, angle: request.angle, side: request.side ?? 0, top: request.top ?? 0 };
+      app2.state.aim = aim;
+      app2.send("pool:aim", aim);
+    });
+    for (const operation of ["shoot", "reset", "place"]) {
+      app2.on(`pool:${operation}`, (request, sender) => {
+        refreshCues();
+        expire();
+        if (!authorized(sender) || !request || request.seq !== seq) return;
+        renewLease();
+        let accepted = false;
+        if (operation === "shoot") {
+          accepted = sim.shoot(request);
+          if (accepted) owner = aim = null;
+        }
+        if (operation === "place") accepted = sim.place(request.x, request.y);
+        if (operation === "reset" && !sim.moving) {
+          sim.reset();
+          rack++;
+          accepted = true;
+        }
+        if (accepted) {
+          publish();
+          startUpdates();
+        }
+      });
+    }
     refreshCues();
     publish();
     return sim;
   }
 
-  // hyperfy-billard/src/sound.js
+  // src/sound.js
   function createSounds(app2, sources) {
     const voices = [];
     let volume = 1;
@@ -1526,6 +1561,7 @@
             voice.until = 0;
           }
         }
+        return voices.some((voice) => voice.until > clock);
       },
       clear() {
         for (const voice of voices) {
@@ -1536,7 +1572,7 @@
     };
   }
 
-  // hyperfy-billard/src/aim.js
+  // src/aim.js
   var AIM_ELEVATION = Math.atan2(0.14, 0.68);
   function avatarStance(position, angle, size, floorY) {
     const forward = new V(Math.cos(angle), 0, -Math.sin(angle));
@@ -1578,17 +1614,17 @@
     return { cameraPosition, cameraQuaternion, cameraTarget: ball, cuePosition, cueQuaternion };
   }
 
-  // hyperfy-billard/src/client.js
+  // src/client.js
   function startClient(world2, app2, { balls, ghost, surfaceTarget, size, playChannel, soundSources }) {
     if (!world2.getPlayer) return;
     const me = world2.getPlayer();
     if (!me) {
       const ready = () => {
         if (!world2.getPlayer()) return;
-        app2.off("update", ready);
+        world2.off("player", ready);
         startClient(world2, app2, { balls, ghost, surfaceTarget, size, playChannel, soundSources });
       };
-      app2.on("update", ready);
+      world2.on("player", ready);
       return;
     }
     let latest = app2.state?.pool, frames = [], clock = 0, control = null, idle = null;
@@ -1625,6 +1661,25 @@
     let playHintControl = null;
     let hintMode = null;
     let hoverRefreshPending = false;
+    let updateAttached = false;
+    let update;
+    const wake = () => {
+      if (!update || updateAttached) return;
+      updateAttached = true;
+      app2.on("update", update);
+    };
+    const isNearby = () => me.position.distanceTo(app2.position) < 15;
+    const setBallsActive = (active) => {
+      for (const ball of balls) ball.active = active;
+    };
+    setBallsActive(isNearby());
+    const renderPositions = (snapshot) => {
+      snapshot?.balls?.forEach((state, i) => {
+        balls[i].position.set(state.p[0], BALL_RADIUS + state.p[2], -state.p[1]);
+        if (isNearby()) balls[i].active = state.state !== "InPocket";
+      });
+    };
+    renderPositions(latest);
     const hoveredTargets = /* @__PURE__ */ new Set();
     const clearPlayHint = () => {
       playHintControl?.setActions([]);
@@ -1648,11 +1703,13 @@
       target.onPointerEnter = () => {
         hoveredTargets.add(target);
         hoverRefreshPending = false;
+        if (isNearby()) setBallsActive(true);
         refresh2();
       };
       target.onPointerLeave = () => {
         hoveredTargets.delete(target);
         hoverRefreshPending = true;
+        wake();
       };
     }
     const clearPose = () => {
@@ -1746,15 +1803,18 @@
         idle = null;
       }
       refresh2();
+      wake();
     };
     app2.on("pool:snapshot", receive);
     app2.on("pool:aim", (next) => {
       aim = next;
+      wake();
     });
     watchCues(world2, (holders) => {
       cueHolders = holders;
       if (!hasCue() && control) stop();
       refresh2();
+      wake();
     });
     if (latest) frames = [{ at: clock, snapshot: latest }];
     const play = () => {
@@ -1764,10 +1824,12 @@
       angle = Math.atan2(ball[1] + local.z, ball[0] - local.x);
       pending = true;
       requestedAt = clock;
+      if (isNearby()) setBallsActive(true);
       idle = app2.control();
       idle.pointer.lock();
       app2.send("pool:claim", { angle });
       refresh2();
+      wake();
     };
     const playOrPlace = (event) => {
       if (event?.button !== "left") return;
@@ -1779,7 +1841,7 @@
     app2.emit(`${cueEvent}:request`);
     const axis = new V();
     const worldPosition = (local) => local.clone().multiply(app2.scale).applyQuaternion(app2.quaternion).add(app2.position);
-    app2.on("update", (dt) => {
+    update = (dt) => {
       if (!Number.isFinite(dt) || dt <= 0) return;
       clock += dt;
       if (hoverRefreshPending) {
@@ -1787,9 +1849,8 @@
         refresh2();
       }
       if (pending && clock - requestedAt > 2) stop(false);
-      sounds.update(clock);
-      const nearby = me.position.distanceTo(app2.position) < 15;
-      for (const ball of balls) ball.active = nearby;
+      const nearby = isNearby();
+      if (nearby) setBallsActive(true);
       if (!nearby) {
         if (control) stop();
         clearPose();
@@ -1811,7 +1872,7 @@
         a.snapshot.balls.forEach((state, i) => {
           const next = b.snapshot.balls[i];
           const p = state.p.map((v, j) => v + (next.p[j] - v) * alpha);
-          balls[i].active = nearby && state.state !== "InPocket";
+          if (nearby) balls[i].active = state.state !== "InPocket";
           balls[i].position.set(p[0], BALL_RADIUS + p[2], -p[1]);
           axis.set(state.w[0], state.w[2], -state.w[1]);
           const rotationSpeed = axis.length();
@@ -1820,8 +1881,8 @@
           );
         });
       }
-      if (!nearby) return;
-      if (control && (me.position.distanceTo(app2.position) > 5 || !hasCue())) stop();
+      const soundsActive = sounds.update(clock);
+      if (nearby && control && (me.position.distanceTo(app2.position) > 5 || !hasCue())) stop();
       if (control) {
         ping += dt;
         if (ping > 15) {
@@ -1895,14 +1956,19 @@ Space: shoot \xB7 Esc: leave \xB7 X: return cue`);
           quaternion: app2.quaternion.clone().multiply(pose.cueQuaternion).toArray()
         });
       } else clearPose();
-    });
+      if (!control && !pending && !hoverRefreshPending && !latest?.moving && frames.length <= 1 && soundEvents.length === 0 && !soundsActive) {
+        app2.off("update", update);
+        updateAttached = false;
+      }
+    };
+    if (latest?.moving || latest?.owner) wake();
     app2.on("destroy", () => {
       stop();
       clearPlayHint();
     });
   }
 
-  // hyperfy-billard/src/app.js
+  // src/app.js
   app.configure?.([
     {
       key: "tableSize",

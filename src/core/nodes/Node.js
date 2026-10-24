@@ -230,6 +230,9 @@ export class Node {
     while (top.parent && top.parent.isDirty) {
       top = top.parent
     }
+    // Notify the app before committing children so they can respond in this pass.
+    const entity = top.ctx?.entity
+    if (top === entity?.root && top.isTransformed) entity.emitTransform?.()
     let didTransform
     top.traverse(node => {
       if (node.isTransformed) {

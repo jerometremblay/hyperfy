@@ -156,3 +156,7 @@ Before merging an app change, verify:
 - [Server entity state loading](../src/core/systems/ServerNetwork.js)
 - [Live blueprint rebuild behavior](../src/core/systems/Blueprints.js)
 - [Snowman prototype](../prototypes/snowman.js)
+
+## Object performance
+
+Follow [App performance](../docs/scripting/performance.md) for new and edited objects. Prefer native app-owned colliders, no idle callbacks for static objects, and client-only decorative animation using in-place properties. A script/package validation pass does not prove idle performance; verify actual callbacks, rebuilds and collision behavior in the target runtime.

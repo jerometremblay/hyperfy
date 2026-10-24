@@ -57,6 +57,7 @@ export class ClientNetwork extends System {
     // console.log('->', name, data)
     const packet = writePacket(name, data)
     this.ws.send(packet)
+    if (this.world.profiler?.active) this.world.profiler.network(name, data, packet.byteLength, true)
   }
 
   async upload(file) {
@@ -108,6 +109,7 @@ export class ClientNetwork extends System {
 
   onPacket = e => {
     const [method, data] = readPacket(e.data)
+    if (this.world.profiler?.active) this.world.profiler.network(method, data, e.data.byteLength, false)
     // Measure clock replies on arrival, before any rendering/frame queue delay.
     if (method === 'onPong' && data && typeof data === 'object') return this.onPong(data)
     this.enqueue(method, data)
@@ -258,6 +260,14 @@ export class ClientNetwork extends System {
 
   onVisibilityChange = () => {
     this.nextTimeSync = 0
+  }
+
+  onProfilerReport = data => {
+    this.world.profiler?.receiveServerReport(data)
+  }
+
+  onProfilerControl = data => {
+    if (typeof data?.enabled === 'boolean') this.world.profiler?.toggle(data.enabled)
   }
 
   onKick = code => {

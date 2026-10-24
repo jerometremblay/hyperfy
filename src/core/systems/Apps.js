@@ -12,6 +12,8 @@ import { warn } from '../extras/warn'
 const isBrowser = typeof window !== 'undefined'
 
 const internalEvents = [
+  'transform',
+  'location',
   'fixedUpdate',
   'updated',
   'lateUpdate',
@@ -44,6 +46,9 @@ export class Apps extends System {
     const world = this.world
     const allowLoaders = ['avatar', 'model']
     this.worldGetters = {
+      isProfiling() {
+        return !!world.profiler?.active
+      },
       isPreview() {
         return !!world.isPreview
       },
@@ -70,6 +75,11 @@ export class Apps extends System {
       // ...
     }
     this.worldMethods = {
+      toggleProfiler(entity, enabled) {
+        if (world.network.isServer) return false
+        if (enabled !== undefined && typeof enabled !== 'boolean') return false
+        return world.profiler?.toggle(enabled) ?? false
+      },
       spawnApp(entity, options = {}) {
         requireServer(world, entity, 'spawnApp')
         const { name, script, position, quaternion } = options
