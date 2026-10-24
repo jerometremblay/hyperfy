@@ -15,10 +15,10 @@ meshes). All orbs share one instanced mesh, without changing world mesh batching
 They refresh twice a second, including their positions; very fast moving objects
 can move ahead of their marker until the next sample.
 
-![Profiler in a disposable test world](screenshots/object-profiler.jpg)
+![Object profiler ranking apps by client script CPU inside the cabin](../profiler.png)
 
-The screenshot uses a deliberately busy scripted fixture; readings are from that
-fixture, not the live world.
+The screenshot shows the cabin ranked by client script CPU. Readings and orb
+colors depend on the selected metric, scene, and reporting client.
 
 ## Readings and limits
 
@@ -40,9 +40,36 @@ wrappers retain a cheap disabled check. Disabled network hooks skip packet
 attribution entirely, and the idle server profiler does not poll viewers or read
 clocks each frame. Explicit Agent API server profiling remains independent.
 
-This first version does not measure GPU time, Gaussian splat rendering, portals'
-render passes, memory, server scripts or server physics. It makes no claim that
-removing an object will recover a displayed amount of frame time.
+The continuous ranking does not measure per-object GPU time, memory, or server
+physics. Geometry counts do not include Gaussian splat rendering or quantify
+portal render passes. Server script timing and an on-demand GPU comparison are
+available separately, as described below. Removing an object does not necessarily
+recover a displayed amount of frame time.
+
+## Estimate GPU rendering cost
+
+Select an app, then click **Measure GPU cost**. Keep the camera and object still
+and the browser tab visible. The comparison requires WebGL2 GPU timer support
+and is unavailable during immersive XR.
+
+The measurement runs four phases: the full scene, the scene without the selected
+app's shadow-casting lights casting shadows, the scene without the app's rendering,
+and the full scene again. Each phase lasts at least four seconds, discards its
+first second for warm-up, and collects at least 20 GPU samples. App scripts and
+physics remain active; rendering changes are temporary and local.
+
+Results show the **Object rendering difference** and **Object shadow difference**
+in milliseconds per frame, alongside uncertainty, scene GPU time with and without
+the app, resolution, and sample counts. The rendering difference includes the
+shadow difference; do not add them together. These are scene comparisons, not
+exclusive timings of the object's draw calls. Differences within the uncertainty
+are marked **inconclusive**.
+
+Moving the camera or object, changing its blueprint or the rendering resolution,
+hiding the tab, or starting XR cancels the measurement. An unstable GPU timer also
+cancels it. You can use **Cancel GPU measurement** at any time. Results describe
+the measured view and resolution; repeat the comparison after changing the scene
+or viewpoint.
 
 ## Script switch API
 
