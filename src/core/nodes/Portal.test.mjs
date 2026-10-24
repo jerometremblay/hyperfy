@@ -246,6 +246,8 @@ for (const doubleside of [false, true]) {
         ctx
       )
       const count = () => ctx.opened.length + ctx.teleports.length
+      ctx.player.base.position.set(0, 0, -1)
+      portal.update()
       ctx.player.base.position.set(0, 0, -0.2)
       portal.update()
       await portal.pendingTravel
@@ -278,6 +280,33 @@ for (const doubleside of [false, true]) {
       destination.deactivate()
     })
   }
+}
+
+for (const doubleside of [false, true]) {
+  test(`restoring inside a ${doubleside ? 'two' : 'one'}-sided remote portal waits for exit and re-entry`, async () => {
+    const { portal, player, opened } = mounted({ url: 'https://example.com', doubleside })
+    player.base.position.set(0, 0, 0.1)
+    portal.update()
+    await portal.pendingTravel
+    assert.equal(opened.length, 0)
+    player.base.position.z = -0.1
+    portal.update()
+    await portal.pendingTravel
+    assert.equal(opened.length, 0, 'movement inside the doorway must not redirect')
+    player.base.position.z = -1
+    portal.update()
+    await portal.pendingTravel
+    assert.equal(opened.length, 0, 'leaving the doorway must not redirect')
+    player.base.position.set(2, 0, 1)
+    portal.update()
+    player.base.position.set(0, 0, 1)
+    portal.update()
+    player.base.position.z = 0.1
+    portal.update()
+    await portal.pendingTravel
+    assert.equal(opened.length, 1)
+    portal.deactivate()
+  })
 }
 
 test('native entry follows nested, rotated, scaled transforms and catches fast front crossings', async () => {
@@ -417,6 +446,9 @@ test('catalog package loads and configures a native portal with no JavaScript as
   assert.equal(portal.doubleside, false)
   assert.ok(entity.fields.some(field => field.key === 'destination'))
   assert.ok(entity.fields.some(field => field.key === 'destinationPortalId'))
+  ctx.player.base.position.set(0, 0, 1).applyMatrix4(portal.matrixWorld)
+  portal.update()
+  ctx.player.base.position.set(0, 0, 0).applyMatrix4(portal.matrixWorld)
   portal.update()
   await portal.pendingTravel
   assert.equal(ctx.opened.length, 1)
@@ -519,6 +551,8 @@ test('travel follows a moved, rotated and scaled destination under an app root',
   root.rotation.y = Math.PI / 2
   root.scale.set(2, 1, 0.5)
   root.clean()
+  ctx.player.base.position.set(0, 0, 1)
+  portal.update()
   ctx.player.base.position.set(0, 0, 0.2)
   portal.update()
   await portal.pendingTravel
@@ -601,6 +635,8 @@ for (const destinationDoubleSide of [false, true]) {
       const localDirection = new THREE.Vector3(0.3, 0, -entrySide).normalize()
       const worldDirection = localDirection.clone().transformDirection(portal.matrixWorld)
       ctx.world.camera.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), worldDirection)
+      ctx.player.base.position.set(0.1, -1.2, entrySide).applyMatrix4(portal.matrixWorld)
+      portal.update()
       ctx.player.base.position.set(0.1, -1.2, entrySide * 0.2).applyMatrix4(portal.matrixWorld)
       portal.update()
       await portal.pendingTravel
@@ -638,6 +674,8 @@ for (const doubleside of [false, true]) {
       const worldDirection = localDirection.clone().transformDirection(source.portal.matrixWorld)
       source.world.camera.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), worldDirection)
       const localPosition = new THREE.Vector3(0.2, -1.2, side * 0.2)
+      source.player.base.position.set(0.2, -1.2, side).applyMatrix4(source.portal.matrixWorld)
+      source.portal.update()
       source.player.base.position.copy(localPosition).applyMatrix4(source.portal.matrixWorld)
       source.portal.update()
       await source.portal.pendingTravel
@@ -679,8 +717,11 @@ test('remote failures remain in the portal and block travel; a fresh check can r
   globalThis.fetch.mock.mockImplementation(async () => {
     throw new Error('offline')
   })
-  const { portal, opened } = mounted({ url: 'https://example.com' })
+  const { portal, player, opened } = mounted({ url: 'https://example.com' })
   try {
+    player.base.position.z = 1
+    portal.update()
+    player.base.position.z = 0.1
     portal.update()
     await portal.pendingTravel
     assert.equal(portal.statusMessage, 'Remote world unreachable')
@@ -714,8 +755,11 @@ test('unmount cancels a pending remote check and never redirects from a stale re
         resolveRequest = resolve
       })
   )
-  const { portal, opened } = mounted({ url: 'https://example.com' })
+  const { portal, player, opened } = mounted({ url: 'https://example.com' })
   try {
+    player.base.position.z = 1
+    portal.update()
+    player.base.position.z = 0.1
     portal.update()
     const pending = portal.pendingTravel
     const signal = portal.destinationController.signal

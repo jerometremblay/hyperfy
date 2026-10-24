@@ -27,7 +27,8 @@ export class Portal extends Node {
     this.appConfig = data.appConfig ?? false
     this.previousPosition = new THREE.Vector3()
     this.hasPreviousPosition = false
-    this.inside = false
+    // A restored player must leave the doorway before it can trigger travel.
+    this.inside = true
     this.destinationError = ''
     this.nextDestinationCheck = 0
     this.destinationFailures = 0
@@ -157,7 +158,7 @@ export class Portal extends Node {
     const world = this.ctx.world
     world.setHot(this, false)
     this.hasPreviousPosition = false
-    this.inside = false
+    this.inside = true
     world.graphics.portals.delete(this)
     world.stage.scene.remove(this.mesh)
     world.stage.octree.remove(this.sItem)
