@@ -142,6 +142,37 @@ world.on(CUE_EVENT, data => {
   refreshActions()
 })
 
+// Held cues follow hands or table aim poses; returned cues need no frame work.
+function updateHeldCues() {
+  for (let i = 0; i < 4; i++) {
+    if (!attached[i] || !holders[i]) continue
+    const player = world.getPlayer(holders[i])
+    if (!player) continue
+    const pose = aimPoses.get(holders[i])
+    if (pose) {
+      cues[i].position.fromArray(pose.position)
+      cues[i].quaternion.fromArray(pose.quaternion)
+      continue
+    }
+    const handMatrix = player.getBoneTransform?.('rightHand')
+    const bodyQuat = player.quaternion
+    const tilt = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), HOLD_TILT)
+    const cueQuat = bodyQuat.clone().multiply(tilt)
+    let handPos
+    if (handMatrix) {
+      handPos = new Vector3().setFromMatrixPosition(handMatrix)
+    } else {
+      handPos = player.position.clone().add(
+        new Vector3(0.35, 1.13, -0.35).applyQuaternion(bodyQuat)
+      )
+    }
+    // The local lower third of the cue aligns with the player's right hand.
+    const gripToCenter = new Vector3(0, 0.38, 0).applyQuaternion(cueQuat)
+    cues[i].position.copy(handPos.add(gripToCenter))
+    cues[i].quaternion.copy(cueQuat)
+  }
+}
+
 function applyHolders(next) {
   if (!Array.isArray(next) || next.length !== 4) return
   for (let i = 0; i < 4; i++) {
@@ -163,6 +194,8 @@ function applyHolders(next) {
   for (const id of aimPoses.keys()) if (!holders.includes(id)) aimPoses.delete(id)
   publishHolders()
   if (!world.isClient || typeof world.getPlayer !== 'function') return
+  if (holders.some(Boolean)) app.on('update', updateHeldCues)
+  else app.off('update', updateHeldCues)
   const me = world.getPlayer()
   const nextHeld = me ? holders.findIndex(id => id === me.id) : -1
   if (nextHeld === localHeld) return
@@ -241,15 +274,11 @@ if (world.isServer) {
     app.emit(CUE_EVENT, { rackId: app.instanceId, holders: [] })
   })
   publish()
-  // Reset abandoned cues for disconnects, without one physics body per cue.
-  let checkElapsed = 0
-  app.on('update', dt => {
-    checkElapsed += dt
-    if (checkElapsed < 2) return
-    checkElapsed = 0
+  // Native leave fires before player removal; use its ID instead of polling getPlayer.
+  world.on('leave', ({ playerId }) => {
     let changed = false
     for (let i = 0; i < 4; i++) {
-      if (holders[i] && !world.getPlayer(holders[i])) {
+      if (holders[i] === playerId) {
         holders[i] = null
         changed = true
       }
@@ -267,50 +296,24 @@ if (world.isClient && typeof world.getPlayer === 'function') {
       return
     }
     if (Array.isArray(pose.position) && pose.position.length === 3 && pose.position.every(Number.isFinite) &&
-        Array.isArray(pose.quaternion) && pose.quaternion.length === 4 && pose.quaternion.every(Number.isFinite))
+        Array.isArray(pose.quaternion) && pose.quaternion.length === 4 && pose.quaternion.every(Number.isFinite)) {
       aimPoses.set(pose.playerId, pose)
+      // The table moves its camera in update; apply its cue pose in that same
+      // frame even when this rack's update has already run.
+      const slot = holders.indexOf(pose.playerId)
+      if (attached[slot]) {
+        cues[slot].position.fromArray(pose.position)
+        cues[slot].quaternion.fromArray(pose.quaternion)
+      }
+    }
   })
   app.on('cue-holders', next => applyHolders(next))
   applyHolders(holders)
   app.send('request-cues')
   app.emit(`${CUE_EVENT}:request`)
 
-  // Only held cues move. In the rack the entire construction is static.
-  let localPlayerId = world.getPlayer()?.id
-  app.on('update', () => {
-    if (world.getPlayer()?.id !== localPlayerId) {
-      localPlayerId = world.getPlayer()?.id
-      applyHolders(holders)
-    }
-    for (let i = 0; i < 4; i++) {
-      if (!attached[i] || !holders[i]) continue
-      const player = world.getPlayer(holders[i])
-      if (!player) continue
-      const pose = aimPoses.get(holders[i])
-      if (pose) {
-        cues[i].position.fromArray(pose.position)
-        cues[i].quaternion.fromArray(pose.quaternion)
-        continue
-      }
-      const handMatrix = player.getBoneTransform?.('rightHand')
-      const bodyQuat = player.quaternion
-      const tilt = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), HOLD_TILT)
-      const cueQuat = bodyQuat.clone().multiply(tilt)
-      let handPos
-      if (handMatrix) {
-        handPos = new Vector3().setFromMatrixPosition(handMatrix)
-      } else {
-        handPos = player.position.clone().add(
-          new Vector3(0.35, 1.13, -0.35).applyQuaternion(bodyQuat)
-        )
-      }
-      // The local lower third of the cue aligns with the player's right hand.
-      const gripToCenter = new Vector3(0, 0.38, 0).applyQuaternion(cueQuat)
-      cues[i].position.copy(handPos.add(gripToCenter))
-      cues[i].quaternion.copy(cueQuat)
-    }
-  })
   app.on('destroy', () => {
+    app.off('update', updateHeldCues)
     if (localControls) localControls.release()
     holders.fill(null)
     app.emit(CUE_EVENT, { rackId: app.instanceId, holders: [] })

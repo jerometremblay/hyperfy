@@ -39,6 +39,16 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
   let actionPrompts = []
   let released = 0
   let control = null, activeControl = null
+  let now = 0
+  const timers = []
+  const advanceTime = seconds => {
+    now += seconds * 1000
+    for (let i = 0; i < timers.length;) {
+      if (timers[i].at > now) { i++; continue }
+      const [timer] = timers.splice(i, 1)
+      timer.fn()
+    }
+  }
   const pointer = { coords: new THREE.Vector3(0.5, 0.5, 0), position: new THREE.Vector3(), delta: new THREE.Vector3(), locked: false,
     lock() { this.locked = true }, unlock() { this.locked = false } }
   const app = {
@@ -108,6 +118,9 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
     on(name, callback) {
       ;(worldEvents[name] ||= []).push(callback)
     },
+    off(name, callback) {
+      worldEvents[name] = (worldEvents[name] || []).filter(fn => fn !== callback)
+    },
     emit(name, value) {
       for (const callback of worldEvents[name] || []) callback(value)
     },
@@ -122,7 +135,9 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
   }
   vm.runInNewContext(
     `(function(world, app, props) { const config = props\n${source}\n})(world, app, props)`,
-    { app, world, props, console, Vector3: THREE.Vector3, Quaternion: THREE.Quaternion, Euler: THREE.Euler },
+    { app, world, props, console, Vector3: THREE.Vector3, Quaternion: THREE.Quaternion, Euler: THREE.Euler,
+      Date: { now: () => now },
+      setTimeout: (fn, ms) => timers.push({ fn, at: now + ms }) },
     { timeout: 5000 }
   )
   return {
@@ -132,6 +147,8 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
     created,
     sent,
     audioPlays,
+    advanceTime,
+    get pendingTimers() { return timers.length },
     get actionPrompts() { return actionPrompts },
     get activeControl() { return activeControl },
     get control() {
@@ -142,6 +159,7 @@ export function harness({ instanceId = `test-app-${++nextInstanceId}`, server = 
       return released
     },
     emit(name, value, sender) {
+      if (name === 'update' && Number.isFinite(value) && value > 0) advanceTime(value)
       for (const fn of handlers[name] || []) fn(value, sender)
     },
   }

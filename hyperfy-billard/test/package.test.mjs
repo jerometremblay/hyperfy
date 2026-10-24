@@ -54,7 +54,7 @@ test('bundle runs in a real SES compartment with only Hyperfy math endowments', 
     Math,
   }).evaluate(`(function() { const config = props\n${code}\n})()`)
   assert.equal(app.state.pool.balls.length, 16)
-  listeners.update(1 / 60)
+  assert.equal(listeners.update, undefined, 'stationary server has no frame callback')
 })
 test('different app instances keep physics dimensions and ownership isolated', () => {
   const players = [player('alice')]

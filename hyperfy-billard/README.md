@@ -6,6 +6,10 @@ bootstrap. The physics needs no external service or runtime downloads. The close
 animated camera return uses this fork's native player camera API.
 Playing requires a held cue from the companion rack (`cue-rack/rack.hyp`). The
 installed world uses its existing four-cue rack, with the same pickup/return flow.
+Stationary tables and empty cue racks register no frame updates. Server physics
+runs while balls move; client updates stop after input, interpolation and sounds
+finish. Snapshots and interaction events wake them again, and ownership leases
+expire on a timer rather than an idle physics loop.
 
 Based on [tailuge/billiards](https://github.com/tailuge/billiards), the original
 open-source pool project by tailuge and contributors. The physics solver and
@@ -56,7 +60,9 @@ ball, including spin offsets; other players see its aiming pose too. There is
 no trajectory line. This is a low camera view; it does not replace the avatar's
 standing animation with a custom crouching animation.
 
-- Mouse or left/right arrows: turn aim. Up/down: change shot speed (0.1–5 m/s).
+- Mouse or left/right arrows: turn aim. Scroll back to pull the cue farther from
+  the ball for a stronger shot; scroll closer for less force (0.1–5 m/s).
+  Up/down arrows also adjust power. Other players see the cue's pullback.
 - W/S: top/back spin. A/D: side spin. Offset is limited to 0.45 ball radii.
 - Space: shoot, return the cue to the hand and release all game camera/input
   controls immediately. The native player camera resumes at its nearest third-person

@@ -62,7 +62,7 @@ test('low camera stays behind the ball and the physical cue points through the s
   for (const angle of [0, Math.PI / 2, Math.PI, -Math.PI / 2, 0.37]) {
     const ball = new THREE.Vector3(0.4, physics.BALL_RADIUS, 0.2)
     const forward = new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle))
-    const pose = physics.shotPose([0.4, -0.2, 0], angle)
+    const pose = physics.shotPose([0.4, -0.2, 0], angle, 0, 0, physics.AIM_ELEVATION, 0.1)
     assert.ok(pose.cameraPosition.clone().sub(ball).dot(forward) < -0.679)
     assert.ok(Math.abs(pose.cameraPosition.y - ball.y - 0.14) < 1e-10)
     const look = new THREE.Vector3(0, 0, -1).applyQuaternion(pose.cameraQuaternion)
@@ -123,6 +123,33 @@ test('all game controls release immediately without waiting for a server respons
   assert.equal(aiming.camera.write, false)
   assert.equal(client.activeControl, null)
   assert.equal(client.created.find(n => n.name === 'ui').active, false)
+})
+test('orbiting updates the held cue in the camera frame regardless of rack update order', () => {
+  for (const rackFirst of [true, false]) {
+    const { players, rack, game } = setup()
+    rack.emit('take-cue', { slot: 0 }, 'socket-a')
+    const bus = {}
+    const clientRack = harness({ source, players, bus, state: structuredClone(rack.app.state) })
+    const client = harness({ players, bus, state: structuredClone(game.app.state) })
+    game.app.deliver = (event, body) => client.emit(event, body)
+    client.app.deliver = (event, body) => game.emit(event, body, 'socket-a')
+    client.created.find(n => n.name === 'prim' && n.opacity === 0).onPointerDown({ button: 'left' })
+    const cue = clientRack.created.find(n => n.name === 'group')
+    const control = client.control
+    let angle = game.app.state.aim.angle
+    for (let frame = 0; frame < 60; frame++) {
+      control.pointer.delta.set(8, 0, 0)
+      angle = Math.atan2(Math.sin(angle - 0.024), Math.cos(angle - 0.024))
+      if (rackFirst) clientRack.emit('update', 1 / 60)
+      client.emit('update', 1 / 60)
+      if (!rackFirst) clientRack.emit('update', 1 / 60)
+      const pose = physics.shotPose(game.app.state.pool.balls[0].p, angle)
+      assert.ok(control.camera.position.distanceTo(pose.cameraPosition.clone().add(client.app.position)) < 1e-8)
+      assert.ok(cue.position.distanceTo(pose.cuePosition.clone().add(client.app.position)) < 1e-8,
+        `cue follows the current camera frame (${rackFirst ? 'rack first' : 'table first'}, frame ${frame})`)
+      assert.ok(cue.quaternion.angleTo(pose.cueQuaternion) < 1e-7)
+    }
+  }
 })
 test('aim packets do not stale the next shot; dropping a cue cancels active aiming', () => {
   const { players, rack, game } = setup()

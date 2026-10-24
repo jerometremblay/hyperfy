@@ -1,7 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import * as THREE from 'three'
+import { readFile } from 'node:fs/promises'
 import { harness, player, physics } from './helpers.mjs'
+const clientSource = process.env.BILLARD_CLIENT_SCRIPT
+  ? await readFile(process.env.BILLARD_CLIENT_SCRIPT, 'utf8') : undefined
 function playSurface(client) {
   return client.created.find(n => n.name === 'prim' && n.opacity === 0)
 }
@@ -14,7 +17,7 @@ function playHint(client) {
 function setup() {
   const players = [player('alice')]
   const server = harness({ server: true, players, cueHolders: ['alice'] })
-  const client = harness({ players, state: structuredClone(server.app.state) })
+  const client = harness({ players, state: structuredClone(server.app.state), source: clientSource })
   server.app.deliver = (event, body) => client.emit(event, body)
   client.app.deliver = (event, body) => server.emit(event, body, 'alice')
   return { players, server, client }
@@ -67,6 +70,48 @@ test('mouse movement orbits the ball, changes shot direction and moves the avata
   const size = physics.dimensions()
   assert.ok(Math.abs(local.x) > size.length / 2 + 0.48 || Math.abs(local.z) > size.width / 2 + 0.48)
   assert.equal(active.pointer.locked, true)
+})
+test('scroll pulls the cue back for more power, pushes it closer for less, and sends that power on strike', () => {
+  const { client, server, players } = setup()
+  let cuePose
+  client.world.on('billard:cue-pose', pose => { if (!pose.clear) cuePose = pose })
+  clickPlay(client)
+  client.emit('update', 1 / 60)
+  const control = client.control
+  assert.equal(control.scrollDelta.capture, true)
+  const camera = control.camera.position.clone()
+  const ball = worldBall(client, server.app.state.pool.balls[0].p)
+  const cueDistance = () => new THREE.Vector3().fromArray(cuePose.position).distanceTo(ball)
+  const initial = cueDistance()
+  const scroll = (value, dt = 0.1) => {
+    control.scrollDelta.value = value
+    server.emit('update', dt)
+    client.emit('update', dt)
+    control.scrollDelta.value = 0
+  }
+  scroll(-50)
+  assert.equal(server.app.state.aim.speed, 3)
+  assert.ok(cueDistance() > initial)
+  assert.ok(control.camera.position.equals(camera), 'power changes do not zoom the camera')
+  const observer = harness({ players: [player('bob'), players[0]], state: structuredClone(server.app.state), source: clientSource })
+  let observerPose
+  observer.world.on('billard:cue-pose', pose => { if (!pose.clear) observerPose = pose })
+  observer.emit('update', 1 / 60)
+  assert.deepEqual(observerPose.position, cuePose.position, 'late observer sees the same pullback')
+  scroll(50)
+  assert.equal(server.app.state.aim.speed, 2.5)
+  assert.ok(Math.abs(cueDistance() - initial) < 1e-8)
+  scroll(-10000)
+  assert.equal(server.app.state.aim.speed, 5)
+  scroll(10000)
+  assert.equal(server.app.state.aim.speed, 0.1)
+  scroll(-100, 1 / 120)
+  const beforeIdle = cueDistance()
+  client.emit('update', 1 / 60)
+  assert.equal(cueDistance(), beforeIdle, 'no further power change after scrolling stops')
+  control.space.onPress()
+  assert.equal(client.sent.findLast(([event]) => event === 'pool:shoot')[1].speed, 1.1)
+  assert.equal(client.activeControl, null)
 })
 test('a shot releases every app control and requires another left click to aim again', () => {
   const { client, server, players } = setup()
