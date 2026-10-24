@@ -2,6 +2,7 @@ import * as THREE from '../extras/three'
 import { System } from './System'
 import { createProfilerReport, PROFILER_REPORT_INTERVAL_MS } from '../extras/profilerReports'
 import { ProfilerOverlay } from '../extras/ProfilerOverlay'
+import { ProfilerGPU } from '../extras/ProfilerGPU'
 
 // Counts describe mounted resources, not GPU work or per-body simulation time.
 export class ClientProfiler extends System {
@@ -16,6 +17,9 @@ export class ClientProfiler extends System {
     this.selected = null
     this.elapsed = 0
     this.serverReport = null
+    this.gpuResults = new Map()
+    this.gpuMeasurement = null
+    this.gpuError = null
   }
 
   start() {
@@ -37,6 +41,9 @@ export class ClientProfiler extends System {
   toggle(value = !this.active) {
     if (value && !this.allowed()) return false
     if (this.active === value) return this.active
+    this.gpuMeasurement?.cancel()
+    this.gpuResults.clear()
+    this.gpuError = null
     this.active = value
     this.pending = new Map()
     this.lastTick = undefined
@@ -138,7 +145,29 @@ export class ClientProfiler extends System {
   }
 
   select(id) {
+    id = this.selected === id ? null : id
+    if (this.selected !== id) {
+      this.gpuMeasurement?.cancel()
+      this.gpuError = null
+    }
     this.selected = id
+    this.overlay?.update(this.rows, this.metric, this.selected)
+    this.publish()
+  }
+
+  measureGPU() {
+    if (!this.active || !this.allowed() || this.gpuMeasurement) return
+    const entity = this.world.entities.items.get(this.selected)
+    if (!entity?.isApp) return
+    this.gpuError = null
+    this.gpuResults.delete(this.selected)
+    const measurement = new ProfilerGPU(this, entity)
+    this.gpuMeasurement = measurement
+    try {
+      measurement.start()
+    } catch (error) {
+      measurement.cancel(error.message)
+    }
     this.publish()
   }
 

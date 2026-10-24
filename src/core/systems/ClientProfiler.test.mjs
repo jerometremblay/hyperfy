@@ -322,7 +322,10 @@ test('hiding Stats stops profiling, preserves graph placement and removes subscr
   const stats = (world.stats = new ClientStats(world))
   const children = []
   stats.ui = { appendChild: child => children.push(child) }
-  stats.container = { remove: () => children.splice(children.indexOf(stats.container), 1) }
+  stats.container = {
+    remove: () => children.splice(children.indexOf(stats.container), 1),
+    removeEventListener() {},
+  }
   stats.stats = { dom: {}, begin() {}, end() {}, update() {} }
   stats.start()
   profiler.toggle(true)
@@ -368,4 +371,32 @@ test('disabled profiler does not read clocks, traverse the scene or inspect netw
   )
   assert.equal(profiler.pending.size, 0)
   assert.equal(profiler.overlay, undefined)
+})
+
+test('clicking a selected row or orb again deselects it and cancels GPU measurement', () => {
+  const { world, profiler, app } = fixture()
+  app('a')
+  profiler.toggle(true)
+  profiler.sample(0.5)
+  profiler.select('a')
+  assert.equal(profiler.selected, 'a')
+  let cancelled = 0
+  profiler.gpuMeasurement = {
+    cancel() {
+      cancelled++
+      profiler.gpuMeasurement = null
+    },
+  }
+  profiler.select('a')
+  assert.equal(profiler.selected, null)
+  assert.equal(cancelled, 1)
+  const clickOrb = () => world.stage.hit.node.resolveHit({ instanceId: 0 }).onPointerDown()
+  clickOrb()
+  assert.equal(profiler.selected, 'a')
+  clickOrb()
+  assert.equal(profiler.selected, null)
+  const matrix = new THREE.Matrix4()
+  profiler.overlay.mesh.getMatrixAt(0, matrix)
+  assert.equal(matrix.elements[0], 1, 'orb highlight clears immediately')
+  profiler.destroy()
 })

@@ -89,6 +89,24 @@ console.log(latitude, longitude)
 Each call returns a fresh snapshot of the current settings. Changing the returned object
 does not change the world's location. Call it again to read updated coordinates.
 
+#### Location changes
+
+`world.on('location', callback)` receives `{ latitude, longitude }` when the
+world's geographic coordinates actually change on this client/server.
+Coordinate changes in one settings batch produce one notification with the
+current values. Time, sun movement and unrelated settings do not trigger it.
+Read `world.getLocation()` during initialization; subscribing does not produce
+an initial notification or register a frame callback.
+
+```js
+world.on('location', ({ latitude, longitude }) => {
+  // Recalibrate geometry that depends on geographic coordinates.
+})
+```
+
+Like other world subscriptions, it is removed automatically when the app
+rebuilds or is destroyed. The engine event cannot be emitted by an app.
+
 ### `.getQueryParam(key)`
 
 Gets a query parameter value from the browsers url

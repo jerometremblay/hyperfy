@@ -5,6 +5,7 @@ import Panel from '../libs/stats-gl/panel'
 import { isBoolean } from 'lodash-es'
 
 const PING_RATE = 1 / 2
+const UI_EVENTS = ['wheel', 'click', 'pointerdown', 'pointermove', 'pointerup', 'touchstart']
 
 /**
  * Stats System
@@ -31,6 +32,14 @@ export class ClientStats extends System {
     this.container.style.cssText =
       'position:absolute;top:0;right:0;width:360px;max-width:100vw;display:flex;flex-direction:column;pointer-events:auto;z-index:35;'
     this.extension = document.createElement('div')
+    // The profiler portal sits outside CoreUI, so mark its native events too.
+    for (const event of UI_EVENTS) {
+      this.container.addEventListener(event, this.onUIEvent)
+    }
+  }
+
+  onUIEvent = event => {
+    event.isCoreUI = true
   }
 
   start() {
@@ -167,6 +176,9 @@ export class ClientStats extends System {
 
   destroy() {
     this.toggle(false)
+    for (const event of UI_EVENTS) {
+      this.container.removeEventListener(event, this.onUIEvent)
+    }
     this.world.prefs.off('change', this.onPrefsChange)
     this.world.off('ui', this.onUIState)
     this.world.off('ready', this.onReady)

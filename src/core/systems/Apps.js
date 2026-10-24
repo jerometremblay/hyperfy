@@ -12,6 +12,8 @@ import { warn } from '../extras/warn'
 const isBrowser = typeof window !== 'undefined'
 
 const internalEvents = [
+  'transform',
+  'location',
   'fixedUpdate',
   'updated',
   'lateUpdate',

@@ -106,14 +106,27 @@ function acquireTreeAsset(world, Tree, presetName, preset, options, seed, applyT
     assets.set(key, asset)
   }
   asset.users.add(node)
-  asset.updateOwner ||= node
   return asset
+}
+
+function setTreeUpdateOwner(asset, node) {
+  const previous = asset.updateOwner
+  if (previous === node) return
+  if (previous?.updateRegistered) {
+    previous.ctx.entity.off('update', previous.onUpdate)
+    previous.updateRegistered = false
+  }
+  asset.updateOwner = node
+  if (node) {
+    node.ctx.entity.on('update', node.onUpdate)
+    node.updateRegistered = true
+  }
 }
 
 function releaseTreeAsset(world, asset, node) {
   if (!asset?.users.delete(node)) return
   if (asset.updateOwner === node) {
-    asset.updateOwner = asset.users.values().next().value || null
+    setTreeUpdateOwner(asset, asset.users.values().next().value || null)
   }
   if (asset.users.size) return
 
@@ -270,10 +283,7 @@ export class TreeNode extends Node {
       this.runtime = runtime
       this.add(runtime)
 
-      if (!this.updateRegistered) {
-        this.ctx.entity.on('update', this.onUpdate)
-        this.updateRegistered = true
-      }
+      if (!asset.updateOwner) setTreeUpdateOwner(asset, this)
     } catch (error) {
       if (this.runtime?.parent === this) this.remove(this.runtime)
       if (this.asset === asset) {

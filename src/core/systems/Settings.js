@@ -44,6 +44,8 @@ export class Settings extends System {
   }
 
   deserialize(data) {
+    const previousLatitude = this.latitude
+    const previousLongitude = this.longitude
     this.title = data.title
     this.desc = data.desc
     this.image = data.image
@@ -86,6 +88,9 @@ export class Settings extends System {
       timeOffset: { value: this.timeOffset },
       timeTransition: { value: this.timeTransition },
     })
+    if (this.latitude !== previousLatitude || this.longitude !== previousLongitude) {
+      this.world.events?.emit('location', { latitude: this.latitude, longitude: this.longitude })
+    }
   }
 
   serialize() {
@@ -113,8 +118,15 @@ export class Settings extends System {
 
   preFixedUpdate() {
     if (!this.changes) return
-    this.emit('change', this.changes)
+    const changes = this.changes
+    this.emit('change', changes)
     this.changes = null
+    if (
+      (changes.latitude && changes.latitude.prev !== changes.latitude.value) ||
+      (changes.longitude && changes.longitude.prev !== changes.longitude.value)
+    ) {
+      this.world.events?.emit('location', { latitude: this.latitude, longitude: this.longitude })
+    }
   }
 
   getTime() {

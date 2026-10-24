@@ -35,6 +35,10 @@ export function ProfilerPanel({ world }) {
     (a, b) => (b[profiler.metric] ?? -1) - (a[profiler.metric] ?? -1) || a.id.localeCompare(b.id)
   )
   const selected = rows.find(row => row.id === profiler.selected)
+  const gpuResult = selected && profiler.gpuResults.get(selected.id)
+  const gpu = gpuResult?.version === selected?.blueprintVersion ? gpuResult : null
+  const gpuCost = result =>
+    `${number(result.delta)} ± ${number(result.uncertainty)} ms/frame${result.inconclusive ? ' · inconclusive' : ''}`
   return createPortal(
     <section
       aria-label='Object performance profiler'
@@ -43,6 +47,8 @@ export function ProfilerPanel({ world }) {
         box-sizing: border-box;
         max-height: calc(100dvh - 48px);
         overflow: auto;
+        /* Live ranking moves rows; keep them from becoming scroll anchors. */
+        overflow-anchor: none;
         pointer-events: auto;
         padding: 0.75rem;
         border-radius: 0 0 0.6rem 0.6rem;
@@ -80,6 +86,7 @@ export function ProfilerPanel({ world }) {
           padding-left: 1.5rem;
           max-height: 15rem;
           overflow: auto;
+          overflow-anchor: none;
         }
         li button {
           display: flex;
@@ -118,7 +125,6 @@ export function ProfilerPanel({ world }) {
       </header>
       {profiler.active && (
         <div id='object-profiler-details'>
-          <small>Client + server · green → red relative to this scene; gray = unavailable</small>
           <label>
             Rank and color by
             <select
@@ -139,7 +145,7 @@ export function ProfilerPanel({ world }) {
               : 'Waiting for a fresh server sample…'}
           </small>
           <br />
-          <small>{rows.length} apps · select an orb or a row to inspect</small>
+          <small>{rows.length} apps</small>
           <ol>
             {rows.map(row => (
               <li key={row.id}>
@@ -188,6 +194,32 @@ export function ProfilerPanel({ world }) {
                 <dt>App messages</dt>
                 <dd>{number(selected.messages)}/s</dd>
               </dl>
+              <h4>GPU rendering estimate</h4>
+              {profiler.gpuMeasurement ? (
+                <>
+                  <p role='status'>{profiler.gpuMeasurement.phase}</p>
+                  <button onClick={() => profiler.gpuMeasurement?.cancel()}>Cancel GPU measurement</button>
+                </>
+              ) : (
+                <button onClick={() => profiler.measureGPU()}>Measure GPU cost</button>
+              )}
+              {profiler.gpuError && <p role='status'>{profiler.gpuError}</p>}
+              {gpu && (
+                <dl>
+                  <dt>Object rendering difference</dt>
+                  <dd>{gpuCost(gpu.total)}</dd>
+                  <dt>Object shadow difference</dt>
+                  <dd>{gpuCost(gpu.shadows)}</dd>
+                  <dt>Scene GPU / without object</dt>
+                  <dd>
+                    {number(gpu.baseline)} / {number(gpu.without)} ms/frame
+                  </dd>
+                  <dt>Resolution</dt>
+                  <dd>{gpu.resolution.join(' × ')}</dd>
+                  <dt>Samples per phase</dt>
+                  <dd>{gpu.samples.join(' / ')}</dd>
+                </dl>
+              )}
               <details>
                 <summary>Client callback CPU in last sample</summary>
                 {Object.entries(selected.callbacks).map(([key, value]) => (
@@ -210,15 +242,6 @@ export function ProfilerPanel({ world }) {
               </details>
             </>
           )}
-          <p>
-            <small>
-              CPU measures synchronous app events, world events and timers; excludes async continuations and native node
-              handlers. Geometry and physics are mounted counts, not GPU or per-body milliseconds. Network counts app
-              entity packets including MessagePack headers, excluding WebSocket overhead, assets and shared traffic.
-              Rates use a 2-second moving average for client CPU and byte rates. Server CPU uses its actual sample
-              window. GPU, splat rendering and engine physics time are not measured.
-            </small>
-          </p>
         </div>
       )}
     </section>,

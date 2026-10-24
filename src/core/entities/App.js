@@ -420,10 +420,39 @@ export class App extends Entity {
       this.listeners[name] = new Set()
     }
     if (this.listeners[name].has(callback)) return
+    if (name === 'transform' && !this.listeners[name].size) {
+      this.lastTransform = {
+        position: this.root.position.clone(),
+        quaternion: this.root.quaternion.clone(),
+        scale: this.root.scale.clone(),
+      }
+    }
     this.listeners[name].add(callback)
     if (hotEventNames.includes(name)) {
       this.hotEvents++
       this.world.setHot(this, this.hotEvents > 0)
+    }
+  }
+
+  emitTransform() {
+    if (!this.listeners.transform?.size) return
+    const { position, quaternion, scale } = this.root
+    const previous = this.lastTransform
+    const changed = {
+      position: !position.equals(previous.position),
+      rotation: !quaternion.equals(previous.quaternion),
+      scale: !scale.equals(previous.scale),
+    }
+    if (!changed.position && !changed.rotation && !changed.scale) return
+    previous.position.copy(position)
+    previous.quaternion.copy(quaternion)
+    previous.scale.copy(scale)
+    try {
+      this.emit('transform', changed)
+    } catch (err) {
+      this.scriptError = serializeError(err)
+      console.error('script transform crashed', this)
+      this.crash()
     }
   }
 
