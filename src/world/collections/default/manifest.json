@@ -9,10 +9,6 @@
     "gs.hyp",
     "HyperfyJournal.hyp",
     "WorldPortal.hyp",
-    "PoolTable.hyp",
-    "CueRack.hyp",
-    "PoolLight.hyp",
-    "WallLightSwitch.hyp",
-    "PerformanceSwitch.hyp"
+    "WallLightSwitch.hyp"
   ]
 }

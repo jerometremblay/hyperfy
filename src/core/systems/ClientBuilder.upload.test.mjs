@@ -93,13 +93,13 @@ function hypFile({ scene = false } = {}) {
   ]
   const header = new TextEncoder().encode(
     JSON.stringify({
-      blueprint: { name: 'Pool Table', model: 'script-only', script: assets[0].url, props: {}, scene },
+      blueprint: { name: 'Imported App', model: 'script-only', script: assets[0].url, props: {}, scene },
       assets: assets.map(({ bytes, ...asset }) => ({ ...asset, size: bytes.length })),
     })
   )
   const size = new Uint8Array(4)
   new DataView(size.buffer).setUint32(0, header.length, true)
-  return new File([size, header, ...assets.map(asset => asset.bytes)], 'PoolTable.hyp')
+  return new File([size, header, ...assets.map(asset => asset.bytes)], 'ImportedApp.hyp')
 }
 
 function importFixture(t, { fail = false } = {}) {
@@ -184,7 +184,7 @@ test('a failed app import removes the server app, cancels remaining uploads and 
   )
   assert.equal(fixture.uploads.length, 2, 'the texture after the rejected audio is not uploaded')
   assert.equal(fixture.messages.length, 1)
-  assert.match(fixture.messages[0].body, /Upload failed.*PoolTable\.hyp/)
+  assert.match(fixture.messages[0].body, /Upload failed.*ImportedApp\.hyp/)
   assert.match(fixture.messages[0].body, /Asset upload check failed \(400\)/)
   assert.equal(fixture.messages[0].fromId, null)
 })
@@ -220,5 +220,5 @@ test('a failed scene import keeps the existing scene and reports the failure', a
   assert.deepEqual(fixture.sent, [])
   assert.equal(fixture.uploads.length, 2)
   assert.equal(fixture.messages.length, 1)
-  assert.match(fixture.messages[0].body, /Upload failed.*PoolTable\.hyp/)
+  assert.match(fixture.messages[0].body, /Upload failed.*ImportedApp\.hyp/)
 })

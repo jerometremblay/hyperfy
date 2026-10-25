@@ -1,10 +1,9 @@
 # Pickup return hints
 
-The cue, journal, and fireplace tools publish a native `keyX` action hint while held by the local player. It appears centered below the pointer for 0.75 seconds, then slides into the screen's lower-left corner over 0.45 seconds. Returning the object clears it; releasing its control also clears its hints.
+The journal and fireplace tools publish a native `keyX` action hint while held by the local player. It appears centered below the pointer for 0.75 seconds, then slides into the screen's lower-left corner over 0.45 seconds. Returning the object clears it; releasing its control also clears its hints.
 
 Source locations:
 
-- Cue rack: `hyperfy-billard/cue-rack/rack.js`.
 - Journal: `outputs/folding-journal/journal.js` (also mirrored in the worldsync catalog and default package).
 - Fireplace tools: `outputs/pickup-hints/hearth.js`.
 - Shared rendering: `src/client/components/CoreUI.js`.
@@ -14,5 +13,5 @@ Source locations:
 Focused checks:
 
 ```sh
-node --test src/client/components/CoreUI.actionHints.test.mjs src/core/systems/ClientControls.xrUI.test.mjs outputs/folding-journal/journal.test.mjs hyperfy-billard/test/cue-play.test.mjs
+node --test src/client/components/CoreUI.actionHints.test.mjs src/core/systems/ClientControls.xrUI.test.mjs outputs/folding-journal/journal.test.mjs
 ```

@@ -104,16 +104,6 @@ The [playable Pac-Man cabinet](outputs/pacman-arcade/README.md) embeds a game in
 its tilted screen. Click to play, steer with WASD or the arrow keys, pause with
 Space, and return to the world with Escape. Each player has an independent game.
 
-[Hyperfy Billard](hyperfy-billard/README.md) adds in-world pool with cue aiming
-and a return to the normal player camera after a shot. Its physics and table
-artwork are adapted from [tailuge/billiards](https://github.com/tailuge/billiards).
-See the app's README for setup, controls, and attribution.
-
-![An avatar holding a cue beside the pool table under three pendant lights](pool-table.png)
-
-*An in-world pool table brings a playable game into the cabin, with balls, a cue,
-and overhead lighting.*
-
 These are example apps included in the repository; they show what the expanded
 engine can support rather than appearing automatically in every world.
 
