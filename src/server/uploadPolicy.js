@@ -13,6 +13,7 @@ export const ALLOWED_EXTENSIONS = [
   'webp',
   'mp4',
   'mp3',
+  'ogg',
   'hdr',
   'spz',
   'ply',
@@ -27,7 +28,7 @@ export const ALLOWED_EXTENSIONS = [
 
 // media the browser renders from its own tags (img/video/audio) or that loaders fetch as binary.
 // everything else is served as an inert download so it can never run as a same-origin document.
-export const INLINE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mp3', 'glb', 'vrm']
+export const INLINE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mp3', 'ogg', 'glb', 'vrm']
 
 const CONTENT_TYPES = {
   glb: 'model/gltf-binary',
@@ -40,6 +41,7 @@ const CONTENT_TYPES = {
   webp: 'image/webp',
   mp4: 'video/mp4',
   mp3: 'audio/mpeg',
+  ogg: 'audio/ogg',
 }
 
 const allowed = new Set(ALLOWED_EXTENSIONS)
@@ -118,6 +120,7 @@ const signatures = {
   hdr: buf => hasBytes(buf, 0, RADIANCE),
   mp4: buf => MP4_BOXES.some(box => hasBytes(buf, 4, box)),
   mp3: isMp3,
+  ogg: buf => hasBytes(buf, 0, bytes('OggS')),
   ply: buf => hasBytes(buf, 0, bytes('ply')),
   spz: buf => hasBytes(buf, 0, [0x1f, 0x8b]),
   gz: buf => hasBytes(buf, 0, [0x1f, 0x8b]),

@@ -33,6 +33,7 @@ const unlimited = readUploadLimitsEnv(
 const MAX_MB = 1
 const GLB = Buffer.concat([Buffer.from('glTF', 'latin1'), Buffer.from([2, 0, 0, 0, 1, 2, 3, 4])])
 const PNG = Buffer.concat([Buffer.from([0x89]), Buffer.from('PNG\r\n\x1a\n', 'latin1'), Buffer.from([1, 2, 3])])
+const OGG = Buffer.concat([Buffer.from('OggS', 'latin1'), Buffer.from([0, 2, 0, 0])])
 const HTML = Buffer.from('<!doctype html><script>document.title = "x"</script>')
 
 // --- world stand-ins: sockets with players whose effective rank mirrors playerRanks.getEffectiveRank ---
@@ -231,6 +232,20 @@ test('upload: builder -> 200 and stored; disallowed type, signature mismatch and
   stored.clear()
 })
 
+test('upload: builders can check and upload OGG audio; visitors and non-OGG content are refused', async () => {
+  const filename = `${'c'.repeat(64)}.ogg`
+  assert.deepEqual(await check(tokens.builder, filename), { status: 200, body: { exists: false } })
+  assert.equal((await post(tokens.visitor, [{ filename, data: OGG, type: 'audio/ogg' }])).status, 403)
+  assert.equal((await post(tokens.builder, [{ filename, data: OGG, type: 'audio/ogg' }])).status, 200)
+  assert.deepEqual(stored.get(filename), OGG)
+  assert.deepEqual(await check(tokens.builder, filename), { status: 200, body: { exists: true } })
+  const invalid = await post(tokens.builder, [{ filename: 'invalid.ogg', data: HTML, type: 'audio/ogg' }])
+  assert.equal(invalid.status, 415)
+  assert.equal(invalid.body.error, 'file content does not match .ogg')
+  assert.equal(stored.has('invalid.ogg'), false)
+  stored.clear()
+})
+
 test('upload: only one file per request; a second file rejects the whole request and stores nothing', async () => {
   const r = await post(tokens.builder, [
     { filename: 'one.glb', data: GLB },
@@ -393,6 +408,7 @@ test('assets: nosniff + explicit type on 200/206/304; sandbox + attachment off t
   await fs.writeFile(path.join(dir, 'a.js'), 'app.on("update", () => {})')
   await fs.writeFile(path.join(dir, 'a.png'), PNG)
   await fs.writeFile(path.join(dir, 'a.glb'), GLB)
+  await fs.writeFile(path.join(dir, 'a.ogg'), OGG)
   await fs.writeFile(path.join(dir, 'legacy.html'), HTML)
   const server = Fastify()
   server.register(assetRoutes, { root: dir })
@@ -416,6 +432,11 @@ test('assets: nosniff + explicit type on 200/206/304; sandbox + attachment off t
     const glb = await server.inject({ method: 'GET', url: '/assets/a.glb?v=1' })
     assert.equal(media(glb.headers), true)
     assert.equal(glb.headers['content-type'], 'model/gltf-binary')
+    const ogg = await server.inject({ method: 'GET', url: '/assets/a.ogg' })
+    assert.equal(ogg.statusCode, 200)
+    assert.equal(media(ogg.headers), true)
+    assert.equal(ogg.headers['content-type'], 'audio/ogg')
+    assert.deepEqual(ogg.rawPayload, OGG)
     const legacy = await server.inject({ method: 'GET', url: '/assets/legacy.html' })
     assert.equal(legacy.statusCode, 200)
     assert.equal(inert(legacy.headers), true, JSON.stringify(legacy.headers))

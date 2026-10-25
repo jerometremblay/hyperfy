@@ -43,7 +43,9 @@ test('extensionOf: text after the last dot, lowercased; no dot means no extensio
 })
 
 test('isAllowedExtension: the fork picker/loader types, exact match', () => {
-  assert.equal(ALLOWED_EXTENSIONS.length, 19)
+  assert.equal(ALLOWED_EXTENSIONS.length, 20)
+  assert.equal(isAllowedExtension('ogg'), true)
+  assert.equal(isUploadCheckFilename(`${hash}.ogg`), true)
   for (const ext of ALLOWED_EXTENSIONS) assert.equal(isAllowedExtension(ext), true, ext)
   const rejected = [
     'html',
@@ -197,6 +199,13 @@ test('matchesSignature: mp3 finds ID3 or a frame sync within the first 4 KB', ()
   assert.equal(matchesSignature('mp3', buf('')).ok, false)
 })
 
+test('matchesSignature: ogg requires the OggS capture pattern at the start', () => {
+  assert.equal(matchesSignature('ogg', buf('OggS', [0, 2, 0, 0])).ok, true)
+  for (const invalid of [buf(''), buf('Ogg'), buf('oggs'), buf(' OggS'), buf('<html>'), buf('ID3')]) {
+    assert.deepEqual(matchesSignature('ogg', invalid), { ok: false, reason: 'file content does not match .ogg' })
+  }
+})
+
 test('matchesSignature: js has no signature; a mismatch carries a reason naming the type', () => {
   assert.equal(matchesSignature('js', buf('<html>')).ok, true)
   assert.equal(matchesSignature('js', buf('')).ok, true)
@@ -224,6 +233,8 @@ test('assetHeaders: nosniff + explicit type everywhere; sandbox + attachment out
   assert.equal(assetHeaders('js')['Content-Type'], 'text/javascript')
   assert.equal(assetHeaders('hdr')['Content-Type'], 'image/vnd.radiance')
   assert.equal(assetHeaders('png')['Content-Type'], 'image/png')
+  assert.equal(assetHeaders('ogg')['Content-Type'], 'audio/ogg')
+  assert.equal(assetHeaders('ogg')['Content-Disposition'], undefined)
   assert.equal(assetHeaders('html')['Content-Type'], 'application/octet-stream')
   assert.equal(assetHeaders('svg')['Content-Type'], 'application/octet-stream')
 })
