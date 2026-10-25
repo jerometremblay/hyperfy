@@ -1,5 +1,5 @@
-import * as THREE from './three'
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { handlePhysicsFailure } from './physicsFailure.js'
+import { isFiniteF32, warnOnce } from './physxConvert.js'
 
 const cache = new Map() // id -> { id, pmesh, refs }
 
@@ -15,116 +15,107 @@ class PMeshHandle {
     if (this.released) return
     this.item.refs--
     if (this.item.refs === 0) {
-      this.item.pmesh.release()
+      if (this.item.pmesh.ptr !== 0) this.item.pmesh.release()
       cache.delete(this.item.id)
-      // console.log('DESTROY', this.item.id)
     }
     this.released = true
     this.value = null
   }
 }
 
-export function geometryToPxMesh(world, geometry, convex) {
+export function geometryToPxMesh(world, geometry, convex, entity) {
   const id = `${geometry.uuid}_${convex ? 'convex' : 'triangles'}`
 
-  // check and return cached if already cooked
   let item = cache.get(id)
   if (item) {
     return new PMeshHandle(item)
   }
 
-  const cookingParams = world.physics.cookingParams
-
-  // geometry = BufferGeometryUtils.mergeVertices(geometry)
-  // geometry = geometry.toNonIndexed()
-  // geometry.computeVertexNormals()
-
-  // console.log('geometry', geometry)
-  // console.log('convex', convex)
-
-  let position = geometry.attributes.position
-  const index = geometry.index
-
-  if (position.isInterleavedBufferAttribute) {
-    // deinterleave!
-    position = BufferGeometryUtils.deinterleaveAttribute(position)
-    position = new THREE.BufferAttribute(new Float32Array(position.array), position.itemSize, false)
+  // Decode the original attribute so normalized and interleaved positions stay intact.
+  const position = geometry.attributes.position
+  const positions = new Float32Array(position.count * 3)
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i)
+    const y = position.getY(i)
+    const z = position.getZ(i)
+    if (!isFiniteF32(x) || !isFiniteF32(y) || !isFiniteF32(z)) {
+      warnOnce('[physics] mesh has non-finite vertices')
+      return null
+    }
+    positions[i * 3] = x
+    positions[i * 3 + 1] = y
+    positions[i * 3 + 2] = z
   }
 
-  // console.log('position', position)
-  // console.log('index', index)
+  let indices
+  if (!convex) {
+    const index = geometry.index
+    indices = index?.array
+    if (
+      !index ||
+      index.itemSize !== 1 ||
+      index.normalized ||
+      index.isInterleavedBufferAttribute ||
+      !(indices instanceof Uint8Array || indices instanceof Uint16Array || indices instanceof Uint32Array)
+    ) {
+      warnOnce('[physics] mesh has unsupported indices')
+      return null
+    }
+    // Some GLBs use Uint8 indices; PhysX requires at least 16 bits.
+    if (indices instanceof Uint8Array) indices = new Uint16Array(indices)
+  }
 
-  const positions = position.array
-  const floatBytes = positions.length * positions.BYTES_PER_ELEMENT
-  const pointsPtr = PHYSX._webidl_malloc(floatBytes)
-  PHYSX.HEAPF32.set(positions, pointsPtr >> 2)
-
+  let pointsPtr = 0
+  let indexPtr = 0
   let desc
   let pmesh
+  try {
+    if (positions.byteLength) {
+      pointsPtr = PHYSX._webidl_malloc(positions.byteLength)
+      if (pointsPtr === 0) return null
+      PHYSX.HEAPF32.set(positions, pointsPtr >> 2)
+    }
 
-  if (convex) {
-    desc = new PHYSX.PxConvexMeshDesc()
-    desc.points.count = positions.length / 3
-    desc.points.stride = 12 // size of PhysX.PxVec3 in bytes
-    desc.points.data = pointsPtr
-    desc.flags.raise(PHYSX.PxConvexFlagEnum.eCOMPUTE_CONVEX) // eCHECK_ZERO_AREA_TRIANGLES
-    pmesh = PHYSX.CreateConvexMesh(cookingParams, desc)
-  } else {
-    desc = new PHYSX.PxTriangleMeshDesc()
-
-    desc.points.count = positions.length / 3
+    desc = convex ? new PHYSX.PxConvexMeshDesc() : new PHYSX.PxTriangleMeshDesc()
+    desc.points.count = position.count
     desc.points.stride = 12
     desc.points.data = pointsPtr
 
-    // console.log('points.count', desc.points.count)
-    // console.log('points.stride', desc.points.stride)
-
-    let indices = index.array // Uint16Array or Uint32Array
-
-    // for some reason i'm seeing Uint8Arrays in some glbs, specifically the vipe rooms.
-    // so we just coerce these up to u16
-    if (indices instanceof Uint8Array) {
-      indices = new Uint16Array(index.array.length)
-      for (let i = 0; i < index.array.length; i++) {
-        indices[i] = index.array[i]
-      }
-    }
-
-    const indexBytes = indices.length * indices.BYTES_PER_ELEMENT
-    const indexPtr = PHYSX._webidl_malloc(indexBytes)
-    if (indices instanceof Uint16Array) {
-      PHYSX.HEAPU16.set(indices, indexPtr >> 1)
-      desc.triangles.stride = 6 // 3 × 2 bytes per triangle
-      desc.flags.raise(PHYSX.PxTriangleMeshFlagEnum.e16_BIT_INDICES)
+    if (convex) {
+      desc.flags.raise(PHYSX.PxConvexFlagEnum.eCOMPUTE_CONVEX)
+      pmesh = PHYSX.CreateConvexMesh(world.physics.cookingParams, desc)
     } else {
-      // note: this is here for brevity but no longer used as we force everything to 16 bit
-      PHYSX.HEAPU32.set(indices, indexPtr >> 2)
-      desc.triangles.stride = 12 // 3 × 4 bytes per triangle
+      if (indices.byteLength) {
+        indexPtr = PHYSX._webidl_malloc(indices.byteLength)
+        if (indexPtr === 0) return null
+        if (indices instanceof Uint16Array) {
+          PHYSX.HEAPU16.set(indices, indexPtr >> 1)
+        } else {
+          PHYSX.HEAPU32.set(indices, indexPtr >> 2)
+        }
+      }
+      if (indices instanceof Uint16Array) {
+        desc.triangles.stride = 6
+        desc.flags.raise(PHYSX.PxTriangleMeshFlagEnum.e16_BIT_INDICES)
+      } else {
+        desc.triangles.stride = 12
+      }
+      desc.triangles.count = indices.length / 3
+      desc.triangles.data = indexPtr
+      pmesh = PHYSX.CreateTriangleMesh(world.physics.cookingParams, desc)
     }
-    desc.triangles.count = indices.length / 3
-    desc.triangles.data = indexPtr
-
-    // console.log('triangles.count', desc.triangles.count)
-    // console.log('triangles.stride', desc.triangles.stride)
-
-    // if (!desc.isValid()) {
-    //   throw new Error('Invalid mesh description')
-    // }
-
-    try {
-      pmesh = PHYSX.CreateTriangleMesh(cookingParams, desc)
-    } catch (err) {
-      console.error('geometryToPxMesh failed...')
-      console.error(err)
-    } finally {
-      PHYSX._webidl_free(indexPtr)
-    }
+  } catch (err) {
+    handlePhysicsFailure(err, { entity, world, phase: 'geometryToPxMesh' })
+    console.error('geometryToPxMesh failed...')
+    console.error(err)
+    return null
+  } finally {
+    if (indexPtr) PHYSX._webidl_free(indexPtr)
+    if (pointsPtr) PHYSX._webidl_free(pointsPtr)
+    if (desc) PHYSX.destroy(desc)
   }
 
-  PHYSX._webidl_free(pointsPtr)
-  PHYSX.destroy(desc)
-
-  if (!pmesh) return null
+  if (!pmesh || pmesh.ptr === 0) return null
 
   item = { id, pmesh, refs: 0 }
   cache.set(id, item)

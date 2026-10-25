@@ -1,5 +1,7 @@
+// Adapted from https://github.com/dwebxr/coo-world/commit/11e593c8695ac4db13d1a5b110468db3ddd407d8
 import moment from 'moment'
 import { uuid } from '../utils'
+import { CHAT_BODY_MAX_LENGTH, chatEnvelope, cutText, sanitizeChatMessage } from '../extras/chatPolicy'
 import { System } from './System'
 
 /**
@@ -22,6 +24,8 @@ export class Chat extends System {
   }
 
   add(msg, broadcast) {
+    msg = chatEnvelope(msg)
+    if (!msg) return
     if (!msg.id) msg.id = uuid()
     if (!msg.createdAt) msg.createdAt = moment().toISOString()
     // add to chat messages
@@ -46,6 +50,7 @@ export class Chat extends System {
   }
 
   command(text) {
+    text = cutText(text, CHAT_BODY_MAX_LENGTH)
     if (this.world.network.isServer) return
     const playerId = this.world.network.id
     const cmd = text.slice(1).split(' ')[0] // "/foo bar" -> "foo"
@@ -79,12 +84,14 @@ export class Chat extends System {
   send(text) {
     // only available as a client
     if (!this.world.network.isClient) return
+    const safe = sanitizeChatMessage({ body: text })
+    if (!safe) return
     const player = this.world.entities.player
     const data = {
       id: uuid(),
       from: player.data.name,
       fromId: player.data.id,
-      body: text,
+      body: safe.body,
       createdAt: moment().toISOString(),
     }
     this.add(data, true)

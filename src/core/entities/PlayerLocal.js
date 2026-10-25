@@ -16,6 +16,24 @@ import { hasRank, Ranks } from '../extras/ranks'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 import { getAvatarCameraFocus, getAvatarEyePosition } from '../extras/avatarFocus'
 import { XR_HAND_BONES } from '../extras/handTracking'
+import { isEmoteUrl, sanitizeName, sanitizePlayerSelfModify } from '../extras/entityModifyPolicy'
+import { readAnchorPose } from '../extras/anchorPose'
+import {
+  readVec3,
+  writeVec3,
+  warnOnce,
+  vec3ToPx,
+  vec3ToPxPos,
+  quatToPxRot,
+  pxToVec3,
+  pxToQuat,
+  scratchPxVec3,
+  scratchPxExtVec3,
+} from '../extras/physxConvert.js'
+
+const teleportPosition = new THREE.Vector3()
+const anchorPosition = new THREE.Vector3()
+const anchorQuaternion = new THREE.Quaternion()
 
 const UP = new THREE.Vector3(0, 1, 0)
 const DOWN = new THREE.Vector3(0, -1, 0)
@@ -624,7 +642,8 @@ export class PlayerLocal extends Entity {
 
   fixedUpdate(delta) {
     const anchor = this.getAnchorMatrix()
-    const snare = this.data.effect?.snare || 0
+    let snare = this.data.effect?.snare
+    if (!Number.isFinite(snare) || snare < 0 || snare > 1) snare = 0
 
     if (this.poseEditorActive) {
       this.jumpDown = false
@@ -662,8 +681,8 @@ export class PlayerLocal extends Entity {
           this.platform.actor = actor
           if (actor) {
             const platformPose = this.platform.actor.getGlobalPose()
-            v1.copy(platformPose.p)
-            q1.copy(platformPose.q)
+            pxToVec3(v1, platformPose.p)
+            pxToQuat(q1, platformPose.q)
             this.platform.prevTransform.compose(v1, q1, SCALE_IDENTITY)
           }
         }
@@ -672,8 +691,8 @@ export class PlayerLocal extends Entity {
           // get current platform transform
           const currTransform = m1
           const platformPose = this.platform.actor.getGlobalPose()
-          v1.copy(platformPose.p)
-          q1.copy(platformPose.q)
+          pxToVec3(v1, platformPose.p)
+          pxToQuat(q1, platformPose.q)
           currTransform.compose(v1, q1, SCALE_IDENTITY)
           // get delta transform
           const deltaTransform = m2.multiplyMatrices(currTransform, this.platform.prevTransform.clone().invert())
@@ -752,8 +771,8 @@ export class PlayerLocal extends Entity {
           const force = v1.set(0, -9.81 * 0.2, 0)
           PHYSX.PxRigidBodyExt.prototype.addForceAtPos(
             this.platform.actor,
-            force.toPxVec3(),
-            this.controller.position.toPxVec3(),
+            vec3ToPx(force, scratchPxVec3()),
+            vec3ToPx(this.controller.position, scratchPxExtVec3()),
             PHYSX.PxForceModeEnum.eFORCE,
             true
           )
@@ -880,8 +899,7 @@ export class PlayerLocal extends Entity {
       }
 
       // ground/air jump
-      const shouldJump =
-        this.grounded && !this.jumping && this.jumpDown && !this.data.effect?.snare && !this.data.effect?.freeze
+      const shouldJump = this.grounded && !this.jumping && this.jumpDown && !snare && !this.data.effect?.freeze
       const shouldAirJump =
         false && !this.grounded && !this.airJumped && this.jumpPressed && !this.world.builder?.enabled // temp: disabled
       if (shouldJump || shouldAirJump) {
@@ -1167,7 +1185,7 @@ export class PlayerLocal extends Entity {
     } else {
       rotY = this.cam.rotation.y
     }
-    if (this.data.effect?.turn) {
+    if (this.data.effect?.turn === true) {
       applyRotY = true
     } else if (this.moving || this.firstPerson) {
       applyRotY = true
@@ -1182,10 +1200,12 @@ export class PlayerLocal extends Entity {
     }
 
     // apply emote
-    let emote
-    if (this.data.effect?.emote) {
-      emote = this.data.effect.emote
+    const rawEmote = this.data.effect?.emote
+    if (!Object.is(this.effectEmoteRaw, rawEmote)) {
+      this.effectEmoteRaw = rawEmote
+      this.effectEmoteValid = typeof rawEmote === 'string' && isEmoteUrl(rawEmote)
     }
+    const emote = this.effectEmoteValid ? rawEmote : undefined
     if (this.emote !== emote) {
       this.emote = emote
     }
@@ -1193,8 +1213,8 @@ export class PlayerLocal extends Entity {
 
     // get locomotion mode
     let mode
-    if (this.data.effect?.emote) {
-      // emote = this.data.effect.emote
+    if (emote) {
+      // emote overrides locomotion
     } else if (this.flying) {
       mode = Modes.FLY
     } else if (this.airJumping) {
@@ -1279,7 +1299,7 @@ export class PlayerLocal extends Entity {
         hasChanges = true
       }
       if (this.lastState.e !== this.emote) {
-        data.e = this.emote
+        data.e = isEmoteUrl(this.emote) ? this.emote : null
         this.lastState.e = this.emote
         hasChanges = true
       }
@@ -1312,9 +1332,9 @@ export class PlayerLocal extends Entity {
     // console.log('lateUpdate')
 
     // if we're anchored, force into that pose
-    if (anchor) {
-      this.base.position.setFromMatrixPosition(anchor)
-      this.base.quaternion.setFromRotationMatrix(anchor)
+    if (anchor && readAnchorPose(anchor, anchorPosition, anchorQuaternion)) {
+      this.base.position.copy(anchorPosition)
+      this.base.quaternion.copy(anchorQuaternion)
       this.controller.teleport(this.base.position)
     }
     if (this.poseEditorActive) {
@@ -1377,11 +1397,7 @@ export class PlayerLocal extends Entity {
         if (t === 1) this.cameraTransition = null
       }
       simpleCamLerp(this.world, this.control.camera, target, delta)
-      const nearBlend = clamp(
-        (this.control.camera.zoom - THIRD_PERSON_MIN_ZOOM) / CAMERA_NEAR_BLEND_RANGE,
-        0,
-        1
-      )
+      const nearBlend = clamp((this.control.camera.zoom - THIRD_PERSON_MIN_ZOOM) / CAMERA_NEAR_BLEND_RANGE, 0, 1)
       const near = CAMERA_CLOSE_NEAR + (CAMERA_DEFAULT_NEAR - CAMERA_CLOSE_NEAR) * nearBlend
       if (this.world.camera.near !== near) {
         this.world.camera.near = near
@@ -1458,7 +1474,6 @@ export class PlayerLocal extends Entity {
         this.lastZoomAt = now
       }
     }
-
   }
 
   getCamera() {
@@ -1467,7 +1482,9 @@ export class PlayerLocal extends Entity {
 
   // Set the native view once; ordinary player input and collision remain active.
   setCamera({ target, quaternion: orientation, firstPerson = false, zoom = THIRD_PERSON_MIN_ZOOM, duration = 0 } = {}) {
-    const direction = orientation ? [orientation.x, orientation.y, orientation.z, orientation.w] : target && [target.x, target.y, target.z]
+    const direction = orientation
+      ? [orientation.x, orientation.y, orientation.z, orientation.w]
+      : target && [target.x, target.y, target.z]
     if (this.isXR || !direction || ![...direction, zoom, duration].every(Number.isFinite) || duration < 0) return false
     if (orientation && direction.every(value => value === 0)) return false
     // Leave first person at the nearest shoulder view before animating out.
@@ -1480,18 +1497,24 @@ export class PlayerLocal extends Entity {
       this.control.camera.quaternion.copy(this.cam.quaternion)
       this.control.camera.zoom = THIRD_PERSON_MIN_ZOOM
     }
-    this.cameraTransition = duration > 0 ? {
-      elapsed: 0, duration: Math.min(duration, 2),
-      offset: this.control.camera.position.clone().sub(this.base.position),
-      quaternion: this.control.camera.quaternion.clone(), zoom: this.control.camera.zoom,
-    } : null
+    this.cameraTransition =
+      duration > 0
+        ? {
+            elapsed: 0,
+            duration: Math.min(duration, 2),
+            offset: this.control.camera.position.clone().sub(this.base.position),
+            quaternion: this.control.camera.quaternion.clone(),
+            zoom: this.control.camera.zoom,
+          }
+        : null
     this.firstPerson = !!firstPerson
     this.avatar?.setFirstPerson(this.firstPerson)
     if (this.avatar) this.avatar.visible = true
     this.cam.zoom = firstPerson ? 0 : clamp(zoom, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
     const eye = this.base.position.clone().add(new THREE.Vector3(0, this.camHeight, 0))
     if (firstPerson && this.getAnchorMatrix?.() && this.avatar) {
-      getAvatarEyePosition(this.avatar, eye) || getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), eye, this.cameraFocusBounds)
+      getAvatarEyePosition(this.avatar, eye) ||
+        getAvatarCameraFocus(this.avatar, this.avatar.getHeight(), eye, this.cameraFocusBounds)
     }
     const rotation = new THREE.Euler(0, 0, 0, 'YXZ')
     const quaternion = new THREE.Quaternion()
@@ -1526,8 +1549,10 @@ export class PlayerLocal extends Entity {
   teleport({ position, rotationY }) {
     this.cameraTransition = null
     this.portalTraversal = null
-    position = position.isVector3 ? position : new THREE.Vector3().fromArray(position)
-    const hasRotation = isNumber(rotationY)
+    if (Array.isArray(position)) position = teleportPosition.fromArray(position)
+    if (!readVec3(position, teleportPosition, '[player] teleport position must be Vector3')) return
+    position = teleportPosition
+    const hasRotation = Number.isFinite(rotationY)
     // snap to position
     this.controller.teleport(position)
     this.velocity.set(0, 0, 0)
@@ -1550,6 +1575,9 @@ export class PlayerLocal extends Entity {
   }
 
   setEffect(effect, onEnd) {
+    const safe = sanitizePlayerSelfModify({ ef: effect }, this.data.id)
+    if (!safe || !Object.prototype.hasOwnProperty.call(safe, 'ef')) return
+    effect = safe.ef
     if (this.data.effect === effect) return
     if (this.data.effect) {
       this.data.effect = null
@@ -1589,6 +1617,8 @@ export class PlayerLocal extends Entity {
   }
 
   setName(name) {
+    name = sanitizeName(name)
+    if (name === undefined) return
     this.modify({ name })
     this.world.network.send('entityModified', { id: this.data.id, name })
   }

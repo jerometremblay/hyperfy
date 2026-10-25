@@ -2,28 +2,38 @@ import moment from 'moment'
 import { isArray, isEqual, isFunction, isNumber, isPlainObject } from 'lodash-es'
 import * as THREE from '../extras/three'
 
+import { readVec3, isFiniteF32, warnOnce } from '../extras/physxConvert.js'
+
 import { System } from './System'
 import { uuid } from '../utils'
-import { getRef } from '../nodes/Node'
+import { getNodeRef, resolveValueRef } from '../nodes/Node'
 import { Layers } from '../extras/Layers'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { warn } from '../extras/warn'
+import { applyCreateOptions, splitCreateOptions } from '../extras/createOptions'
+import { internalEvents } from '../extras/internalEvents'
+import { resolveOpenURL } from '../extras/worldOpenPolicy'
+import { toScriptError } from '../extras/scriptValues'
+import { createEventLedger } from '../extras/appEventQueue'
+
+const _rayOrigin = new THREE.Vector3()
+const _rayDir = new THREE.Vector3()
+const _overlapOrigin = new THREE.Vector3()
 
 const isBrowser = typeof window !== 'undefined'
 
-const internalEvents = [
-  'transform',
-  'location',
-  'fixedUpdate',
-  'updated',
-  'lateUpdate',
-  'destroy',
-  'enter',
-  'leave',
-  'chat',
-  'command',
-  'health',
-]
+// create options from scripts: geometry may be null, a geometry ref from another node, or a
+// real geometry (resolved here, once, like the proxy setter)
+function resolveCreateOption(key, value) {
+  if (key === 'geometry') {
+    if (value == null || value instanceof THREE.BufferGeometry) return value
+    const ref = resolveValueRef(value)
+    if (ref) return ref.value
+    console.error('[app.create] geometry invalid')
+    return undefined
+  }
+  return value
+}
 
 /**
  * Apps System
@@ -37,6 +47,7 @@ export class Apps extends System {
     super(world)
     this.spawnTimes = new WeakMap()
     this.pendingSpawns = new WeakMap()
+    this.eventLedger = createEventLedger()
     this.initWorldHooks()
     this.initAppHooks()
   }
@@ -166,8 +177,11 @@ export class Apps extends System {
         world.network.dirtyApps.add(id)
       },
       add(entity, pNode) {
-        const node = getRef(pNode)
-        if (!node) return
+        const node = getNodeRef(pNode)
+        if (!node) {
+          if (pNode != null) console.error('[world.add] expected a node')
+          return
+        }
         if (node.parent) {
           node.parent.remove(node)
         }
@@ -175,16 +189,22 @@ export class Apps extends System {
         node.activate({ world, entity })
       },
       remove(entity, pNode) {
-        const node = getRef(pNode)
-        if (!node) return
+        const node = getNodeRef(pNode)
+        if (!node) {
+          if (pNode != null) console.error('[world.remove] expected a node')
+          return
+        }
         if (node.parent) return // its not in world
         if (!entity.worldNodes.has(node)) return
         entity.worldNodes.delete(node)
         node.deactivate()
       },
       attach(entity, pNode) {
-        const node = getRef(pNode)
-        if (!node) return
+        const node = getNodeRef(pNode)
+        if (!node) {
+          if (pNode != null) console.error('[world.attach] expected a node')
+          return
+        }
         const parent = node.parent
         if (!parent) return
         const finalMatrix = new THREE.Matrix4()
@@ -224,6 +244,9 @@ export class Apps extends System {
       },
       chat(entity, msg, broadcast) {
         if (!msg) return
+        if (world.network.isServer) {
+          return world.network.asScript(() => world.chat.add(msg, broadcast), entity, 'chat')
+        }
         world.chat.add(msg, broadcast)
       },
       getPlayer(entity, playerId) {
@@ -246,15 +269,21 @@ export class Apps extends System {
         return mask
       },
       raycast(entity, origin, direction, maxDistance, layerMask) {
-        if (!origin?.isVector3) throw new Error('[raycast] origin must be Vector3')
-        if (!direction?.isVector3) throw new Error('[raycast] direction must be Vector3')
-        if (maxDistance !== undefined && maxDistance !== null && !isNumber(maxDistance)) {
+        const validOrigin = readVec3(origin, _rayOrigin, '[raycast] origin must be Vector3')
+        const validDirection = readVec3(direction, _rayDir, '[raycast] direction must be Vector3')
+        maxDistance ??= Infinity
+        if (typeof maxDistance !== 'number' || Number.isNaN(maxDistance) || maxDistance < 0) {
           throw new Error('[raycast] maxDistance must be number')
         }
-        if (layerMask !== undefined && layerMask !== null && !isNumber(layerMask)) {
+        layerMask ??= 0
+        if (!Number.isInteger(layerMask) || layerMask < -2147483648 || layerMask > 4294967295) {
           throw new Error('[raycast] layerMask must be number')
         }
-        const hit = world.physics.raycast(origin, direction, maxDistance, layerMask)
+        if (!validOrigin || !validDirection) {
+          warnOnce('[raycast] ignored a non-finite origin or direction')
+          return null
+        }
+        const hit = world.physics.raycast(_rayOrigin, _rayDir, maxDistance, layerMask >>> 0)
         if (!hit) return null
         if (!self.raycastHit) {
           self.raycastHit = {
@@ -273,7 +302,19 @@ export class Apps extends System {
         return self.raycastHit
       },
       overlapSphere(entity, radius, origin, layerMask) {
-        const hits = world.physics.overlapSphere(radius, origin, layerMask)
+        const validOrigin = readVec3(origin, _overlapOrigin, '[overlapSphere] origin must be Vector3')
+        if (!isFiniteF32(radius) || Math.fround(radius) <= 0) {
+          throw new Error('[overlapSphere] radius must be a positive number')
+        }
+        layerMask ??= 0
+        if (!Number.isInteger(layerMask) || layerMask < -2147483648 || layerMask > 4294967295) {
+          throw new Error('[overlapSphere] layerMask must be number')
+        }
+        if (!validOrigin) {
+          warnOnce('[overlapSphere] ignored a non-finite origin')
+          return []
+        }
+        const hits = world.physics.overlapSphere(radius, _overlapOrigin, layerMask >>> 0)
         return hits.map(hit => {
           return hit.proxy
         })
@@ -292,11 +333,20 @@ export class Apps extends System {
 
         if (world.network.isClient) {
           try {
-            const resolvedUrl = world.resolveURL(url)
+            // http(s) only, never a file from the assets store; new windows get no opener
+            const resolvedUrl = resolveOpenURL(url, {
+              resolve: value => world.resolveURL(value),
+              base: window.location.href,
+              assetsUrl: world.assetsUrl,
+            })
+            if (!resolvedUrl) {
+              console.error('[world.open] only http(s) URLs outside of /assets/ can be opened')
+              return
+            }
 
             setTimeout(() => {
               if (newWindow) {
-                window.open(resolvedUrl, '_blank')
+                window.open(resolvedUrl, '_blank', 'noopener,noreferrer')
               } else {
                 window.location.href = resolvedUrl
               }
@@ -320,7 +370,7 @@ export class Apps extends System {
               if (!hook.dead) resolve(photo)
             },
             err => {
-              if (!hook.dead) reject(err)
+              if (!hook.dead) reject(toScriptError(err))
             }
           )
         })
@@ -336,10 +386,10 @@ export class Apps extends System {
             if (!glb) glb = await world.loader.load(type, url)
             if (hook.dead) return
             const root = glb.toNodes()
-            resolve(type === 'avatar' ? root.children[0] : root)
+            resolve(type === 'avatar' ? root.children[0].getProxy() : root.getProxy())
           } catch (err) {
             if (hook.dead) return
-            reject(err)
+            reject(toScriptError(err))
           }
         })
       },
@@ -425,23 +475,28 @@ export class Apps extends System {
       },
       send(entity, name, data, ignoreSocketId) {
         if (internalEvents.includes(name)) {
-          return console.error(`apps cannot send internal events (${name})`)
+          console.error(`apps cannot send internal events (${name})`)
+          return false
         }
         // NOTE: on the client ignoreSocketId is a no-op because it can only send events to the server
         const event = [entity.data.id, entity.blueprint.version, name, data]
-        world.network.send('entityEvent', event, ignoreSocketId)
+        if (world.network.isServer) {
+          return world.network.asScript(() => world.network.send('entityEvent', event, ignoreSocketId), entity, name)
+        }
+        return world.network.send('entityEvent', event, ignoreSocketId)
       },
       sendTo(entity, playerId, name, data) {
         if (internalEvents.includes(name)) {
-          return console.error(`apps cannot send internal events (${name})`)
+          console.error(`apps cannot send internal events (${name})`)
+          return false
         }
         if (!world.network.isServer) {
           throw new Error('sendTo can only be called on the server')
         }
         const player = world.entities.get(playerId)
-        if (!player) return
+        if (!player) return false
         const event = [entity.data.id, entity.blueprint.version, name, data]
-        world.network.sendTo(playerId, 'entityEvent', event)
+        return world.network.asScript(() => world.network.sendTo(playerId, 'entityEvent', event), entity, name)
       },
       emit(entity, name, data) {
         if (internalEvents.includes(name)) {
@@ -450,8 +505,12 @@ export class Apps extends System {
         world.events.emit(name, data)
       },
       create(entity, name, data) {
-        const node = entity.createNode(name, data)
-        return node.getProxy()
+        // construct from host-safe data, then apply the rest through the proxy's own setters
+        const { ctorData, options } = splitCreateOptions(data)
+        const node = entity.createNode(name, ctorData)
+        const proxy = node.getProxy()
+        applyCreateOptions(proxy, options, resolveCreateOption)
+        return proxy
       },
       control(entity, options) {
         entity.control?.release()

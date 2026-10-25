@@ -1,7 +1,12 @@
+// Session/snapshot fixes adapted from https://github.com/dwebxr/coo-world/commit/043b40c69a2d78e09df53ac4f5a755d607a61824
+import { createUploadQueue, fetchWithRetry, CHECK_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from '../extras/uploadQueue'
 import moment from 'moment'
 import { throttle } from 'lodash-es'
 import { emoteUrls } from '../extras/playerEmotes'
-import { readPacket, writePacket } from '../packets'
+import { readPacket, writeClientPacket, PROTOCOL_VERSION } from '../packets'
+import { packetByteLimit, packetNodeLimit } from '../extras/inboundPolicy'
+import { strictDecode } from '../extras/strictDecode'
+import { sanitizeTeleport, sanitizePush, sanitizeSessionAvatar } from '../extras/playerRelayPolicy'
 import { storage } from '../storage'
 import { uuid } from '../utils'
 import { hashFile } from '../utils-client'
@@ -17,9 +22,12 @@ import { System } from './System'
 export class ClientNetwork extends System {
   constructor(world) {
     super(world)
+    this.uploadQueue = createUploadQueue()
     this.ids = -1
     this.ws = null
     this.apiUrl = null
+    this.authToken = undefined
+    this.onAuthToken = null
     this.id = null
     this.isClient = true
     this.queue = []
@@ -32,22 +40,26 @@ export class ClientNetwork extends System {
     this.sendLoading = throttle(this.publishLoading, 250)
   }
 
-  init({ wsUrl, name, avatar }) {
-    const authToken = storage.get('authToken')
-    let url = `${wsUrl}?authToken=${authToken}`
-    if (this.world.loader?.loading) url += '&loading=1'
-    if (name) url += `&name=${encodeURIComponent(name)}`
-    if (avatar) url += `&avatar=${encodeURIComponent(avatar)}`
-    const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+  init({ wsUrl, name, avatar, authToken, onAuthToken }) {
+    this.onAuthToken = typeof onAuthToken === 'function' ? onAuthToken : null
+    this.authToken = authToken ?? (this.onAuthToken ? '' : storage.get('authToken')) ?? ''
+    const endpoint = new URL(wsUrl)
+    endpoint.searchParams.set('v', String(PROTOCOL_VERSION))
+    if (this.authToken) endpoint.searchParams.set('authToken', this.authToken)
+    if (this.world.loader?.loading) endpoint.searchParams.set('loading', '1')
+    if (name) endpoint.searchParams.set('name', name)
+    if (avatar) endpoint.searchParams.set('avatar', avatar)
+    const query = new URLSearchParams(typeof window !== 'undefined' ? window.location?.search || '' : '')
     for (const key of ['portalId', 'portalPose']) {
       const value = query.get(key)
-      if (value) url += `&${key}=${encodeURIComponent(value)}`
+      if (value) endpoint.searchParams.set(key, value)
     }
-    this.ws = new WebSocket(url)
+    endpoint.hash = ''
+    this.ws = new WebSocket(endpoint.href)
     this.ws.binaryType = 'arraybuffer'
     this.ws.addEventListener('message', this.onPacket)
     this.ws.addEventListener('close', this.onClose)
-    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.onVisibilityChange)
+    if (typeof document !== 'undefined') document.addEventListener?.('visibilitychange', this.onVisibilityChange)
     if (typeof window !== 'undefined') window.addEventListener?.('pagehide', this.savePlayerSession)
     this.world.loader?.on?.('loading', this.onLoadingChanged)
     this.world.on?.('ready', this.onPlayerReady)
@@ -66,21 +78,51 @@ export class ClientNetwork extends System {
     }
   }
 
-  send(name, data) {
-    // console.log('->', name, data)
-    const packet = writePacket(name, data)
-    this.ws.send(packet)
-    if (this.world.profiler?.active) this.world.profiler.network(name, data, packet.byteLength, true)
+  fits(name, data) {
+    try {
+      const packet = writeClientPacket(name, data)
+      return (
+        packet.byteLength <= packetByteLimit(name) &&
+        strictDecode(packet, { maxNodes: packetNodeLimit(name), build: false }).ok
+      )
+    } catch {
+      return false
+    }
   }
 
-  async upload(file) {
+  send(name, data) {
+    // console.log('->', name, data)
+    let packet
+    try {
+      packet = writeClientPacket(name, data)
+    } catch {
+      return false
+    }
+    if (
+      packet.byteLength > packetByteLimit(name) ||
+      !strictDecode(packet, { maxNodes: packetNodeLimit(name), build: false }).ok
+    )
+      return false
+    if (this.ws?.readyState !== 1) return false
+    this.ws.send(packet)
+    if (this.world.profiler?.active) this.world.profiler.network(name, data, packet.byteLength, true)
+    return true
+  }
+
+  upload(file, options) {
+    return this.uploadQueue.enqueue(signal => this.uploadFile(file, signal), options)
+  }
+
+  async uploadFile(file, signal) {
+    const token = this.authToken ?? storage.get('authToken')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
     {
       // first check if we even need to upload it
       const hash = await hashFile(file)
       const ext = file.name.split('.').pop().toLowerCase()
       const filename = `${hash}.${ext}`
-      const url = `${this.apiUrl}/upload-check?filename=${filename}`
-      const resp = await fetch(url)
+      const url = `${this.apiUrl}/upload-check?filename=${filename}&size=${file.size}`
+      const resp = await fetchWithRetry(url, { headers }, { timeoutMs: CHECK_TIMEOUT_MS, signal })
       if (!resp.ok) throw new Error(`Asset upload check failed (${resp.status}).`)
       const data = await resp.json()
       if (data.exists) return // console.log('already uploaded:', filename)
@@ -89,10 +131,15 @@ export class ClientNetwork extends System {
     const form = new FormData()
     form.append('file', file)
     const url = `${this.apiUrl}/upload`
-    const resp = await fetch(url, {
-      method: 'POST',
-      body: form,
-    })
+    const resp = await fetchWithRetry(
+      url,
+      {
+        method: 'POST',
+        body: form,
+        headers,
+      },
+      { timeoutMs: UPLOAD_TIMEOUT_MS, signal }
+    )
     if (!resp.ok) throw new Error(`Asset upload failed (${resp.status}).`)
   }
 
@@ -183,7 +230,7 @@ export class ClientNetwork extends System {
     this.world.settings.deserialize(data.settings)
     this.world.settings.setHasAdminCode(data.hasAdminCode)
     this.world.chat.deserialize(data.chat)
-    this.world.ai.deserialize(data.ai)
+    this.world.ai?.deserialize(data.ai)
     this.world.blueprints.deserialize(data.blueprints)
     if (data.playerSession) {
       const player = data.entities.find(entity => entity.type === 'player' && entity.id === data.id)
@@ -191,7 +238,9 @@ export class ClientNetwork extends System {
     }
     this.world.entities.deserialize(data.entities)
     this.world.livekit?.deserialize(data.livekit)
-    storage.set('authToken', data.authToken)
+    this.authToken = data.authToken ?? ''
+    if (this.onAuthToken) this.onAuthToken(data.authToken)
+    else storage.set('authToken', data.authToken)
     this.onLoadingChanged()
   }
 
@@ -259,15 +308,18 @@ export class ClientNetwork extends System {
   }
 
   onPlayerTeleport = data => {
-    this.world.entities.player?.teleport(data)
+    const safe = sanitizeTeleport(data)
+    if (safe) this.world.entities.player?.teleport(safe)
   }
 
   onPlayerPush = data => {
-    this.world.entities.player?.push(data.force)
+    const safe = sanitizePush(data)
+    if (safe) this.world.entities.player?.push(safe.force)
   }
 
   onPlayerSessionAvatar = data => {
-    this.world.entities.player?.setSessionAvatar(data.avatar)
+    const safe = sanitizeSessionAvatar(data)
+    if (safe) this.world.entities.player?.setSessionAvatar(safe.avatar)
   }
 
   onPlayerSeatPoseResult = data => {
@@ -333,6 +385,8 @@ export class ClientNetwork extends System {
   }
 
   onClose = code => {
+    if (this.world.fatalError) this.queue.length = 0
+    else this.flush()
     this.sendLoading.cancel()
     this.world.chat.add({
       id: uuid(),
@@ -351,7 +405,7 @@ export class ClientNetwork extends System {
     this.world.off?.('ready', this.onPlayerReady)
     this.savePlayerSession()
     if (typeof window !== 'undefined') window.removeEventListener?.('pagehide', this.savePlayerSession)
-    if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', this.onVisibilityChange)
+    if (typeof document !== 'undefined') document.removeEventListener?.('visibilitychange', this.onVisibilityChange)
     if (this.ws) {
       this.ws.removeEventListener('message', this.onPacket)
       this.ws.removeEventListener('close', this.onClose)

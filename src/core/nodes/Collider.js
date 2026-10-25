@@ -1,7 +1,9 @@
+import { handlePhysicsFailure } from '../extras/physicsFailure.js'
 import * as THREE from '../extras/three'
+import { vec3ToPxPos, quatToPxRot, warnOnce } from '../extras/physxConvert.js'
 import { isBoolean, isNumber } from 'lodash-es'
 
-import { getRef, Node, secureRef } from './Node'
+import { getRef, Node, resolveValueRef, secureRef } from './Node'
 
 import { Layers } from '../extras/Layers'
 import { geometryToPxMesh } from '../extras/geometryToPxMesh'
@@ -59,10 +61,12 @@ export class Collider extends Node {
     } else if (this._type === 'geometry') {
       // note: triggers MUST be convex according to PhysX/Unity
       const isConvex = this._trigger || this._convex
-      pmesh = geometryToPxMesh(this.ctx.world, this._geometry, isConvex)
+      pmesh = geometryToPxMesh(this.ctx.world, this._geometry, isConvex, this.ctx.entity)
       if (!pmesh) return console.error('failed to generate collider pmesh')
       this.matrixWorld.decompose(_v1, _q1, _v2)
-      const scale = new PHYSX.PxMeshScale(new PHYSX.PxVec3(_v2.x, _v2.y, _v2.z), new PHYSX.PxQuat(0, 0, 0, 1))
+      const scaleVec = new PHYSX.PxVec3(_v2.x, _v2.y, _v2.z)
+      const scaleQuat = new PHYSX.PxQuat(0, 0, 0, 1)
+      const scale = new PHYSX.PxMeshScale(scaleVec, scaleQuat)
       if (isConvex) {
         geometry = new PHYSX.PxConvexMeshGeometry(pmesh.value, scale)
       } else {
@@ -71,6 +75,8 @@ export class Collider extends Node {
         geometry = new PHYSX.PxTriangleMeshGeometry(pmesh.value, scale)
       }
       PHYSX.destroy(scale)
+      PHYSX.destroy(scaleVec)
+      PHYSX.destroy(scaleQuat)
     }
     const material = this.ctx.world.physics.getMaterial(this._staticFriction, this._dynamicFriction, this._restitution)
     const flags = new PHYSX.PxShapeFlags()
@@ -84,32 +90,39 @@ export class Collider extends Node {
     if (!this._trigger) {
       pairFlags |= PHYSX.PxPairFlagEnum.eNOTIFY_CONTACT_POINTS
     }
-    this.pmesh = pmesh
     const filterData = new PHYSX.PxFilterData(layer.group, layer.mask, pairFlags, 0)
+    let shape
     try {
-      this.shape = this.ctx.world.physics.physics.createShape(geometry, material, true, flags)
+      shape = this.ctx.world.physics.physics.createShape(geometry, material, true, flags)
     } catch (err) {
+      handlePhysicsFailure(err, { entity: this.ctx.entity, world: this.ctx.world, phase: 'Collider.mount' })
       console.error('[collider] failed to create shape')
       console.error(err)
-      // cleanup
-      if (geometry) {
-        PHYSX.destroy(geometry)
-      }
-      if (this.pmesh) {
-        this.pmesh.release()
-        this.pmesh = null
-      }
+    } finally {
+      PHYSX.destroy(flags)
+    }
+    if (!shape || shape.ptr === 0) {
+      this.shape = null
+      PHYSX.destroy(geometry)
+      PHYSX.destroy(filterData)
+      pmesh?.release()
+      this.pmesh = null
+      warnOnce('[collider] failed to create shape')
       return
     }
+    this.shape = shape
+    this.pmesh = pmesh
     this.shape.setQueryFilterData(filterData)
     this.shape.setSimulationFilterData(filterData)
+    PHYSX.destroy(filterData)
     // const parentWorldScale = _v2
     // this.parent.matrixWorld.decompose(_v1, _q1, parentWorldScale)
     const position = _v1.copy(this.position).multiply(this.parent.scale)
     const pose = new PHYSX.PxTransform()
-    position.toPxTransform(pose)
-    this.quaternion.toPxTransform(pose)
+    vec3ToPxPos(position, pose)
+    quatToPxRot(this.quaternion, pose)
     this.shape.setLocalPose(pose)
+    PHYSX.destroy(pose)
     this.parent?.addShape?.(this.shape)
     // console.log('geometry', geometry)
     // this._geometry = geometry
@@ -397,6 +410,16 @@ export class Collider extends Node {
           return self.geometry
         },
         set geometry(value) {
+          // scripts may pass null, a geometry ref from another node, or a real geometry.
+          // a ref is resolved here, once, so the node only ever stores the resolved geometry
+          if (value != null && !(value instanceof THREE.BufferGeometry)) {
+            const ref = resolveValueRef(value)
+            if (!ref) {
+              console.error('[collider] geometry invalid')
+              return
+            }
+            value = ref.value
+          }
           self.geometry = value
         },
         get convex() {

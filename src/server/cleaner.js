@@ -1,6 +1,7 @@
 import fs from 'fs-extra'
 import path from 'path'
 import { assets } from './assets'
+import { isPlainObject } from '../core/extras/entityModifyPolicy'
 import { collections } from './collections'
 
 class Cleaner {
@@ -20,6 +21,13 @@ class Cleaner {
     const blueprintRows = await db('blueprints')
     for (const row of blueprintRows) {
       const blueprint = JSON.parse(row.data)
+      if (
+        !isPlainObject(blueprint) ||
+        typeof blueprint.id !== 'string' ||
+        !blueprint.id ||
+        (row.id && blueprint.id !== row.id)
+      )
+        throw new Error('invalid blueprint record')
       blueprints.add(blueprint)
     }
     // get all entities
@@ -27,6 +35,8 @@ class Cleaner {
     const entityRows = await db('entities')
     for (const row of entityRows) {
       const entity = JSON.parse(row.data)
+      if (!isPlainObject(entity) || typeof entity.blueprint !== 'string' || !entity.blueprint)
+        throw new Error('invalid entity record')
       entities.push(entity)
     }
     // track a list of assets to keep
@@ -46,7 +56,7 @@ class Cleaner {
     }
     // keep world image & world avatar assets
     const settingsRow = await db('config').where('key', 'settings').first()
-    const settings = JSON.parse(settingsRow.value)
+    const settings = JSON.parse(settingsRow?.value || '{}')
     if (settings.image) assetsToKeep.add(settings.image.url.replace('asset://', ''))
     if (settings.avatar) assetsToKeep.add(settings.avatar.url.replace('asset://', ''))
     // delete orphaned blueprints (no longer referenced by an entity)
@@ -58,6 +68,20 @@ class Cleaner {
         blueprintsToDelete.push(blueprint)
       }
     }
+    // Validate all trees, including orphans, before allowing any destructive work.
+    for (const value of [
+      ...blueprints,
+      ...blueprintsToDelete,
+      ...entities,
+      ...collections.blueprints,
+      settings,
+      storage,
+    ]) {
+      if (value != null && !isPlainObject(value)) throw new Error('invalid persisted record')
+      discoverAssets(value, new Set())
+    }
+    for (const blueprint of blueprints) discoverAssets(blueprint, assetsToKeep)
+    discoverAssets(settings, assetsToKeep)
     if (blueprintsToDelete.length) {
       console.log(`[clean] ${blueprintsToDelete.length} blueprints can be deleted`)
       if (!dryrun) {
@@ -108,6 +132,23 @@ class Cleaner {
       }
     }
     console.log('[clean] complete')
+  }
+}
+
+function discoverAssets(value, found) {
+  const pending = [value]
+  while (pending.length) {
+    const item = pending.pop()
+    if (typeof item === 'string' && item.startsWith('asset://')) {
+      const filename = item.slice(8).split(/[?#]/)[0]
+      if (!filename || filename.includes('/') || filename.includes('..')) throw new Error('invalid asset reference')
+      found.add(filename)
+    } else if (item && typeof item === 'object') {
+      for (const [key, value] of Object.entries(item)) {
+        if (key === 'url' && value != null && typeof value !== 'string') throw new Error('invalid asset url')
+        pending.push(value)
+      }
+    }
   }
 }
 

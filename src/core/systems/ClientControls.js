@@ -4,6 +4,8 @@ import { buttons, codeToProp } from '../extras/buttons'
 import { XR_HAND_JOINTS } from '../extras/handTracking'
 import * as THREE from '../extras/three'
 import { System } from './System'
+import { createControlProxy } from './controlProxy'
+import { callEntry, callScript } from '../extras/callScript'
 
 const LMB = 1 // bitmask
 const RMB = 2 // bitmask
@@ -95,6 +97,7 @@ export class ClientControls extends System {
 
   applyXRRig(xrRig) {
     for (const control of this.controls) {
+      if (!control.active) continue
       if (control.entries.xrLeftRayPose) {
         const pose = control.entries.xrLeftRayPose
         const scale = v1.set(1, 1, 1)
@@ -117,6 +120,7 @@ export class ClientControls extends System {
   preFixedUpdate() {
     // mouse wheel delta
     for (const control of this.controls) {
+      if (!control.active) continue
       if (control.entries.scrollDelta) {
         control.entries.scrollDelta.value = this.scroll.delta
         if (control.entries.scrollDelta.capture) break
@@ -377,6 +381,7 @@ export class ClientControls extends System {
     this.scroll.delta = 0
     // clear buttons
     for (const control of this.controls) {
+      if (!control.active) continue
       for (const key in control.entries) {
         const value = control.entries[key]
         if (value.$button) {
@@ -388,6 +393,7 @@ export class ClientControls extends System {
     // update camera
     let written
     for (const control of this.controls) {
+      if (!control.active) continue
       const camera = control.entries.camera
       if (camera?.write && !written) {
         this.world.rig.position.copy(camera.position)
@@ -432,6 +438,9 @@ export class ClientControls extends System {
     let reticleSupressor
     const control = {
       options,
+      get active() {
+        return !self.world.fatalError && !options.object?.crashed
+      },
       entries,
       actions: null,
       api: {
@@ -463,7 +472,7 @@ export class ClientControls extends System {
           if (idx === -1) return
           this.controls.splice(idx, 1)
           if (control.actions?.length) self.buildActions()
-          options.onRelease?.()
+          if (control.active) callScript(options.onRelease)
         },
       },
     }
@@ -477,42 +486,41 @@ export class ClientControls extends System {
     } else {
       this.controls.splice(idx, 0, control)
     }
-    // return proxy api
-    return new Proxy(control, {
-      get(target, prop) {
-        // internal property
-        if (prop in target.api) {
-          return target.api[prop]
-        }
-        // existing item
-        if (prop in entries) {
-          return entries[prop]
-        }
-        // new button item
-        if (buttons.has(prop)) {
-          entries[prop] = createButton(self, control, prop)
-          return entries[prop]
-        }
-        // new item based on type
-        const createType = controlTypes[prop]
-        if (createType) {
-          entries[prop] = createType(self, control, prop)
-          return entries[prop]
-        }
-        return undefined
-      },
+    // return proxy api (over an empty target so the control itself stays unreachable)
+    return createControlProxy(prop => {
+      // internal property
+      if (prop in control.api) {
+        return control.api[prop]
+      }
+      // existing item
+      if (prop in entries) {
+        return entries[prop]
+      }
+      // new button item
+      if (buttons.has(prop)) {
+        entries[prop] = createButton(self, control, prop)
+        return entries[prop]
+      }
+      // new item based on type
+      const createType = controlTypes[prop]
+      if (createType) {
+        entries[prop] = createType(self, control, prop)
+        return entries[prop]
+      }
+      return undefined
     })
   }
 
   releaseAllButtons() {
     // release all down buttons because they can get stuck
     for (const control of this.controls) {
+      if (!control.active) continue
       for (const key in control.entries) {
         const value = control.entries[key]
         if (value.$button && value.down) {
           value.released = true
           value.down = false
-          value.onRelease?.()
+          callControlEntry(control, value, 'onRelease')
         }
       }
     }
@@ -521,6 +529,7 @@ export class ClientControls extends System {
   buildActions() {
     this.actions = []
     for (const control of this.controls) {
+      if (!control.active) continue
       const actions = control.actions
       if (actions) {
         for (const action of actions) {
@@ -540,22 +549,24 @@ export class ClientControls extends System {
     if (down) {
       this.buttonsDown.add(prop)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries[prop]
         if (button?.$button) {
           button.pressed = true
           button.down = true
-          const capture = button.onPress?.()
+          const capture = callControlEntry(control, button, 'onPress')
           if (capture || button.capture) break
         }
       }
     } else {
       this.buttonsDown.delete(prop)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries[prop]
         if (button?.$button && button.down) {
           button.down = false
           button.released = true
-          button.onRelease?.()
+          callControlEntry(control, button, 'onRelease')
         }
       }
     }
@@ -566,25 +577,27 @@ export class ClientControls extends System {
       if (this.buttonsDown.has(prop)) return
       this.buttonsDown.add(prop)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries[prop]
         if (button?.$button) {
           button.pressed = true
           button.down = true
-          const capture = button.onPress?.()
+          const capture = callControlEntry(control, button, 'onPress')
           if (capture || button.capture) break
         }
-        const capture = control.onButtonPress?.(prop, text)
+        const capture = control.active && callScript(control.onButtonPress, prop)
         if (capture) break
       }
     } else {
       if (!this.buttonsDown.has(prop)) return
       this.buttonsDown.delete(prop)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries[prop]
         if (button?.$button && button.down) {
           button.down = false
           button.released = true
-          button.onRelease?.()
+          callControlEntry(control, button, 'onRelease')
         }
       }
     }
@@ -603,14 +616,15 @@ export class ClientControls extends System {
     const text = e.key
     this.buttonsDown.add(prop)
     for (const control of this.controls) {
+      if (!control.active) continue
       const button = control.entries[prop]
       if (button?.$button) {
         button.pressed = true
         button.down = true
-        const capture = button.onPress?.()
+        const capture = callControlEntry(control, button, 'onPress')
         if (capture || button.capture) break
       }
-      const capture = control.onButtonPress?.(prop, text)
+      const capture = control.active && control.onButtonPress?.(prop, text)
       if (capture) break
     }
   }
@@ -627,11 +641,12 @@ export class ClientControls extends System {
     const prop = codeToProp[code]
     this.buttonsDown.delete(prop)
     for (const control of this.controls) {
+      if (!control.active) continue
       const button = control.entries[prop]
       if (button?.$button && button.down) {
         button.down = false
         button.released = true
-        button.onRelease?.()
+        callControlEntry(control, button, 'onRelease')
       }
     }
   }
@@ -649,7 +664,8 @@ export class ClientControls extends System {
       }
       this.touches.set(e.pointerId, info)
       for (const control of this.controls) {
-        const consume = control.options.onTouch?.(info)
+        if (!control.active) continue
+        const consume = control.active && callScript(control.options.onTouch, info)
         if (consume) break
       }
     }
@@ -687,7 +703,8 @@ export class ClientControls extends System {
       const info = this.touches.get(e.pointerId)
       if (info) {
         for (const control of this.controls) {
-          const consume = control.options.onTouchEnd?.(info)
+          if (!control.active) continue
+          const consume = control.active && callScript(control.options.onTouchEnd, info)
           if (consume) break
         }
         this.touches.delete(e.pointerId)
@@ -703,11 +720,12 @@ export class ClientControls extends System {
       this.lmbDown = true
       this.buttonsDown.add(MouseLeft)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries.mouseLeft
         if (button) {
           button.down = true
           button.pressed = true
-          const capture = button.onPress?.()
+          const capture = callControlEntry(control, button, 'onPress')
           if (capture || button.capture) break
         }
       }
@@ -717,11 +735,12 @@ export class ClientControls extends System {
       this.lmbDown = false
       this.buttonsDown.delete(MouseLeft)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries.mouseLeft
         if (button) {
           button.down = false
           button.released = true
-          button.onRelease?.()
+          callControlEntry(control, button, 'onRelease')
         }
       }
     }
@@ -731,11 +750,12 @@ export class ClientControls extends System {
       this.rmbDown = true
       this.buttonsDown.add(MouseRight)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries.mouseRight
         if (button) {
           button.down = true
           button.pressed = true
-          const capture = button.onPress?.()
+          const capture = callControlEntry(control, button, 'onPress')
           if (capture || button.capture) break
         }
       }
@@ -745,11 +765,12 @@ export class ClientControls extends System {
       this.rmbDown = false
       this.buttonsDown.delete(MouseRight)
       for (const control of this.controls) {
+        if (!control.active) continue
         const button = control.entries.mouseRight
         if (button) {
           button.down = false
           button.released = true
-          button.onRelease?.()
+          callControlEntry(control, button, 'onRelease')
         }
       }
     }
@@ -954,4 +975,8 @@ function createCamera(controls, control) {
     zoom,
     write: false,
   }
+}
+
+function callControlEntry(control, entry, key) {
+  if (control.active) return callEntry(entry, key)
 }

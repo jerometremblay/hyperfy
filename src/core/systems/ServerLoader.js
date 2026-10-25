@@ -1,3 +1,4 @@
+// Adapted from https://github.com/dwebxr/coo-world/commit/d17d631c168c62370f3d7f80b3f45554ad3c8c51
 import fs from 'fs-extra'
 import path from 'path'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
@@ -25,6 +26,12 @@ export class ServerLoader extends System {
     this.results = new Map()
     this.rgbeLoader = new HDRLoader()
     this.gltfLoader = new GLTFLoader()
+    // The server needs model geometry/material settings, not GPU images. Run this
+    // plugin before texture-format plugins so they cannot decode or fetch images.
+    this.gltfLoader.pluginCallbacks.unshift(() => ({
+      name: 'HYP_server_textures',
+      loadTexture: () => Promise.resolve(null),
+    }))
     this.preloadItems = []
     // this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))
 
@@ -106,79 +113,106 @@ export class ServerLoader extends System {
       // ...
     }
     if (type === 'model') {
-      promise = new Promise(async (resolve, reject) => {
-        try {
-          const arrayBuffer = await this.fetchArrayBuffer(url)
-          this.gltfLoader.parse(arrayBuffer, '', glb => {
-            const node = glbToNodes(glb, this.world)
-            const model = {
-              toNodes() {
-                return node.clone(true)
+      promise = new Promise((resolve, reject) => {
+        ;(async () => {
+          try {
+            const arrayBuffer = await this.fetchArrayBuffer(url)
+            // parse settles asynchronously (external buffers are fetched), so its errors need their own path
+            this.gltfLoader.parse(
+              arrayBuffer,
+              '',
+              glb => {
+                try {
+                  const node = glbToNodes(glb, this.world)
+                  const model = {
+                    toNodes() {
+                      return node.clone(true)
+                    },
+                  }
+                  this.results.set(key, model)
+                  resolve(model)
+                } catch (err) {
+                  reject(err)
+                }
               },
-            }
-            this.results.set(key, model)
-            resolve(model)
-          })
-        } catch (err) {
-          reject(err)
-        }
+              reject
+            )
+          } catch (err) {
+            reject(err)
+          }
+        })()
       })
     }
     if (type === 'emote') {
-      promise = new Promise(async (resolve, reject) => {
-        try {
-          const arrayBuffer = await this.fetchArrayBuffer(url)
-          this.gltfLoader.parse(arrayBuffer, '', glb => {
-            const factory = createEmoteFactory(glb, url)
-            const emote = {
-              toClip(options) {
-                return factory.toClip(options)
+      promise = new Promise((resolve, reject) => {
+        ;(async () => {
+          try {
+            const arrayBuffer = await this.fetchArrayBuffer(url)
+            this.gltfLoader.parse(
+              arrayBuffer,
+              '',
+              glb => {
+                try {
+                  const factory = createEmoteFactory(glb, url)
+                  const emote = {
+                    toClip(options) {
+                      return factory.toClip(options)
+                    },
+                  }
+                  this.results.set(key, emote)
+                  resolve(emote)
+                } catch (err) {
+                  reject(err)
+                }
               },
-            }
-            this.results.set(key, emote)
-            resolve(emote)
-          })
-        } catch (err) {
-          reject(err)
-        }
+              reject
+            )
+          } catch (err) {
+            reject(err)
+          }
+        })()
       })
     }
     if (type === 'avatar') {
-      promise = new Promise(async (resolve, reject) => {
-        try {
-          // NOTE: we can't load vrms on the server yet but we don't need 'em anyway
-          let node
-          const glb = {
-            toNodes: () => {
-              if (!node) {
-                node = createNode('group')
-                const node2 = createNode('avatar', { id: 'avatar', factory: null })
-                node.add(node2)
-              }
-              return node.clone(true)
-            },
+      promise = new Promise((resolve, reject) => {
+        ;(async () => {
+          try {
+            // NOTE: we can't load vrms on the server yet but we don't need 'em anyway
+            let node
+            const glb = {
+              toNodes: () => {
+                if (!node) {
+                  node = createNode('group')
+                  const node2 = createNode('avatar', { id: 'avatar', factory: null })
+                  node.add(node2)
+                }
+                return node.clone(true)
+              },
+            }
+            this.results.set(key, glb)
+            resolve(glb)
+          } catch (err) {
+            reject(err)
           }
-          this.results.set(key, glb)
-          resolve(glb)
-        } catch (err) {
-          reject(err)
-        }
+        })()
       })
     }
     if (type === 'script') {
-      promise = new Promise(async (resolve, reject) => {
-        try {
-          const code = await this.fetchText(url)
-          const script = this.world.scripts.evaluate(code)
-          this.results.set(key, script)
-          resolve(script)
-        } catch (err) {
-          reject(err)
-        }
+      promise = new Promise((resolve, reject) => {
+        ;(async () => {
+          try {
+            const code = await this.fetchText(url)
+            const script = this.world.scripts.evaluate(code)
+            this.results.set(key, script)
+            resolve(script)
+          } catch (err) {
+            reject(err)
+          }
+        })()
       })
     }
     if (type === 'audio') {
-      promise = new Promise(async (resolve, reject) => {
+      promise = new Promise((resolve, reject) => {
         reject(null)
       })
     }

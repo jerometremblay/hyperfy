@@ -121,6 +121,7 @@ export function FieldText({ label, hint, placeholder, value, onChange }) {
           onFocus={e => e.target.select()}
           onChange={e => setLocalValue(e.target.value)}
           onKeyDown={e => {
+            if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return
             if (e.code === 'Enter') {
               e.preventDefault()
               onChange(localValue)
@@ -208,6 +209,7 @@ export function FieldTextarea({ label, hint, placeholder, value, onChange }) {
           onFocus={e => e.target.select()}
           onChange={e => setLocalValue(e.target.value)}
           onKeyDown={e => {
+            if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return
             if (e.metaKey && e.code === 'Enter') {
               e.preventDefault()
               onChange(localValue)

@@ -4,6 +4,7 @@ import { every, isArray, isBoolean, isNumber, isString } from 'lodash-es'
 import { Node } from './Node'
 import { Display, isDisplay } from '../extras/yoga'
 import { fillRoundRect } from '../extras/roundRect'
+import { wrapText } from '../extras/wrapText.js'
 
 const textAligns = ['left', 'center', 'right']
 
@@ -247,7 +248,7 @@ export class UIText extends Node {
     }
     if (this._absolute === value) return
     this._absolute = value
-    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE.ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
+    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
     this.ui?.redraw()
   }
 
@@ -367,7 +368,7 @@ export class UIText extends Node {
     if (!isEdge(value)) {
       throw new Error(`[uitext] padding not a number or array of numbers`)
     }
-    if (this._padding === value) rturn
+    if (this._padding === value) return
     this._padding = value
     if (isArray(this._padding)) {
       const [top, right, bottom, left] = this._padding
@@ -524,7 +525,7 @@ export class UIText extends Node {
   }
 
   getProxy() {
-    var self = this
+    const self = this
     if (!this.proxy) {
       let proxy = {
         get display() {
@@ -653,26 +654,6 @@ export class UIText extends Node {
     }
     return this.proxy
   }
-}
-
-function wrapText(ctx, text, maxWidth) {
-  const words = text.split(' ')
-  const lines = []
-  let currentLine = words[0]
-
-  for (let i = 1; i < words.length; i++) {
-    const word = words[i]
-    const width = ctx.measureText(currentLine + ' ' + word).width
-    if (width <= maxWidth) {
-      currentLine += ' ' + word
-    } else {
-      lines.push(currentLine)
-      currentLine = word
-    }
-  }
-  lines.push(currentLine)
-
-  return lines
 }
 
 function isTextAlign(value) {

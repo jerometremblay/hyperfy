@@ -3,9 +3,13 @@ npm-debug.log
 world
 .git
 .gitignore
+.claude
+.codex
+.agents
+.env
 .env.*
 !.env.example
 *.md
 .eslintrc
 .prettierrc
-.eslintignore 
+.eslintignore

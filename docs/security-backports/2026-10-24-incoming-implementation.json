@@ -1,0 +1,88 @@
+{
+  "implemented_on": "2026-10-24",
+  "base_head": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+  "status": "applied, uncommitted",
+  "application": "selected patches and adapted hunks; not a whole-commit cherry-pick",
+  "upstream_commits": [
+    "https://github.com/dwebxr/coo-world/commit/0960a8d4df12c53d972f885616287ff9cbabec0b",
+    "https://github.com/dwebxr/coo-world/commit/d17d631c168c62370f3d7f80b3f45554ad3c8c51",
+    "https://github.com/dwebxr/coo-world/commit/e5ec0b23e8d7da42cb18cd758b573c051cebdd57",
+    "https://github.com/dwebxr/coo-world/commit/11e593c8695ac4db13d1a5b110468db3ddd407d8",
+    "https://github.com/dwebxr/coo-world/commit/823106c26fdc1c7190fe301ec649813caa52a7e7",
+    "https://github.com/dwebxr/coo-world/commit/be3357b955fdced8af02cac262643f075eb200b5",
+    "https://github.com/dwebxr/coo-world/commit/043b40c69a2d78e09df53ac4f5a755d607a61824",
+    "https://github.com/dwebxr/coo-world/commit/1f528221b240be0be73d4f97179d5fea36834bb2",
+    "https://github.com/dwebxr/coo-world/commit/0725a549c556165d2a54658894fc62fe47f36866"
+  ],
+  "source_sha256": {
+    ".dockerignore": "4ec4281a659415bcdc3721ca6a041949113e106ce4cb664808acf74256e75b7a",
+    ".github/workflows/security.yml": "b95337d251f60346078b13d6f22371f839cf9a5776d1e464b46c18517da8234a",
+    "package.json": "05a8198550aa027134ab5526f3a5bbc7c4ab0c02f69a24873be83013a4f1a3ef",
+    "src/server/fetchGuard.js": "3ec726b75f34e078697875f3887adfc935c151e11a972f69e94a64009ca955c4",
+    "src/server/fetchGuardInstall.js": "5f79697bc430df8e2590f3bade4b62a731797dffdca8b8c2b194736457528ac5",
+    "src/server/index.js": "16302ffaea909c43522e8146b500a4b427ba109f89e4d1ec4f91cfd3c701d624",
+    "src/node-client/index.js": "f2529e6f93f05ec0e1f61eabff9fd5cffe1ba8d1c385fe67e794cd3d28714349",
+    "src/core/systems/ServerLoader.js": "591a99c75cde69ff19564359099fe99746f63768a1d63a083557b0db8e1a5ebd",
+    "src/core/systems/Chat.js": "fac45e55bb58f1fb6aaaa121ec750cfa52a66ac0686566fb98c10c9f966b3236",
+    "src/core/systems/ServerNetwork.js": "1386d8c6c4130a41d29036623866895bbc38e913d92d3419e21d6aca7a2178c5",
+    "src/core/systems/ClientNetwork.js": "717238d27e82448c27cec82f48469337d9df590ca1b28e68f46c94322a5c6c2f",
+    "src/core/systems/ClientAudio.js": "e4a1ba1ab7eab0174ed89f4f4534536e79aaa12d6d7bc46ae88d7c3b09caebaf",
+    "src/core/nodes/UI.js": "4b3f4d6276e6161ea240b15833444c4a7ba190408d3baa47f577b4a9b48bbbb7",
+    "src/core/nodes/UIView.js": "fe90e9804f1bbcb47f795deecaa84e98da133be4fe00543bd63662cf1d08cbb2",
+    "src/core/nodes/UIText.js": "34a14ec6a4cddadecdd25dd008ccbead5e72271fa6d8771ce3727a959dee52e2",
+    "src/core/extras/yoga.js": "b6a6cb60208d8bd898c01e0a175e63f084cccfbf675c7f142fe08bbe7d6c554c",
+    "src/client/components/CoreUI.js": "33d987f09633fb07f7f13982099e7e4ef79859b824e397adf9f12ade5a8727c8",
+    "src/client/components/Fields.js": "7834a6e22bc0ebc13c716431aa4554a61eac968672e69110ab3cf5bba3fe91e6",
+    "test/security/fetchGuard.test.js": "1562921c20bff7716720fae7e05174cfb88ba4ccc4b4a28dd71de1b9e3e1ba8a",
+    "test/security/fetchGuardControl.test.js": "90e04dcf94e72b229244b5b956848e930b9c9a7fb73b425c0f7b1a07867c2a11",
+    "test/security/serverLoaderBrotli.test.js": "14186aadb16e8477d8b230818197694994db5d10a2afe12b9be1f5816db63fbd",
+    "test/security/incomingFixes.test.js": "151fc815a0efc8e5273713ee0f5c28ae6eb2338acd5eb51724cc3d14c2b2acd4",
+    "test/security/server.integration.test.mjs": "2d96e59603ac089ef45c910f261217fdfc7599f47987b3a59ae27399e4fbd5a4",
+    "test/security/lib/nodeClientsSmoke.mjs": "54c37132e4f634597241bc44bdd7e877003fc5eb8e078bd3be17978f09d72b83"
+  },
+  "validation": {
+    "node": "22.23.4",
+    "security_tests": {
+      "passed": 705,
+      "failed": 0
+    },
+    "built_server_integration": "passed including actual SQLite/PhysX, outbound guard boot, chat peers and two headless clients with separate sessions",
+    "browser": "Chrome/React IME composition and one local echo/peer delivery passed; SES and Monaco passed; no uncaught browser errors",
+    "builds": {
+      "main": "passed",
+      "standalone_client": "passed",
+      "node_client": "passed"
+    },
+    "fork_regressions": {
+      "passed": 495,
+      "failed": 2,
+      "existing_baseline_failures": [
+        "promptBox: missing expected missing-asset rejection",
+        "Portal: catalog asset count 2 versus 1"
+      ]
+    },
+    "final_network_regressions": {
+      "passed": 20,
+      "failed": 0
+    },
+    "characterization": {
+      "UIFlexWrap": "no-wrap",
+      "UIViewFlexWrap": "no-wrap",
+      "repeatPadding": "accepted",
+      "absoluteYogaType": 2,
+      "invalidFlexDirectionAccepted": false,
+      "firefoxAudio": "ok (legacy API fixture)",
+      "sentChatRows": 1,
+      "sentChatDistinctIds": 1,
+      "headlessSnapshot": "ok"
+    },
+    "workflow": "YAML parsed, pinned action inputs verified; GitHub workflow has not run",
+    "diff_check": "passed",
+    "docker": "not run",
+    "actual_firefox": "not run"
+  },
+  "optional_amplitude_lip_sync": "not applied; existing standard VRM expression manager preserved",
+  "commits_created": false,
+  "pushed": false,
+  "deployed": false
+}

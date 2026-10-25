@@ -147,11 +147,12 @@ class PointerState {
     while (i < newPath.length && i < oldPath.length && newPath[i] === oldPath[i]) i++
 
     // pointer leave events bubble up from leaf
+    // (script callbacks run without a receiver; the path holds raw nodes)
     for (let j = oldPath.length - 1; j >= i; j--) {
       if (oldPath[j].onPointerLeave) {
         this.event.set(PointerEvents.LEAVE)
         try {
-          oldPath[j].onPointerLeave?.(this.event)
+          oldPath[j].onPointerLeave?.call(undefined, this.event)
         } catch (err) {
           console.error(err)
         }
@@ -165,7 +166,7 @@ class PointerState {
       if (newPath[j].onPointerEnter) {
         this.event.set(PointerEvents.ENTER, hit)
         try {
-          newPath[j].onPointerEnter?.(this.event)
+          newPath[j].onPointerEnter?.call(undefined, this.event)
         } catch (err) {
           console.error(err)
         }
@@ -211,7 +212,7 @@ class PointerState {
         if (node.onPointerDown) {
           this.event.set(PointerEvents.DOWN, hit, button)
           try {
-            node.onPointerDown(this.event)
+            node.onPointerDown.call(undefined, this.event)
           } catch (err) {
             console.error(err)
           }
@@ -228,7 +229,7 @@ class PointerState {
         if (node.onPointerUp) {
           this.event.set(PointerEvents.UP, hit, button)
           try {
-            node.onPointerUp(this.event)
+            node.onPointerUp.call(undefined, this.event)
           } catch (err) {
             console.error(err)
           }

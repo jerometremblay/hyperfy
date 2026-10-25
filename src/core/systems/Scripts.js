@@ -9,39 +9,47 @@ import { Curve } from '../extras/Curve'
 import { prng } from '../extras/prng'
 import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
+import { createScriptCompartment, wrapRawCode } from '../extras/scriptCompartment'
+import { hardenForScripts, hardenScriptClasses } from '../extras/scriptHardening'
+import { createScriptObjectURL } from '../extras/scriptBlob'
+import { createScriptConsole, hostInspect } from '../extras/scriptConsole'
 
 /**
  * Script System
  *
  * - Runs on both the server and client.
  * - Executes scripts inside secure compartments
+ * - One compartment per script asset, with locked endowments
  *
  */
 
 export class Scripts extends System {
   constructor(world) {
     super(world)
-    this.compartment = new Compartment({
-      console: {
-        log: (...args) => console.log(...args),
-        warn: (...args) => console.warn(...args),
-        error: (...args) => console.error(...args),
-        time: (...args) => console.time(...args),
-        timeEnd: (...args) => console.timeEnd(...args),
-      },
-      Date: {
+    hardenScriptClasses()
+    // shared host functions are frozen once, so no script can stash data on them
+    this.helpers = hardenForScripts({ num, prng, clamp, uuid })
+    // on Node, script console arguments are rendered to strings before they reach the host console
+    this.inspect = hostInspect()
+  }
+
+  // fresh wrapper objects per compartment: no object is shared between two scripts
+  createEndowments() {
+    return {
+      console: hardenForScripts(createScriptConsole({ inspect: this.inspect })),
+      Date: hardenForScripts({
         now: () => Date.now(),
-      },
-      URL: {
-        createObjectURL: blob => URL.createObjectURL(blob),
-      },
+      }),
+      URL: hardenForScripts({
+        createObjectURL: blob => createScriptObjectURL(blob),
+      }),
       Math,
       eval: undefined,
       harden: undefined,
       lockdown: undefined,
-      num,
-      prng,
-      clamp,
+      num: this.helpers.num,
+      prng: this.helpers.prng,
+      clamp: this.helpers.clamp,
       // Layers,
       Object3D: THREE.Object3D,
       Quaternion: THREE.Quaternion,
@@ -57,33 +65,21 @@ export class Scripts extends System {
       // Gradient: Gradient,
       DEG2RAD,
       RAD2DEG,
-      uuid,
+      uuid: this.helpers.uuid,
       // pause: () => this.world.pause(),
-    })
+    }
   }
 
   evaluate(code) {
+    const compartment = createScriptCompartment(this.createEndowments())
     let value
     const result = {
       exec: (...args) => {
-        if (!value) value = this.compartment.evaluate(wrapRawCode(code))
+        if (!value) value = compartment.evaluate(wrapRawCode(code))
         return value(...args)
       },
       code,
     }
     return result
   }
-}
-
-// NOTE: config is deprecated and renamed to props
-function wrapRawCode(code) {
-  return `
-  (function() {
-    const shared = {}
-    return (world, app, fetch, props, setTimeout) => {
-      const config = props // deprecated
-      ${code}
-    }
-  })()
-  `
 }

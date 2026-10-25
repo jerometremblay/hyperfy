@@ -1,5 +1,6 @@
 import { System } from './System'
 import { Ranks } from '../extras/ranks'
+import { normalizeSettingValue } from '../extras/settingsPolicy'
 import {
   DEFAULT_LATITUDE,
   DEFAULT_LONGITUDE,
@@ -44,6 +45,11 @@ export class Settings extends System {
   }
 
   deserialize(data) {
+    data = data && typeof data === 'object' ? { ...data } : {}
+    for (const key of ['title', 'desc', 'image', 'avatar', 'customAvatars', 'voice', 'rank', 'playerLimit', 'ao']) {
+      const normalized = normalizeSettingValue(key, data[key])
+      data[key] = normalized.ok ? normalized.value : null
+    }
     const previousLatitude = this.latitude
     const previousLongitude = this.longitude
     this.title = data.title
@@ -135,7 +141,9 @@ export class Settings extends System {
   }
 
   modify(key, value) {
-    if (!isValidDayNightSetting(key, value)) return false
+    const result = normalizeSettingValue(key, value)
+    if (!result.ok) return false
+    value = result.value
     if (this[key] === value) return
     const prev = this[key]
     this[key] = value

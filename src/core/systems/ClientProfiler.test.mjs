@@ -184,6 +184,7 @@ test('shared geometry is counted per mounted instance, detached nodes aggregate 
 
 test('actual App event/world/timer paths are measured and subscriptions can be removed by their original callback', async t => {
   const { world, profiler, app } = fixture()
+  world.network = { isClient: true, isServer: false }
   app('a')
   class TestApp extends App {
     build() {}
@@ -213,7 +214,7 @@ test('actual App event/world/timer paths are measured and subscriptions can be r
   assert.equal(calls, 4)
   assert.equal(profiler.pending.get('a').cpu, 8)
   entity.onWorldEvent('receiver', function () {
-    assert.equal(this, world.events)
+    assert.equal(this, undefined)
   })
   world.events.emit('receiver')
   profiler.measure('a', '__proto__', callback)
@@ -232,7 +233,7 @@ test('network hooks count encoded app packets in both directions and exclude sha
   world.entities.items.set('player', { isApp: false })
   const network = new ClientNetwork(world)
   const packets = []
-  network.ws = { send: packet => packets.push(packet) }
+  network.ws = { readyState: 1, send: packet => packets.push(packet) }
   profiler.toggle(true)
   network.send('entityEvent', ['a', 0, 'move', { x: 1 }])
   network.onPacket({ data: packets[0] })

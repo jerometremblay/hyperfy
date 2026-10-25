@@ -1,5 +1,9 @@
+import { callForScript } from '../extras/scriptValues'
 import { isBoolean } from 'lodash-es'
 import * as THREE from '../extras/three'
+import { getNodeRef, isRefAllowed, registerNodeRefGetter } from './refs'
+
+export { getRef, getNodeRef, resolveValueRef, secureRef } from './refs'
 
 const _v1 = new THREE.Vector3()
 const _v2 = new THREE.Vector3()
@@ -22,27 +26,6 @@ const defaults = {
 let nodeIds = -1
 
 const EPSILON = 0.000000001
-
-const secure = { allowRef: false }
-export function getRef(pNode) {
-  if (!pNode || !pNode._isRef) return pNode
-  secure.allowRef = true
-  const node = pNode._ref
-  secure.allowRef = false
-  return node
-}
-
-export function secureRef(obj = {}, getRef) {
-  const tpl = {
-    get _ref() {
-      if (!secure.allowRef) return null
-      return getRef()
-    },
-  }
-  obj._isRef = true
-  Object.defineProperty(obj, '_ref', Object.getOwnPropertyDescriptor(tpl, '_ref'))
-  return obj
-}
 
 export class Node {
   constructor(data = {}) {
@@ -353,6 +336,7 @@ export class Node {
   }
 
   get onPointerEnter() {
+    if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
     return this._onPointerEnter
   }
 
@@ -361,6 +345,7 @@ export class Node {
   }
 
   get onPointerLeave() {
+    if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
     return this._onPointerLeave
   }
 
@@ -369,6 +354,7 @@ export class Node {
   }
 
   get onPointerDown() {
+    if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
     return this._onPointerDown
   }
 
@@ -377,6 +363,7 @@ export class Node {
   }
 
   get onPointerUp() {
+    if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
     return this._onPointerUp
   }
 
@@ -436,7 +423,13 @@ export class Node {
           return self.active
         },
         set active(value) {
-          self.active = value
+          callForScript(
+            () => {
+              self.active = value
+            },
+            self,
+            []
+          )
         },
         get parent() {
           return self.parent?.getProxy()
@@ -457,13 +450,21 @@ export class Node {
           return self.getWorldMatrix(mat)
         },
         add(pNode) {
-          const node = getRef(pNode)
-          self.add(node)
+          const node = getNodeRef(pNode)
+          if (!node && pNode != null) {
+            console.error('[node.add] expected a node')
+            return this
+          }
+          callForScript(self.add, self, [node])
           return this
         },
         remove(pNode) {
-          const node = getRef(pNode)
-          self.remove(node)
+          const node = getNodeRef(pNode)
+          if (!node && pNode != null) {
+            console.error('[node.remove] expected a node')
+            return this
+          }
+          callForScript(self.remove, self, [node])
           return this
         },
         traverse(callback) {
@@ -475,38 +476,42 @@ export class Node {
         //   self.detach(node)
         // },
         clone(recursive) {
-          const node = self.clone(recursive)
+          const node = callForScript(self.clone, self, [recursive])
           return node.getProxy()
         },
         clean() {
-          self.clean()
+          callForScript(self.clean, self, [])
         },
         get _ref() {
-          if (!secure.allowRef) return null
+          if (!isRefAllowed()) return null
           return self
         },
         get _isRef() {
           return true
         },
         get onPointerEnter() {
+          if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
           return self.onPointerEnter
         },
         set onPointerEnter(value) {
           self.onPointerEnter = value
         },
         get onPointerLeave() {
+          if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
           return self.onPointerLeave
         },
         set onPointerLeave(value) {
           self.onPointerLeave = value
         },
         get onPointerDown() {
+          if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
           return self.onPointerDown
         },
         set onPointerDown(value) {
           self.onPointerDown = value
         },
         get onPointerUp() {
+          if (this.ctx?.entity?.crashed || this.ctx?.world?.fatalError) return null
           return self.onPointerUp
         },
         set onPointerUp(value) {
@@ -519,6 +524,7 @@ export class Node {
           self.cursor = value
         },
       }
+      registerNodeRefGetter(proxy)
       this._nodeProxy = proxy
     }
     return this._nodeProxy

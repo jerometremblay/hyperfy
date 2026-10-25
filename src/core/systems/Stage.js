@@ -1,3 +1,4 @@
+import { handlePhysicsFailure } from '../extras/physicsFailure.js'
 import * as THREE from '../extras/three'
 import { isNumber } from 'lodash-es'
 
@@ -46,11 +47,16 @@ const getDevicePerformanceTier = () => {
 const getDefaultLodSplatCount = () => {
   const tier = getDevicePerformanceTier()
   switch (tier) {
-    case 'quest': return 500_000       // Quest: 500K splats max
-    case 'visionpro': return 750_000   // Vision Pro: 750K splats
-    case 'android': return 1_000_000   // Android: 1M splats
-    case 'ios': return 1_500_000       // iOS: 1.5M splats
-    default: return 2_500_000          // Desktop: 2.5M splats
+    case 'quest':
+      return 500_000 // Quest: 500K splats max
+    case 'visionpro':
+      return 750_000 // Vision Pro: 750K splats
+    case 'android':
+      return 1_000_000 // Android: 1M splats
+    case 'ios':
+      return 1_500_000 // iOS: 1.5M splats
+    default:
+      return 2_500_000 // Desktop: 2.5M splats
   }
 }
 
@@ -60,15 +66,22 @@ const getDefaultLodSplatCount = () => {
 const getDefaultLodSplatScale = () => {
   const tier = getDevicePerformanceTier()
   switch (tier) {
-    case 'quest': return 0.5       // Quest: use 50% of budget for safety
-    case 'visionpro': return 0.8   // Vision Pro: use 80%
-    case 'android': return 0.7     // Android: use 70%
-    case 'ios': return 0.8         // iOS: use 80%
-    default: return 1.0            // Desktop: full budget
+    case 'quest':
+      return 0.5 // Quest: use 50% of budget for safety
+    case 'visionpro':
+      return 0.8 // Vision Pro: use 80%
+    case 'android':
+      return 0.7 // Android: use 70%
+    case 'ios':
+      return 0.8 // iOS: use 80%
+    default:
+      return 1.0 // Desktop: full budget
   }
 }
+import { serializeError } from '../extras/serializeError'
 
 const vec2 = new THREE.Vector2()
+const CLEAN_RETRY_CAP = 10
 
 /**
  * Stage System
@@ -127,10 +140,82 @@ export class Stage extends System {
   }
 
   clean() {
+    let failed
     for (const node of this.dirtyNodes) {
-      node.clean()
+      try {
+        node.clean()
+        if (node._cleanFailures) node._cleanFailures = 0
+      } catch (err) {
+        if (!failed) failed = []
+        failed.push({ node, err })
+      }
     }
     this.dirtyNodes.clear()
+    if (failed) this.containCleanFailures(failed)
+  }
+
+  // A node whose update throws (eg a script put a throwing valueOf into its transform) must not stop
+  // every other node from updating. App-owned nodes crash their app, which unbuilds the whole subtree.
+  // Other nodes are retried on the next pass, up to CLEAN_RETRY_CAP consecutive failures; after that the
+  // node is left untracked until a later write tracks it again.
+  // A failed Node.clean() may have consumed transform flags part-way through its subtree, so a retry
+  // re-tracks the top of that traversal with the whole subtree marked transformed (full recompute), and
+  // giving up recomputes what it can before releasing the flags, so later writes find consistent matrices.
+  // NOTE: until the shared THREE prototypes are hardened, the failing code may be another app's patch.
+  containCleanFailures(failed) {
+    const crashed = new Set()
+    for (const { node, err } of failed) {
+      const owner = node.ctx?.entity
+      const trapped = handlePhysicsFailure(err, { entity: owner, world: this.world, phase: 'Stage.clean' })
+      try {
+        if (!node._cleanFailed) {
+          node._cleanFailed = true
+          console.error(`[stage] node update failed (node ${node.id}, entity ${owner?.data?.id ?? 'none'})`)
+          console.error(err)
+        }
+        if (owner?.isApp && !crashed.has(owner)) owner.scriptError = serializeError(err)
+      } catch {
+        // a hostile error object (eg throwing getters) must not stop the containment itself
+      }
+      if (owner?.isApp) {
+        if (crashed.has(owner)) continue
+        crashed.add(owner)
+        if (!trapped) owner.crash()
+        continue
+      }
+      // the traversal that failed started at the top of the dirty chain, like Node.clean()
+      let top = node
+      while (top.parent && top.parent.isDirty) {
+        top = top.parent
+      }
+      node._cleanFailures = (node._cleanFailures || 0) + 1
+      if (node._cleanFailures >= CLEAN_RETRY_CAP) {
+        if (!node._cleanGaveUp) {
+          node._cleanGaveUp = true
+          console.error(
+            `[stage] giving up on node ${node.id} (entity ${owner?.data?.id ?? 'none'}) after ${CLEAN_RETRY_CAP} failures`
+          )
+        }
+        node._cleanFailures = 0
+        top.traverse(child => {
+          try {
+            child.updateTransform()
+          } catch {
+            // stays stale until its next write
+          }
+          child.isDirty = false
+          child.isTransformed = false
+          this.dirtyNodes.delete(child)
+        })
+        continue
+      }
+      top.traverse(child => {
+        child.isTransformed = true
+        child.isDirty = true
+        this.dirtyNodes.delete(child)
+      })
+      this.dirtyNodes.add(top)
+    }
   }
 
   insert(options) {
@@ -418,7 +503,7 @@ export class Stage extends System {
           point: hit.point,
           node: foundNode,
           getEntity: () => foundNode?.ctx?.entity,
-          object: splatMesh
+          object: splatMesh,
         })
       }
     }
@@ -488,21 +573,21 @@ export class Stage extends System {
   _createSplatHandle(splatMesh, { id, srcUrl, removeFromCache = false }) {
     return {
       splatMesh,
-      move: (newMatrix) => {
+      move: newMatrix => {
         // Apply same internal 180° flip as in _setupSplatMesh
         newMatrix.decompose(_tempPosition, _tempQuaternion, _tempScale)
         _tempQuaternion.multiply(SPLAT_FLIP_QUATERNION)
         splatMesh.matrix.compose(_tempPosition, _tempQuaternion, _tempScale)
         splatMesh.updateMatrixWorld(true)
       },
-      updateColor: (newColor) => {
+      updateColor: newColor => {
         const colorObj = new THREE.Color(newColor)
         splatMesh.recolor.set(colorObj.r, colorObj.g, colorObj.b)
       },
-      updateOpacity: (newOpacity) => {
+      updateOpacity: newOpacity => {
         splatMesh.opacity = newOpacity
       },
-      updateSplatScale: (newScale) => {
+      updateSplatScale: newScale => {
         splatMesh.scale.setScalar(newScale)
       },
       // Spark 2.0: lodSplatScale is global - use world.stage.setLodSplatScale()
@@ -514,17 +599,25 @@ export class Stage extends System {
         if (removeFromCache && srcUrl) {
           this.world.loader.remove('splat', srcUrl)
         }
-      }
+      },
     }
   }
 
-  async insertGaussianSplat({ url, node, matrix, color = '#ffffff', opacity = 1.0, splatScale = 1.0, onProgress = null }) {
+  async insertGaussianSplat({
+    url,
+    node,
+    matrix,
+    color = '#ffffff',
+    opacity = 1.0,
+    splatScale = 1.0,
+    onProgress = null,
+  }) {
     // Only create SplatMesh on client
     if (this.world.network.isServer) {
       return {
         splatMesh: null,
         move: () => {},
-        destroy: () => {}
+        destroy: () => {},
       }
     }
 
@@ -539,9 +632,8 @@ export class Stage extends System {
         const lodSplatScale = getDefaultLodSplatScale()
 
         // Spark 2.0: maxStdDev limits Gaussian extent (lower = better perf, slightly lower quality)
-        const maxStdDev = (tier === 'quest' || tier === 'android') ? 1.8 :
-                          (tier === 'ios' || tier === 'visionpro') ? 2.0 :
-                          Math.sqrt(8) // Desktop: ~2.83
+        const maxStdDev =
+          tier === 'quest' || tier === 'android' ? 1.8 : tier === 'ios' || tier === 'visionpro' ? 2.0 : Math.sqrt(8) // Desktop: ~2.83
 
         // Spark 2.0: LOD settings are now on Renderer level
         this.sparkRenderer = new SparkRenderer({
@@ -549,7 +641,7 @@ export class Stage extends System {
           enableLod: true,
           lodSplatCount: lodSplatCount,
           lodSplatScale: lodSplatScale,
-          maxStdDev: maxStdDev
+          maxStdDev: maxStdDev,
         })
 
         // Render splats early in transparent pass so UI/transparent meshes render on top
@@ -574,7 +666,7 @@ export class Stage extends System {
           url: url,
           fileType: fileType,
           lod: true,
-          onProgress: onProgress
+          onProgress: onProgress,
         })
 
         const id = this._setupSplatMesh(splatMesh, setupOptions)
@@ -592,7 +684,6 @@ export class Stage extends System {
       const id = this._setupSplatMesh(splatMesh, setupOptions)
 
       return this._createSplatHandle(splatMesh, { id, srcUrl, removeFromCache: true })
-
     } catch (error) {
       console.error('❌ SplatMesh creation failed:', error)
       return null

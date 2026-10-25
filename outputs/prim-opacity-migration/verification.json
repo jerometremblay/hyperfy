@@ -1,0 +1,92 @@
+[
+  {
+    "id": "2bY5LbSgCH",
+    "name": "Laser-Cut T-Rex Skeleton",
+    "createdNodes": 139,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true,
+    "mode": "server"
+  },
+  {
+    "id": "9G2KYhFLAz",
+    "name": "Campfire Circle",
+    "createdNodes": 114,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true,
+    "mode": "server"
+  },
+  {
+    "id": "WI0QjsRZ0R",
+    "name": "Larch House — Wired Lighting Circuits",
+    "createdNodes": 2148,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true,
+    "mode": "server"
+  },
+  {
+    "id": "XajRA7cHdV",
+    "name": "Steampunk Gas Street Light",
+    "createdNodes": 112,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true,
+    "mode": "server"
+  },
+  {
+    "id": "jUoVsxovzh",
+    "name": "Steampunk Gas Street Light",
+    "createdNodes": 112,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true,
+    "mode": "server"
+  },
+  {
+    "id": "2bY5LbSgCH",
+    "name": "Laser-Cut T-Rex Skeleton",
+    "mode": "client",
+    "createdNodes": 139,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true
+  },
+  {
+    "id": "9G2KYhFLAz",
+    "name": "Campfire Circle",
+    "mode": "client",
+    "createdNodes": 114,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true
+  },
+  {
+    "id": "WI0QjsRZ0R",
+    "name": "Larch House — Wired Lighting Circuits",
+    "mode": "client",
+    "createdNodes": 2153,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true
+  },
+  {
+    "id": "XajRA7cHdV",
+    "name": "Steampunk Gas Street Light",
+    "mode": "client",
+    "createdNodes": 112,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true
+  },
+  {
+    "id": "jUoVsxovzh",
+    "name": "Steampunk Gas Street Light",
+    "mode": "client",
+    "createdNodes": 112,
+    "beforeWarnings": 1,
+    "afterWarnings": 0,
+    "identicalNodeOptionsAndOpacity": true
+  }
+]

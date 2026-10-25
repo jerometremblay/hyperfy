@@ -1,0 +1,72 @@
+[
+  {
+    "id": "2bY5LbSgCH",
+    "key": "apps/laser-cut-t-rex-skeleton",
+    "name": "Laser-Cut T-Rex Skeleton",
+    "beforeVersion": 2,
+    "afterVersion": 3,
+    "beforeScript": "asset://0601a4a6fad67350736b1ef1556a5f0882bfb68c86c4459640dbbd1025930cbb.js",
+    "afterScript": "asset://8d590e7e69212bc8cbf9743e1795d407910612159681f70ff2642f200c8a15a9.js",
+    "changedFields": [
+      "script"
+    ],
+    "downloadedScriptHashVerified": true,
+    "unchangedFieldsVerified": true
+  },
+  {
+    "id": "9G2KYhFLAz",
+    "key": "apps/campfire-circle",
+    "name": "Campfire Circle",
+    "beforeVersion": 35,
+    "afterVersion": 36,
+    "beforeScript": "asset://714252ca31f947d87c408a166c9ecb79a95c51cf5d469986320ed63124d39fd0.js",
+    "afterScript": "asset://f4d88409b5d4cf61d90ccabd7a328ab86fc722b1b3aa6c76e24789c78aa0b68d.js",
+    "changedFields": [
+      "script"
+    ],
+    "downloadedScriptHashVerified": true,
+    "unchangedFieldsVerified": true
+  },
+  {
+    "id": "WI0QjsRZ0R",
+    "key": "app-a35ccc55105b821e",
+    "name": "Larch House — Wired Lighting Circuits",
+    "beforeVersion": 3,
+    "afterVersion": 4,
+    "beforeScript": "asset://50281580bdee72e8a4105da1542e9548b6f5435d916aba592bc93a5546aa1188.js",
+    "afterScript": "asset://7607c723c2c65d1aa8420c68604015dc4c73ec43dbe6a2551aafb8cc0c85f66b.js",
+    "changedFields": [
+      "script"
+    ],
+    "downloadedScriptHashVerified": true,
+    "unchangedFieldsVerified": true
+  },
+  {
+    "id": "XajRA7cHdV",
+    "key": "apps/steampunk-gas-street-light-01",
+    "name": "Steampunk Gas Street Light",
+    "beforeVersion": 12,
+    "afterVersion": 13,
+    "beforeScript": "asset://4e05e969f8cd4b095a8dc5b5123aad88e819c7ebde93b6f245dbf67636b5d815.js",
+    "afterScript": "asset://e90820e1bc0ff8b5017bf314bf1f20a523e93b82edbfcb3b1d29e63fd5e09c5f.js",
+    "changedFields": [
+      "script"
+    ],
+    "downloadedScriptHashVerified": true,
+    "unchangedFieldsVerified": true
+  },
+  {
+    "id": "jUoVsxovzh",
+    "key": "apps/steampunk-gas-street-light-02",
+    "name": "Steampunk Gas Street Light",
+    "beforeVersion": 15,
+    "afterVersion": 16,
+    "beforeScript": "asset://d5de9d72f9188a94331e4031883e6c748cea9c859ae4f318d4d1e5a9af5c1150.js",
+    "afterScript": "asset://79bb756d92e631b1ce593f0fab5d9dd27bcaa2e3fc2dc37cfabde3de90a6e3ce.js",
+    "changedFields": [
+      "script"
+    ],
+    "downloadedScriptHashVerified": true,
+    "unchangedFieldsVerified": true
+  }
+]

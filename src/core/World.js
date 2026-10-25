@@ -1,3 +1,4 @@
+import { getPhysicsTrapCount } from './extras/physicsFailure.js'
 import * as THREE from './extras/three'
 import EventEmitter from 'eventemitter3'
 
@@ -30,6 +31,7 @@ export class World extends EventEmitter {
     this.assetsUrl = null
     this.assetsDir = null
     this.hot = new Set()
+    this.fatalError = null
 
     this.rig = new THREE.Object3D()
     // NOTE: camera near is slightly smaller than spherecast. far is slightly more than skybox.
@@ -66,18 +68,20 @@ export class World extends EventEmitter {
     for (const system of this.systems) {
       await system.init(options)
     }
-    this.start()
+    await this.start()
   }
 
-  start() {
+  async start() {
     for (const system of this.systems) {
-      system.start()
+      await system.start()
     }
   }
 
   tick = time => {
+    if (this.fatalError) return
     // begin any stats/performance monitors
     this.preTick()
+    if (this.fatalError) return
     // update time, delta, frame and accumulator
     time /= 1000
     let delta = time - this.time
@@ -87,111 +91,157 @@ export class World extends EventEmitter {
     }
     this.frame++
     this.time = time
-    this.accumulator += delta
+    this.accumulator = Math.min(this.accumulator + delta, this.maxDeltaTime + this.fixedDeltaTime)
     // prepare physics
     const willFixedStep = this.accumulator >= this.fixedDeltaTime
     this.preFixedUpdate(willFixedStep)
+    if (this.fatalError) return
     // run as many fixed updates as we can for this ticks delta
     while (this.accumulator >= this.fixedDeltaTime) {
       // run all fixed updates
       this.fixedUpdate(this.fixedDeltaTime)
+      if (this.fatalError) return
       // step physics
       this.postFixedUpdate(this.fixedDeltaTime)
+      if (this.fatalError) return
       // decrement accumulator
       this.accumulator -= this.fixedDeltaTime
     }
     // interpolate physics for remaining delta time
     const alpha = this.accumulator / this.fixedDeltaTime
     this.preUpdate(alpha)
+    if (this.fatalError) return
     // run all updates
     this.update(delta, alpha)
+    if (this.fatalError) return
     // run post updates, eg cleaning all node matrices
     this.postUpdate(delta)
+    if (this.fatalError) return
     // run all late updates
     this.lateUpdate(delta, alpha)
+    if (this.fatalError) return
     // run post late updates, eg cleaning all node matrices
     this.postLateUpdate(delta)
+    if (this.fatalError) return
     // commit all changes, eg render on the client
     this.commit()
+    if (this.fatalError) return
     // end any stats/performance monitors
     this.postTick()
   }
 
   preTick() {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.preTick()
     }
   }
 
   preFixedUpdate(willFixedStep) {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.preFixedUpdate(willFixedStep)
     }
   }
 
   fixedUpdate(delta) {
     for (const item of this.hot) {
+      if (this.fatalError) return
       item.fixedUpdate?.(delta)
     }
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.fixedUpdate(delta)
     }
   }
 
   postFixedUpdate(delta) {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.postFixedUpdate(delta)
     }
   }
 
   preUpdate(alpha) {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.preUpdate(alpha)
     }
   }
 
   update(delta) {
     for (const item of this.hot) {
+      if (this.fatalError) return
       item.update?.(delta)
     }
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.update(delta)
     }
   }
 
   postUpdate(delta) {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.postUpdate(delta)
     }
   }
 
   lateUpdate(delta) {
     for (const item of this.hot) {
+      if (this.fatalError) return
       item.lateUpdate?.(delta)
     }
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.lateUpdate(delta)
     }
   }
 
   postLateUpdate(delta) {
     for (const item of this.hot) {
+      if (this.fatalError) return
       item.postLateUpdate?.(delta)
     }
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.postLateUpdate(delta)
     }
   }
 
   commit() {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.commit()
     }
   }
 
   postTick() {
     for (const system of this.systems) {
+      if (this.fatalError) return
       system.postTick()
+    }
+  }
+
+  fatal(reason) {
+    if (this.fatalError) return
+    this.fatalError = reason
+    console.error(`[physics] ${reason} after ${getPhysicsTrapCount()} traps; stopping for a restart`)
+    if (this.network.isServer) {
+      this.server.destroy()
+      this.network.stopForFatal()
+      this.fatalPromise = (async () => {
+        try {
+          await this.network.flushBeforeExit(5000)
+        } catch {
+          console.error('[physics] save before exit failed or exceeded its deadline')
+        } finally {
+          process.exit(1)
+        }
+      })()
+    } else {
+      this.client?.stopForFatal()
+      this.emit('fatal', 'Physics stopped. Reload to reconnect.')
     }
   }
 

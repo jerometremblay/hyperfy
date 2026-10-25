@@ -11,11 +11,11 @@ lockdown({
   // consoleTaming: 'unsafe',
   // evalTaming: 'unsafeEval',
   // // stackFiltering: ''
-  // overrideTaming: 'min',
   // domainTaming: 'unsafe',
 
-  // this is needed for monaco to work correctly.
-  // specifically the theming seems to be broken.
-  // this shouldn't be an issue as we are not using harden()
-  __hardenTaming__: 'unsafe',
+  // harden() is real, so the shared intrinsics are frozen for app scripts.
+  // 'severe' lets libraries assign over inherited intrinsic properties on their own objects,
+  // which two of ours do at runtime: monaco 0.49 (Monarch's arrayToHash sets result['constructor'])
+  // and d3-color (define.js sets prototype.constructor). 'moderate' breaks both.
+  overrideTaming: 'severe',
 })

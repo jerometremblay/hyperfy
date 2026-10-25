@@ -1,4 +1,5 @@
 const emitters = {}
+const MAX_DISTANCE_EMITS_PER_UPDATE = 1000
 
 import { DEG2RAD } from '../core/extras/general'
 import { Vector3, Quaternion, Matrix4, Color } from '../core/extras/three'
@@ -231,7 +232,9 @@ function createEmitter(config) {
     //   newParticlesByDist -= amount
     // }
     // emit over distance
-    if (emitting && rateOverDistance && distanceMoved > 0) {
+    if (!Number.isFinite(distanceMoved)) {
+      distanceRemainder = 0
+    } else if (emitting && rateOverDistance && distanceMoved > 0) {
       // Calculate the distance interval between particles
       const distanceBetweenParticles = 1.0 / rateOverDistance
 
@@ -239,7 +242,13 @@ function createEmitter(config) {
       distanceRemainder += distanceMoved
 
       // Calculate how many complete particles we should emit based on distance
-      const particlesToEmit = Math.floor(distanceRemainder / distanceBetweenParticles)
+      const count = Math.floor(distanceRemainder / distanceBetweenParticles)
+      const particlesToEmit = Number.isFinite(count) ? Math.min(count, MAX_DISTANCE_EMITS_PER_UPDATE) : 0
+      if (!Number.isFinite(count) || count > MAX_DISTANCE_EMITS_PER_UPDATE) {
+        distanceRemainder = 0
+      } else if (particlesToEmit > 0) {
+        distanceRemainder -= particlesToEmit * distanceBetweenParticles
+      }
 
       if (particlesToEmit > 0) {
         // Create particles along the movement path
@@ -263,9 +272,6 @@ function createEmitter(config) {
             // movementDirection,
           })
         }
-
-        // Update remainder for next frame (keep fractional part)
-        distanceRemainder -= particlesToEmit * distanceBetweenParticles
       }
     }
     // track new pos

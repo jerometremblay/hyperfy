@@ -1,0 +1,133 @@
+[
+  {
+    "id": "2bY5LbSgCH",
+    "name": "Laser-Cut T-Rex Skeleton",
+    "version": 2,
+    "script": "asset://0601a4a6fad67350736b1ef1556a5f0882bfb68c86c4459640dbbd1025930cbb.js",
+    "key": "apps/laser-cut-t-rex-skeleton",
+    "mode": "files",
+    "sourceFile": "file:./script.js",
+    "lines": [
+      {
+        "line": 262,
+        "text": "color:'#ffffff', transparent:true, opacity:0,"
+      }
+    ],
+    "file": "/Users/jerome/metaverse/hyperfy-world-jerome/objects/apps/laser-cut-t-rex-skeleton/script.js",
+    "oldHash": "0601a4a6fad67350736b1ef1556a5f0882bfb68c86c4459640dbbd1025930cbb",
+    "newHash": "8d590e7e69212bc8cbf9743e1795d407910612159681f70ff2642f200c8a15a9",
+    "removedFlags": 1
+  },
+  {
+    "id": "9G2KYhFLAz",
+    "name": "Campfire Circle",
+    "version": 35,
+    "script": "asset://714252ca31f947d87c408a166c9ecb79a95c51cf5d469986320ed63124d39fd0.js",
+    "key": "apps/campfire-circle",
+    "mode": "files",
+    "sourceFile": "file:./script.js",
+    "lines": [
+      {
+        "line": 104,
+        "text": "transparent: true, opacity: 0.78,"
+      }
+    ],
+    "file": "/Users/jerome/metaverse/hyperfy-world-jerome/objects/apps/campfire-circle/script.js",
+    "oldHash": "714252ca31f947d87c408a166c9ecb79a95c51cf5d469986320ed63124d39fd0",
+    "newHash": "f4d88409b5d4cf61d90ccabd7a328ab86fc722b1b3aa6c76e24789c78aa0b68d",
+    "removedFlags": 1
+  },
+  {
+    "id": "WI0QjsRZ0R",
+    "name": "Larch House — Wired Lighting Circuits",
+    "version": 3,
+    "script": "asset://50281580bdee72e8a4105da1542e9548b6f5435d916aba592bc93a5546aa1188.js",
+    "key": "app-a35ccc55105b821e",
+    "mode": "files",
+    "sourceFile": "file:./script.js",
+    "lines": [
+      {
+        "line": 177,
+        "text": "{ opacity: 0.18, transparent: true, roughness: 0.12, castShadow: false }, 'glass')"
+      },
+      {
+        "line": 666,
+        "text": "{ opacity: 0.18, transparent: true, castShadow: false, roughness: 0.12 }, 'glass')"
+      },
+      {
+        "line": 671,
+        "text": "{ opacity: 0.18, transparent: true, castShadow: false, roughness: 0.12 }, 'glass')"
+      },
+      {
+        "line": 675,
+        "text": "{ opacity: 0.18, transparent: true, castShadow: false, roughness: 0.12 })"
+      }
+    ],
+    "file": "/Users/jerome/metaverse/hyperfy-world-jerome/objects/app-a35ccc55105b821e/script.js",
+    "oldHash": "50281580bdee72e8a4105da1542e9548b6f5435d916aba592bc93a5546aa1188",
+    "newHash": "7607c723c2c65d1aa8420c68604015dc4c73ec43dbe6a2551aafb8cc0c85f66b",
+    "removedFlags": 4
+  },
+  {
+    "id": "XajRA7cHdV",
+    "name": "Steampunk Gas Street Light",
+    "version": 12,
+    "script": "asset://4e05e969f8cd4b095a8dc5b5123aad88e819c7ebde93b6f245dbf67636b5d815.js",
+    "key": "apps/steampunk-gas-street-light-01",
+    "mode": "files",
+    "sourceFile": "file:./script.js",
+    "lines": [
+      {
+        "line": 225,
+        "text": "transparent: true,"
+      },
+      {
+        "line": 245,
+        "text": "transparent: true,"
+      },
+      {
+        "line": 255,
+        "text": "transparent: true,"
+      },
+      {
+        "line": 301,
+        "text": "transparent: true,"
+      }
+    ],
+    "file": "/Users/jerome/metaverse/hyperfy-world-jerome/objects/apps/steampunk-gas-street-light-01/script.js",
+    "oldHash": "4e05e969f8cd4b095a8dc5b5123aad88e819c7ebde93b6f245dbf67636b5d815",
+    "newHash": "e90820e1bc0ff8b5017bf314bf1f20a523e93b82edbfcb3b1d29e63fd5e09c5f",
+    "removedFlags": 4
+  },
+  {
+    "id": "jUoVsxovzh",
+    "name": "Steampunk Gas Street Light",
+    "version": 15,
+    "script": "asset://d5de9d72f9188a94331e4031883e6c748cea9c859ae4f318d4d1e5a9af5c1150.js",
+    "key": "apps/steampunk-gas-street-light-02",
+    "mode": "files",
+    "sourceFile": "file:./script.js",
+    "lines": [
+      {
+        "line": 225,
+        "text": "transparent: true,"
+      },
+      {
+        "line": 245,
+        "text": "transparent: true,"
+      },
+      {
+        "line": 255,
+        "text": "transparent: true,"
+      },
+      {
+        "line": 301,
+        "text": "transparent: true,"
+      }
+    ],
+    "file": "/Users/jerome/metaverse/hyperfy-world-jerome/objects/apps/steampunk-gas-street-light-02/script.js",
+    "oldHash": "d5de9d72f9188a94331e4031883e6c748cea9c859ae4f318d4d1e5a9af5c1150",
+    "newHash": "79bb756d92e631b1ce593f0fab5d9dd27bcaa2e3fc2dc37cfabde3de90a6e3ce",
+    "removedFlags": 4
+  }
+]

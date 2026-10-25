@@ -1,3 +1,4 @@
+import { readInboundPacket } from '../../server/inboundDecode.js'
 import assert from 'node:assert/strict'
 import Module from 'node:module'
 import path from 'node:path'
@@ -64,6 +65,7 @@ function serverFixture({ doubleside = false, moving = false, disabled = false, w
       add(data, local) {
         const entity = new Entity(world, data, local)
         entity.isPlayer = data.type === 'player'
+        entity.isBuilder = () => data.rank >= 1
         entity.modify = changes => {
           Object.assign(data, changes)
         }
@@ -95,9 +97,14 @@ function serverFixture({ doubleside = false, moving = false, disabled = false, w
   network.db = () => ({ where: () => ({ first: async () => ({ id: 'visitor', name: 'Visitor', rank: 0 }) }) })
   const packets = []
   const ws = {
+    readyState: 1,
+    close() {},
+    terminate() {},
+    once() {},
     on() {},
-    send(packet) {
+    send(packet, callback) {
       packets.push(readPacket(packet))
+      callback?.()
     },
   }
   return { world, portal, network, packets, ws, stored }
@@ -124,7 +131,13 @@ test('an existing observer receives the custom seat pose in the returning player
   const observerPackets = []
   fixture.network.sockets.set('observer', {
     id: 'observer',
-    sendPacket: packet => observerPackets.push(readPacket(packet)),
+    ws: {
+      readyState: 1,
+      send(packet, callback) {
+        observerPackets.push(readPacket(packet))
+        callback?.()
+      },
+    },
   })
   const pose = {
     version: 1,
@@ -229,7 +242,7 @@ test('client checkpoints the native camera and final location without sending be
   const world = { entities: {} }
   const network = new ClientNetwork(world)
   const packets = []
-  network.ws = { readyState: 1, send: packet => packets.push(readPacket(packet)) }
+  network.ws = { readyState: 1, send: packet => packets.push(readInboundPacket(packet)) }
   network.savePlayerSession()
   assert.equal(packets.length, 0)
   world.entities.player = {
@@ -251,7 +264,7 @@ test('loading progress follows the asset bar and clears only after controls and 
   const network = new ClientNetwork(world)
   const packets = []
   network.id = 'visitor'
-  network.ws = { readyState: 1, send: packet => packets.push(readPacket(packet)) }
+  network.ws = { readyState: 1, send: packet => packets.push(readInboundPacket(packet)) }
   network.publishLoading()
   assert.deepEqual(packets.pop(), ['onEntityModified', { id: 'visitor', loading: 33 }])
   network.publishLoading()
@@ -281,16 +294,23 @@ test('player loading updates reach observers and late joins while rejecting forg
   const observerPackets = []
   fixture.network.sockets.set('observer', {
     id: 'observer',
-    sendPacket: packet => observerPackets.push(readPacket(packet)),
+    ws: {
+      readyState: 1,
+      send(packet, callback) {
+        observerPackets.push(readPacket(packet))
+        callback?.()
+      },
+    },
   })
   await fixture.network.onConnection(fixture.ws, { authToken: 'token', loading: '1' })
   const player = fixture.world.entities.items.get('visitor')
   assert.equal(observerPackets[0][1].loading, 0)
-  await fixture.network.onEntityModified({ id: 'visitor' }, { id: 'visitor', loading: 42 })
+  const socket = fixture.network.sockets.get('visitor')
+  await fixture.network.onEntityModified(socket, { id: 'visitor', loading: 42 })
   assert.deepEqual(observerPackets.at(-1), ['onEntityModified', { id: 'visitor', loading: 42 }])
   assert.equal(fixture.world.entities.serialize().find(data => data.id === 'visitor').loading, 42)
   for (const loading of [-1, 101, NaN, '50', {}, undefined]) {
-    await fixture.network.onEntityModified({ id: 'visitor' }, { id: 'visitor', loading })
+    await fixture.network.onEntityModified(socket, { id: 'visitor', loading })
     assert.equal(player.data.loading, 42)
   }
   const originalError = console.error
@@ -301,7 +321,7 @@ test('player loading updates reach observers and late joins while rejecting forg
   } finally {
     console.error = originalError
   }
-  await fixture.network.onEntityModified({ id: 'visitor' }, { id: 'visitor', loading: null })
+  await fixture.network.onEntityModified(socket, { id: 'visitor', loading: null })
   assert.equal(player.data.loading, null)
 })
 

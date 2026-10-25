@@ -1,4 +1,8 @@
 import 'ses'
+// LiveKit defines an own Promise.resolve field by assignment during import.
+// Initialize it before SES freezes the inherited field; app scripts still run
+// only after lockdown has completed.
+import 'livekit-client'
 import '../core/lockdown'
 import { createRoot } from 'react-dom/client'
 

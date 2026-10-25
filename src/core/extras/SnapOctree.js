@@ -1,8 +1,10 @@
 import * as THREE from './three'
+import { getOctreeExpansions } from './octreeBounds.js'
 
 const _v1 = new THREE.Vector3()
 const _sphere = new THREE.Sphere()
 const _arr = []
+let warned = false
 
 export class SnapOctree {
   constructor({ center, size }) {
@@ -10,39 +12,43 @@ export class SnapOctree {
   }
 
   insert(point) {
-    let added = this.root.insert(point)
-    if (!added) {
-      while (!this.root.canContain(point.position)) {
-        this.expand()
-      }
-      added = this.root.insert(point)
-    }
+    const expansions = getOctreeExpansions(this.root, point.position)
+    if (expansions < 0) return this.park(point)
+    const prevNode = point._node
+    this.remove(point)
+    for (let i = 0; i < expansions; i++) this.expand()
+    const added = this.root.insert(point)
+    prevNode?.checkCollapse()
     return added
   }
 
   remove(point) {
-    point._node.remove(point)
+    point._node?.remove(point)
+    point._parked = false
   }
 
   move(point) {
-    if (!point._node) {
-      return false
-    }
-    // if point still fits in current node, we good!
-    if (point._node.canContain(point.position)) {
+    if (!point._node && !point._parked) return false
+    if (
+      [point.position.x, point.position.y, point.position.z].every(Number.isFinite) &&
+      point._node?.canContain(point.position)
+    ) {
       return
     }
-    // otherwise remove and reinsert
+    return this.insert(point)
+  }
+
+  park(point) {
     const prevNode = point._node
     this.remove(point)
-    const added = this.insert(point)
-    if (!added) {
-      console.error('octree point moved but was not re-added. did it move outside octree bounds?')
-      return false
+    point._node = null
+    point._parked = true
+    prevNode?.checkCollapse()
+    if (!warned) {
+      warned = true
+      console.warn('[SnapOctree] parked point with non-finite or out-of-budget bounds')
     }
-    // check if we can collapse the previous node
-    prevNode.checkCollapse()
-    return true
+    return false
   }
 
   expand() {

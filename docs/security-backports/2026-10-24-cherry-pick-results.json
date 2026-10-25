@@ -1,0 +1,731 @@
+{
+  "review_date": "2026-10-24",
+  "fork_repository": "jerometremblay/hyperfy",
+  "fork_revision": "66cd9212ed4f34e633b359f509ee19c41e7c5dfc",
+  "method": "Each commit individually cherry-picked with --no-commit onto a fresh disposable checkout of fork_revision; conflict paths captured, then disposable checkout reset. No commits created.",
+  "clean_application_does_not_imply_runtime_correctness": true,
+  "trials": [
+    {
+      "sha": "51bf43a10857519a815204c01fe588dc5fe7fa09",
+      "title": "fix: validate client packets server-side and tighten script sandbox boundaries",
+      "clean": false,
+      "conflicts": [
+        "src/client/components/Sidebar.js",
+        "src/core/entities/App.js",
+        "src/core/extras/createEntityProxy.js",
+        "src/core/nodes/LOD.js",
+        "src/core/nodes/Node.js",
+        "src/core/systems/Apps.js",
+        "src/core/systems/ClientActions.js",
+        "src/core/systems/ClientControls.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/core/utils.js",
+        "src/server/index.js",
+        "test/utils.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/51bf43a10857519a815204c01fe588dc5fe7fa09"
+    },
+    {
+      "sha": "944abda610c0ffb90d736958cefc43eae3ce1cda",
+      "title": "fix: require builder session for uploads and serve assets inertly",
+      "clean": false,
+      "conflicts": [
+        "README.md",
+        "package-lock.json",
+        "package.json",
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/systems/ClientNetwork.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/assetFilename.js",
+        "src/server/index.js",
+        "test/entityModifyPolicy.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/944abda610c0ffb90d736958cefc43eae3ce1cda"
+    },
+    {
+      "sha": "f48c5821b49fa5bf3cabb8a11bf4f3ab11d96ee3",
+      "title": "fix: freeze shared intrinsics and isolate app script compartments",
+      "clean": false,
+      "conflicts": [
+        ".eslintrc",
+        ".gitignore",
+        "docs/scripting/world/World.md",
+        "package-lock.json",
+        "package.json",
+        "src/core/entities/App.js",
+        "src/core/extras/createEntityProxy.js",
+        "src/core/systems/Apps.js",
+        "src/core/systems/Physics.js",
+        "src/core/systems/Stage.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/f48c5821b49fa5bf3cabb8a11bf4f3ab11d96ee3"
+    },
+    {
+      "sha": "8fa24deebe3102cf82aa773a87a7f37912b09af8",
+      "title": "fix: keep e2e artifacts on abort and render script console output on one line",
+      "clean": false,
+      "conflicts": [
+        "src/core/extras/scriptConsole.js",
+        "test/e2e/README.md",
+        "test/e2e/fullstack.mjs",
+        "test/e2e/gate-extras.mjs",
+        "test/e2e/lib/browser.mjs",
+        "test/e2e/stress.mjs"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/8fa24deebe3102cf82aa773a87a7f37912b09af8"
+    },
+    {
+      "sha": "be3357b955fdced8af02cac262643f075eb200b5",
+      "title": "fix: start audio on Firefox and scale the e2e harness for slow runners",
+      "clean": false,
+      "conflicts": [
+        ".github/workflows/e2e.yml",
+        "test/e2e/README.md",
+        "test/e2e/apps/physics-crash.js",
+        "test/e2e/apps/stage-crash.js",
+        "test/e2e/lib/browser.mjs",
+        "test/e2e/lib/common.mjs"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/be3357b955fdced8af02cac262643f075eb200b5"
+    },
+    {
+      "sha": "02912ae6e64fc0bec899a44e59092f250d0efd27",
+      "title": "fix: rate-limit and bound uploads per user, address and server",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "README.md",
+        "src/core/systems/ClientBuilder.js",
+        "src/core/systems/ClientNetwork.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/AssetsLocal.js",
+        "src/server/AssetsS3.js",
+        "src/server/index.js",
+        "src/server/solana-gating.js",
+        "src/server/uploadRoutes.js",
+        "test/uploadRoutes.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/02912ae6e64fc0bec899a44e59092f250d0efd27"
+    },
+    {
+      "sha": "fe55661ecfe0f4dd7e60d3734242117a2650d914",
+      "title": "fix: make cross-player teleport, push and session avatar server-only",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "docs/scripting/world/Player.md",
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/e2e/README.md",
+        "test/e2e/fullstack.mjs",
+        "test/entityModifyPolicy.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/fe55661ecfe0f4dd7e60d3734242117a2650d914"
+    },
+    {
+      "sha": "d1b678846528fd5e56d191a27c40a78cc0d14eed",
+      "title": "fix: rebuild client chat messages server-side and tighten the relay sanitizers",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "src/client/components/CoreUI.js",
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/extras/playerRelayPolicy.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/e2e/README.md",
+        "test/e2e/fullstack.mjs",
+        "test/entityModifyPolicy.test.js",
+        "test/playerRelayPolicy.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/d1b678846528fd5e56d191a27c40a78cc0d14eed"
+    },
+    {
+      "sha": "c4514ccde5d842c4906cf29fa6357a2f2690e068",
+      "title": "fix: gate, budget and defensively decode inbound packets",
+      "clean": false,
+      "conflicts": [
+        "src/core/systems/ServerNetwork.js",
+        "test/packets.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/c4514ccde5d842c4906cf29fa6357a2f2690e068"
+    },
+    {
+      "sha": "8241242169233ecf8274fee0fbadd005d953e8be",
+      "title": "fix: bound the app event queue and drop future-version events",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/App.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/8241242169233ecf8274fee0fbadd005d953e8be"
+    },
+    {
+      "sha": "5bd9a277aa2eff419ec3f35cff074c1d01e03ae7",
+      "title": "fix: cap client frames at 1 MiB and limit connections per address",
+      "clean": false,
+      "conflicts": [
+        "README.md",
+        "src/server/index.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/5bd9a277aa2eff419ec3f35cff074c1d01e03ae7"
+    },
+    {
+      "sha": "11e593c8695ac4db13d1a5b110468db3ddd407d8",
+      "title": "fix: emote url policy, server-minted chat ids and a grapheme-safe cut",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/PlayerRemote.js",
+        "src/core/extras/chatPolicy.js",
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/chatPolicy.test.js",
+        "test/entityModifyPolicy.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/11e593c8695ac4db13d1a5b110468db3ddd407d8"
+    },
+    {
+      "sha": "06c03681666a556d62b956ca474baca60f331e9e",
+      "title": "fix: strict inbound decoder",
+      "clean": false,
+      "conflicts": [
+        "src/core/Socket.js",
+        "src/core/extras/inboundPolicy.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/inboundDecode.js",
+        "test/e2e/fullstack.mjs",
+        "test/inboundDecode.test.js",
+        "test/inboundPolicy.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/06c03681666a556d62b956ca474baca60f331e9e"
+    },
+    {
+      "sha": "2ca781dac2dd05f8ad9ec6f2efe0e6bc0e75c3ba",
+      "title": "fix: transport, admission and write limits",
+      "clean": false,
+      "conflicts": [
+        ".env.example",
+        ".github/workflows/e2e.yml",
+        "README.md",
+        "package-lock.json",
+        "package.json",
+        "src/core/extras/createPlayerProxy.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/connectionLimits.js",
+        "src/server/index.js",
+        "src/server/uploadLimits.js",
+        "test/connectionLimits.test.js",
+        "test/e2e/apps/event-probe.js",
+        "test/e2e/fullstack.mjs",
+        "test/protocolVersion.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/2ca781dac2dd05f8ad9ec6f2efe0e6bc0e75c3ba"
+    },
+    {
+      "sha": "414e1c50053bbdfadc32feec1df750b1c04fccc4",
+      "title": "fix: client size checks and producer normalization",
+      "clean": false,
+      "conflicts": [
+        "src/client/components/Fields.js",
+        "src/client/components/ScriptEditor.js",
+        "src/client/components/Sidebar.js",
+        "src/client/solana-integration.js",
+        "src/core/entities/PlayerLocal.js",
+        "src/core/extras/chatPolicy.js",
+        "src/core/extras/createPlayerProxy.js",
+        "src/core/systems/Apps.js",
+        "src/core/systems/Chat.js",
+        "src/core/systems/ClientBuilder.js",
+        "src/core/systems/ClientNetwork.js",
+        "src/core/systems/Settings.js",
+        "test/e2e/apps/event-probe.js",
+        "test/e2e/apps/sandbox-probe.js",
+        "test/e2e/fullstack.mjs",
+        "test/writeLedger.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/414e1c50053bbdfadc32feec1df750b1c04fccc4"
+    },
+    {
+      "sha": "52e40a52910d0aa85ffc927ad17363bb9a92f9ba",
+      "title": "fix: inbound scheduler and inbox",
+      "clean": false,
+      "conflicts": [
+        "src/core/Socket.js",
+        "src/core/extras/inboundPolicy.js",
+        "src/core/extras/logOnce.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/e2e/fullstack.mjs",
+        "test/inboundNetwork.test.js",
+        "test/inboundPolicy.test.js",
+        "test/lib/networkHarness.mjs",
+        "test/lib/wsTransport-child.mjs",
+        "test/logOnce.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/52e40a52910d0aa85ffc927ad17363bb9a92f9ba"
+    },
+    {
+      "sha": "7ae9eb95733ce5ab0c5d2cd38fcb870eeb72b332",
+      "title": "fix: bounded app event queue",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/App.js",
+        "src/core/extras/appEventQueue.js",
+        "src/core/systems/Apps.js",
+        "src/core/systems/Blueprints.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/appEventQueue.test.js",
+        "test/e2e/apps/event-probe.js",
+        "test/e2e/fullstack.mjs",
+        "test/inboundNetwork.test.js",
+        "test/lib/clientHarness.mjs",
+        "test/lib/networkHarness.mjs",
+        "test/writeLedger.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/7ae9eb95733ce5ab0c5d2cd38fcb870eeb72b332"
+    },
+    {
+      "sha": "d79942650eb6547ffbb1314a0cc8bc848ff9df4d",
+      "title": "fix: connection lifecycle and metadata-only logging",
+      "clean": false,
+      "conflicts": [
+        "src/core/systems/ServerNetwork.js",
+        "test/lib/networkHarness.mjs",
+        "test/writeLedger.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/d79942650eb6547ffbb1314a0cc8bc848ff9df4d"
+    },
+    {
+      "sha": "0e555977416cff52f7d7fdc30eaf01ecfaa2cbcf",
+      "title": "fix: server-side blueprint enforcement and announce-before-apply",
+      "clean": false,
+      "conflicts": [
+        "src/core/systems/ServerNetwork.js",
+        "test/e2e/apps/event-probe.js",
+        "test/e2e/fullstack.mjs",
+        "test/inboundNetwork.test.js",
+        "test/lib/networkHarness.mjs",
+        "test/networkLogging.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/0e555977416cff52f7d7fdc30eaf01ecfaa2cbcf"
+    },
+    {
+      "sha": "e3ef8a810407c169814e6c08272f39752b206df2",
+      "title": "fix: review findings for inbound limits",
+      "clean": false,
+      "conflicts": [
+        ".env.example",
+        "CHANGELOG.md",
+        "README.md",
+        "src/client/components/CoreUI.js",
+        "src/core/entities/App.js",
+        "src/core/extras/blueprintPolicy.js",
+        "src/core/extras/createPlayerProxy.js",
+        "src/core/extras/writeLedger.js",
+        "src/core/systems/Blueprints.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/connectionLimits.js",
+        "test/appEvents.test.js",
+        "test/blueprintEnforcement.test.js",
+        "test/blueprintPolicy.test.js",
+        "test/clientPreflight.test.js",
+        "test/connectionLifecycle.test.js",
+        "test/connectionLimits.test.js",
+        "test/e2e/fullstack.mjs",
+        "test/e2e/lib/server.mjs",
+        "test/inboundNetwork.test.js",
+        "test/lib/clientHarness.mjs",
+        "test/lib/networkHarness.mjs",
+        "test/writeLedger.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/e3ef8a810407c169814e6c08272f39752b206df2"
+    },
+    {
+      "sha": "a3c9513f4c12609c8ed588c1e4e37318ed42ded0",
+      "title": "fix: bound and normalise network transforms",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/PlayerLocal.js",
+        "src/core/entities/PlayerRemote.js",
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/extras/playerRelayPolicy.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/entityModifyPolicy.test.js",
+        "test/lib/networkHarness.mjs",
+        "test/networkLogging.test.js",
+        "test/playerRelayPolicy.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/a3c9513f4c12609c8ed588c1e4e37318ed42ded0"
+    },
+    {
+      "sha": "de9351ef119545075d0b089b7931e873ac504f2f",
+      "title": "fix: octrees terminate on non-finite or huge bounds",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/PlayerLocal.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/de9351ef119545075d0b089b7931e873ac504f2f"
+    },
+    {
+      "sha": "de29cea3b6007be36e968a55264fd3b061766477",
+      "title": "fix: review findings for player transforms",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "docs/scripting/world/Player.md",
+        "src/core/entities/PlayerLocal.js",
+        "src/core/extras/anchorPose.js",
+        "test/anchorPose.test.js",
+        "test/entityModifyPolicy.test.js",
+        "test/playerEffectFields.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/de29cea3b6007be36e968a55264fd3b061766477"
+    },
+    {
+      "sha": "e2c6850dd6251858621d2ec0ca99c915cab825dc",
+      "title": "refactor: host-private PhysX conversions",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/PlayerLocal.js",
+        "src/core/nodes/Controller.js",
+        "src/core/nodes/Prim.js",
+        "src/core/nodes/RigidBody.js",
+        "src/core/systems/Physics.js",
+        "test/anchorPose.test.js",
+        "test/playerEffectFields.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/e2c6850dd6251858621d2ec0ca99c915cab825dc"
+    },
+    {
+      "sha": "8d681ea994c2a60ce36aab20660776df0d78e8be",
+      "title": "fix: validated script-facing physics inputs",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/PlayerLocal.js",
+        "src/core/extras/createPlayerProxy.js",
+        "src/core/extras/scriptValues.js",
+        "src/core/nodes/Controller.js",
+        "src/core/nodes/Node.js",
+        "src/core/nodes/RigidBody.js",
+        "src/core/systems/Apps.js",
+        "test/scriptValues.test.js",
+        "test/writeLedger.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/8d681ea994c2a60ce36aab20660776df0d78e8be"
+    },
+    {
+      "sha": "a8a8d8d6803e4edb900a839ce68d5f98f2e04f8b",
+      "title": "fix: memory-safe mesh cooking",
+      "clean": false,
+      "conflicts": [
+        "src/core/nodes/Collider.js",
+        "src/core/nodes/Prim.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/a8a8d8d6803e4edb900a839ce68d5f98f2e04f8b"
+    },
+    {
+      "sha": "823106c26fdc1c7190fe301ec649813caa52a7e7",
+      "title": "fix: chat input with IME and bubble text wrapping",
+      "clean": true,
+      "conflicts": [],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/823106c26fdc1c7190fe301ec649813caa52a7e7"
+    },
+    {
+      "sha": "69728c8f8dbb2d60b7e286eae7c189bf16068ce5",
+      "title": "fix: contain PhysX callbacks and copy contact events",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "src/core/nodes/Controller.js",
+        "src/core/systems/Physics.js",
+        "test/physicsInputs.test.js",
+        "test/physxConvert.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/69728c8f8dbb2d60b7e286eae7c189bf16068ce5"
+    },
+    {
+      "sha": "afe59782163157463cc6b9d2f4bf9b51651562b7",
+      "title": "fix: physics trap guards, health probe and fatal restart",
+      "clean": false,
+      "conflicts": [
+        "src/core/entities/App.js",
+        "src/core/extras/createEntityProxy.js",
+        "src/core/extras/createPlayerProxy.js",
+        "src/core/extras/geometryToPxMesh.js",
+        "src/core/extras/scriptValues.js",
+        "src/core/nodes/Controller.js",
+        "src/core/nodes/Node.js",
+        "src/core/nodes/Prim.js",
+        "src/core/nodes/RigidBody.js",
+        "src/core/systems/ClientActions.js",
+        "src/core/systems/ClientControls.js",
+        "src/core/systems/ClientNetwork.js",
+        "src/core/systems/Physics.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/core/systems/Stage.js",
+        "test/lib/realPhysx.mjs",
+        "test/physicsCallbacks.test.js",
+        "test/physicsInputs.test.js",
+        "test/physicsShapeFailure.test.js",
+        "test/scriptValues.test.js",
+        "test/writeLedger.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/afe59782163157463cc6b9d2f4bf9b51651562b7"
+    },
+    {
+      "sha": "7fb8ee1ebae9988494d56add3ae1b6bffc040bda",
+      "title": "fix: revisioned saves and a bounded fatal flush",
+      "clean": false,
+      "conflicts": [
+        "src/core/systems/ServerAI.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/announceBeforeApply.test.js",
+        "test/blueprintEnforcement.test.js",
+        "test/inboundNetwork.test.js",
+        "test/lib/networkHarness.mjs",
+        "test/networkLogging.test.js",
+        "test/physicsFailure.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/7fb8ee1ebae9988494d56add3ae1b6bffc040bda"
+    },
+    {
+      "sha": "e226348b08ec5371c70e3da5a14294ee28630c90",
+      "title": "fix: bounded query sphere and material cache",
+      "clean": false,
+      "conflicts": [
+        "src/core/systems/Physics.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/e226348b08ec5371c70e3da5a14294ee28630c90"
+    },
+    {
+      "sha": "23a179417fa1d28418c63fd48e541732a2565f47",
+      "title": "fix: validate persisted blueprints and apps; safe cleaner",
+      "clean": false,
+      "conflicts": [
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/systems/Blueprints.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/cleaner.js",
+        "test/blueprintEnforcement.test.js",
+        "test/lib/networkHarness.mjs"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/23a179417fa1d28418c63fd48e541732a2565f47"
+    },
+    {
+      "sha": "dd389c79c1db05ba798973ce52c138ed2e14f7b0",
+      "title": "fix: review findings for physics availability",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "docs/scripting/world/World.md",
+        "src/core/entities/App.js",
+        "src/core/extras/createEntityProxy.js",
+        "src/core/extras/entityModifyPolicy.js",
+        "src/core/extras/physicsFailure.js",
+        "src/core/extras/scriptValues.js",
+        "src/core/systems/Entities.js",
+        "src/core/systems/Physics.js",
+        "src/core/systems/Server.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/blueprintEnforcement.test.js",
+        "test/lib/networkHarness.mjs",
+        "test/lib/persistenceHarness.mjs",
+        "test/networkLogging.test.js",
+        "test/persistedHydration.test.js",
+        "test/persistence.test.js",
+        "test/physicsFailure.test.js",
+        "test/scriptValues.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/dd389c79c1db05ba798973ce52c138ed2e14f7b0"
+    },
+    {
+      "sha": "8b40438e09cf0d05eb041cc8799c69d50d79cfff",
+      "title": "fix: stop sending the RPC URL to browsers",
+      "clean": false,
+      "conflicts": [
+        ".env.example",
+        "CHANGELOG.md",
+        "README.md",
+        "scripts/build.mjs",
+        "src/client/components/SolanaWalletButton.js",
+        "src/client/solana-integration.js",
+        "src/server/index.js",
+        "test/solanaClient.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/8b40438e09cf0d05eb041cc8799c69d50d79cfff"
+    },
+    {
+      "sha": "198bfc25362af68a0403303154f1e31bd71d2db3",
+      "title": "fix: keep protocol v2 so existing agents stay connected",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "src/core/packets.js",
+        "test/protocolVersion.test.js",
+        "test/serverWallet.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/198bfc25362af68a0403303154f1e31bd71d2db3"
+    },
+    {
+      "sha": "32e47a3d62b1319a1a2c4a476df9d6e3aadb6c1d",
+      "title": "fix: review findings for the token gate",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "src/client/components/SolanaWalletButton.js",
+        "src/client/components/walletPanelText.js",
+        "src/client/solana-integration.js",
+        "src/core/extras/tokenBalanceClient.js",
+        "src/core/systems/ServerNetwork.js",
+        "src/server/solana-gating.js",
+        "test/appEvents.test.js",
+        "test/e2e/README.md",
+        "test/e2e/apps/token-door.js",
+        "test/e2e/token-gate.mjs",
+        "test/serverWallet.test.js",
+        "test/solanaClient.test.js",
+        "test/solanaGating.test.js",
+        "test/tokenBalanceClient.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/32e47a3d62b1319a1a2c4a476df9d6e3aadb6c1d"
+    },
+    {
+      "sha": "814f2de306033112fb6a3f7b91915f803719ce62",
+      "title": "fix: English texts for the wallet and token gate",
+      "clean": false,
+      "conflicts": [
+        "src/client/components/SolanaWalletButton.js",
+        "src/client/components/walletPanelText.js",
+        "src/client/solana-integration.js",
+        "src/core/systems/ServerNetwork.js",
+        "test/e2e/apps/token-door.js",
+        "test/e2e/token-gate.mjs",
+        "test/serverWallet.test.js",
+        "test/solanaClient.test.js",
+        "test/tokenBalanceClient.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/814f2de306033112fb6a3f7b91915f803719ce62"
+    },
+    {
+      "sha": "e19ac675a9324d56451cd0ca79ba437076f7e6db",
+      "title": "fix: review findings for lip sync",
+      "clean": false,
+      "conflicts": [
+        "src/core/extras/vrmMouth.js",
+        "src/core/systems/ClientLiveKit.js",
+        "test/e2e/hostile-transforms.mjs",
+        "test/playerVoice.test.js",
+        "test/vrmMouth.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/e19ac675a9324d56451cd0ca79ba437076f7e6db"
+    },
+    {
+      "sha": "4a5b70cd40a245d94bbc5f451c11aced9e9baa18",
+      "title": "fix: Node.js 22.23.4 for the October 2026 security release",
+      "clean": false,
+      "conflicts": [
+        ".nvmrc",
+        "CHANGELOG.md",
+        "Dockerfile",
+        "README.md",
+        "package-lock.json",
+        "package.json",
+        "test/e2e/README.md"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/4a5b70cd40a245d94bbc5f451c11aced9e9baa18"
+    },
+    {
+      "sha": "976881fc9ce2f9e6ea1d48a315006d4f4848f63e",
+      "title": "fix: keep Brotli off untrusted request bodies",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "src/server/index.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/976881fc9ce2f9e6ea1d48a315006d4f4848f63e"
+    },
+    {
+      "sha": "adf1b060121c16f2ff81469f73fd4389ff108a4b",
+      "title": "fix: review findings for the Brotli hardening",
+      "clean": false,
+      "conflicts": [
+        "CHANGELOG.md",
+        "Dockerfile",
+        "src/server/compressOptions.js",
+        "test/compressOptions.test.js",
+        "test/uploadLimitsRoutes.test.js"
+      ],
+      "repository": "dwebxr/coo-world",
+      "url": "https://github.com/dwebxr/coo-world/commit/adf1b060121c16f2ff81469f73fd4389ff108a4b"
+    },
+    {
+      "sha": "d8947f9801249704fdb72a99e4ed4d842db4c5e8",
+      "title": "coo-hyperliza: dependency security",
+      "clean": false,
+      "conflicts": [
+        ".gitignore",
+        "package.json",
+        "src/anthropic-models.ts",
+        "src/elevenlabs-speech.ts",
+        "src/index.ts",
+        "src/llm-provider.test.ts",
+        "src/llm-provider.ts",
+        "src/plugin-hyperfy/lib/asset-upload.ts",
+        "src/plugin-hyperfy/managers/voice-manager.ts",
+        "src/plugin-hyperfy/utils.ts",
+        "vitest.config.ts"
+      ],
+      "repository": "dwebxr/coo-hyperliza",
+      "url": "https://github.com/dwebxr/coo-hyperliza/commit/d8947f9801249704fdb72a99e4ed4d842db4c5e8"
+    },
+    {
+      "sha": "bdeda55528679a076a4fa310805f449c88f30853",
+      "title": "coo-hyperliza: recent dependency security",
+      "clean": false,
+      "conflicts": [
+        ".env.example",
+        "bun.lock",
+        "package.json"
+      ],
+      "repository": "dwebxr/coo-hyperliza",
+      "url": "https://github.com/dwebxr/coo-hyperliza/commit/bdeda55528679a076a4fa310805f449c88f30853"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { readPacket, writePacket } from './packets'
+import { writePacket } from './packets'
 
 export class Socket {
   constructor({ id, ws, network, player }) {
@@ -11,6 +11,9 @@ export class Socket {
     this.alive = true
     this.closed = false
     this.disconnected = false
+    this.inbox = []
+    this.inboxCost = 0
+    this.inQueue = false
 
     this.ws.on('message', this.onMessage)
     this.ws.on('pong', this.onPong)
@@ -20,16 +23,20 @@ export class Socket {
   send(name, data) {
     // console.log('->', name, data)
     const packet = writePacket(name, data)
-    this.ws.send(packet)
+    return this.network.write(this.ws, packet, { name })
   }
 
   sendPacket(packet) {
-    this.ws.send(packet)
+    return this.network.write(this.ws, packet)
+  }
+
+  get pingPending() {
+    return this.network.writer.state(this.ws).pingPending
   }
 
   ping() {
     this.alive = false
-    this.ws.ping()
+    return this.network.write(this.ws, null)
   }
 
   // end(code) {
@@ -42,9 +49,9 @@ export class Socket {
   }
 
   onMessage = packet => {
-    const [method, data] = readPacket(packet)
-    this.network.enqueue(this, method, data)
-    // console.log('<-', method, data)
+    const entry = this.network.admit(this, packet)
+    if (!entry) return
+    this.network.enqueue(this, packet, entry)
   }
 
   onClose = e => {

@@ -2,6 +2,7 @@ import { App } from '../entities/App'
 import { PlayerLocal } from '../entities/PlayerLocal'
 import { PlayerRemote } from '../entities/PlayerRemote'
 import { System } from './System'
+import { preflightPacket } from '../extras/clientPreflight'
 
 const Types = {
   app: App,
@@ -36,12 +37,14 @@ export class Entities extends System {
   }
 
   add(data, local) {
+    if (local && this.world.network.isClient && !preflightPacket(this.world, 'entityAdded', data)) return false
     let Entity
     if (data.type === 'player') {
       Entity = Types[data.owner === this.world.network.id ? 'playerLocal' : 'playerRemote']
-    } else {
+    } else if (Object.prototype.hasOwnProperty.call(Types, data.type)) {
       Entity = Types[data.type]
     }
+    if (!Entity) return console.error(`unknown entity type: ${data.type}`)
     const entity = new Entity(this.world, data, local)
     this.items.set(entity.data.id, entity)
     if (data.type === 'player') {
@@ -66,6 +69,7 @@ export class Entities extends System {
     const entity = this.items.get(id)
     if (!entity) return console.warn(`tried to remove entity that did not exist: ${id}`)
     if (entity.isPlayer) this.players.delete(entity.data.id)
+    if (entity.isApp && this.world.network.isServer && !this.destroying) this.world.network.markAppDeleted(id)
     entity.destroy()
     this.items.delete(id)
     this.removed.push(id)
@@ -113,11 +117,16 @@ export class Entities extends System {
   }
 
   destroy() {
-    this.items.forEach(item => {
-      this.remove(item.data.id)
-    })
-    this.items.clear()
-    this.players.clear()
-    this.hot.clear()
+    this.destroying = true
+    try {
+      this.items.forEach(item => {
+        this.remove(item.data.id)
+      })
+      this.items.clear()
+      this.players.clear()
+      this.hot.clear()
+    } finally {
+      this.destroying = false
+    }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "id": "WI0QjsRZ0R",
+  "version": 3,
+  "name": "Larch House — Wired Lighting Circuits",
+  "image": null,
+  "author": "Jerome",
+  "url": null,
+  "desc": "Original log house, doors and roof portals retained; exterior, downstairs and upstairs light fixtures respond to independent wall switches",
+  "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+  "script": "asset://50281580bdee72e8a4105da1542e9548b6f5435d916aba592bc93a5546aa1188.js",
+  "props": {
+    "castShadows": true,
+    "receiveShadows": true,
+    "promptBoxRequestId": "arXh5pxHzn",
+    "promptBoxTargetEntityId": "HCzjtaVZFI"
+  },
+  "preload": true,
+  "public": false,
+  "locked": false,
+  "unique": true,
+  "disabled": false,
+  "scene": false,
+  "frozen": false
+}

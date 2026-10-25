@@ -508,6 +508,7 @@ function Chat({ world }) {
           value={msg}
           onChange={e => setMsg(e.target.value)}
           onKeyDown={e => {
+            if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return
             if (e.code === 'Escape') {
               closeChat()
             }

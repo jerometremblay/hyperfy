@@ -1,4 +1,15 @@
+import { createLogOnce } from '../extras/logOnce.js'
+import { callForScript } from '../extras/scriptValues'
 import * as THREE from '../extras/three'
+import {
+  readVec3,
+  writeVec3,
+  warnOnce,
+  vec3ToPx,
+  pxToVec3,
+  scratchPxVec3,
+  scratchPxExtVec3,
+} from '../extras/physxConvert.js'
 import { isNumber, isBoolean, isString, isFunction } from 'lodash-es'
 
 import { DEG2RAD } from '../extras/general'
@@ -10,7 +21,11 @@ const stepOrigin = new THREE.Vector3()
 const stepDirection = new THREE.Vector3()
 const capsuleRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2)
 
+const warnController = createLogOnce()
+
 const layers = ['environment', 'prop', 'player', 'tool']
+
+const _v1 = new THREE.Vector3()
 
 const defaults = {
   radius: 0.4,
@@ -68,13 +83,14 @@ export class Controller extends Node {
     this.hitReport.onShapeHit = ptr => {
       const hit = PHYSX.wrapPointer(ptr, PHYSX.PxControllerShapeHit)
       hitShape = hit.shape.ptr
-      slide = hit.worldNormal.y < Math.cos(60 * DEG2RAD) &&
+      slide =
+        hit.worldNormal.y < Math.cos(60 * DEG2RAD) &&
         hit.worldPos.y > this.controller.getFootPosition().y + this.controller.getStepOffset()
     }
     this.hitReport.onControllerHit = () => {}
     this.hitReport.onObstacleHit = () => {}
     this.behavior = new PHYSX.PxControllerBehaviorCallbackImpl()
-    this.behavior.getShapeBehaviorFlags = ptr => ptr === hitShape && slide ? PHYSX.eCCT_SLIDE : 0
+    this.behavior.getShapeBehaviorFlags = ptr => (ptr === hitShape && slide ? PHYSX.eCCT_SLIDE : 0)
     this.behavior.getControllerBehaviorFlags = () => 0
     this.behavior.getObstacleBehaviorFlags = () => 0
     desc.reportCallback = this.hitReport
@@ -83,10 +99,21 @@ export class Controller extends Node {
     desc.contactOffset = 0.02 // Keep the skin small relative to the 0.3m player radius.
     desc.stepOffset = 0.5 // PhysX default = 0.5m
     this.stepGeometry = new PHYSX.PxCapsuleGeometry(this._radius, Math.max(0, this._height - desc.stepOffset) / 2)
-    this.controller = this.ctx.world.physics.controllerManager.createController(desc) // prettier-ignore
-    PHYSX.destroy(desc)
+    this.controller = null
+    try {
+      if (desc.isValid()) this.controller = this.ctx.world.physics.controllerManager.createController(desc)
+    } finally {
+      PHYSX.destroy(desc)
+    }
+    if (!this.controller?.ptr) {
+      this.controller = null
+      warnController(this, 'controller', '[controller] invalid descriptor or failed controller creation')
+      return
+    }
     const worldPosition = this.getWorldPosition()
-    this.controller.setFootPosition(worldPosition.toPxExtVec3())
+    const px = scratchPxExtVec3()
+    vec3ToPx(worldPosition, px)
+    this.controller.setFootPosition(px)
 
     const actor = this.controller.getActor()
     const nbShapes = actor.getNbShapes()
@@ -139,7 +166,9 @@ export class Controller extends Node {
     // if (this.didMove) {
     //   console.log('character position change without move() ????')
     //   const worldPosition = this.getWorldPosition()
-    //   this.controller.setFootPosition(worldPosition.toPxExtVec3())
+    //   const px = scratchPxExtVec3()
+    //   vec3ToPx(worldPosition, px)
+    //   this.controller.setFootPosition(px)
     //   this.didMove = false
     // }
   }
@@ -148,6 +177,7 @@ export class Controller extends Node {
     if (this.ctx.world.entities?.player?.controller === this) this.ctx.world.physics.portalCollisions?.clear()
     if (this.mesh) {
       this.ctx.world.stage.scene.remove(this.mesh)
+      this.mesh = null
     }
     this.actorHandle?.destroy()
     this.actorHandle = null
@@ -159,6 +189,7 @@ export class Controller extends Node {
     if (this.behavior) PHYSX.destroy(this.behavior)
     this.hitReport = null
     this.behavior = null
+    this.moveFlags = null
   }
 
   copy(source, recursive) {
@@ -273,21 +304,27 @@ export class Controller extends Node {
   }
 
   teleport(vec3) {
-    if (!vec3?.isVector3) {
-      throw new Error('[controller] teleport expected Vector3')
+    if (!readVec3(vec3, _v1, '[controller] teleport expected Vector3')) {
+      warnOnce('[controller] teleport ignored a non-finite vector')
+      return
     }
-    this.position.copy(vec3)
-    this.controller.setFootPosition(vec3.toPxExtVec3())
+    writeVec3(this.position, _v1.x, _v1.y, _v1.z)
+    if (!this.controller) return
+    const px = scratchPxExtVec3()
+    vec3ToPx(_v1, px)
+    this.controller.setFootPosition(px)
     // A teleported CCT must not keep sweep contacts from its previous room.
     this.controller.invalidateCache()
     this.moveFlags = null
   }
 
   move(vec3, delta = 1 / 60) {
-    if (!vec3?.isVector3) {
-      throw new Error('[controller] move expected Vector3')
+    if (!readVec3(vec3, _v1, '[controller] move expected Vector3')) {
+      warnOnce('[controller] move ignored non-finite input')
+      return
     }
     if (!this.controller) return
+    if (!this.controller || !Number.isFinite(delta) || delta <= 0) return
     const player = this.ctx.world.entities?.player
     const local = player?.controller === this
     const portals = local ? [...(this.ctx.world.graphics?.portals || [])] : []
@@ -304,20 +341,30 @@ export class Controller extends Node {
     if (horizontal > 0 && vec3.y <= 0) {
       stepDirection.multiplyScalar(1 / horizontal)
       stepOrigin.copy(this.position)
-      stepOrigin.y += stepOffset + this._radius + Math.max(0, this._height - stepOffset) / 2 + this.controller.getContactOffset()
-      const hit = this.ctx.world.physics.sweep(this.stepGeometry, stepOrigin, stepDirection,
-        this._radius + horizontal, Layers.environment.group | Layers.prop.group, capsuleRotation)
+      stepOrigin.y +=
+        stepOffset + this._radius + Math.max(0, this._height - stepOffset) / 2 + this.controller.getContactOffset()
+      const hit = this.ctx.world.physics.sweep(
+        this.stepGeometry,
+        stepOrigin,
+        stepDirection,
+        this._radius + horizontal,
+        Layers.environment.group | Layers.prop.group,
+        capsuleRotation
+      )
       blockedStep = !!hit && hit.normal.y < Math.cos(60 * DEG2RAD)
     }
     if (blockedStep) this.controller.setStepOffset(0)
     try {
-      this.moveFlags = this.controller.move(vec3.toPxVec3(), 0, delta, this.ctx.world.physics.controllerFilters)
+      const px = scratchPxVec3()
+      vec3ToPx(vec3, px)
+      this.moveFlags = this.controller.move(px, 0, delta, this.ctx.world.physics.controllerFilters)
     } finally {
       if (blockedStep) this.controller.setStepOffset(stepOffset)
+      this.ctx.world.physics.drainCallbackFailures()
     }
     // this.isGrounded = moveFlags.isSet(PHYSX.PxControllerCollisionFlagEnum.eCOLLISION_DOWN) // prettier-ignore
     const pos = this.controller.getFootPosition()
-    this.position.copy(pos)
+    pxToVec3(this.position, pos)
     if (local) {
       const previousTraversal = player.portalTraversal
       player.base.position.copy(this.position)
@@ -380,16 +427,16 @@ export class Controller extends Node {
           self.onContactEnd = value
         },
         get isGrounded() {
-          return self.isGrounded
+          return callForScript(() => self.isGrounded, self, [])
         },
         get isCeiling() {
-          return self.isCeiling
+          return callForScript(() => self.isCeiling, self, [])
         },
         teleport(vec3) {
-          return self.teleport(vec3)
+          return callForScript(self.teleport, self, [vec3])
         },
         move(vec3) {
-          return self.move(vec3)
+          return callForScript(self.move, self, [vec3])
         },
       }
       proxy = Object.defineProperties(proxy, Object.getOwnPropertyDescriptors(super.getProxy())) // inherit Node properties

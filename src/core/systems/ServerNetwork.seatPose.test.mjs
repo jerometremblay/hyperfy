@@ -29,6 +29,7 @@ function createFixture({ occupied = true, profileId = null } = {}) {
   const replies = []
   const player = {
     isPlayer: true,
+    isBuilder: () => false,
     data: {
       id: 'user-1',
       owner: 'user-1',
@@ -43,6 +44,7 @@ function createFixture({ occupied = true, profileId = null } = {}) {
     },
   }
   const world = {
+    settings: { customAvatars: false },
     anchors: {
       get: id => (occupied && id === 'chair:seat' ? {} : null),
       getProfileId: id => (id === 'chair:seat' ? profileId : null),

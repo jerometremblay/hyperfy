@@ -25,6 +25,7 @@ export class Client extends System {
   }
 
   start() {
+    if (this.world.fatalError) return
     this.world.graphics.renderer.setAnimationLoop(this.world.tick)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
 
@@ -38,6 +39,7 @@ export class Client extends System {
   }
 
   onVisibilityChange = () => {
+    if (this.world.fatalError) return
     // if the tab is no longer active, browsers stop triggering requestAnimationFrame.
     // this is obviously bad because physics stop running and we stop processing websocket messages etc.
     // instead, we stop using requestAnimationFrame and get a worker to tick at a slower rate using setInterval
@@ -67,6 +69,7 @@ export class Client extends System {
       const blob = new Blob([script], { type: 'application/javascript' })
       worker = new Worker(URL.createObjectURL(blob))
       worker.onmessage = () => {
+        if (this.world.fatalError) return
         const time = performance.now()
         this.world.tick(time)
       }
@@ -82,6 +85,16 @@ export class Client extends System {
       // resume rAF
       this.world.graphics.renderer.setAnimationLoop(this.world.tick)
     }
+  }
+
+  stopForFatal() {
+    this.world.graphics.renderer.setAnimationLoop(null)
+    if (worker) {
+      worker.onmessage = null
+      worker.terminate()
+      worker = null
+    }
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
   }
 
   destroy() {

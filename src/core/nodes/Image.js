@@ -76,6 +76,9 @@ export class Image extends Node {
       if (this.mesh) {
         this.mesh.matrixWorld.copy(this.matrixWorld)
       }
+      if (this.sItem) {
+        this.ctx.world.stage.octree.move(this.sItem)
+      }
     }
   }
 

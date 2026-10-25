@@ -1,7 +1,7 @@
 import { isBoolean } from 'lodash-es'
 import * as THREE from '../extras/three'
 
-import { getRef, Node } from './Node'
+import { getNodeRef, Node } from './Node'
 
 const v0 = new THREE.Vector3()
 const v1 = new THREE.Vector3()
@@ -116,7 +116,8 @@ export class LOD extends Node {
           self.scaleAware = value
         },
         insert(pNode, maxDistance, hysteresis) {
-          const node = getRef(pNode)
+          const node = getNodeRef(pNode)
+          if (!node) return this
           self.insert(node, maxDistance, hysteresis)
           return this
         },

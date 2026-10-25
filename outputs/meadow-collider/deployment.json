@@ -1,0 +1,16 @@
+{
+  "profile": "online-world",
+  "scene": "local-world",
+  "id": "$scene",
+  "beforeVersion": 250,
+  "afterVersion": 251,
+  "changedFields": [
+    "model"
+  ],
+  "beforeModel": "asset://1aa2381f0fb25ba2fe9941b62eb2cad1fe2c77afa0316df8828ba5eba5d3d374.glb",
+  "afterModel": "asset://845488eb943361c6bda105b8befa17c40c884e15e3cd94cac5a4e55fe91abded.glb",
+  "downloadedModelHashVerified": true,
+  "persistedVersionVerified": true,
+  "livePageStatus": 200,
+  "postDeploymentModelHashVerified": true
+}

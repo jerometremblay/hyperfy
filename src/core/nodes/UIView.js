@@ -252,7 +252,7 @@ export class UIView extends Node {
     }
     if (this._absolute === value) return
     this._absolute = value
-    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE.ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
+    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
     this.ui?.redraw()
   }
 
@@ -469,7 +469,7 @@ export class UIView extends Node {
   }
 
   get flexWrap() {
-    return this.flexWrap
+    return this._flexWrap
   }
 
   set flexWrap(value = defaults.flexWrap) {
@@ -539,7 +539,7 @@ export class UIView extends Node {
   }
 
   getProxy() {
-    var self = this
+    const self = this
     if (!this.proxy) {
       let proxy = {
         get display() {

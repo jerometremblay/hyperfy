@@ -1,3 +1,5 @@
+import { createOnce } from './coalesce'
+import { assetHeaders, extensionOf } from './uploadPolicy'
 import {
   PutObjectCommand,
   HeadObjectCommand,
@@ -37,6 +39,7 @@ const contentTypes = {
 
 export class AssetsS3 {
   constructor() {
+    this.inflight = new Map()
     this.url = process.env.ASSETS_BASE_URL
 
     // Parse S3 URI: s3://access_key:secret_key@endpoint/bucket/prefix
@@ -176,17 +179,17 @@ export class AssetsS3 {
   }
 
   async upload(file) {
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const buffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(await file.arrayBuffer())
     const hash = await hashFile(buffer)
     const ext = file.name.split('.').pop().toLowerCase()
+    if (!/^[a-z0-9]+$/.test(ext)) throw new Error('Invalid asset extension')
     const filename = `${hash}.${ext}`
 
-    // Check if file already exists
-    const exists = await this.exists(filename)
-    if (exists) return
-
-    await this.uploadBuffer(buffer, filename)
+    return createOnce(this.inflight, filename, async () => {
+      if (await this.exists(filename)) return false
+      await this.uploadBuffer(buffer, filename)
+      return true
+    })
   }
 
   async uploadBuffer(buffer, filename) {
@@ -199,7 +202,8 @@ export class AssetsS3 {
           Key: key,
           Body: buffer,
           // Optional: Set content type based on file extension
-          ContentType: this.getContentType(filename),
+          ContentType: assetHeaders(extensionOf(filename))['content-type'],
+          ContentDisposition: assetHeaders(extensionOf(filename))['content-disposition'],
           // Optional: Make objects publicly readable if needed
           // ACL: 'public-read',
         })

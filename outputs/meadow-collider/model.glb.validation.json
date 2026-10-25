@@ -1,0 +1,24 @@
+{
+  "file": "model.glb",
+  "validatorVersion": "2.0.0-dev.3.10",
+  "errors": 0,
+  "warnings": 0,
+  "infos": 3,
+  "messages": [
+    {
+      "code": "UNUSED_OBJECT",
+      "severity": 2,
+      "pointer": "/accessors/0"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "severity": 2,
+      "pointer": "/accessors/1"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "severity": 2,
+      "pointer": "/accessors/2"
+    }
+  ]
+}

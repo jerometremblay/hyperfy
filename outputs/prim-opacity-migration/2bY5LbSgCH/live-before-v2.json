@@ -1,0 +1,17 @@
+{
+  "id": "2bY5LbSgCH",
+  "version": 2,
+  "name": "Laser-Cut T-Rex Skeleton",
+  "image": null,
+  "author": "OpenAI",
+  "url": "https://www.atomm.com/project/54537-laser-cut-tyrannosaurus-dinosaur-3d-puzzle-3mm-free-vector",
+  "desc": "Native extruded plywood T-Rex skeleton demo. Corrected spine placement, one extrusion per piece, and separate depth layers for overlapping side plates.",
+  "model": "asset://1c26353779208e271fecb62e605d85382f61aee190ce7d448c2e43252420b2bd.glb",
+  "script": "asset://0601a4a6fad67350736b1ef1556a5f0882bfb68c86c4459640dbbd1025930cbb.js",
+  "props": {},
+  "preload": false,
+  "public": false,
+  "locked": false,
+  "unique": false,
+  "disabled": false
+}

@@ -1,0 +1,162 @@
+# Historical reviewed partial upstream patches; now applied to the main checkout.
+# Do not reapply; see docs/upstream-review-2026-10-24.md for the full implementation.
+# Base: 242a44fa1b6f8853bcbbb1ab8a77619dfac1daab plus pending security backports.
+# Upstream-Commit: https://github.com/dwebxr/coo-world/commit/be3357b955fdced8af02cac262643f075eb200b5
+# Upstream-Commit: https://github.com/dwebxr/coo-world/commit/043b40c69a2d78e09df53ac4f5a755d607a61824
+# Upstream-Commit: https://github.com/dwebxr/coo-world/commit/1f528221b240be0be73d4f97179d5fea36834bb2
+# Only ClientAudio, UI/UIView/UIText, Yoga validation and .dockerignore are included.
+# See docs/upstream-review-2026-10-24.md for limits and remaining high priority fixes.
+
+diff --git a/src/core/systems/ClientAudio.js b/src/core/systems/ClientAudio.js
+index a20ffca..cbfe2e1 100644
+--- a/src/core/systems/ClientAudio.js
++++ b/src/core/systems/ClientAudio.js
+@@ -24,15 +24,21 @@ export class ClientAudio extends System {
+     this.groupGains.sfx.connect(this.masterGain)
+     this.groupGains.voice.connect(this.masterGain)
+     this.listener = this.ctx.listener
+-    this.listener.positionX.value = 0
+-    this.listener.positionY.value = 0
+-    this.listener.positionZ.value = 0
+-    this.listener.forwardX.value = 0
+-    this.listener.forwardY.value = 0
+-    this.listener.forwardZ.value = -1
+-    this.listener.upX.value = 0
+-    this.listener.upY.value = 1
+-    this.listener.upZ.value = 0
++    // Firefox has no positionX/forwardX/upX AudioParams on the listener, only the older setters
++    if (this.listener.positionX) {
++      this.listener.positionX.value = 0
++      this.listener.positionY.value = 0
++      this.listener.positionZ.value = 0
++      this.listener.forwardX.value = 0
++      this.listener.forwardY.value = 0
++      this.listener.forwardZ.value = -1
++      this.listener.upX.value = 0
++      this.listener.upY.value = 1
++      this.listener.upZ.value = 0
++    } else {
++      this.listener.setPosition(0, 0, 0)
++      this.listener.setOrientation(0, 0, -1, 0, 1, 0)
++    }
+     this.lastDelta = 0
+ 
+     this.queue = []
+diff --git a/src/core/extras/yoga.js b/src/core/extras/yoga.js
+index e3098e9..e660532 100644
+--- a/src/core/extras/yoga.js
++++ b/src/core/extras/yoga.js
+@@ -44,7 +44,7 @@ export function isDisplay(value) {
+   return displays.includes(value)
+ }
+ 
+-const flexDirections = ['column', 'column-reverse', 'row', 'row-reverse', 'flex-start', 'flex-end', 'center']
++const flexDirections = ['column', 'column-reverse', 'row', 'row-reverse']
+ 
+ export function isFlexDirection(value) {
+   return flexDirections.includes(value)
+diff --git a/src/core/nodes/UI.js b/src/core/nodes/UI.js
+index 9ad395b..0620ef7 100644
+--- a/src/core/nodes/UI.js
++++ b/src/core/nodes/UI.js
+@@ -363,7 +363,7 @@ export class UI extends Node {
+         // calculate scale factor based on the distance
+         // When distance is at min, scale is 1.0 (or some other base scale)
+         // When distance is at max, scale adjusts proportionally
+-        let scaleFactor = (baseScale * (worldToScreenFactor * clampedDistance)) / this._size
++        const scaleFactor = (baseScale * (worldToScreenFactor * clampedDistance)) / this._size
+         // if (world.xr.session) scaleFactor *= 0.3 // roughly matches desktop fov etc
+         sca.setScalar(scaleFactor)
+       }
+@@ -778,7 +778,7 @@ export class UI extends Node {
+   }
+ 
+   get flexWrap() {
+-    return this.flexWrap
++    return this._flexWrap
+   }
+ 
+   set flexWrap(value = defaults.flexWrap) {
+@@ -807,7 +807,7 @@ export class UI extends Node {
+ 
+   getProxy() {
+     if (!this.proxy) {
+-      var self = this
++      const self = this
+       let proxy = {
+         get space() {
+           return self.space
+diff --git a/src/core/nodes/UIText.js b/src/core/nodes/UIText.js
+index b142ec8..ca75169 100644
+--- a/src/core/nodes/UIText.js
++++ b/src/core/nodes/UIText.js
+@@ -247,7 +247,7 @@ export class UIText extends Node {
+     }
+     if (this._absolute === value) return
+     this._absolute = value
+-    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE.ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
++    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
+     this.ui?.redraw()
+   }
+ 
+@@ -367,7 +367,7 @@ export class UIText extends Node {
+     if (!isEdge(value)) {
+       throw new Error(`[uitext] padding not a number or array of numbers`)
+     }
+-    if (this._padding === value) rturn
++    if (this._padding === value) return
+     this._padding = value
+     if (isArray(this._padding)) {
+       const [top, right, bottom, left] = this._padding
+@@ -524,7 +524,7 @@ export class UIText extends Node {
+   }
+ 
+   getProxy() {
+-    var self = this
++    const self = this
+     if (!this.proxy) {
+       let proxy = {
+         get display() {
+diff --git a/src/core/nodes/UIView.js b/src/core/nodes/UIView.js
+index 09b22f9..a9e821d 100644
+--- a/src/core/nodes/UIView.js
++++ b/src/core/nodes/UIView.js
+@@ -252,7 +252,7 @@ export class UIView extends Node {
+     }
+     if (this._absolute === value) return
+     this._absolute = value
+-    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE.ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
++    this.yogaNode?.setPositionType(this._absolute ? Yoga.POSITION_TYPE_ABSOLUTE : Yoga.POSITION_TYPE_RELATIVE)
+     this.ui?.redraw()
+   }
+ 
+@@ -469,7 +469,7 @@ export class UIView extends Node {
+   }
+ 
+   get flexWrap() {
+-    return this.flexWrap
++    return this._flexWrap
+   }
+ 
+   set flexWrap(value = defaults.flexWrap) {
+@@ -539,7 +539,7 @@ export class UIView extends Node {
+   }
+ 
+   getProxy() {
+-    var self = this
++    const self = this
+     if (!this.proxy) {
+       let proxy = {
+         get display() {
+diff --git a/.dockerignore b/.dockerignore
+index feb93e4..5592053 100644
+--- a/.dockerignore
++++ b/.dockerignore
+@@ -3,6 +3,7 @@ npm-debug.log
+ world
+ .git
+ .gitignore
++.env
+ .env.*
+ !.env.example
+ *.md

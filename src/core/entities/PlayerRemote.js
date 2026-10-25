@@ -1,3 +1,4 @@
+import { readAnchorPose } from '../extras/anchorPose'
 import * as THREE from '../extras/three'
 import { Entity } from './Entity'
 import { createNode } from '../extras/createNode'
@@ -8,6 +9,9 @@ import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 import { cloneHandTrackingPose } from '../extras/handTracking'
+
+const anchorPosition = new THREE.Vector3()
+const anchorQuaternion = new THREE.Quaternion()
 
 let capsuleGeometry
 {
@@ -171,11 +175,11 @@ export class PlayerRemote extends Entity {
 
   lateUpdate(delta) {
     const anchor = this.getAnchorMatrix()
-    if (anchor) {
+    if (anchor && readAnchorPose(anchor, anchorPosition, anchorQuaternion)) {
       this.position.snap()
       this.quaternion.snap()
-      this.base.position.setFromMatrixPosition(anchor)
-      this.base.quaternion.setFromRotationMatrix(anchor)
+      this.base.position.copy(anchorPosition)
+      this.base.quaternion.copy(anchorQuaternion)
       this.base.clean()
     }
     if (this.avatar) {

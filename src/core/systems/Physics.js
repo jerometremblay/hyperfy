@@ -1,9 +1,12 @@
+import { handlePhysicsFailure, isPhysicsTrap, getPhysicsTrapCount } from '../extras/physicsFailure.js'
 import * as THREE from '../extras/three'
-import { extendThreePhysX } from '../extras/extendThreePhysX'
+import { matrixToPxTransform, vec3ToPx, pxToVec3, pxToQuat, warnOnce } from '../extras/physxConvert.js'
 import { System } from './System'
 import { Layers } from '../extras/Layers'
 import { loadPhysX } from '../loadPhysX'
 import { PortalCollisions } from '../extras/PortalCollisions'
+import { serializeError } from '../extras/serializeError'
+import { briefError } from '../extras/logOnce.js'
 
 const _raycastHit = {
   actor: null,
@@ -23,10 +26,6 @@ const _overlapHit = {
   actor: null,
 }
 
-const triggerResult = {
-  tag: null,
-}
-
 const overlapHitPool = []
 const overlapHits = []
 
@@ -43,6 +42,9 @@ export class Physics extends System {
     super(world)
     this.scene = null
     this.portalCollisions = new PortalCollisions(world)
+    this.probeTick = 0
+    this.lastProbeTick = -1
+    this.needsProbe = false
   }
 
   async init() {
@@ -52,175 +54,66 @@ export class Physics extends System {
     this.errorCb = info.errorCb
     this.foundation = info.foundation
 
-    extendThreePhysX()
-
     this.tolerances = new PHYSX.PxTolerancesScale()
     this.cookingParams = new PHYSX.PxCookingParams(this.tolerances)
     this.physics = PHYSX.CreatePhysics(this.version, this.foundation, this.tolerances)
     this.defaultMaterial = this.physics.createMaterial(0.2, 0.2, 0.2)
 
-    this.callbackQueue = []
-
-    this.getContactCallback = createPool(() => {
-      const contactPool = []
-      const contacts = []
-      let idx = 0
-      return {
-        start: false,
-        fn0: null,
-        event0: {
-          tag: null,
-          playerId: null,
-          contacts,
-        },
-        fn1: null,
-        event1: {
-          tag: null,
-          playerId: null,
-          contacts,
-        },
-        addContact(position, normal, impulse) {
-          if (!contactPool[idx]) {
-            contactPool[idx] = {
-              position: new THREE.Vector3(),
-              normal: new THREE.Vector3(),
-              impulse: new THREE.Vector3(),
-            }
-          }
-          const contact = contactPool[idx]
-          contact.position.copy(position)
-          contact.normal.copy(normal)
-          contact.impulse.copy(impulse)
-          contacts.push(contact)
-          idx++
-        },
-        init(start) {
-          this.start = start
-          this.fn0 = null
-          this.fn1 = null
-          contacts.length = 0
-          idx = 0
-          return this
-        },
-        exec() {
-          if (this.fn0) {
-            try {
-              this.fn0(this.event0)
-            } catch (err) {
-              console.error(err)
-            }
-          }
-          if (this.fn1) {
-            try {
-              this.fn1(this.event1)
-            } catch (err) {
-              console.error(err)
-            }
-          }
-          this.release()
-        },
-      }
-    })
     this.contactCallbacks = []
-    this.queueContactCallback = cb => {
-      this.contactCallbacks.push(cb)
-    }
-    this.processContactCallbacks = () => {
-      for (const cb of this.contactCallbacks) {
-        cb.exec()
-      }
-      this.contactCallbacks.length = 0
-    }
+    this.triggerCallbacks = []
+    this.pendingCallbacks = []
+    this.callbackFailures = []
+    this.overflowTraps = 0
+    this.callbackWarnings = new WeakMap()
+    this.registrations = new WeakMap()
+
     const contactPoints = new PHYSX.PxArray_PxContactPairPoint(64)
     const simulationEventCallback = new PHYSX.PxSimulationEventCallbackImpl()
-    simulationEventCallback.onContact = (pairHeader, pairs, count) => {
+    simulationEventCallback.onContact = this.containCallback('onContact', (pairHeader, pairs, count) => {
       pairHeader = PHYSX.wrapPointer(pairHeader, PHYSX.PxContactPairHeader)
       const handle0 = this.handles.get(pairHeader.get_actors(0)?.ptr)
       const handle1 = this.handles.get(pairHeader.get_actors(1)?.ptr)
       if (!handle0 || !handle1) return
       for (let i = 0; i < count; i++) {
         const pair = PHYSX.NativeArrayHelpers.prototype.getContactPairAt(pairs, i)
-        if (pair.events.isSet(PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND)) {
-          const contactCallback = this.getContactCallback().init(true)
-          this.contactCallbacks.push(contactCallback)
-          const pxContactPoints = pair.extractContacts(contactPoints.begin(), 64)
-          if (pxContactPoints > 0) {
-            for (let j = 0; j < pxContactPoints; j++) {
-              const contact = contactPoints.get(j)
-              contactCallback.addContact(contact.position, contact.normal, contact.impulse)
-            }
-          }
-          if (!handle0.contactedHandles.has(handle1)) {
-            if (handle0.onContactStart) {
-              contactCallback.fn0 = handle0.onContactStart
-              contactCallback.event0.tag = handle1.tag
-              contactCallback.event0.playerId = handle1.playerId
-            }
-            handle0.contactedHandles.add(handle1)
-          }
-          if (!handle1.contactedHandles.has(handle0)) {
-            if (handle1.onContactStart) {
-              contactCallback.fn1 = handle1.onContactStart
-              contactCallback.event1.tag = handle0.tag
-              contactCallback.event1.playerId = handle0.playerId
-            }
-            handle1.contactedHandles.add(handle0)
-          }
-        } else if (pair.events.isSet(PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST)) {
-          const contactCallback = this.getContactCallback().init(false)
-          this.contactCallbacks.push(contactCallback)
-          if (handle0.contactedHandles.has(handle1)) {
-            if (handle0.onContactEnd) {
-              contactCallback.fn0 = handle0.onContactEnd
-              contactCallback.event0.tag = handle1.tag
-              contactCallback.event0.playerId = handle1.playerId
-            }
-            handle0.contactedHandles.delete(handle1)
-          }
-          if (handle1.contactedHandles.has(handle0)) {
-            if (handle1.onContactEnd) {
-              contactCallback.fn1 = handle1.onContactEnd
-              contactCallback.event1.tag = handle0.tag
-              contactCallback.event1.playerId = handle0.playerId
-            }
-            handle1.contactedHandles.delete(handle0)
+        const start = pair.events.isSet(PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND)
+        if (!start && !pair.events.isSet(PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST)) continue
+        // Only primitive contact data is retained across the native callback boundary.
+        const contacts = []
+        if (start) {
+          const count = pair.extractContacts(contactPoints.begin(), 64)
+          for (let j = 0; j < count; j++) {
+            const contact = contactPoints.get(j)
+            contacts.push({
+              position: copyPoint(contact.position),
+              normal: copyPoint(contact.normal),
+              impulse: copyPoint(contact.impulse),
+            })
           }
         }
-      }
-    }
-    this.getTriggerCallback = createPool(() => {
-      return {
-        fn: null,
-        event: {
-          tag: null,
-          playerId: null,
-        },
-        exec() {
-          try {
-            this.fn(this.event)
-          } catch (err) {
-            console.error(err)
-          }
-          this.release()
-        },
+        const recipients = []
+        const method = start ? 'onContactStart' : 'onContactEnd'
+        if (handle0.contactedHandles.has(handle1) !== start) {
+          recipients.push(this.snapshotRecipient(handle0, handle1, method))
+        }
+        if (handle1.contactedHandles.has(handle0) !== start) {
+          recipients.push(this.snapshotRecipient(handle1, handle0, method))
+        }
+        if (start) {
+          handle0.contactedHandles.add(handle1)
+          handle1.contactedHandles.add(handle0)
+        } else {
+          handle0.contactedHandles.delete(handle1)
+          handle1.contactedHandles.delete(handle0)
+        }
+        this.contactCallbacks.push({ contacts, recipients })
       }
     })
-    this.triggerCallbacks = []
-    this.queueTriggerCallback = cb => {
-      this.triggerCallbacks.push(cb)
-    }
-    this.processTriggerCallbacks = () => {
-      for (const cb of this.triggerCallbacks) {
-        cb.exec()
-      }
-      this.triggerCallbacks.length = 0
-    }
-    simulationEventCallback.onTrigger = (pairs, count) => {
+    simulationEventCallback.onTrigger = this.containCallback('onTrigger', (pairs, count) => {
       pairs = PHYSX.wrapPointer(pairs, PHYSX.PxTriggerPair)
       for (let i = 0; i < count; i++) {
         const pair = PHYSX.NativeArrayHelpers.prototype.getTriggerPairAt(pairs, i)
-        // ignore pairs if a shape was deleted.
-        // this prevents an issue where onLeave can get called after rebuilding an object that had entered a trigger
+        // Removed shapes are handled by the synthetic queue, including rebuilt actors.
         if (
           pair.flags.isSet(PHYSX.PxTriggerPairFlagEnum.eREMOVED_SHAPE_TRIGGER) ||
           pair.flags.isSet(PHYSX.PxTriggerPairFlagEnum.eREMOVED_SHAPE_OTHER)
@@ -230,36 +123,24 @@ export class Physics extends System {
         const triggerHandle = this.handles.get(pair.triggerShape.getActor().ptr)
         const otherHandle = this.handles.get(pair.otherShape.getActor().ptr)
         if (!triggerHandle || !otherHandle) continue
-        if (pair.status === PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND) {
-          if (!otherHandle.triggeredHandles.has(triggerHandle)) {
-            if (triggerHandle.onTriggerEnter) {
-              const cb = this.getTriggerCallback()
-              cb.fn = triggerHandle.onTriggerEnter
-              cb.event.tag = otherHandle.tag
-              cb.event.playerId = otherHandle.playerId
-              cb.event.isLocalPlayer = otherHandle.playerId === this.world.network.id
-              this.triggerCallbacks.push(cb)
-            }
-            otherHandle.triggeredHandles.add(triggerHandle)
-          }
-        } else if (pair.status === PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST) {
-          if (otherHandle.triggeredHandles.has(triggerHandle)) {
-            if (triggerHandle.onTriggerLeave) {
-              const cb = this.getTriggerCallback()
-              cb.fn = triggerHandle.onTriggerLeave
-              cb.event.tag = otherHandle.tag
-              cb.event.playerId = otherHandle.playerId
-              cb.event.isLocalPlayer = otherHandle.playerId === this.world.network.id
-              this.triggerCallbacks.push(cb)
-            }
-            otherHandle.triggeredHandles.delete(triggerHandle)
-          }
+        const start = pair.status === PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND
+        if (!start && pair.status !== PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST) continue
+        if (otherHandle.triggeredHandles.has(triggerHandle) === start) continue
+        const method = start ? 'onTriggerEnter' : 'onTriggerLeave'
+        const recipient = this.snapshotRecipient(triggerHandle, otherHandle, method)
+        if (start) {
+          otherHandle.triggeredHandles.add(triggerHandle)
+          triggerHandle.triggeringHandles.add(otherHandle)
+        } else {
+          otherHandle.triggeredHandles.delete(triggerHandle)
+          triggerHandle.triggeringHandles.delete(otherHandle)
         }
+        this.triggerCallbacks.push({ recipients: [recipient] })
       }
-    }
-    simulationEventCallback.onConstraintBreak = (...args) => {
-      console.error('TODO: onContraintBreak', ...args)
-    }
+    })
+    simulationEventCallback.onConstraintBreak = this.containCallback('onConstraintBreak', () => {})
+    simulationEventCallback.onWake = () => {}
+    simulationEventCallback.onSleep = () => {}
 
     const sceneDesc = new PHYSX.PxSceneDesc(this.tolerances)
     sceneDesc.gravity = new PHYSX.PxVec3(0, -9.81, 0)
@@ -275,13 +156,14 @@ export class Physics extends System {
     this.handles = new Map()
     this.active = new Set()
 
-    this.materials = {}
+    this.materials = new Map()
 
     this.raycastResult = new PHYSX.PxRaycastResult()
     this.sweepPose = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
     this.sweepResult = new PHYSX.PxSweepResult()
     this.overlapPose = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
     this.overlapResult = new PHYSX.PxOverlapResult()
+    this.overlapSphereGeometry = new PHYSX.PxSphereGeometry(1)
     this.queryFilterData = new PHYSX.PxQueryFilterData()
 
     this._pv1 = new PHYSX.PxVec3()
@@ -289,6 +171,61 @@ export class Physics extends System {
     this.transform = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
 
     this.setupControllerManager()
+    this.createProbeScene()
+  }
+
+  createProbeScene() {
+    const desc = new PHYSX.PxSceneDesc(this.tolerances)
+    const gravity = new PHYSX.PxVec3(0, -9.81, 0)
+    desc.gravity = gravity
+    desc.cpuDispatcher = PHYSX.DefaultCpuDispatcherCreate(0)
+    desc.filterShader = PHYSX.DefaultFilterShader()
+    this.probeScene = this.physics.createScene(desc)
+    PHYSX.destroy(desc)
+    PHYSX.destroy(gravity)
+    const pose = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
+    const flags = new PHYSX.PxShapeFlags(PHYSX.PxShapeFlagEnum.eSIMULATION_SHAPE)
+    for (const dynamic of [false, true]) {
+      pose.p.y = dynamic ? 2 : 0
+      const geometry = dynamic ? new PHYSX.PxSphereGeometry(0.25) : new PHYSX.PxBoxGeometry(1, 0.25, 1)
+      const actor = dynamic ? this.physics.createRigidDynamic(pose) : this.physics.createRigidStatic(pose)
+      const shape = this.physics.createShape(geometry, this.defaultMaterial, true, flags)
+      actor.attachShape(shape)
+      this.probeScene.addActor(actor)
+      shape.release()
+      PHYSX.destroy(geometry)
+    }
+    PHYSX.destroy(flags)
+    PHYSX.destroy(pose)
+  }
+
+  probe() {
+    try {
+      this.probeScene.simulate(1 / 60)
+      if (!this.probeScene.fetchResults(true)) return false
+      const vector = new PHYSX.PxVec3()
+      PHYSX.destroy(vector)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  checkHealth() {
+    if (this.world.fatalError || (!this.needsProbe && getPhysicsTrapCount() < 64)) return
+    if (this.lastProbeTick === this.probeTick) return
+    this.lastProbeTick = this.probeTick
+    this.needsProbe = false
+    if (!this.probe()) this.world.fatal('physics unusable')
+  }
+
+  preTick() {
+    this.probeTick++
+    this.checkHealth()
+  }
+
+  postTick() {
+    this.checkHealth()
   }
 
   setupControllerManager() {
@@ -296,26 +233,23 @@ export class Physics extends System {
     this.controllerFilters = new PHYSX.PxControllerFilters()
     this.controllerFilters.mFilterData = new PHYSX.PxFilterData(Layers.player.group, Layers.player.mask, 0, 0) // prettier-ignore
     const filterCallback = new PHYSX.PxQueryFilterCallbackImpl()
-    filterCallback.simplePreFilter = (filterDataPtr, shapePtr, actor) => {
-      const filterData = PHYSX.wrapPointer(filterDataPtr, PHYSX.PxFilterData)
-      const shape = PHYSX.wrapPointer(shapePtr, PHYSX.PxShape)
-      const shapeFilterData = shape.getQueryFilterData()
-      // if (0 == (filterData.word0 & shapeFilterData.word1) && 0 == (shapeFilterData.word0 & filterData.word1)) {
-      //   return PHYSX.PxQueryHitType.eBLOCK
-      //   return PHYSX.PxQueryHitType.eNONE
-      // }
-      if (filterData.word0 & shapeFilterData.word1 && shapeFilterData.word0 & filterData.word1) {
-        return PHYSX.PxQueryHitType.eBLOCK
-      }
-      return PHYSX.PxQueryHitType.eNONE
-    }
+    filterCallback.simplePreFilter = this.containCallback(
+      'simplePreFilter',
+      (filterDataPtr, shapePtr) => {
+        const filterData = PHYSX.wrapPointer(filterDataPtr, PHYSX.PxFilterData)
+        const shape = PHYSX.wrapPointer(shapePtr, PHYSX.PxShape)
+        const shapeFilterData = shape.getQueryFilterData()
+        if (filterData.word0 & shapeFilterData.word1 && shapeFilterData.word0 & filterData.word1) {
+          return PHYSX.PxQueryHitType.eBLOCK
+        }
+        return PHYSX.PxQueryHitType.eNONE
+      },
+      PHYSX.PxQueryHitType.eNONE
+    )
+    filterCallback.simplePostFilter = () => PHYSX.PxQueryHitType.eNONE
     this.controllerFilters.mFilterCallback = filterCallback
     const cctFilterCallback = new PHYSX.PxControllerFilterCallbackImpl()
-    cctFilterCallback.filter = (aPtr, bPtr) => {
-      // const a = PHYSX.wrapPointer(aPtr, PHYSX.PxCapsuleController)
-      // const b = PHYSX.wrapPointer(bPtr, PHYSX.PxCapsuleController)
-      return true // for now ALL cct's collide
-    }
+    cctFilterCallback.filter = this.containCallback('filter', () => true, true)
     this.controllerFilters.mCCTFilterCallback = cctFilterCallback
   }
 
@@ -331,6 +265,9 @@ export class Physics extends System {
     handle.actor = actor
     handle.contactedHandles = new Set()
     handle.triggeredHandles = new Set()
+    handle.triggeringHandles = new Set()
+    const registration = { handle, ptr: actor.ptr, destroyed: false }
+    this.registrations.set(handle, registration)
     if (handle.onInterpolate) {
       handle.interpolation = {
         prev: {
@@ -347,12 +284,12 @@ export class Physics extends System {
         },
       }
       const pose = actor.getGlobalPose()
-      handle.interpolation.prev.position.copy(pose.p)
-      handle.interpolation.prev.quaternion.copy(pose.q)
-      handle.interpolation.next.position.copy(pose.p)
-      handle.interpolation.next.quaternion.copy(pose.q)
-      handle.interpolation.curr.position.copy(pose.p)
-      handle.interpolation.curr.quaternion.copy(pose.q)
+      pxToVec3(handle.interpolation.prev.position, pose.p)
+      pxToQuat(handle.interpolation.prev.quaternion, pose.q)
+      pxToVec3(handle.interpolation.next.position, pose.p)
+      pxToQuat(handle.interpolation.next.quaternion, pose.q)
+      pxToVec3(handle.interpolation.curr.position, pose.p)
+      pxToQuat(handle.interpolation.curr.quaternion, pose.q)
     }
     this.handles.set(actor.ptr, handle)
     if (!handle.controller) {
@@ -363,7 +300,7 @@ export class Physics extends System {
         if (this.ignoreSetGlobalPose) {
           return
         }
-        matrix.toPxTransform(this.transform)
+        if (!matrixToPxTransform(matrix, this.transform)) return
         // const isKinematic = actor.getRigidBodyFlags?.().isSet(PHYSX.PxRigidBodyFlagEnum.eKINEMATIC)
         // if (isKinematic) {
         //   actor.setKinematicTarget(this.transform)
@@ -374,48 +311,161 @@ export class Physics extends System {
       },
       snap: pose => {
         actor.setGlobalPose(pose)
-        handle.interpolation.prev.position.copy(pose.p)
-        handle.interpolation.prev.quaternion.copy(pose.q)
-        handle.interpolation.next.position.copy(pose.p)
-        handle.interpolation.next.quaternion.copy(pose.q)
-        handle.interpolation.curr.position.copy(pose.p)
-        handle.interpolation.curr.quaternion.copy(pose.q)
+        pxToVec3(handle.interpolation.prev.position, pose.p)
+        pxToQuat(handle.interpolation.prev.quaternion, pose.q)
+        pxToVec3(handle.interpolation.next.position, pose.p)
+        pxToQuat(handle.interpolation.next.quaternion, pose.q)
+        pxToVec3(handle.interpolation.curr.position, pose.p)
+        pxToQuat(handle.interpolation.curr.quaternion, pose.q)
         handle.interpolation.skip = true
       },
       destroy: () => {
-        // end any contacts
-        if (handle.contactedHandles.size) {
-          const cb = this.getContactCallback().init(false)
-          for (const otherHandle of handle.contactedHandles) {
-            if (otherHandle.onContactEnd) {
-              cb.fn0 = otherHandle.onContactEnd
-              cb.event0.tag = handle.tag
-              cb.event0.playerId = handle.playerId
-              cb.exec()
-            }
-            otherHandle.contactedHandles.delete(handle)
-          }
+        if (registration.destroyed) return
+        registration.destroyed = true
+        this.handles.delete(registration.ptr)
+        this.active.delete(handle)
+        for (const otherHandle of handle.contactedHandles) {
+          otherHandle.contactedHandles.delete(handle)
+          this.pendingCallbacks.push({
+            contacts: [],
+            recipients: [this.snapshotRecipient(otherHandle, handle, 'onContactEnd')],
+          })
         }
-        // end any triggers
-        if (handle.triggeredHandles.size) {
-          const cb = this.getTriggerCallback()
-          for (const triggerHandle of handle.triggeredHandles) {
-            if (triggerHandle.onTriggerLeave) {
-              cb.fn = triggerHandle.onTriggerLeave
-              cb.event.tag = handle.tag
-              cb.event.playerId = handle.playerId
-              cb.exec()
-            }
-          }
+        handle.contactedHandles.clear()
+        for (const triggerHandle of handle.triggeredHandles) {
+          triggerHandle.triggeringHandles.delete(handle)
+          this.pendingCallbacks.push({
+            recipients: [this.snapshotRecipient(triggerHandle, handle, 'onTriggerLeave')],
+          })
         }
-        // remove from scene
+        handle.triggeredHandles.clear()
+        for (const otherHandle of handle.triggeringHandles) {
+          otherHandle.triggeredHandles.delete(handle)
+        }
+        handle.triggeringHandles.clear()
         if (!handle.controller) {
           this.scene.removeActor(actor)
         }
-        // delete data
-        this.handles.delete(actor.ptr)
       },
     }
+  }
+
+  containCallback(phase, callback, fallback) {
+    return (...args) => {
+      try {
+        return callback(...args)
+      } catch (err) {
+        this.recordCallbackFailure(err, phase)
+        return fallback
+      }
+    }
+  }
+
+  recordCallbackFailure(err, phase, entity) {
+    const runtimeError = isPhysicsTrap(err)
+    if (this.callbackFailures.length < 32) {
+      this.callbackFailures.push({ phase, runtimeError, entity })
+    } else if (runtimeError) {
+      this.overflowTraps++
+    }
+  }
+
+  drainCallbackFailures() {
+    if (!this.callbackFailures.length && !this.overflowTraps) return
+    const failures = this.callbackFailures
+    this.callbackFailures = []
+    if (this.overflowTraps) {
+      failures.push({ phase: 'callback overflow', runtimeError: true, count: this.overflowTraps })
+      this.overflowTraps = 0
+    }
+    this.handleContainedCallbackFailures(failures)
+  }
+
+  handleContainedCallbackFailures(failures) {
+    for (const { phase, runtimeError, entity, count } of failures) {
+      // Identity was classified inside the native callback; only metadata survives it.
+      if (runtimeError) {
+        handlePhysicsFailure(new WebAssembly.RuntimeError(), { entity, world: this.world, phase, count })
+        continue
+      }
+      const subject = entity || this
+      let warned = this.callbackWarnings.get(subject)
+      if (!warned) this.callbackWarnings.set(subject, (warned = new Set()))
+      const key = `${phase}:${runtimeError}`
+      if (warned.has(key)) continue
+      warned.add(key)
+      console.error(`[physics] callback failed (phase ${phase}, native trap ${runtimeError})`)
+    }
+  }
+
+  snapshotRecipient(handle, other, method) {
+    const fn = handle[method]
+    if (!fn) return null
+    const entity = handle.node?.ctx?.entity
+    return {
+      registration: this.registrations.get(handle),
+      entity,
+      run: entity?.isApp ? entity.deadHook : null,
+      fn,
+      method,
+      tag: other.tag,
+      playerId: other.playerId,
+      isLocalPlayer: other.playerId === this.world.network.id,
+    }
+  }
+
+  dispatchCallbacks(callbacks) {
+    for (const { recipients, contacts } of callbacks) {
+      for (const recipient of recipients) {
+        if (this.world.fatalError) return
+        if (!recipient) continue
+        const { registration, entity, run, fn, method, tag, playerId, isLocalPlayer } = recipient
+        const { handle, ptr, destroyed } = registration
+        if (destroyed || this.handles.get(ptr) !== handle || this.registrations.get(handle) !== registration) continue
+        if (handle.node?.ctx?.entity !== entity) continue
+        if (entity?.isApp && (entity.destroyed || entity.crashed || entity.deadHook !== run || run?.dead)) continue
+        try {
+          const event = contacts
+            ? {
+                tag,
+                playerId,
+                contacts: contacts.map(contact => ({
+                  position: new THREE.Vector3(...contact.position),
+                  normal: new THREE.Vector3(...contact.normal),
+                  impulse: new THREE.Vector3(...contact.impulse),
+                })),
+              }
+            : { tag, playerId, isLocalPlayer }
+          Reflect.apply(fn, undefined, [event])
+        } catch (err) {
+          if (handlePhysicsFailure(err, { entity, world: this.world, phase: method })) continue
+          const subject = run || registration
+          let warned = this.callbackWarnings.get(subject)
+          if (!warned) this.callbackWarnings.set(subject, (warned = new Set()))
+          if (warned.has(method)) continue
+          warned.add(method)
+          console.error(
+            `[physics] ${method} callback failed (entity ${entity?.data?.id ?? 'none'}): ${briefError(err)}`,
+            err
+          )
+        }
+      }
+    }
+    this.drainCallbackFailures()
+  }
+
+  processContactCallbacks() {
+    if (!this.contactCallbacks.length) return
+    const callbacks = this.contactCallbacks
+    this.contactCallbacks = []
+    this.dispatchCallbacks(callbacks)
+  }
+
+  processTriggerCallbacks() {
+    if (!this.triggerCallbacks.length) return
+    const callbacks = this.triggerCallbacks
+    this.triggerCallbacks = []
+    this.dispatchCallbacks(callbacks)
   }
 
   preFixedUpdate(willFixedUpdate) {
@@ -426,10 +476,30 @@ export class Physics extends System {
   }
 
   postFixedUpdate(delta) {
-    this.scene.simulate(delta)
-    this.scene.fetchResults(true)
+    if (this.world.fatalError) return
+    const pending = this.pendingCallbacks
+    this.pendingCallbacks = []
+    this.dispatchCallbacks(pending)
+    this.checkHealth()
+    if (this.world.fatalError) return
+    let phase = 'simulate'
+    try {
+      this.scene.simulate(delta)
+      phase = 'fetchResults'
+      this.scene.fetchResults(true)
+    } catch (err) {
+      handlePhysicsFailure(err, { world: this.world, phase })
+      this.world.fatal(`physics ${phase} interrupted`)
+      return
+    } finally {
+      this.drainCallbackFailures()
+    }
+    this.checkHealth()
+    if (this.world.fatalError) return
     this.processContactCallbacks()
     this.processTriggerCallbacks()
+    this.checkHealth()
+    if (this.world.fatalError) return
     const activeActors = PHYSX.SupportFunctions.prototype.PxScene_getActiveActors(this.scene)
     const size = activeActors.size()
     for (let i = 0; i < size; i++) {
@@ -445,14 +515,16 @@ export class Physics extends System {
       lerp.prev.position.copy(lerp.next.position)
       lerp.prev.quaternion.copy(lerp.next.quaternion)
       const pose = handle.actor.getGlobalPose()
-      lerp.next.position.copy(pose.p)
-      lerp.next.quaternion.copy(pose.q)
+      pxToVec3(lerp.next.position, pose.p)
+      pxToQuat(lerp.next.quaternion, pose.q)
       this.active.add(handle)
     }
   }
 
   preUpdate(alpha) {
+    if (this.world.fatalError) return
     this.world.stage.clean()
+    let failed
     for (const handle of this.active) {
       const lerp = handle.interpolation
       if (lerp.skip) {
@@ -461,8 +533,14 @@ export class Physics extends System {
       }
       lerp.curr.position.lerpVectors(lerp.prev.position, lerp.next.position, alpha)
       lerp.curr.quaternion.slerpQuaternions(lerp.prev.quaternion, lerp.next.quaternion, alpha)
-      handle.onInterpolate(lerp.curr.position, lerp.curr.quaternion)
+      try {
+        handle.onInterpolate(lerp.curr.position, lerp.curr.quaternion)
+      } catch (err) {
+        if (!failed) failed = []
+        failed.push({ handle, err })
+      }
     }
+    if (failed) this.containInterpolateFailures(failed)
     // finalize any physics updates immediately
     // but don't listen to any loopback commits from those actor moves
     this.ignoreSetGlobalPose = true
@@ -470,15 +548,40 @@ export class Physics extends System {
     this.ignoreSetGlobalPose = false
   }
 
+  // an interpolation callback that throws (eg a script broke its own node's transform) must not stop the
+  // other actors from updating: app-owned handles crash their app, anything else is logged once per handle
+  containInterpolateFailures(failed) {
+    const crashed = new Set()
+    for (const { handle, err } of failed) {
+      const owner = handle.node?.ctx?.entity
+      const trapped = handlePhysicsFailure(err, { entity: owner, world: this.world, phase: 'Physics.preUpdate' })
+      try {
+        if (!handle._interpolateFailed) {
+          handle._interpolateFailed = true
+          console.error(
+            `[physics] interpolation failed (node ${handle.node?.id ?? 'none'}, entity ${owner?.data?.id ?? 'none'})`
+          )
+          console.error(err)
+        }
+        if (owner?.isApp && !crashed.has(owner)) owner.scriptError = serializeError(err)
+      } catch {
+        // a hostile error object (eg throwing getters) must not stop the containment itself
+      }
+      if (owner?.isApp && !crashed.has(owner)) {
+        crashed.add(owner)
+        if (!trapped) owner.crash()
+      }
+    }
+  }
+
   raycast(origin, direction, maxDistance = Infinity, layerMask) {
-    origin = origin.toPxVec3(this._pv1)
-    direction = direction.toPxVec3(this._pv2)
+    if (!vec3ToPx(origin, this._pv1) || !vec3ToPx(direction, this._pv2)) return null
     // this.queryFilterData.flags |= PHYSX.PxQueryFlagEnum.ePREFILTER | PHYSX.PxQueryFlagEnum.ePOSTFILTER // prettier-ignore
     this.queryFilterData.data.word0 = layerMask // what to hit, eg Layers.player.group | Layers.environment.group
     this.queryFilterData.data.word1 = 0
     const didHit = this.scene.raycast(
-      origin,
-      direction,
+      this._pv1,
+      this._pv2,
       maxDistance,
       this.raycastResult,
       PHYSX.PxHitFlagEnum.eNORMAL,
@@ -494,8 +597,8 @@ export class Physics extends System {
         }
       }
       _raycastHit.handle = this.handles.get(hit.actor.ptr)
-      _raycastHit.point.set(hit.position.x, hit.position.y, hit.position.z)
-      _raycastHit.normal.set(hit.normal.x, hit.normal.y, hit.normal.z)
+      pxToVec3(_raycastHit.point, hit.position)
+      pxToVec3(_raycastHit.normal, hit.normal)
       _raycastHit.distance = hit.distance
       return _raycastHit
     }
@@ -503,19 +606,19 @@ export class Physics extends System {
   }
 
   sweep(geometry, origin, direction, maxDistance, layerMask, rotation) {
-    origin.toPxVec3(this.sweepPose.p)
+    if (!vec3ToPx(origin, this.sweepPose.p) || !vec3ToPx(direction, this._pv2)) return null
     const q = this.sweepPose.q
     q.x = rotation?.x || 0
     q.y = rotation?.y || 0
     q.z = rotation?.z || 0
     q.w = rotation?.w ?? 1
-    direction = direction.toPxVec3(this._pv2)
+    direction = this._pv2
     this.queryFilterData.data.word0 = layerMask
     this.queryFilterData.data.word1 = 0
     const didHit = this.scene.sweep(
       geometry,
       this.sweepPose,
-      direction,
+      this._pv2,
       maxDistance,
       this.sweepResult,
       PHYSX.PxHitFlagEnum.eDEFAULT,
@@ -531,8 +634,8 @@ export class Physics extends System {
         }
       }
       _sweepHit.actor = hit.actor
-      _sweepHit.point.set(hit.position.x, hit.position.y, hit.position.z)
-      _sweepHit.normal.set(hit.normal.x, hit.normal.y, hit.normal.z)
+      pxToVec3(_sweepHit.point, hit.position)
+      pxToVec3(_sweepHit.normal, hit.normal)
       _sweepHit.distance = hit.distance
       return _sweepHit
     }
@@ -540,7 +643,7 @@ export class Physics extends System {
   }
 
   // overlap(geometry, origin, layerMask) {
-  //   origin.toPxVec3(this.overlapPose.p)
+  //   if (!vec3ToPx(origin, this.overlapPose.p)) return []
   //   this.queryFilterData.data.word0 = layerMask
   //   this.queryFilterData.data.word1 = 0
   //   const didHit = this.scene.overlap(geometry, this.overlapPose, this.overlapResult, this.queryFilterData)
@@ -553,8 +656,9 @@ export class Physics extends System {
   // }
 
   overlapSphere(radius, origin, layerMask) {
-    origin.toPxVec3(this.overlapPose.p)
-    const geometry = getSphereGeometry(radius)
+    if (!vec3ToPx(origin, this.overlapPose.p)) return []
+    const geometry = this.overlapSphereGeometry
+    geometry.set_radius(Math.fround(radius))
     this.queryFilterData.data.word0 = layerMask // what to hit, eg Layers.player.group | Layers.environment.group
     this.queryFilterData.data.word1 = 0
     const didHit = this.scene.overlap(geometry, this.overlapPose, this.overlapResult, this.queryFilterData)
@@ -572,40 +676,26 @@ export class Physics extends System {
   }
 
   getMaterial(staticFriction, dynamicFriction, restitution) {
-    // we cache and re-use material as PhysX has a limit of 64k.
-    // this only works if the materials are not modified by the user, eg
-    // players change friction coefficients etc
-    // cached and re-used because PhysX has a limit of 64k
-    const id = `${staticFriction}${dynamicFriction}${restitution}`
-    let material = this.materials[id]
-    if (!material) {
-      material = this.physics.createMaterial(staticFriction, dynamicFriction, restitution)
-      this.materials[id] = material
+    const id = `${staticFriction}|${dynamicFriction}|${restitution}`
+    const cached = this.materials.get(id)
+    if (cached) return cached
+    // Shapes retain these materials, so never evict or change an existing entry.
+    if (this.materials.size >= 4096) {
+      warnOnce('physics-material-cap', '[physics] material cache full; using default material')
+      return this.defaultMaterial
     }
+    const material = this.physics.createMaterial(staticFriction, dynamicFriction, restitution)
+    if (!material?.ptr) {
+      warnOnce('physics-material-null', '[physics] failed to create material; using default material')
+      return this.defaultMaterial
+    }
+    this.materials.set(id, material)
     return material
   }
 }
 
-function createPool(factory) {
-  const pool = []
-  return () => {
-    if (pool.length) {
-      return pool.pop()
-    }
-    const item = factory()
-    item.release = () => pool.push(item)
-    return item
-  }
-}
-
-const spheres = new Map()
-function getSphereGeometry(radius) {
-  let sphere = spheres.get(radius)
-  if (!sphere) {
-    sphere = new PHYSX.PxSphereGeometry(radius)
-    spheres.set(radius, sphere)
-  }
-  return sphere
+function copyPoint(point) {
+  return [point.x, point.y, point.z]
 }
 
 function getOrCreateOverlapHit(idx) {

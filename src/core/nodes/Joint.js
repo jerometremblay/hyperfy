@@ -1,7 +1,8 @@
 import * as THREE from '../extras/three'
+import { vec3ToPxPos, quatToPxRot } from '../extras/physxConvert.js'
 import { isBoolean, isNumber } from 'lodash-es'
 
-import { Node } from './Node'
+import { Node, getNodeRef } from './Node'
 import { Layers } from '../extras/Layers'
 import { bindRotations } from '../extras/bindRotations'
 import { DEG2RAD, RAD2DEG } from '../extras/general'
@@ -66,23 +67,23 @@ export class Joint extends Node {
 
     if (this.type === 'fixed') {
       // add offsets to transform
-      this.offset0.toPxTransform(frame0)
-      this.offset1.toPxTransform(frame1)
+      vec3ToPxPos(this.offset0, frame0)
+      vec3ToPxPos(this.offset1, frame1)
       // add orientations to transform (note: dont think fixed joints even need these)
-      this.quaternion0.toPxTransform(frame0)
-      this.quaternion1.toPxTransform(frame1)
+      quatToPxRot(this.quaternion0, frame0)
+      quatToPxRot(this.quaternion1, frame1)
       // make joint
       this.joint = new PHYSX.FixedJointCreate(this.ctx.world.physics.physics, actor0, frame0, actor1, frame1)
     }
 
     if (this.type === 'socket') {
       // add offsets to transform
-      this.offset0.toPxTransform(frame0)
-      this.offset1.toPxTransform(frame1)
+      vec3ToPxPos(this.offset0, frame0)
+      vec3ToPxPos(this.offset1, frame1)
       // create rotation to align X-axis with desired axis and apply (this relates to the limit angles)
       const alignRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), this.axis)
-      _q1.copy(this.quaternion0).multiply(alignRotation).toPxTransform(frame0)
-      _q2.copy(this.quaternion1).multiply(alignRotation).toPxTransform(frame1)
+      quatToPxRot(_q1.copy(this.quaternion0).multiply(alignRotation), frame0)
+      quatToPxRot(_q2.copy(this.quaternion1).multiply(alignRotation), frame1)
       // make joint
       this.joint = new PHYSX.SphericalJointCreate(this.ctx.world.physics.physics, actor0, frame0, actor1, frame1)
       // apply cone limit
@@ -101,12 +102,12 @@ export class Joint extends Node {
 
     if (this.type === 'hinge') {
       // add offsets to transform
-      this.offset0.toPxTransform(frame0)
-      this.offset1.toPxTransform(frame1)
+      vec3ToPxPos(this.offset0, frame0)
+      vec3ToPxPos(this.offset1, frame1)
       // create rotation to align X-axis with desired axis and apply
       const alignRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), this.axis)
-      _q1.copy(this.quaternion0).multiply(alignRotation).toPxTransform(frame0)
-      _q2.copy(this.quaternion1).multiply(alignRotation).toPxTransform(frame1)
+      quatToPxRot(_q1.copy(this.quaternion0).multiply(alignRotation), frame0)
+      quatToPxRot(_q2.copy(this.quaternion1).multiply(alignRotation), frame1)
       // make joint
       this.joint = new PHYSX.RevoluteJointCreate(this.ctx.world.physics.physics, actor0, frame0, actor1, frame1)
       // apply limits
@@ -125,12 +126,12 @@ export class Joint extends Node {
 
     if (this.type === 'distance') {
       // add offsets to transform
-      this.offset0.toPxTransform(frame0)
-      this.offset1.toPxTransform(frame1)
+      vec3ToPxPos(this.offset0, frame0)
+      vec3ToPxPos(this.offset1, frame1)
       // create rotation to align X-axis with desired axis and apply
       // const alignRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), this.axis)
-      // _q1.copy(this.quaternion0).multiply(alignRotation).toPxTransform(frame0)
-      // _q2.copy(this.quaternion1).multiply(alignRotation).toPxTransform(frame1)
+      // quatToPxRot(_q1.copy(this.quaternion0).multiply(alignRotation), frame0)
+      // quatToPxRot(_q2.copy(this.quaternion1).multiply(alignRotation), frame1)
       // make joint
       this.joint = new PHYSX.DistanceJointCreate(this.ctx.world.physics.physics, actor0, frame0, actor1, frame1)
       // apply limits
@@ -205,16 +206,14 @@ export class Joint extends Node {
           self.setDirty()
         },
         get body0() {
-          return self.body0.getProxy()
+          return self.body0?.getProxy() ?? null
         },
         set body0(value) {
-          if (value) {
-            self.ctx.world._allowRefs = true
-            self.body0 = value?._ref
-            self.ctx.world._allowRefs = false
-          } else {
-            self.body0 = null
+          const node = value == null ? null : getNodeRef(value)
+          if (value != null && (!node || node.name !== 'rigidbody')) {
+            throw new Error('[joint] body0 must be a rigidbody')
           }
+          self.body0 = node
           self.needsRebuild = true
           self.setDirty()
         },
@@ -228,16 +227,14 @@ export class Joint extends Node {
           return self.rotation0
         },
         get body1() {
-          return self.body1.getProxy()
+          return self.body1?.getProxy() ?? null
         },
         set body1(value) {
-          if (value) {
-            self.ctx.world._allowRefs = true
-            self.body1 = value?._ref
-            self.ctx.world._allowRefs = false
-          } else {
-            self.body1 = null
+          const node = value == null ? null : getNodeRef(value)
+          if (value != null && (!node || node.name !== 'rigidbody')) {
+            throw new Error('[joint] body1 must be a rigidbody')
           }
+          self.body1 = node
           self.needsRebuild = true
           self.setDirty()
         },

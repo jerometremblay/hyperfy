@@ -1,4 +1,7 @@
 import { resolveWorldProfile } from './world-profile.mjs'
+import { assertSecureRuntime } from '../src/server/runtimePolicy.js'
+
+assertSecureRuntime()
 
 const args = process.argv.slice(2)
 const dev = args.includes('--dev')

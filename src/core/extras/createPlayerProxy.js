@@ -1,9 +1,14 @@
 import { normalizeExpression, applyPlayerExpression } from './playerExpressions'
+import { callForScript } from './scriptValues.js'
 import { getRef } from '../nodes/Node'
 import { clamp, uuid } from '../utils'
 import * as THREE from './three'
 import { getStoredSeatPose } from './seatPose'
+import { sanitizePlayerSelfModify } from './entityModifyPolicy'
 
+import { readVec3, warnOnce } from './physxConvert.js'
+
+const _v = new THREE.Vector3()
 const HEALTH_MAX = 100
 
 export function createPlayerProxy(entity, player) {
@@ -13,7 +18,15 @@ export function createPlayerProxy(entity, player) {
   const quaternion = new THREE.Quaternion()
   let activeEffectConfig = null
   let voiceMod
-  return {
+  // a client script changes another player only through a server script: on a remote player these calls
+  // do nothing here, said once per method because scripts tend to call them every frame
+  const warned = new Set()
+  const remoteOnClient = method => {
+    if (warned.has(method)) return
+    warned.add(method)
+    console.error(`[player] ${method} on a remote player must be called on the server`)
+  }
+  const proxy = {
     get networkId() {
       return player.data.owner
     },
@@ -71,15 +84,22 @@ export function createPlayerProxy(entity, player) {
       return player.setCamera(options)
     },
     teleport(position, rotationY) {
+      if (player.data.owner !== world.network.id && world.network.isClient) {
+        remoteOnClient('teleport')
+        return
+      }
+      if (!readVec3(position, _v, '[player] teleport position must be Vector3')) {
+        warnOnce('[player] teleport ignored a non-finite position')
+        return
+      }
+      const payload = { position: [_v.x, _v.y, _v.z] }
+      if (Number.isFinite(rotationY)) payload.rotationY = rotationY
       if (player.data.owner === world.network.id) {
         // if player is local we can set directly
-        world.network.enqueue('onPlayerTeleport', { position: position.toArray(), rotationY })
-      } else if (world.network.isClient) {
-        // if we're a client we need to notify server
-        world.network.send('playerTeleport', { networkId: player.data.owner, position: position.toArray(), rotationY })
+        world.network.enqueue('onPlayerTeleport', payload)
       } else {
         // if we're the server we need to notify the player
-        world.network.sendTo(player.data.owner, 'playerTeleport', { position: position.toArray(), rotationY })
+        world.network.sendTo(player.data.owner, 'playerTeleport', payload)
       }
     },
     getBoneTransform(boneName) {
@@ -109,8 +129,7 @@ export function createPlayerProxy(entity, player) {
         // if player is local we can set directly
         world.network.enqueue('onPlayerSessionAvatar', { avatar })
       } else if (world.network.isClient) {
-        // if we're a client we need to notify server
-        world.network.send('playerSessionAvatar', { networkId: player.data.owner, avatar })
+        return
       } else {
         // if we're the server we need to notify the player
         world.network.sendTo(player.data.owner, 'playerSessionAvatar', { avatar })
@@ -149,13 +168,15 @@ export function createPlayerProxy(entity, player) {
         effect.cancellable = opts.cancellable
         delete effect.freeze // overrides
       }
+      const safe = sanitizePlayerSelfModify({ ef: effect }, player.data.id)
+      if (!safe || !Object.prototype.hasOwnProperty.call(safe, 'ef')) return
       const config = {
-        effect,
+        effect: safe.ef,
         onEnd: () => {
           if (activeEffectConfig !== config) return
           activeEffectConfig = null
           player.setEffect(null)
-          opts.onEnd?.()
+          if (!entity.crashed && !world.fatalError) opts.onEnd?.call(undefined)
         },
       }
       activeEffectConfig = config
@@ -178,17 +199,21 @@ export function createPlayerProxy(entity, player) {
       activeEffectConfig?.onEnd()
     },
     push(force) {
-      force = force.toArray()
-      // player.applyForce(force)
+      if (player.data.owner !== world.network.id && world.network.isClient) {
+        remoteOnClient('push')
+        return
+      }
+      if (!readVec3(force, _v, '[player] push force must be Vector3')) {
+        warnOnce('[player] push ignored a non-finite force')
+        return
+      }
+      const values = [_v.x, _v.y, _v.z]
       if (player.data.owner === world.network.id) {
         // if player is local we can set directly
-        player.push(force)
-      } else if (world.network.isClient) {
-        // if we're a client we need to notify server
-        world.network.send('playerPush', { networkId: player.data.owner, force })
+        player.push(values)
       } else {
         // if we're the server we need to notify the player
-        world.network.sendTo(player.data.owner, 'playerPush', { force })
+        world.network.sendTo(player.data.owner, 'playerPush', { force: values })
       }
     },
     screenshare(targetId) {
@@ -227,4 +252,24 @@ export function createPlayerProxy(entity, player) {
       }
     },
   }
+  if (world.network.isServer) {
+    for (const name of [
+      'teleport',
+      'setSessionAvatar',
+      'damage',
+      'heal',
+      'applyEffect',
+      'cancelEffect',
+      'push',
+      'setVoiceLevel',
+    ]) {
+      const method = proxy[name]
+      proxy[name] = (...args) => world.network.asScript(() => method(...args), entity, name)
+    }
+  }
+  for (const name of ['push', 'teleport']) {
+    const method = proxy[name]
+    proxy[name] = (...args) => callForScript(method, entity, args)
+  }
+  return proxy
 }

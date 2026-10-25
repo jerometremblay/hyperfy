@@ -1,5 +1,6 @@
 import 'ses'
 import '../core/lockdown'
+import './fetchGuardInstall'
 import './bootstrap'
 
 import fs from 'fs-extra'
@@ -20,7 +21,13 @@ import { assets } from './assets'
 import { agentAPI } from './agent-api'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
-import { PhotoUploadLimits, isJPEGUpload, validatePhoto, MAX_PHOTO_BYTES } from './photoUploads'
+import { assetRoutes, uploadRoutes } from './uploadRoutes'
+import { createUploadLimits, readUploadLimitsEnv, clientIpKeys } from './uploadLimits'
+import { createConnectionLimits, readConnectionLimitsEnv } from './connectionLimits'
+import { renderShell } from './escapeHtml'
+import { compressOptions } from './compressOptions'
+import { readJWT } from '../core/utils-server'
+import { PROTOCOL_VERSION, writePacket } from '../core/packets'
 import { BrowserCapture } from './BrowserCapture'
 import { proxyWebViewRequest } from './WebViewProxy'
 import { getPortalStatus, getPortalLoadingImage } from './portalStatus'
@@ -142,16 +149,14 @@ fastify.register(compress, {
   // Only compress text-based files, exclude binary and already compressed formats
   customTypes: /text\/|application\/json|application\/javascript|text\/css/,
   encodings: ['gzip', 'deflate'],
+  ...compressOptions(),
   inflateIfDeflated: false,
   // Skip compression based on file extension or request path
   skipOnPath(req) {
     const path = req.url || req.raw.url || ''
     // Skip compression for splat files that are already compressed
-    return path.endsWith('.spz') ||
-           path.endsWith('.sogs') ||
-           path.endsWith('.ksplat') ||
-           path.endsWith('.zip')
-  }
+    return path.endsWith('.spz') || path.endsWith('.sogs') || path.endsWith('.ksplat') || path.endsWith('.zip')
+  },
 })
 fastify.get('/', async (req, reply) => {
   const title = world.settings.title || 'World'
@@ -162,13 +167,7 @@ fastify.get('/', async (req, reply) => {
   const url = process.env.ASSETS_BASE_URL
   const filePath = path.join(__dirname, 'public', 'index.html')
   let html = fs.readFileSync(filePath, 'utf-8')
-  html = html.replaceAll('{url}', url)
-  html = html.replaceAll('{title}', title)
-  html = html.replaceAll('{desc}', desc)
-  html = html.replaceAll('{image}', image)
-  // Keep saved image metadata inside a JSON script value, including URLs containing markup.
-  html = html.replaceAll('{loadingImage}', () => JSON.stringify(loadingImage).replaceAll('<', '\\u003c'))
-  html = html.replaceAll('{arrivalImage}', arrivalImage ? 'true' : 'false')
+  html = renderShell(html, { url, title, desc, image, loadingImage, arrivalImage: !!arrivalImage })
   reply.type('text/html').send(html)
 })
 fastify.register(statics, {
@@ -182,29 +181,8 @@ fastify.register(statics, {
   },
 })
 if (world.assetsDir) {
-  fastify.register(statics, {
+  fastify.register(assetRoutes, {
     root: world.assetsDir,
-    prefix: '/assets/',
-    decorateReply: false,
-    // Add better error handling for file serving
-    acceptRanges: true, // Enable range requests for large files
-    cacheControl: true,
-    lastModified: true,
-    etag: true,
-    setHeaders: (reply, path) => {
-      // all assets are hashed & immutable so we can use aggressive caching
-      reply.header('Cache-Control', 'public, max-age=31536000, immutable') // 1 year
-      reply.header('Expires', new Date(Date.now() + 31536000000).toUTCString()) // older browsers
-      
-      // Serve Gaussian Splat files as raw binary. SPZ is gzip data by spec but must
-      // NOT get a Content-Encoding header — Spark decompresses it itself.
-      const ext = path.split('.').pop()?.toLowerCase()
-
-      if (ext === 'ply' || ext === 'splat' || ext === 'ksplat' || ext === 'spz') {
-        reply.header('Content-Type', 'application/octet-stream')
-        reply.header('Accept-Ranges', 'bytes')
-      }
-    },
   })
 }
 fastify.register(multipart, {
@@ -214,17 +192,20 @@ fastify.register(multipart, {
   // Ensure binary files are handled correctly
   attachFieldsToBody: false,
   // Don't parse SPZ files as text
-  onFile: async (part) => {
+  onFile: async part => {
     const filename = part.filename
     const ext = filename.split('.').pop()?.toLowerCase()
-    
+
     // For binary files like SPZ, ensure proper handling
     if (['spz', 'ply', 'splat', 'ksplat'].includes(ext)) {
       part.file.readable = true
     }
-  }
+  },
 })
-fastify.register(ws)
+fastify.register(ws, { options: { maxPayload: 65536, maxFragments: 8, perMessageDeflate: false, closeTimeout: 2000 } })
+const connectionLimits = createConnectionLimits(readConnectionLimitsEnv(process.env))
+const uploadConfig = readUploadLimitsEnv(process.env)
+const socketLease = Symbol('wsLease')
 fastify.register(worldNetwork)
 fastify.register(agentAPI, {
   prefix: '/api/agent',
@@ -250,68 +231,16 @@ fastify.get('/env.js', async (req, reply) => {
   reply.type('application/javascript').send(envsCode)
 })
 
-const photoUploadLimits = new PhotoUploadLimits()
-
-fastify.post('/api/upload', async (req, reply) => {
-  const mp = await req.file()
-  if (!mp) return reply.code(400).send({ error: 'File required' })
-  const photo = isJPEGUpload(mp)
-  if (photo) photoUploadLimits.take(req.ip)
-  
-  // Check if this is a binary file that needs special handling
-  const ext = mp.filename.split('.').pop()?.toLowerCase()
-  const isBinaryFormat = ['spz', 'ply', 'splat', 'ksplat', 'glb', 'vrm'].includes(ext)
-  
-  // collect into buffer with proper binary handling
-  const chunks = []
-  let bytes = 0
-  for await (const chunk of mp.file) {
-    bytes += chunk.length
-    if (photo && bytes > MAX_PHOTO_BYTES) {
-      return reply.code(413).send({ error: 'JPEG upload exceeds 1 MB' })
-    }
-    chunks.push(chunk)
-  }
-  if (mp.file.truncated) {
-    throw new fastify.multipartErrors.RequestFileTooLargeError()
-  }
-  const buffer = Buffer.concat(chunks)
-  if (photo) validatePhoto(buffer)
-  
-  // Set correct MIME type for binary formats
-  let mimeType = mp.mimetype || 'application/octet-stream'
-  if (isBinaryFormat) {
-    mimeType = 'application/octet-stream'
-  }
-  
-  // Upload: ${mp.filename} (${(buffer.length / 1024 / 1024).toFixed(1)}MB)
-  
-  // Basic validation for SPZ files
-  if (ext === 'spz') {
-    // SPZ files should start with specific magic bytes for gzip
-    const magicBytes = buffer.slice(0, 3)
-    const isValidGzip = magicBytes[0] === 0x1f && magicBytes[1] === 0x8b && magicBytes[2] === 0x08
-    
-    if (!isValidGzip) {
-      // Continue anyway, maybe it's a different SPZ variant
-      console.warn(`⚠️ SPZ file ${mp.filename} doesn't appear to be valid gzip format`)
-    }
-  }
-  
-  // convert to file
-  const file = new File([buffer], mp.filename, {
-    type: mimeType,
-  })
-  
-  // upload
-  await assets.upload(file)
-  
-  // File uploaded successfully
-})
-
-fastify.get('/api/upload-check', async (req, reply) => {
-  const exists = await assets.exists(req.query.filename)
-  return { exists }
+fastify.register(uploadRoutes, {
+  readJWT,
+  getSocket: id => world.network.sockets.get(id),
+  assets,
+  getSettings: () => world.settings,
+  maxUploadSize: maxUploadSize || 256,
+  limits: createUploadLimits(uploadConfig),
+  clientIpHeader: uploadConfig.clientIpHeader,
+  slotTimeoutMs: uploadConfig.slotTimeoutMs,
+  minFreeBytes: uploadConfig.minFreeBytes,
 })
 
 fastify.get('/api/avatars', async () => {
@@ -437,7 +366,9 @@ fastify.get('/api/portal-snapshot', async (request, reply) => {
       if (node.name !== 'portal' || !node.url) return
       try {
         if (normalize(node.url) === destination) found = true
-      } catch {}
+      } catch {
+        // Ignore invalid portal URLs when checking the requested destination.
+      }
     }
     entity.root?.traverse(inspect)
     for (const node of entity.worldNodes || []) node.traverse(inspect)
@@ -498,7 +429,9 @@ fastify.get('/status', async (request, reply) => {
 
 fastify.setErrorHandler((err, req, reply) => {
   console.error(err)
-  reply.status(500).send()
+  const status =
+    Number.isInteger(err.statusCode) && err.statusCode >= 400 && err.statusCode < 500 ? err.statusCode : 500
+  reply.status(status).send({ error: status < 500 ? err.message : 'Internal server error' })
 })
 
 try {
@@ -509,9 +442,28 @@ try {
   process.exit(1)
 }
 
+function admitConnection(request, reply, done) {
+  if (request.ws !== true) return done()
+  const transport = request.raw.socket
+  if (transport[socketLease]) return reply.code(503).header('Retry-After', '10').send()
+  const header = uploadConfig.clientIpHeader
+  const lease = connectionLimits.admit(clientIpKeys(header ? request.headers[header] : undefined, request.ip))
+  if (!lease.ok) return reply.code(503).header('Retry-After', '10').send()
+  transport[socketLease] = lease
+  transport.once('close', lease.release)
+  transport.once('error', () => transport.destroy())
+  if (transport.destroyed) lease.release()
+  done()
+}
+
 async function worldNetwork(fastify) {
   fastify.get('/portal-preview', { websocket: true }, ws => portalPreviews.connect(ws))
-  fastify.get('/ws', { websocket: true }, (ws, req) => {
+  fastify.get('/ws', { websocket: true, preValidation: admitConnection }, (ws, req) => {
+    if (req.query.v !== String(PROTOCOL_VERSION)) {
+      ws.send(writePacket('kick', 'outdated'))
+      ws.close(1008, 'outdated')
+      return
+    }
     world.network.onConnection(ws, req.query)
   })
 }

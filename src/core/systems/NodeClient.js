@@ -21,9 +21,14 @@ export class NodeClient extends System {
   }
 
   tick = () => {
+    if (this.world.fatalError) return
     const time = performance.now()
     this.world.tick(time)
-    this.timerId = setTimeout(this.tick, TICK_RATE * 1000)
+    if (!this.world.fatalError) this.timerId = setTimeout(this.tick, TICK_RATE * 1000)
+  }
+
+  stopForFatal() {
+    this.destroy()
   }
 
   destroy() {

@@ -2,7 +2,7 @@ import { isBoolean, isNumber, isString } from 'lodash-es'
 import CustomShaderMaterial from '../libs/three-custom-shader-material'
 import * as THREE from '../extras/three'
 
-import { getRef, Node, secureRef } from './Node'
+import { getRef, Node, resolveValueRef, secureRef } from './Node'
 import { uuid } from '../utils'
 
 const v1 = new THREE.Vector3()
@@ -364,7 +364,7 @@ export class Video extends Node {
       material.needsUpdate = true
 
       this._loading = false
-      this._onLoad?.()
+      this._onLoad?.call(undefined) // script callbacks run without a receiver
 
       if (this.shouldPlay) {
         this.instance.play()
@@ -1012,6 +1012,16 @@ export class Video extends Node {
           return self.geometry
         },
         set geometry(value) {
+          // scripts may pass null, a geometry ref from another node, or a real geometry.
+          // a ref is resolved here, once, so the node only ever stores the resolved geometry
+          if (value != null && !(value instanceof THREE.BufferGeometry)) {
+            const ref = resolveValueRef(value)
+            if (!ref) {
+              console.error('[video] geometry invalid')
+              return
+            }
+            value = ref.value
+          }
           self.geometry = value
         },
         get volume() {

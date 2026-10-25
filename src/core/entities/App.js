@@ -2,6 +2,8 @@ import * as THREE from '../extras/three'
 import { isArray, isFunction, isNumber, isString } from 'lodash-es'
 import moment from 'moment'
 
+import { assertScriptActive, handlePhysicsFailure } from '../extras/physicsFailure.js'
+import { createEntityProxy } from '../extras/createEntityProxy'
 import { Entity } from './Entity'
 import { createNode } from '../extras/createNode'
 import { LerpVector3 } from '../extras/LerpVector3'
@@ -11,6 +13,11 @@ import { getRef } from '../nodes/Node'
 import { Layers } from '../extras/Layers'
 import { createPlayerProxy } from '../extras/createPlayerProxy'
 import { serializeError } from '../extras/serializeError'
+import { registerAppProxy } from '../nodes/refs'
+import { createScriptTimers } from '../extras/scriptTimers'
+import { createScriptResponse, toHostFetchOptions } from '../extras/scriptFetch'
+import { createEventQueue } from '../extras/appEventQueue'
+import { briefError, createLogOnce } from '../extras/logOnce'
 
 // Exact shipped WorldPortal assets only: custom scripts keep their own behavior.
 function legacyPortalRoot(blueprint) {
@@ -26,6 +33,9 @@ function legacyPortalRoot(blueprint) {
 }
 
 const hotEventNames = ['fixedUpdate', 'update', 'animate', 'lateUpdate']
+
+// an app says once per reason that it is dropping events; the count is kept on the app
+const logDroppedEvent = createLogOnce()
 
 const Modes = {
   ACTIVE: 'active',
@@ -44,11 +54,18 @@ export class App extends Entity {
     super(world, data, local)
     this.isApp = true
     this.n = 0
+    this.crashed = false
     this.worldNodes = new Set()
     this.hotEvents = 0
     this.worldListeners = new Map()
     this.listeners = {}
-    this.eventQueue = []
+    this.droppedEvents = 0
+    this.eventDrops = new Map()
+    this.eventQueue = createEventQueue({
+      ledger: world.apps?.eventLedger,
+      isServer: world.network.isServer,
+      onDrop: reason => this.dropEvent(reason),
+    })
     this.snaps = []
     this.root = createNode('group')
     this.fields = []
@@ -61,6 +78,7 @@ export class App extends Entity {
     this.hitResultsPool = []
     this.hitResults = []
     this.deadHook = { dead: false }
+    this.timers = createScriptTimers()
     this.build()
   }
 
@@ -72,12 +90,14 @@ export class App extends Entity {
   async build(crashed) {
     this.building = true
     const n = ++this.n
+    const failureVersion = this.physicsFailureVersion
     // fetch blueprint
     const blueprint = this.world.blueprints.get(this.data.blueprint)
 
     if (blueprint.disabled) {
       this.unbuild()
       this.blueprint = blueprint
+      this.eventQueue.clear() // a disabled app runs no script; nothing queued can be delivered
       this.building = false
       return
     }
@@ -148,7 +168,7 @@ export class App extends Entity {
       root = glb.toNodes()
     }
     // if a new build happened while we were fetching, stop here
-    if (this.n !== n) return
+    if (this.n !== n || this.world.fatalError) return
     // unbuild any previous version
     this.unbuild()
     // mode
@@ -175,10 +195,18 @@ export class App extends Entity {
       (this.mode === Modes.ACTIVE || (this.mode === Modes.MOVING && !this.resetOnMove))
     // (this.mode === Modes.ACTIVE && script && !crashed) ||
     // (this.mode === Modes.MOVING && !this.resetOnMove && !this.scriptError)
+    if (this.n !== n || this.world.fatalError) return
+    if (this.physicsFailureVersion !== failureVersion) {
+      this.building = false
+      return
+    }
     if (runScript) {
+      this.crashed = false
+      this.nativeFailure = false
       this.abortController = new AbortController()
       try {
         this.script.exec(this.getWorldProxy(), this.getAppProxy(), this.fetch, blueprint.props, this.setTimeout)
+        if (this.n !== n || this.crashed || this.world.fatalError) return
         this.scriptError = null
       } catch (err) {
         this.scriptError = serializeError(err)
@@ -202,20 +230,32 @@ export class App extends Entity {
     this.networkPos = new LerpVector3(root.position, this.world.networkRate)
     this.networkQuat = new LerpQuaternion(root.quaternion, this.world.networkRate)
     this.networkSca = new LerpVector3(root.scale, this.world.networkRate)
-    // execute any events we collected while building
-    while (this.eventQueue.length) {
-      const event = this.eventQueue[0]
-      if (event.version > this.blueprint.version) break // ignore future versions
-      this.eventQueue.shift()
-      this.emit(event.name, event.data, event.networkId)
-    }
+    // execute any events we collected while building. a listener that throws is reported and the rest are
+    // still delivered, so the build always finishes
+    this.eventQueue.drain(
+      this.blueprint.version,
+      event => this.emit(event.name, event.data, event.networkId),
+      err => this.dropEvent('listener error', err),
+      {
+        latest: this.world.blueprints.get(this.data.blueprint)?.version,
+        author: this.world.blueprints.authors?.get(this.data.blueprint),
+      }
+    )
     // finished!
     this.building = false
   }
 
   unbuild() {
-    // notify any running script
-    this.emit('destroy')
+    // notify any running script; a throwing listener must not skip the teardown below
+    this.destroying = true
+    try {
+      this.emit('destroy')
+    } catch (err) {
+      console.error('script destroy() crashed', this)
+      console.error(err)
+    } finally {
+      this.destroying = false
+    }
     // cancel any control
     this.control?.release()
     this.control = null
@@ -238,7 +278,9 @@ export class App extends Entity {
     // abort fetch's etc
     this.abortController?.abort()
     this.abortController = null
-    // mark dead and re-create hook (timers, async etc)
+    // cancel script timers
+    this.timers.clear()
+    // mark dead and re-create hook (async etc)
     this.deadHook.dead = true
     this.deadHook = { dead: false }
     // clear fields
@@ -313,7 +355,8 @@ export class App extends Entity {
     // In this case, position/quaternion/scale are final values and should NOT trigger rebuild
     let endingMove = false
 
-    if (data.hasOwnProperty('blueprint')) {
+    if (Object.prototype.hasOwnProperty.call(data, 'blueprint')) {
+      this.eventQueue.clear()
       this.data.blueprint = data.blueprint
       rebuild = true
     }
@@ -399,12 +442,29 @@ export class App extends Entity {
   }
 
   crash() {
-    return this.build(true)
+    if (this.crashed || this.destroyed) return
+    this.crashed = true
+    this.deadHook.dead = true
+    this.timers.clear()
+    this.world.setHot(this, false)
+    const n = ++this.n // invalidate builds already waiting on assets
+    queueMicrotask(() => {
+      if (this.n !== n || this.destroyed || this.world.fatalError) return
+      const promise = this.build(true)
+      const build = this.n
+      promise.catch(err => {
+        handlePhysicsFailure(err, { entity: this, phase: 'crash rebuild' })
+        console.error(`[app] crash rebuild failed (entity ${this.data.id})`)
+        if (this.n === build) this.building = false
+      })
+    })
   }
 
   destroy(local) {
     if (this.destroyed) return
     this.destroyed = true
+    this.n++
+    this.eventQueue.clear()
 
     this.unbuild()
 
@@ -467,8 +527,13 @@ export class App extends Entity {
   }
 
   emit(name, a1, a2) {
+    // a crashed app still gets its destroy event so the script can clean up; native work from it is
+    // refused by the latched script boundaries
+    const suppressed = () => (this.crashed && name !== 'destroy') || this.world.fatalError
+    if (suppressed()) return
     if (!this.listeners[name]) return
     for (const callback of this.listeners[name]) {
+      if (suppressed()) return
       if (this.world.profiler?.active) this.world.profiler.measure(this.data.id, name, callback, [a1, a2])
       else callback(a1, a2)
     }
@@ -478,10 +543,12 @@ export class App extends Entity {
     let entries = this.worldListeners.get(callback)
     if (!entries) this.worldListeners.set(callback, (entries = new Map()))
     if (entries.has(name)) return
+    const run = this.deadHook
     const wrapped = (...args) => {
+      if (this.crashed || this.world.fatalError || run.dead) return
       if (this.world.profiler?.active)
-        return this.world.profiler.measure(this.data.id, `world:${name}`, callback, args, this.world.events)
-      return callback.apply(this.world.events, args)
+        return this.world.profiler.measure(this.data.id, `world:${name}`, callback, args, undefined)
+      return callback(...args)
     }
     entries.set(name, wrapped)
     this.world.events.on(name, wrapped)
@@ -506,14 +573,34 @@ export class App extends Entity {
     this.worldListeners.clear()
   }
 
-  onEvent(version, name, data, networkId) {
+  onEvent(version, name, data, networkId, meta) {
+    if (!Number.isSafeInteger(version) || version < 0) return this.dropEvent('invalid version')
+    const latest = this.world.blueprints.get(this.data.blueprint)?.version
+    // An optimistic upload can run its cached script before announcing the next blueprint version.
+    const keep = version === latest + 1
+    if (version > latest && (!keep || !meta?.builder)) return this.dropEvent('future version')
     if (this.building || version > this.blueprint.version) {
-      this.eventQueue.push({ version, name, data, networkId })
+      this.eventQueue.push({ version, name, data, networkId }, meta, { keep, blueprintId: this.data.blueprint })
     } else {
-      this.emit(name, data, networkId)
+      try {
+        this.emit(name, data, networkId)
+      } catch (err) {
+        this.dropEvent('listener error', err)
+      }
     }
   }
 
+  dropEvent(reason, err) {
+    this.droppedEvents++
+    this.eventDrops.set(reason, (this.eventDrops.get(reason) || 0) + 1)
+    logDroppedEvent(
+      this,
+      reason,
+      `[app] ${String(this.data.id).slice(0, 64)}: event dropped (${reason}); further drops for this app are counted only${err ? `: ${briefError(err)}` : ''}`
+    )
+  }
+
+  // scripts get a whitelisted request init and a response of plain values (see scriptFetch.js)
   fetch = async (url, options = {}) => {
     if (this.world.isPreview) {
       if (!['GET', 'HEAD'].includes((options.method || 'GET').toUpperCase())) return
@@ -522,34 +609,25 @@ export class App extends Entity {
     }
     try {
       const resp = await fetch(url, {
-        ...options,
+        ...toHostFetchOptions(options),
         signal: this.abortController.signal,
       })
-      const secureResp = {
-        ok: resp.ok,
-        status: resp.status,
-        statusText: resp.statusText,
-        headers: Object.fromEntries(resp.headers.entries()),
-        json: async () => await resp.json(),
-        text: async () => await resp.text(),
-        blob: async () => await resp.blob(),
-        arrayBuffer: async () => await resp.arrayBuffer(),
-      }
-      return secureResp
+      return createScriptResponse(resp)
     } catch (err) {
       console.error(err)
       // this.crash()
     }
   }
 
+  // scripts get an opaque handle; the timer itself stays host-private
   setTimeout = (fn, ms) => {
-    const hook = this.getDeadHook()
-    const timerId = setTimeout(() => {
-      if (hook.dead) return
+    assertScriptActive(this)
+    const run = this.deadHook
+    return this.timers.set(() => {
+      if (this.crashed || this.world.fatalError || run.dead) return
       if (this.world.profiler?.active) this.world.profiler.measure(this.data.id, 'timer', fn)
       else fn()
     }, ms)
-    return timerId
   }
 
   getDeadHook = () => {
@@ -583,36 +661,12 @@ export class App extends Entity {
   getWorldProxy() {
     if (!this.worldProxy) {
       const entity = this
-      const getters = this.world.apps.worldGetters
-      const setters = this.world.apps.worldSetters
-      const methods = this.world.apps.worldMethods
-      this.worldProxy = new Proxy(
-        {},
-        {
-          get: (target, prop) => {
-            // getters
-            if (prop in getters) {
-              return getters[prop](entity)
-            }
-            // methods
-            if (prop in methods) {
-              const method = methods[prop]
-              return (...args) => {
-                return method(entity, ...args)
-              }
-            }
-            return undefined
-          },
-          set: (target, prop, value) => {
-            // setters
-            if (prop in setters) {
-              setters[prop](entity, value)
-              return true
-            }
-            return true
-          },
-        }
-      )
+      this.worldProxy = createEntityProxy(entity, {
+        getters: this.world.apps.worldGetters,
+        setters: this.world.apps.worldSetters,
+        methods: this.world.apps.worldMethods,
+        destroyMethods: ['off', 'remove'],
+      })
     }
     return this.worldProxy
   }
@@ -620,42 +674,23 @@ export class App extends Entity {
   getAppProxy() {
     if (!this.appProxy) {
       const entity = this
-      const getters = this.world.apps.appGetters
-      const setters = this.world.apps.appSetters
-      const methods = this.world.apps.appMethods
-      this.appProxy = new Proxy(
-        {},
-        {
-          get: (target, prop) => {
-            // getters
-            if (prop in getters) {
-              return getters[prop](entity)
-            }
-            // methods
-            if (prop in methods) {
-              const method = methods[prop]
-              return (...args) => {
-                return method(entity, ...args)
-              }
-            }
-            // root node props
-            return entity.root.getProxy()[prop]
-          },
-          set: (target, prop, value) => {
-            // setters
-            if (prop in setters) {
-              setters[prop](entity, value)
-              return true
-            }
-            // root node props
-            if (prop in entity.root.getProxy()) {
-              entity.root.getProxy()[prop] = value
-              return true
-            }
+      this.appProxy = createEntityProxy(entity, {
+        getters: this.world.apps.appGetters,
+        setters: this.world.apps.appSetters,
+        methods: this.world.apps.appMethods,
+        destroyMethods: ['off', 'send', 'sendTo'],
+        // root node props
+        fallbackGet: prop => entity.root.getProxy()[prop],
+        fallbackSet: (prop, value) => {
+          if (Object.prototype.hasOwnProperty.call(entity.root.getProxy(), prop)) {
+            entity.root.getProxy()[prop] = value
             return true
-          },
-        }
-      )
+          }
+          return true
+        },
+      })
+      // lets world.add(app) etc resolve to the app's root node
+      registerAppProxy(this.appProxy, () => entity.root.getProxy())
     }
     return this.appProxy
   }

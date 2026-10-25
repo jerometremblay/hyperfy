@@ -145,7 +145,7 @@ test('server spawns a normal app, copies inputs, broadcasts to everyone, and sav
   const db = await database(t, world.network)
   await saveNetwork(world.network)
   assert.deepEqual(JSON.parse((await db('blueprints').first()).data), child.blueprint)
-  assert.deepEqual(JSON.parse((await db('entities').first()).data), child.data)
+  assert.deepEqual(JSON.parse((await db('entities').first()).data), { ...child.data, state: null })
 })
 
 test('all three scripting methods throw a server-only error on clients', t => {
@@ -262,7 +262,10 @@ test('setTransform updates the root without rerunning the server script, survive
   assert.deepEqual(reloaded.root.quaternion.toArray(), quaternion.toArray())
   assert.equal(reloaded.data.spawnedBy, 'booth')
   // Normal builder move and delete paths work for the reloaded child.
-  await restarted.world.network.onEntityModified({ id: 'builder' }, { id, position: [7, 8, 9], mover: null })
+  await restarted.world.network.onEntityModified(
+    { id: 'builder', player: { isBuilder: () => true } },
+    { id, position: [7, 8, 9], mover: null }
+  )
   assert.deepEqual(reloaded.data.position, [7, 8, 9])
   restarted.world.network.onEntityRemoved({ id: 'builder', player: { isBuilder: () => true } }, id)
   assert.equal(restarted.world.entities.get(id), undefined)

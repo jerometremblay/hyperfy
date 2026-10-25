@@ -38,7 +38,9 @@
     "lint": "eslint . --ext .js,.jsx",
     "lint:fix": "eslint . --ext .js,.jsx --fix",
     "format": "prettier --write .",
-    "check": "npm run lint && npm run format"
+    "check": "npm run lint && npm run format",
+    "test:security": "node --test --test-concurrency=2 test/security/*.test.js src/core/systems/ServerNetwork.security.test.mjs",
+    "test:security:server": "npm run node-client:build && npm run build && node --test test/security/server.integration.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
@@ -101,10 +103,13 @@
   },
   "engines": {
     "npm": ">=10.0.0",
-    "node": "^22.18.0 || >=24.11.0"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "overrides": {
-    "fast-xml-parser": "^5.11.2"
+    "fast-xml-parser": "^5.11.2",
+    "esbuild-plugin-polyfill-node": {
+      "import-meta-resolve": "4.2.0"
+    }
   },
   "license": "GPL-3.0-only"
 }

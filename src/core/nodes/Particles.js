@@ -574,9 +574,7 @@ export class Particles extends Node {
   }
 
   set rateOverDistance(value = defaults.rateOverDistance) {
-    if (!isNumber(value)) {
-      throw new Error('[particles] rateOverDistance not a number')
-    }
+    if (!Number.isFinite(value) || value < 0) return
     this._rateOverDistance = value
     this.needsRebuild = true
     this.setDirty()

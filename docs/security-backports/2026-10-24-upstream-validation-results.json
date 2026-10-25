@@ -1,0 +1,43 @@
+{
+  "reviewed_at": "2026-10-24",
+  "node": "22.23.4",
+  "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+  "pending_backports_included": true,
+  "production_characterization": {
+    "UIFlexWrap": "RangeError",
+    "UIViewFlexWrap": "RangeError",
+    "repeatPadding": "ReferenceError",
+    "absoluteYogaType": "undefined",
+    "invalidFlexDirectionAccepted": true,
+    "firefoxAudio": "TypeError",
+    "sentChatRows": 2,
+    "sentChatDistinctIds": 2,
+    "headlessSnapshot": "TypeError: Cannot read properties of undefined (reading 'deserialize')"
+  },
+  "selected_small_patches_characterization": {
+    "UIFlexWrap": "no-wrap",
+    "UIViewFlexWrap": "no-wrap",
+    "repeatPadding": "accepted",
+    "absoluteYogaType": 2,
+    "invalidFlexDirectionAccepted": false,
+    "firefoxAudio": "ok",
+    "sentChatRows": 2,
+    "sentChatDistinctIds": 2,
+    "headlessSnapshot": "TypeError: Cannot read properties of undefined (reading 'deserialize')"
+  },
+  "upstream_fetch_guard_tests": {
+    "passed": 8,
+    "failed": 0,
+    "source": "https://github.com/dwebxr/coo-world/commit/66d5ff94742886ae8034661e870af681dbf57749",
+    "isolated": true,
+    "support_adapter": "Explicit production class dependencies and local GLTFLoader; no full world boot."
+  },
+  "current_loader_with_candidate_guard": {
+    "passed": 0,
+    "failed": 1,
+    "cause": "Unhandled rejection: THREE.GLTFLoader failed to load the external Brotli buffer; asynchronous parse errors are not forwarded to reject.",
+    "support_adapter": "HDRLoader alias supplied for fork constructor."
+  },
+  "main_application_changes": false,
+  "commits_created": false
+}

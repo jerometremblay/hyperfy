@@ -1,0 +1,253 @@
+{
+  "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+  "tracked_patch_sha256": "e9d7928e3be36e253ddb7c0b788196920cd6e1dc8aa57c67d5022a8bc5655e65",
+  "untracked_files_in_snapshot": 110,
+  "git_fsmonitor_disabled": true,
+  "no_commits_created": true,
+  "full_cherry_picks": [
+    {
+      "name": "fetch guard and loader review",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "0960a8d4df12c53d972f885616287ff9cbabec0b",
+          "status": "conflict",
+          "conflicts": [
+            "CHANGELOG.md",
+            "test/e2e/fullstack.mjs"
+          ],
+          "message": "error: could not apply 0960a8d... fix: server-side fetch never decodes Brotli\nhint: after resolving the conflicts, mark the corrected paths\nhint: with 'git add <paths>' or 'git rm <paths>'\nhint: Disable this message with \"git config set advice.mergeConflict false\"\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "Firefox startup audio",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "be3357b955fdced8af02cac262643f075eb200b5",
+          "status": "conflict",
+          "conflicts": [
+            ".github/workflows/e2e.yml",
+            "test/e2e/README.md",
+            "test/e2e/apps/physics-crash.js",
+            "test/e2e/apps/stage-crash.js",
+            "test/e2e/lib/browser.mjs",
+            "test/e2e/lib/common.mjs"
+          ],
+          "message": "error: could not apply be3357b... fix: start audio on Firefox and scale the e2e harness for slow runners\nhint: after resolving the conflicts, mark the corrected paths\nhint: with 'git add <paths>' or 'git rm <paths>'\nhint: Disable this message with \"git config set advice.mergeConflict false\"\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "IME and text wrapping",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "823106c26fdc1c7190fe301ec649813caa52a7e7",
+          "status": "conflict",
+          "conflicts": [
+            "src/core/extras/wrapText.js"
+          ],
+          "message": "error: could not apply 823106c... fix: chat input with IME and bubble text wrapping\nhint: after resolving the conflicts, mark the corrected paths\nhint: with 'git add <paths>' or 'git rm <paths>'\nhint: Disable this message with \"git config set advice.mergeConflict false\"\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "voice driven lip sync",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "b5a9a259c9b7fec1d51426ae28e32f1e2025ae98",
+          "status": "conflict",
+          "conflicts": [
+            "src/core/extras/createVRMFactory.js"
+          ],
+          "message": "error: could not apply b5a9a25... feat: per-instance VRM mouth morphs\nhint: after resolving the conflicts, mark the corrected paths\nhint: with 'git add <paths>' or 'git rm <paths>'\nhint: Disable this message with \"git config set advice.mergeConflict false\"\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "July correctness refactor",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "043b40c69a2d78e09df53ac4f5a755d607a61824",
+          "status": "conflict",
+          "conflicts": [
+            "package-lock.json",
+            "package.json",
+            "src/client/components/CoreUI.js",
+            "src/client/components/Fields.js",
+            "src/client/components/Inputs.js",
+            "src/client/components/Menu.js",
+            "src/client/components/MenuApp.js",
+            "src/client/components/Sidebar.js",
+            "src/client/solana-integration.js",
+            "src/client/utils.js",
+            "src/client/world-client.js",
+            "src/core/entities/App.js",
+            "src/core/entities/PlayerLocal.js",
+            "src/core/entities/PlayerRemote.js",
+            "src/core/extras/createEntityProxy.js",
+            "src/core/extras/createVRMFactory.js",
+            "src/core/nodes/Prim.js",
+            "src/core/packets.js",
+            "src/core/systems/Apps.js",
+            "src/core/systems/ClientControls.js",
+            "src/core/systems/ClientLoader.js",
+            "src/core/systems/ClientNetwork.js",
+            "src/core/systems/ServerNetwork.js",
+            "src/core/systems/Stage.js",
+            "src/server/AssetsLocal.js",
+            "src/server/AssetsS3.js"
+          ],
+          "message": "error: could not apply 043b40c... refactor: security hardening, bug fixes, dead-code removal, dedup, AI agent runtime\nhint: after resolving the conflicts, mark the corrected paths\nhint: with 'git add <paths>' or 'git rm <paths>'\nhint: Disable this message with \"git config set advice.mergeConflict false\"\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "CI and bare env exclusion",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "1f528221b240be0be73d4f97179d5fea36834bb2",
+          "status": "conflict",
+          "conflicts": [
+            ".eslintrc",
+            "scripts/build-node-client.mjs",
+            "scripts/build.mjs"
+          ],
+          "message": "error: could not apply 1f52822... build: eslint repair, node:test harness, CI gate, Docker/env leak fix\nhint: after resolving the conflicts, mark the corrected paths\nhint: with 'git add <paths>' or 'git rm <paths>'\nhint: Disable this message with \"git config set advice.mergeConflict false\"\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "tool docker exclusion",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "commits": [
+        {
+          "sha": "0725a549c556165d2a54658894fc62fe47f36866",
+          "status": "clean",
+          "conflicts": [],
+          "message": ""
+        }
+      ],
+      "result": "clean"
+    }
+  ],
+  "selected_file_patches": [
+    {
+      "name": "fetch guard and loader",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "steps": [
+        {
+          "sha": "0960a8d4df12c53d972f885616287ff9cbabec0b",
+          "paths": [
+            "src/server/fetchGuard.js",
+            "src/server/fetchGuardInstall.js",
+            "src/server/index.js",
+            "test/fetchGuard.test.js",
+            "test/fetchGuardControl.test.js"
+          ],
+          "result": "applies",
+          "message": ""
+        },
+        {
+          "sha": "d17d631c168c62370f3d7f80b3f45554ad3c8c51",
+          "paths": [
+            "src/server/fetchGuard.js",
+            "src/core/systems/ServerLoader.js",
+            "test/fetchGuard.test.js"
+          ],
+          "result": "needs adaptation",
+          "message": "error: patch failed: src/core/systems/ServerLoader.js:110\nerror: src/core/systems/ServerLoader.js: patch does not apply\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "Firefox audio",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "steps": [
+        {
+          "sha": "be3357b955fdced8af02cac262643f075eb200b5",
+          "paths": [
+            "src/core/systems/ClientAudio.js"
+          ],
+          "result": "applies",
+          "message": ""
+        }
+      ],
+      "result": "applies"
+    },
+    {
+      "name": "IME and text wrapper wiring",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "steps": [
+        {
+          "sha": "823106c26fdc1c7190fe301ec649813caa52a7e7",
+          "paths": [
+            "src/client/components/CoreUI.js",
+            "src/client/components/Fields.js",
+            "src/core/nodes/UIText.js"
+          ],
+          "result": "needs adaptation",
+          "message": "error: patch failed: src/client/components/CoreUI.js:255\nerror: src/client/components/CoreUI.js: patch does not apply\nerror: patch failed: src/client/components/Fields.js:150\nerror: src/client/components/Fields.js: patch does not apply\n"
+        }
+      ],
+      "result": "needs adaptation"
+    },
+    {
+      "name": "Docker env exclusion",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "steps": [
+        {
+          "sha": "1f528221b240be0be73d4f97179d5fea36834bb2",
+          "paths": [
+            ".dockerignore"
+          ],
+          "result": "applies",
+          "message": ""
+        }
+      ],
+      "result": "applies"
+    },
+    {
+      "name": "UI correctness",
+      "base": "242a44fa1b6f8853bcbbb1ab8a77619dfac1daab",
+      "includes_pending_backports": true,
+      "steps": [
+        {
+          "sha": "043b40c69a2d78e09df53ac4f5a755d607a61824",
+          "paths": [
+            "src/core/nodes/UI.js",
+            "src/core/nodes/UIView.js",
+            "src/core/nodes/UIText.js",
+            "src/core/extras/yoga.js"
+          ],
+          "result": "applies",
+          "message": ""
+        }
+      ],
+      "result": "applies"
+    }
+  ]
+}

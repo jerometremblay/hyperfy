@@ -44,7 +44,7 @@ export function isDisplay(value) {
   return displays.includes(value)
 }
 
-const flexDirections = ['column', 'column-reverse', 'row', 'row-reverse', 'flex-start', 'flex-end', 'center']
+const flexDirections = ['column', 'column-reverse', 'row', 'row-reverse']
 
 export function isFlexDirection(value) {
   return flexDirections.includes(value)

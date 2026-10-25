@@ -1,0 +1,27 @@
+{
+  "name": "Campfire Circle",
+  "model": "script-only",
+  "script": "asset://714252ca31f947d87c408a166c9ecb79a95c51cf5d469986320ed63124d39fd0.js",
+  "props": {
+    "promptBoxRequestId": "X72hlUBic2",
+    "promptBoxTargetEntityId": "aAKGotg3PA",
+    "lightEnabled": true,
+    "lightIntensity": 5.5,
+    "lightDistance": 12.100000000000001,
+    "flickerStrength": 0.18,
+    "flickerSpeed": 1,
+    "lightHeight": 0.22,
+    "fireLightColor": "#ff923c",
+    "castFireShadows": false
+  },
+  "unique": true,
+  "scene": false,
+  "id": "9G2KYhFLAz",
+  "version": 35,
+  "disabled": false,
+  "image": null,
+  "preload": false,
+  "public": false,
+  "locked": false,
+  "frozen": false
+}

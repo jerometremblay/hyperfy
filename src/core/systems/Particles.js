@@ -19,7 +19,7 @@ const billboardModeInts = {
 let worker = null
 function getWorker() {
   if (!worker) {
-    worker = new Worker(window.PARTICLES_PATH)
+    worker = new Worker(window.PARTICLES_PATH, { type: 'module' })
   }
   return worker
 }
@@ -319,7 +319,7 @@ function createEmitter(world, system, node) {
       pending = false
     }
     if (msg.op === 'end') {
-      node._onEnd?.()
+      node._onEnd?.call(undefined) // script callbacks run without a receiver
     }
   }
 

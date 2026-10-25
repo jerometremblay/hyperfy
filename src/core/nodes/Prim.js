@@ -1,5 +1,7 @@
+import { handlePhysicsFailure } from '../extras/physicsFailure.js'
 import * as THREE from '../extras/three'
 import { mergeVertices, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { vec3ToPxPos, quatToPxRot, warnOnce } from '../extras/physxConvert.js'
 import { isBoolean, isNumber, isString, isArray, isObject, isFunction, isEqual } from 'lodash-es'
 
 import { Node, secureRef } from './Node'
@@ -243,78 +245,83 @@ export class Prim extends Node {
   }
 
   async mount() {
-    this.needsRebuild = false
+    try {
+      this.needsRebuild = false
 
-    // do some trickery to get a unit geometry size with a scale offset we can apply.
-    // essentially lets us use unit-sized geometry and transfers the offset to scale.
-    // for example there will only ever be ONE box geometry used, scaling will form its size.
-    // but for shapes with varying config, eg cylinder top and bottom radii, these are normalized by ratio.
-    const { size, scaleOffset } = getGeometryConfig(this._type, this._size)
-    this.scaleOffset.fromArray(scaleOffset)
-    this.updateMatrixWorldOffset()
+      // do some trickery to get a unit geometry size with a scale offset we can apply.
+      // essentially lets us use unit-sized geometry and transfers the offset to scale.
+      // for example there will only ever be ONE box geometry used, scaling will form its size.
+      // but for shapes with varying config, eg cylinder top and bottom radii, these are normalized by ratio.
+      const { size, scaleOffset } = getGeometryConfig(this._type, this._size)
+      this.scaleOffset.fromArray(scaleOffset)
+      this.updateMatrixWorldOffset()
 
-    // Get unit-sized geometry for this type
-    const geometry = getGeometry(this._type, size, this.getExtrudeOptions())
+      // Get unit-sized geometry for this type
+      const geometry = getGeometry(this._type, size, this.getExtrudeOptions())
 
-    // Create material with current properties
-    const cache = this.ctx.world.isPreview ? (this.ctx.world.primMaterials ||= new Map()) : materialCache
-    const material = getMaterial(
-      {
-        // color: this._color,
-        // emissive: this._emissive,
-        // emissiveIntensity: this._emissiveIntensity,
-        metalness: this._metalness,
-        roughness: this._roughness,
-        opacity: quantizeOpacity(this._opacity), // reduce material variations
-        texture: this._texture ? this.ctx.world.resolveURL(this._texture) : null,
-        doubleside: this._doubleside,
-      },
-      cache
-    )
+      // Create material with current properties
+      const cache = this.ctx.world.isPreview ? (this.ctx.world.primMaterials ||= new Map()) : materialCache
+      const material = getMaterial(
+        {
+          // color: this._color,
+          // emissive: this._emissive,
+          // emissiveIntensity: this._emissiveIntensity,
+          metalness: this._metalness,
+          roughness: this._roughness,
+          opacity: quantizeOpacity(this._opacity), // reduce material variations
+          texture: this._texture ? this.ctx.world.resolveURL(this._texture) : null,
+          doubleside: this._doubleside,
+        },
+        cache
+      )
 
-    // Get loader if available (client-side only)
-    const loader = this.ctx.world.loader || null
+      // Get loader if available (client-side only)
+      const loader = this.ctx.world.loader || null
 
-    if (this._texture && !material._texApplied) {
-      const n = ++this.n
-      await applyTexture(material, this._texture, loader)
-      if (n !== this.n) return // remounted or destroyed
-    }
-
-    // Create visual if visible
-    if (this._opacity > 0) {
-      // Create mesh
-      this.handle = this.ctx.world.stage.insertLinked({
-        geometry,
-        material,
-        uberShader: true,
-        castShadow: this._castShadow,
-        receiveShadow: this._receiveShadow,
-        matrix: this.matrixWorldOffset,
-        // color: this._color,
-        node: this,
-      })
-      // console.log('FOO', this._color)
-      this.handle.setColor(this._color)
-      this.handle.setEmissive(this._emissive)
-      this.handle.setEmissiveIntensity(this._emissiveIntensity)
-      count++
-    } else {
-      // not visible but add to octree
-      this.sItem = {
-        matrix: this.matrixWorldOffset,
-        geometry,
-        material,
-        getEntity: () => this.ctx.entity,
-        node: this,
+      if (this._texture && !material._texApplied) {
+        const n = ++this.n
+        await applyTexture(material, this._texture, loader)
+        if (n !== this.n) return // remounted or destroyed
       }
-      this.ctx.world.stage.octree.insert(this.sItem)
-      count++
-    }
 
-    // Create physics if enabled
-    if (this._physics && !this.ctx.moving && !this.ctx.world.isPreview) {
-      this.mountPhysics(size, geometry)
+      // Create visual if visible
+      if (this._opacity > 0) {
+        // Create mesh
+        this.handle = this.ctx.world.stage.insertLinked({
+          geometry,
+          material,
+          uberShader: true,
+          castShadow: this._castShadow,
+          receiveShadow: this._receiveShadow,
+          matrix: this.matrixWorldOffset,
+          // color: this._color,
+          node: this,
+        })
+        // console.log('FOO', this._color)
+        this.handle.setColor(this._color)
+        this.handle.setEmissive(this._emissive)
+        this.handle.setEmissiveIntensity(this._emissiveIntensity)
+        count++
+      } else {
+        // not visible but add to octree
+        this.sItem = {
+          matrix: this.matrixWorldOffset,
+          geometry,
+          material,
+          getEntity: () => this.ctx.entity,
+          node: this,
+        }
+        this.ctx.world.stage.octree.insert(this.sItem)
+        count++
+      }
+
+      // Create physics if enabled
+      if (this._physics && !this.ctx.moving && !this.ctx.world.isPreview) {
+        this.mountPhysics(size, geometry)
+      }
+    } catch (err) {
+      handlePhysicsFailure(err, { entity: this.ctx.entity, world: this.ctx.world, phase: 'Prim.mount' })
+      console.error('[prim] mount failed')
     }
   }
 
@@ -345,8 +352,8 @@ export class Prim extends Node {
     // Create transform
     this.matrixWorldOffset.decompose(_v1, _q1, _v2)
     if (!this._tm) this._tm = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
-    _v1.toPxTransform(this._tm)
-    _q1.toPxTransform(this._tm)
+    vec3ToPxPos(_v1, this._tm)
+    quatToPxRot(_q1, this._tm)
 
     // Create actor
     if (type === 'static') {
@@ -378,7 +385,7 @@ export class Prim extends Node {
       const threeGeometry = getGeometry(this._type, size, this.getExtrudeOptions())
 
       // Create convex mesh
-      pmesh = geometryToPxMesh(this.ctx.world, threeGeometry, true)
+      pmesh = geometryToPxMesh(this.ctx.world, threeGeometry, true, this.ctx.entity)
       if (pmesh && pmesh.value) {
         // Create scale and its components explicitly so we can free them
         const _scaleVec = new PHYSX.PxVec3(_v2.x, _v2.y, _v2.z)
@@ -413,7 +420,25 @@ export class Prim extends Node {
     }
 
     // Create shape
-    this.shape = this.ctx.world.physics.physics.createShape(pxGeometry, material, true, flags)
+    let shape
+    try {
+      shape = this.ctx.world.physics.physics.createShape(pxGeometry, material, true, flags)
+    } finally {
+      PHYSX.destroy(flags)
+      if (!shape || shape.ptr === 0) {
+        this.shape = null
+        PHYSX.destroy(pxGeometry)
+        this.pmesh?.release()
+        this.pmesh = null
+        this.actor.release()
+        this.actor = null
+        PHYSX.destroy(this._tm)
+        this._tm = null
+        warnOnce('[prim] failed to create shape')
+      }
+    }
+    if (!shape || shape.ptr === 0) return
+    this.shape = shape
 
     // Set filter data
     const layerName = this._layer
@@ -425,11 +450,12 @@ export class Prim extends Node {
     const filterData = new PHYSX.PxFilterData(layer.group, layer.mask, pairFlags, 0)
     this.shape.setQueryFilterData(filterData)
     this.shape.setSimulationFilterData(filterData)
+    PHYSX.destroy(filterData)
 
     // const position = _v1.copy(this.position).multiply(this.parent.scale)
     // const pose = new PHYSX.PxTransform()
-    // position.toPxTransform(pose)
-    // this.quaternion.toPxTransform(pose)
+    // vec3ToPxPos(position, pose)
+    // quatToPxRot(this.quaternion, pose)
     // this.shape.setLocalPose(pose)
 
     // Attach shape to actor
@@ -1207,7 +1233,7 @@ export class Prim extends Node {
           // return self.transparent
         },
         set transparent(value) {
-          console.warn('prim.transparent deprecated')
+          warnOnce('[prim] transparent is deprecated and ignored; use opacity instead')
           // self.transparent = value
         },
         get texture() {

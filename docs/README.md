@@ -4,6 +4,9 @@ These docs are for 3D artists and developers looking to build assets and/or full
 
 - [All changes from official Hyperfy main, with screenshots](fork-changes.md)
 - [Complete changed-file, dependency, and commit inventory](fork-change-inventory.md)
+- [Coo security backport review, upstream commit links, and prepared patch](security-review-coo-2026-10-24.md)
+- [Applied upstream fixes, commit provenance, and validation](upstream-review-2026-10-24.md)
+- [Node 26 runtime setup, compatibility fix, and validation](node-runtime.md)
 
 - [Commands](/docs/commands.md)
 - [Models](/docs/supported-files/models.md)

@@ -1,0 +1,38 @@
+{
+  "id": "$scene",
+  "version": 250,
+  "name": "The Meadow",
+  "image": null,
+  "author": null,
+  "url": null,
+  "desc": null,
+  "model": "asset://1aa2381f0fb25ba2fe9941b62eb2cad1fe2c77afa0316df8828ba5eba5d3d374.glb",
+  "script": "asset://ac4ae78f0df0e3a434a1bfc39dd87a7de20bda0d140951331a754d3605c2c93e.js",
+  "props": {
+    "hour": 4,
+    "period": "pm",
+    "intensity": 1,
+    "sky": {
+      "type": "texture",
+      "name": "Clear_08_4pm_LDR.2048.webp",
+      "url": "asset://179d71586e675efc4af04185e1b2d3e6b7f4a5b707f1ef5e9b6497c5660ecab7.webp"
+    },
+    "hdr": {
+      "type": "hdr",
+      "name": "Clear_08_4pm_LDR.hdr",
+      "url": "asset://62db0ffbcea86b5e9ba23fb5da739b160e8abfd3b390235fed5ac436750e1e2e.hdr"
+    },
+    "verticalRotation": 20,
+    "horizontalRotation": 160,
+    "rotationY": 0,
+    "fogNear": 450,
+    "fogFar": 1000,
+    "fogColor": ""
+  },
+  "preload": true,
+  "public": false,
+  "locked": false,
+  "unique": false,
+  "scene": true,
+  "disabled": false
+}

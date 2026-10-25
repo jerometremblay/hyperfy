@@ -1,5 +1,6 @@
 import { isBoolean } from 'lodash-es'
 import * as THREE from './three'
+import { getOctreeExpansions } from './octreeBounds.js'
 
 const _v1 = new THREE.Vector3()
 const _v2 = new THREE.Vector3()
@@ -9,6 +10,7 @@ const _intersects = []
 const _mesh = new THREE.Mesh()
 
 const MIN_RADIUS = 0.2
+let warned = false
 
 // https://anteru.net/blog/2008/loose-octrees/
 
@@ -20,44 +22,45 @@ export class LooseOctree {
   }
 
   insert(item) {
-    if (!item.sphere) item.sphere = new THREE.Sphere()
-    if (!item.geometry.boundingSphere) item.geometry.computeBoundingSphere()
-    item.sphere.copy(item.geometry.boundingSphere).applyMatrix4(item.matrix)
-    if (item.sphere.radius < MIN_RADIUS) item.sphere.radius = MIN_RADIUS // prevent huge subdivisions
-    let added = this.root.insert(item)
-    if (!added) {
-      while (!this.root.canContain(item)) {
-        this.expand()
-      }
-      added = this.root.insert(item)
-    }
+    updateSphere(item)
+    const expansions = getOctreeExpansions(this.root, item.sphere.center, item.sphere.radius, true)
+    if (expansions < 0) return this.park(item)
+    const prevNode = item._node
+    this.remove(item)
+    for (let i = 0; i < expansions; i++) this.expand()
+    const added = this.root.insert(item)
+    prevNode?.checkCollapse()
     return added
   }
 
   move(item) {
-    if (!item._node) {
-      // console.error('octree item move called but there is no _node')
+    if (!item._node && !item._parked) return
+    updateSphere(item)
+    if (
+      [item.sphere.center.x, item.sphere.center.y, item.sphere.center.z, item.sphere.radius].every(Number.isFinite) &&
+      item._node?.canContain(item)
+    ) {
       return
     }
-    // update bounding sphere
-    item.sphere.copy(item.geometry.boundingSphere).applyMatrix4(item.matrix)
-    // if it still fits inside its current node that's cool
-    if (item._node.canContain(item)) {
-      return
-    }
-    // if it doesn't fit, re-insert it into its new node
+    return this.insert(item)
+  }
+
+  park(item) {
     const prevNode = item._node
     this.remove(item)
-    const added = this.insert(item)
-    if (!added) {
-      console.error('octree item moved but was not re-added. did it move outside octree bounds?')
+    item._node = null
+    item._parked = true
+    prevNode?.checkCollapse()
+    if (!warned) {
+      warned = true
+      console.warn('[LooseOctree] parked item with non-finite or out-of-budget bounds')
     }
-    // check if we can collapse the previous node
-    prevNode.checkCollapse()
+    return false
   }
 
   remove(item) {
     item._node?.remove(item)
+    item._parked = false
   }
 
   expand() {
@@ -361,6 +364,15 @@ class LooseOctreeNode {
 
   destroy() {
     this.unmountHelper()
+  }
+}
+
+function updateSphere(item) {
+  if (!item.sphere) item.sphere = new THREE.Sphere()
+  if (!item.geometry.boundingSphere) item.geometry.computeBoundingSphere()
+  item.sphere.copy(item.geometry.boundingSphere).applyMatrix4(item.matrix)
+  if (Number.isFinite(item.sphere.radius) && item.sphere.radius < MIN_RADIUS) {
+    item.sphere.radius = MIN_RADIUS // prevent huge subdivisions
   }
 }
 

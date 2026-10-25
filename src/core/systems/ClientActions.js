@@ -55,12 +55,9 @@ export class ClientActions extends System {
 
   update(delta) {
     const isXR = !!this.world.xr?.session
-    const isBuilderMouseHover =
-      this.world.builder?.enabled && !isXR && !isTouch && !this.control.pointer.locked
+    const isBuilderMouseHover = this.world.builder?.enabled && !isXR && !isTouch && !this.control.pointer.locked
     const canTarget = !this.world.builder?.enabled || isBuilderMouseHover
-    const cameraPos = isXR
-      ? this.world.camera.getWorldPosition(v5)
-      : this.world.rig.position
+    const cameraPos = isXR ? this.world.camera.getWorldPosition(v5) : this.world.rig.position
 
     this.btnDown =
       this.control.keyE.down ||
@@ -196,7 +193,7 @@ function createAction(world) {
   const startAction = () => {
     cancelled = false
     try {
-      node._onStart()
+      !node.ctx?.entity?.crashed && !world.fatalError && node._onStart.call(undefined)
     } catch (err) {
       console.error('action.onStart:', err)
     }
@@ -204,7 +201,9 @@ function createAction(world) {
 
   const triggerAction = () => {
     try {
-      node._onTrigger({ playerId: world.entities.player.data.id })
+      !node.ctx?.entity?.crashed &&
+        !world.fatalError &&
+        node._onTrigger.call(undefined, { playerId: world.entities.player.data.id })
     } catch (err) {
       console.error('action.onTrigger:', err)
     }
@@ -279,7 +278,7 @@ function createAction(world) {
       } else if (node.progress > 0) {
         if (!cancelled) {
           try {
-            node._onCancel()
+            if (!node.ctx?.entity?.crashed && !world.fatalError) node._onCancel.call(undefined)
           } catch (err) {
             console.error('action.onCancel:', err)
           }

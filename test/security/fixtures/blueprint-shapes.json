@@ -1,0 +1,391 @@
+[
+  {
+    "id": "fixture0",
+    "version": 0,
+    "name": "Fixture app 0",
+    "image": null,
+    "author": null,
+    "url": null,
+    "desc": null,
+    "model": "asset://c5a1fb2bb75704537f0d4328973f9579f7888255632179aea77a40ef3fa1904c.glb",
+    "script": "asset://5f50af03080526b310af6dd637501e201fa84bf92f2a75595c5692bd860009be.js",
+    "props": {
+      "avatar": {
+        "type": "avatar",
+        "name": "file-1.vrm",
+        "url": "asset://e1240a82cabc9387cb3d540ad498d562c7fe61578385255315ffa8e6c130da98.vrm"
+      },
+      "weapon": {
+        "type": "model",
+        "name": "file-2.glb",
+        "url": "asset://d6b24b227335bc1fceea1c9169d3d8e5c6099a161743b54c7dfb9de580763ee9.glb"
+      },
+      "attack1": {
+        "type": "emote",
+        "name": "file-3.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "attack2": {
+        "type": "emote",
+        "name": "file-4.glb",
+        "url": "asset://35e2cf8c001b860f7d249fc613d99a48e8c4d87e49e02e409b0f1fd82ee1a128.glb"
+      },
+      "attackEmote1": {
+        "type": "emote",
+        "name": "file-5.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "attackEmote2": {
+        "type": "emote",
+        "name": "file-6.glb",
+        "url": "asset://35e2cf8c001b860f7d249fc613d99a48e8c4d87e49e02e409b0f1fd82ee1a128.glb"
+      },
+      "attackSound": {
+        "type": "audio",
+        "name": "file sound.mp3",
+        "url": "asset://a20c90a74540b22fa0c9f788c9d69a46739e3157b1425e6f7b2dca6adcca7da4.mp3"
+      },
+      "chargeEmote": {
+        "type": "emote",
+        "name": "file-7.glb",
+        "url": "asset://eab5e3b46a3405e7bcf7198db97126a79006159d20b79a24043cfd289b8751ef.glb"
+      },
+      "chargeIcon": {
+        "type": "texture",
+        "name": "file-8.png",
+        "url": "asset://6d7a66ba49cd194b0cfb1a33b6e876e1f9a2139ad8d7efd70e482267b0c31d3d.png"
+      },
+      "chargeCost": 30,
+      "specialEmote": {
+        "type": "emote",
+        "name": "file-9.glb",
+        "url": "asset://4ad11b4be323eef69e484e85120457d1ff0505cbb9c4462eb88fafdfa772617d.glb"
+      },
+      "specialIcon": {
+        "type": "texture",
+        "name": "file-10.png",
+        "url": "asset://9e7eff6b36558e122086f7bc6dbea692e110bed97b96980ccc994e1bb466bc18.png"
+      },
+      "specialCost": 50,
+      "attackIcon": {
+        "type": "texture",
+        "name": "file-11.png",
+        "url": "asset://d5474d458d26185fd0c77c3cecc4a900344e6dbbea44acb59dfb8df0457a250c.png"
+      },
+      "attackCost": 1,
+      "enabled": true,
+      "deathDuration": 5,
+      "healInterval": 2,
+      "healAmount": 10,
+      "deathEmote": {
+        "type": "emote",
+        "name": "file-12.glb",
+        "url": "asset://c6addf22ad2446e1dbbacd1577e4e9feb49440a61e5406049de6aefd1db75d5f.glb"
+      }
+    },
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "disabled": false,
+    "scene": false
+  },
+  {
+    "id": "fixture1",
+    "version": 0,
+    "name": "Fixture app 1",
+    "image": null,
+    "author": null,
+    "url": null,
+    "desc": null,
+    "model": "asset://1b8a94f16534da23bd311e357bc602b050285d8779190c19c00a1ff8d4ae6682.glb",
+    "script": "asset://d6b9542cc69bea6948dd68c79f16a0f4d18a157f3df5e1505e5fea3b5716acc6.js",
+    "props": {
+      "avatar": {
+        "type": "avatar",
+        "name": "file-13.vrm",
+        "url": "asset://e1240a82cabc9387cb3d540ad498d562c7fe61578385255315ffa8e6c130da98.vrm"
+      },
+      "weapon": {
+        "type": "model",
+        "name": "file-14.glb",
+        "url": "asset://a4e42599946567af6887d5276774ef02413903b1db813fba74be7fb576ce1b4f.glb"
+      },
+      "attack1": {
+        "type": "emote",
+        "name": "file-15.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "attack2": {
+        "type": "emote",
+        "name": "file-16.glb",
+        "url": "asset://35e2cf8c001b860f7d249fc613d99a48e8c4d87e49e02e409b0f1fd82ee1a128.glb"
+      },
+      "attackEmote1": {
+        "type": "emote",
+        "name": "file-17.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "attackEmote2": {
+        "type": "emote",
+        "name": "file-18.glb",
+        "url": "asset://35e2cf8c001b860f7d249fc613d99a48e8c4d87e49e02e409b0f1fd82ee1a128.glb"
+      },
+      "attackSound": {
+        "type": "audio",
+        "name": "file-19.mp3",
+        "url": "asset://a0e6961484d215795019d08f32d603b9f93b433abbb4f188c46610323d9132da.mp3"
+      },
+      "chargeEmote": {
+        "type": "emote",
+        "name": "file-20.glb",
+        "url": "asset://eab5e3b46a3405e7bcf7198db97126a79006159d20b79a24043cfd289b8751ef.glb"
+      },
+      "chargeIcon": {
+        "type": "texture",
+        "name": "file-21.png",
+        "url": "asset://6d7a66ba49cd194b0cfb1a33b6e876e1f9a2139ad8d7efd70e482267b0c31d3d.png"
+      },
+      "chargeCost": 30,
+      "specialEmote": {
+        "type": "emote",
+        "name": "file-22.glb",
+        "url": "asset://4ad11b4be323eef69e484e85120457d1ff0505cbb9c4462eb88fafdfa772617d.glb"
+      },
+      "specialIcon": {
+        "type": "texture",
+        "name": "file-23.png",
+        "url": "asset://9e7eff6b36558e122086f7bc6dbea692e110bed97b96980ccc994e1bb466bc18.png"
+      },
+      "specialCost": 50,
+      "attackIcon": {
+        "type": "texture",
+        "name": "file-24.png",
+        "url": "asset://d5474d458d26185fd0c77c3cecc4a900344e6dbbea44acb59dfb8df0457a250c.png"
+      },
+      "attackCost": 1,
+      "attackDmg": "10-20",
+      "attackDamage": "5,10,30,2",
+      "attackCritChance": 30,
+      "attackCritMultiplier": 2,
+      "attackEnergy": 1,
+      "chargeEnergy": 20,
+      "specialEnergy": 50,
+      "specialDamage": "20,40,30,1.5",
+      "specialSound": {
+        "type": "audio",
+        "name": "file-25.mp3",
+        "url": "asset://384e8b2285ab0931739e4afd11dbc4a485708fcaf17ed8fb636b04fe87735459.mp3"
+      },
+      "chargeSound": {
+        "type": "audio",
+        "name": "file-26.mp3",
+        "url": "asset://3b153aba44dad2d8b71a2673bfead1dacf1cc092a77b15954f4bdf5ebc6ae18e.mp3"
+      }
+    },
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "disabled": false,
+    "scene": false
+  },
+  {
+    "id": "fixture2",
+    "version": 0,
+    "name": "Fixture app 2",
+    "image": null,
+    "author": null,
+    "url": null,
+    "desc": null,
+    "model": "asset://8a8f3a3e016fe66f7db846a348e0114916bcb8671e91d4ee8656f3a51cef1f29.vrm",
+    "script": "asset://c7c028a517744b6de84e16f4ecfcd757de135538cb049724618fb5325fb9e659.js",
+    "props": {
+      "avatar": {
+        "type": "avatar",
+        "name": "file-27.vrm",
+        "url": "asset://8a8f3a3e016fe66f7db846a348e0114916bcb8671e91d4ee8656f3a51cef1f29.vrm"
+      },
+      "weapon": {
+        "type": "model",
+        "name": "file-28.glb",
+        "url": "asset://e004f652b2384f2cf1136f65e67831d95893ba53aac3958fed0ca6b10a51fa8d.glb"
+      },
+      "attack1": {
+        "type": "emote",
+        "name": "file-29.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "attack2": {
+        "type": "emote",
+        "name": "file-30.glb",
+        "url": "asset://35e2cf8c001b860f7d249fc613d99a48e8c4d87e49e02e409b0f1fd82ee1a128.glb"
+      },
+      "attackEmote1": {
+        "type": "emote",
+        "name": "file-31.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "attackEmote2": {
+        "type": "emote",
+        "name": "file-32.glb",
+        "url": "asset://35e2cf8c001b860f7d249fc613d99a48e8c4d87e49e02e409b0f1fd82ee1a128.glb"
+      },
+      "attackSound": {
+        "type": "audio",
+        "name": "file sound.mp3",
+        "url": "asset://a20c90a74540b22fa0c9f788c9d69a46739e3157b1425e6f7b2dca6adcca7da4.mp3"
+      },
+      "chargeEmote": {
+        "type": "emote",
+        "name": "file-33.glb",
+        "url": "asset://eab5e3b46a3405e7bcf7198db97126a79006159d20b79a24043cfd289b8751ef.glb"
+      },
+      "chargeIcon": {
+        "type": "texture",
+        "name": "file-34.png",
+        "url": "asset://6d7a66ba49cd194b0cfb1a33b6e876e1f9a2139ad8d7efd70e482267b0c31d3d.png"
+      },
+      "chargeCost": 30,
+      "specialEmote": {
+        "type": "emote",
+        "name": "file-35.glb",
+        "url": "asset://4ad11b4be323eef69e484e85120457d1ff0505cbb9c4462eb88fafdfa772617d.glb"
+      },
+      "specialIcon": {
+        "type": "texture",
+        "name": "file-36.png",
+        "url": "asset://9e7eff6b36558e122086f7bc6dbea692e110bed97b96980ccc994e1bb466bc18.png"
+      },
+      "specialCost": 50,
+      "attackIcon": {
+        "type": "texture",
+        "name": "file-37.png",
+        "url": "asset://d5474d458d26185fd0c77c3cecc4a900344e6dbbea44acb59dfb8df0457a250c.png"
+      },
+      "attackCost": 1,
+      "enabled": true,
+      "deathDuration": 5,
+      "healInterval": 2,
+      "healAmount": 10,
+      "deathEmote": {
+        "type": "emote",
+        "name": "file-38.glb",
+        "url": "asset://c6addf22ad2446e1dbbacd1577e4e9feb49440a61e5406049de6aefd1db75d5f.glb"
+      },
+      "idleEmote": {
+        "type": "emote",
+        "name": "file-39.glb",
+        "url": "asset://7ed4ef485db24c54e9d9a3511feaec08427ab9aee4fccbba774610fd7291e53e.glb"
+      },
+      "walkEmote": {
+        "type": "emote",
+        "name": "file-40.glb",
+        "url": "asset://647cbd2ad2b393f40674ad8367df0fce5dd408f1ec1baba65088b64470f72fff.glb"
+      },
+      "attackEmote": {
+        "type": "emote",
+        "name": "file-41.glb",
+        "url": "asset://ea8eeb761ee81ada44caaec23983d503ec998ce3e92ab3aed920dd2504e92ba4.glb"
+      },
+      "assets": {
+        "type": "model",
+        "name": "file-42.glb",
+        "url": "asset://56e17e361d6ac8a5cffb3f7297afc453dabb572910cd78e1b7db4ec0e273c4f9.glb"
+      },
+      "aggroRadius": 10,
+      "aggroDebug": false,
+      "runEmote": {
+        "type": "emote",
+        "name": "file-43.glb",
+        "url": "asset://647cbd2ad2b393f40674ad8367df0fce5dd408f1ec1baba65088b64470f72fff.glb"
+      },
+      "aggroDistance": 10,
+      "fleeDistance": 11,
+      "leashDistance": 11,
+      "healRate": 1,
+      "regenRate": 1,
+      "regenAmount": 20,
+      "deadEmote": {
+        "type": "emote",
+        "name": "file-44.glb",
+        "url": "asset://c6addf22ad2446e1dbbacd1577e4e9feb49440a61e5406049de6aefd1db75d5f.glb"
+      },
+      "attackDmg": "10,15,30,2",
+      "attackRate": 1,
+      "runSpeed": 6
+    },
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "disabled": false,
+    "scene": false
+  },
+  {
+    "id": "fixture3",
+    "version": 0,
+    "name": "Fixture app 3",
+    "image": null,
+    "author": null,
+    "url": null,
+    "desc": null,
+    "model": "asset://78bf329904701339cc601ee81f3639a55b3c7673ddf6c04bdbbab6d6c0b9ab77.glb",
+    "script": "asset://b52c7125433599ec75f2d03cfdc299c3e4167cdfa7bf0ac40357be177136ff1d.js",
+    "props": {
+      "hoverHeight": 1,
+      "maxSpeed": 10,
+      "acceleration": 0.4,
+      "turnSpeed": 3,
+      "emote": {
+        "type": "emote",
+        "name": "file-45.glb",
+        "url": "asset://461f42f5e97ce0efe15268eede00f13fb5434f66ee08652ab027ec60f9fc2d18.glb"
+      }
+    },
+    "preload": false,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "disabled": false,
+    "scene": false
+  },
+  {
+    "id": "$scene",
+    "version": 236,
+    "name": "Fixture scene",
+    "image": null,
+    "author": null,
+    "url": null,
+    "desc": null,
+    "model": "asset://2cd7d8028da887b282944e284c701af704f7facb296ae2250e6e4f242b832b8d.glb",
+    "script": "asset://58171225306a24b216d6afe46f25df55587723b3f3a42317e09429951800496e.js",
+    "props": {
+      "hour": 4,
+      "period": "pm",
+      "intensity": 1,
+      "sky": {
+        "type": "texture",
+        "name": "file-46.webp",
+        "url": "asset://1b73f19f80f9def95e5e4125bedbcb0ec0ab2c338f0f5384139cf9d45da9b151.webp"
+      },
+      "hdr": {
+        "type": "hdr",
+        "name": "file-47.hdr",
+        "url": "asset://a5178a909cbc04de26210213dff82294e65d4fe8e749b34c367d42c410b09309.hdr"
+      },
+      "verticalRotation": 40,
+      "horizontalRotation": 230,
+      "rotationY": 0,
+      "fogNear": 450,
+      "fogFar": 1000,
+      "fogColor": "#97b4d3"
+    },
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "scene": true,
+    "disabled": false
+  }
+]

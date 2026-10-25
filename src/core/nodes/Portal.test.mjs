@@ -804,7 +804,7 @@ test('shipped legacy portals use the configured URL for both status and native t
       world: ctx.world,
       data: { id: 'legacy', position: [8, 0, -10], quaternion: [0, 0, 0, 1], scale: [1, 1, 1] },
       n: 0,
-      eventQueue: [],
+      eventQueue: { clear() {}, drain() {} },
       unbuild() {},
     }
     await App.prototype.build.call(entity)

@@ -1,0 +1,25 @@
+{
+  "id": "XajRA7cHdV",
+  "version": 12,
+  "name": "Steampunk Gas Street Light",
+  "model": "script-only",
+  "script": "asset://4e05e969f8cd4b095a8dc5b5123aad88e819c7ebde93b6f245dbf67636b5d815.js",
+  "props": {
+    "promptBoxRequestId": "ZGInEmSGTz",
+    "lightIntensity": 8.5,
+    "lightRange": 10.5,
+    "lightDecay": 0.2,
+    "flickerStrength": 0.12,
+    "flickerSpeed": 1,
+    "lightColor": "#ffbf67",
+    "castLightShadows": true
+  },
+  "unique": true,
+  "scene": false,
+  "preload": true,
+  "image": null,
+  "public": false,
+  "locked": false,
+  "frozen": false,
+  "disabled": false
+}

@@ -1,7 +1,7 @@
 import * as THREE from '../extras/three'
 import { isBoolean, isNumber } from 'lodash-es'
 
-import { Node, secureRef } from './Node'
+import { Node, resolveValueRef, secureRef } from './Node'
 import { getTrianglesFromGeometry } from '../extras/getTrianglesFromGeometry'
 import { getTextureBytesFromMaterial } from '../extras/getTextureBytesFromMaterial'
 
@@ -360,6 +360,16 @@ export class Mesh extends Node {
           return self.geometry
         },
         set geometry(value) {
+          // scripts may pass null, a geometry ref from another node, or a real geometry.
+          // a ref is resolved here, once, so the node only ever stores the resolved geometry
+          if (value != null && !(value instanceof THREE.BufferGeometry)) {
+            const ref = resolveValueRef(value)
+            if (!ref) {
+              console.error('[mesh] geometry invalid')
+              return
+            }
+            value = ref.value
+          }
           self.geometry = value
         },
         get material() {
