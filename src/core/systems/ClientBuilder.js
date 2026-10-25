@@ -1245,7 +1245,18 @@ export class ClientBuilder extends System {
     }
     const transform = this.getSpawnTransform()
     if (ext === 'hyp') {
-      this.addApp(file, transform)
+      try {
+        await this.addApp(file, transform)
+      } catch (err) {
+        console.error('failed to import .hyp', err)
+        this.world.chat.add({
+          id: uuid(),
+          from: null,
+          fromId: null,
+          body: `Upload failed for "${file.name}". ${err?.message || 'Please try again.'}`,
+          createdAt: moment().toISOString(),
+        })
+      }
     }
     if (ext === 'glb') {
       this.addModel(file, transform)
@@ -1529,6 +1540,7 @@ app.on('update', () => {
 
   async addApp(file, transform) {
     const info = await importApp(file)
+    const batch = new AbortController()
     for (const asset of info.assets) {
       this.world.loader.insert(asset.type, asset.url, asset.file)
     }
@@ -1541,7 +1553,7 @@ app.on('update', () => {
         cancelText: 'Cancel',
       })
       if (!confirmed) return
-      // modify blueprint optimistically
+      // prepare the scene change without replacing it until uploads succeed
       const blueprint = this.world.blueprints.getScene()
       const change = {
         id: blueprint.id,
@@ -1562,12 +1574,12 @@ app.on('update', () => {
         scene: info.blueprint.scene,
         disabled: info.blueprint.disabled,
       }
-      this.world.blueprints.modify(change)
       // upload assets
       const promises = info.assets.map(asset => {
-        return this.world.network.upload(asset.file)
+        return this.world.network.upload(asset.file, { batch })
       })
       await Promise.all(promises)
+      this.world.blueprints.modify(change)
       // publish blueprint change for all
       this.world.network.send('blueprintModified', change)
       return
@@ -1606,16 +1618,16 @@ app.on('update', () => {
     }
     this.world.blueprints.add(blueprint, true)
     const app = this.world.entities.add(data, true)
-    const promises = info.assets.map(asset => {
-      return this.world.network.upload(asset.file)
-    })
     try {
+      const promises = info.assets.map(asset => {
+        return this.world.network.upload(asset.file, { batch })
+      })
       await Promise.all(promises)
       app.onUploaded()
     } catch (err) {
-      console.error('failed to upload .hyp assets')
-      console.error(err)
-      app.destroy()
+      batch.abort()
+      app.destroy(true)
+      throw err
     }
   }
 
