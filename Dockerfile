@@ -2,9 +2,12 @@
 FROM node:26.12.1-alpine AS builder
 WORKDIR /app
 
+# Install native addon build tools
+RUN apk add --no-cache python3 make g++
+
 # Copy package.json and package-lock.json to leverage layer caching
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
 # Copy all source files and build
 COPY . .
