@@ -1,0 +1,61 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "blueprint": {
+    "id": "581e2f47-58b5-4a24-ac05-03319dbc217b",
+    "version": 6,
+    "name": "MacBook Pro 16 — Space Gray",
+    "image": null,
+    "author": "Jerome",
+    "url": "https://github.com/jerometremblay/hyperfy",
+    "desc": "Standalone rounded, beveled extrusion laptop. E opens/closes the shared lid; its screen displays a packaged GitHub screenshot.",
+    "model": "asset://9228dc870776f9139d949e94ee6726a9bddffcb182a0ec0dd5a7d9f3218cfb4b.glb",
+    "script": "asset://25fe5c80d3e54d4c4ec0f808e57211ad13dbf2fe6e654d780b66bbfbf51fff09.js",
+    "props": {},
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "frozen": false,
+    "scene": false,
+    "disabled": false
+  },
+  "entity": {
+    "id": "5030e342-8a9e-4950-9f41-46d5cf46f7e4",
+    "blueprint": "581e2f47-58b5-4a24-ac05-03319dbc217b",
+    "position": [
+      43.61327961401162,
+      4.089167176636911,
+      17.04230729262213
+    ],
+    "quaternion": [
+      0,
+      0.6087614290087207,
+      0,
+      0.7933533402912352
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "pinned": false
+  },
+  "deskLocal": [
+    0,
+    0.7862,
+    0.755
+  ],
+  "independentMovableObject": true,
+  "assetsUploadedAndReadBack": true,
+  "deskAndOtherPlacementsUnchanged": true,
+  "serverProfile": {
+    "id": "5030e342-8a9e-4950-9f41-46d5cf46f7e4",
+    "blueprintId": "581e2f47-58b5-4a24-ac05-03319dbc217b",
+    "blueprintVersion": 6,
+    "name": "MacBook Pro 16 — Space Gray",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  }
+}

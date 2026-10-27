@@ -1,0 +1,89 @@
+{
+  "blueprints": [
+    {
+      "image": null,
+      "author": "Jerome",
+      "url": "",
+      "desc": "Large U-shaped walnut desk with brass edge, drawer pedestals and leather pad. Physical collision preserves the open bay; placement stays grounded.",
+      "script": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+      "props": {
+        "castShadows": true,
+        "receiveShadows": true
+      },
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Walnut and Brass U-shaped Work Desk",
+      "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+      "id": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "version": 1
+    },
+    {
+      "image": null,
+      "author": "Jerome",
+      "url": "https://github.com/jerometremblay/hyperfy",
+      "desc": "Standalone rounded, beveled extrusion laptop. E opens/closes the shared lid; click its screen to browse the public Hyperfy fork.",
+      "script": "asset://f1779ee1e14e689ddc895424711c3bd8e2631524329fe18e1b524e740419f13d.js",
+      "props": {},
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "MacBook Pro 16 — Space Gray",
+      "model": "asset://9228dc870776f9139d949e94ee6726a9bddffcb182a0ec0dd5a7d9f3218cfb4b.glb",
+      "id": "581e2f47-58b5-4a24-ac05-03319dbc217b",
+      "version": 5
+    }
+  ],
+  "entities": [
+    {
+      "id": "5030e342-8a9e-4950-9f41-46d5cf46f7e4",
+      "blueprint": "581e2f47-58b5-4a24-ac05-03319dbc217b",
+      "position": [
+        43.61327961401162,
+        4.089167176636911,
+        17.04230729262213
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false
+    },
+    {
+      "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "blueprint": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "position": [
+        42.88400561516337,
+        3.302967176636911,
+        16.846898913569728
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false
+    }
+  ]
+}

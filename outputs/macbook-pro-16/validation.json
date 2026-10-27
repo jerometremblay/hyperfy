@@ -1,0 +1,40 @@
+{
+  "valid": true,
+  "actualRuntimeConstructors": true,
+  "exactPackageSource": true,
+  "embeddedTransparentLogo": true,
+  "embeddedGitHubScreenshot": true,
+  "clientWebViews": 0,
+  "nativeImageMesh": true,
+  "logoOrientationAndClearance": true,
+  "primitives": 163,
+  "extrusions": 160,
+  "clientIdleUpdateCallbacks": 0,
+  "serverIdleUpdateCallbacks": 0,
+  "roundedExtrusions": true,
+  "closedLidClearsKeyboard": true,
+  "closedRimTouchesDeck": true,
+  "openLidBehindBase": true,
+  "lowOffsetHinge": true,
+  "screenOrientation": true,
+  "opensClosesAndReverses": true,
+  "serverValidatesDistance": true,
+  "independentMovableEntity": true,
+  "deskLocal": [
+    1.5543122344752192e-15,
+    0.7862,
+    0.7550000000000027
+  ],
+  "closedBounds": {
+    "min": [
+      -0.1791,
+      -2.5518240081776056e-11,
+      -0.12330000019073487
+    ],
+    "max": [
+      0.17906000000085914,
+      0.017999999950081166,
+      0.1229500025510788
+    ]
+  }
+}
