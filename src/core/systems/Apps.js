@@ -260,6 +260,14 @@ export class Apps extends System {
         })
         return players
       },
+      getSpawn(entity) {
+        requireServer(world, entity, 'getSpawn')
+        const spawn = world.network.spawn
+        return {
+          position: new THREE.Vector3().fromArray(spawn.position),
+          quaternion: new THREE.Quaternion().fromArray(spawn.quaternion),
+        }
+      },
       createLayerMask(entity, ...groups) {
         let mask = 0
         for (const group of groups) {

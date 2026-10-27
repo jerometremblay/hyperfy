@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixel Worlds — rendering prototype</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="identity">
+        <span class="mark">▦</span>
+        <div><strong>PIXEL WORLDS</strong><span>Hyperfy · rendering study 01</span></div>
+      </div>
+      <div class="prototype-label"><i></i> WORKSPACE PROTOTYPE</div>
+    </header>
+    <main>
+      <section class="viewport" aria-label="Interactive rendered world">
+        <div class="scene-caption">
+          <span>01 / THE CROSSING</span>
+          <h1>One world.<br />A different perspective.</h1>
+        </div>
+        <div id="stage"></div>
+        <div class="scene-info">
+          <span id="scene-name">PROCEDURAL VILLAGE</span><span id="telemetry" aria-live="off">Starting renderer…</span>
+        </div>
+      </section>
+      <aside>
+        <span class="eyebrow">VIEW SETTINGS</span>
+        <h2 id="view-title">Pixel isometric</h2>
+        <p id="view-description"></p>
+        <div class="divider"></div>
+        <label for="resolution">Internal resolution</label>
+        <select id="resolution">
+          <option value="320">320 × 180 · chunky</option>
+          <option value="480" selected>480 × 270 · balanced</option>
+          <option value="640">640 × 360 · fine</option>
+        </select>
+        <label for="avatar">Character treatment</label>
+        <select id="avatar">
+          <option value="mesh" selected>Keep the 3D character</option>
+          <option value="sprite">Pixel sprite experiment</option>
+        </select>
+        <label class="check"><input id="snap" type="checkbox" checked /> Snap camera to pixels</label>
+        <label class="check"><input id="follow" type="checkbox" /> Follow the character</label>
+        <label class="check"><input id="night" type="checkbox" /> Dusk lighting</label>
+        <div class="divider"></div>
+        <label for="world-default">Default for this world</label>
+        <select id="world-default">
+          <option value="isometric">Pixel isometric</option>
+          <option value="hd2d">Cinematic pixel</option>
+          <option value="retro">Retro orthographic</option>
+          <option value="standard">Standard 3D</option>
+        </select>
+        <button id="apply-default" class="secondary">Enter with world default</button>
+        <small
+          >In-memory preview of a per-world default. Switching views preserves the world and player position.</small
+        >
+        <div class="divider"></div>
+        <label for="model-file" class="import-label">Try an existing scene <span>↗</span></label>
+        <input id="model-file" type="file" accept=".glb" />
+        <small id="asset-status">Load a local, self-contained .glb. No upload.</small>
+        <button id="restore-demo" class="text-button" hidden>Restore village</button>
+        <div class="divider"></div>
+        <div class="controls-title">EXPLORE</div>
+        <p class="controls">
+          <kbd>W A S D</kbd> walk<br /><kbd>Q</kbd> <kbd>E</kbd> rotate view<br /><kbd>R</kbd> reset position<br /><kbd
+            >←</kbd
+          >
+          <kbd>→</kbd> compare styles
+        </p>
+      </aside>
+    </main>
+    <nav class="switcher" aria-label="Rendering style comparison">
+      <button id="previous" aria-label="Previous rendering style">←</button>
+      <div class="variant-list">
+        <button data-variant="isometric">01 <span>Pixel isometric</span></button>
+        <button data-variant="hd2d">02 <span>Cinematic pixel</span></button>
+        <button data-variant="retro">03 <span>Retro orthographic</span></button>
+        <button data-variant="standard">04 <span>Standard 3D</span></button>
+      </div>
+      <button id="next" aria-label="Next rendering style">→</button>
+    </nav>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

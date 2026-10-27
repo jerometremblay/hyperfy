@@ -44,6 +44,9 @@ export function getPortalCameraDistance(portals, origin, direction, distance, ra
 
 // Map the eye through the two doorways, then clip away the near side of the exit.
 export function updatePortalCamera(view, source, destination, eye) {
+  if (!!view.camera.isOrthographicCamera !== !!eye.isOrthographicCamera) {
+    view.camera = eye.isOrthographicCamera ? new THREE.OrthographicCamera() : new THREE.PerspectiveCamera()
+  }
   const camera = view.camera
   inverseSource.copy(source).invert()
   camera.matrixWorld.copy(destination).multiply(flip).multiply(inverseSource).multiply(eye.matrixWorld)
@@ -71,11 +74,13 @@ export function updatePortalCamera(view, source, destination, eye) {
   plane.applyMatrix4(camera.matrixWorldInverse)
   clip.set(plane.normal.x, plane.normal.y, plane.normal.z, plane.constant)
   const p = camera.projectionMatrix.elements
-  q.set((Math.sign(clip.x) + p[8]) / p[0], (Math.sign(clip.y) + p[9]) / p[5], -1, (1 + p[10]) / p[14])
+  // Unproject the far corner for either perspective or orthographic projection.
+  camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert()
+  q.set(Math.sign(clip.x), Math.sign(clip.y), 1, 1).applyMatrix4(camera.projectionMatrixInverse)
   clip.multiplyScalar(2 / clip.dot(q))
-  p[2] = clip.x
-  p[6] = clip.y
-  p[10] = clip.z + 1
-  p[14] = clip.w
+  p[2] = clip.x - p[3]
+  p[6] = clip.y - p[7]
+  p[10] = clip.z - p[11]
+  p[14] = clip.w - p[15]
   camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert()
 }

@@ -3,7 +3,16 @@
 import { Ranks } from './ranks.js'
 import { isValidDayNightSetting } from './dayNight.js'
 
-export const BUILDER_SETTING_KEYS = new Set(['title', 'desc', 'image', 'avatar', 'voice', 'playerLimit', 'ao'])
+export const BUILDER_SETTING_KEYS = new Set([
+  'title',
+  'desc',
+  'image',
+  'avatar',
+  'voice',
+  'playerLimit',
+  'ao',
+  'renderStyle',
+])
 export const ADMIN_SETTING_KEYS = new Set(['rank', 'customAvatars'])
 const DAY_NIGHT_KEYS = new Set([
   'dayNightCycle',
@@ -72,6 +81,8 @@ export function normalizeSettingValue(key, value) {
     return isValidDayNightSetting(key, value) ? accept(value) : reject()
   }
   switch (key) {
+    case 'renderStyle':
+      return ['standard', 'pixel-isometric', 'pixel-retro'].includes(value) ? accept(value) : reject()
     case 'title':
       return nullOrText(value, TITLE_MAX_LENGTH)
     case 'desc':

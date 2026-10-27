@@ -360,7 +360,7 @@ export class UI extends Node {
       if (this._scaler) {
         const worldToScreenFactor = world.graphics.worldToScreenFactor
         const [minDistance, maxDistance, baseScale = 1] = this._scaler
-        const clampedDistance = clamp(distance, minDistance, maxDistance)
+        const clampedDistance = camera.isOrthographicCamera ? 1 : clamp(distance, minDistance, maxDistance)
         // calculate scale factor based on the distance
         // When distance is at min, scale is 1.0 (or some other base scale)
         // When distance is at max, scale adjusts proportionally

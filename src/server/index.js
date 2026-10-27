@@ -439,7 +439,7 @@ fastify.get('/status', async (request, reply) => {
 fastify.setErrorHandler(errorHandler)
 
 try {
-  await fastify.listen({ port, host: '0.0.0.0' })
+  await fastify.listen({ port, host: process.env.HOST || '0.0.0.0' })
 } catch (err) {
   console.error(err)
   console.error(`failed to launch on port ${port}`)

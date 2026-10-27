@@ -75,6 +75,19 @@ Returns a player. If no `playerId` is provided it returns the local player.
 
 Returns an array of all players.
 
+### `.getSpawn()`: { position: Vector3, quaternion: Quaternion }
+
+Server-only. Returns a copy of the world's current saved spawn pose, including
+changes made with `/spawn set` or `/spawn clear`. Changing the returned pose does
+not change the world spawn.
+
+```js
+if (world.isServer) {
+  const spawn = world.getSpawn()
+  player.teleport(spawn.position, new Euler().setFromQuaternion(spawn.quaternion, 'YXZ').y)
+}
+```
+
 ### `.getLocation()`: { latitude: Number, longitude: Number }
 
 Returns the world's configured geographic coordinates in degrees, on both the server

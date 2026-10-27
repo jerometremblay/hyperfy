@@ -40,7 +40,11 @@
     "format": "prettier --write .",
     "check": "npm run lint && npm run format",
     "test:security": "node --test --test-concurrency=2 test/security/*.test.js src/core/systems/ServerNetwork.security.test.mjs",
-    "test:security:server": "npm run node-client:build && npm run build && node --test test/security/server.integration.test.mjs"
+    "test:security:server": "npm run node-client:build && npm run build && node --test test/security/server.integration.test.mjs",
+    "test:rendering": "node --test --test-concurrency=2 scripts/world-profile.test.mjs scripts/world-2d-scene.test.mjs src/core/entities/PlayerLocal.test.mjs src/core/extras/portalCamera.test.mjs src/core/nodes/Portal.test.mjs src/core/nodes/UI.test.mjs src/core/systems/Apps.spawning.test.mjs src/core/systems/ClientGraphics.test.mjs test/security/isometricView.test.js test/security/settingsPolicy.test.js",
+    "prototype:isometric": "node prototypes/isometric-renderer/serve.mjs",
+    "world:2d:create": "node scripts/create-world-2d.mjs",
+    "world:2d": "npm run dev -- world-2d"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
