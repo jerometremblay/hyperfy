@@ -95,8 +95,53 @@ yaw and a steeper view. Camera movement snaps to the screen pixel grid while
 player physics and network positions remain continuous. Avatars turn toward
 their walking direction, and compact pixel-font chat bubbles follow their heads.
 
-This is an experimental mesh-and-avatar mode. Foreground objects can hide the
-player; arbitrary interiors need layout assessment. Photos, app-controlled
+## Keeping the avatar visible
+
+Both orthographic pixel modes automatically cut an entire `.hyp` app when its
+opaque geometry obstructs the local avatar. A horizontal plane stays 25 cm above
+the avatar's standing height, removing geometry above the plane while keeping
+lower walls and floors. The cut includes every model section and script-created
+world node owned by the app, so separate roof sections and upstairs rooms are
+removed together.
+
+Separate apps inside the building, such as upstairs furniture, receive the same
+cut. Containment uses visible geometry bounds in the building's local coordinates,
+including its rotation and scale. An interior object's full bounds must fit inside
+the building's bounds; outside objects and other placements remain complete.
+
+Five rays cover the head, torso and shoulders, checked ten times per second.
+The plane follows the player's actual elevation every frame, using the avatar's
+fixed standing height rather than its animated head position so walking cannot
+make the cut bob up and down. Apps return to their full shape
+after the view has stayed clear for 200 ms.
+
+Only the local player's main render applies the cut. Nodes, colliders and
+geometry queries stay mounted. Other players and invisible meshes are excluded.
+Glass does not trigger a cut, but glass inside a selected app is clipped along
+with its other content. Lights above the plane are temporarily hidden, and model,
+image, video, HTML and portal surfaces use the same plane. Standard rendering, build mode and XR
+restore the scene immediately. Portal views and photos see the original scene.
+Shadow maps use the complete, original geometry before the main view draws its
+cut, preserving shadows from windows, walls and upper floors.
+
+The cut also works when a building's roof and walls share one merged mesh.
+Use the optional `cameraOcclusion` property in scripts or GLB custom properties:
+
+- `null` (default): opaque geometry can trigger a cut of its entire owning app
+  and interior objects.
+- `true`: allow this node or its descendants to trigger the cut even when their
+  materials are transparent. Nodes without an owning app clip as a subtree.
+- `false`: exempt this node and its descendants, useful for large terrain.
+
+For example, `app.cameraOcclusion = false` exempts the entire app, and
+`app.get('Terrain').cameraOcclusion = false` keeps a terrain subtree visible. These flags
+do not change node activation or physics. Shadows retain the original geometry.
+
+Run `node scripts/test-camera-occlusion.mjs` and open its localhost URL to verify
+the real WebGL whole-app clipping, interior furniture, lower-wall retention,
+restoration and nested portal draw.
+
+This is an experimental mesh-and-avatar mode. Photos, app-controlled
 cameras, CSS3D views, touch controls, seated poses, and specialized renderers
 still need dedicated compatibility checks. XR hardware has not been validated.
 Sprite avatars, cinematic rendering, and animated water remain separate

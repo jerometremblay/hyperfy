@@ -81,6 +81,9 @@ const getDefaultLodSplatScale = () => {
 import { serializeError } from '../extras/serializeError'
 
 const vec2 = new THREE.Vector2()
+const hiddenMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
+const cameraBounds = new THREE.Box3()
+const cameraCenter = new THREE.Vector3()
 const CLEAN_RETRY_CAP = 10
 // a Model with no instances is released after this long (world time), so a visible toggle or an LOD switch keeps it
 const MODEL_IDLE_SECONDS = 10
@@ -334,6 +337,17 @@ export class Stage extends System {
     }
     return {
       material: material.proxy,
+      occludesCamera: !material.raw.transparent && material.raw.opacity > 0,
+      clipForCamera: plane => {
+        const planes = material.raw.clippingPlanes
+        const clipShadows = material.raw.clipShadows
+        material.raw.clippingPlanes = [...(planes || []), plane]
+        material.raw.clipShadows = true
+        return () => {
+          material.raw.clippingPlanes = planes
+          material.raw.clipShadows = clipShadows
+        }
+      },
       hideForPhoto: () => {
         const visible = mesh.visible
         mesh.visible = false
@@ -857,6 +871,12 @@ class Model {
     this.iMesh.frustumCulled = true
     this.iMesh.getEntity = this.getEntity.bind(this)
     this.items = [] // { idx, node, matrix, color }
+    this.cameraBatch = null
+    this.cameraOriginalVisible = true
+    this.cameraMatrix = null
+    this.cameraOriginalMatrix = null
+    this.cameraRetiredMatrices = []
+    this.cameraHiddenCount = 0
     this.dirty = true
   }
 
@@ -873,10 +893,14 @@ class Model {
       color: null,
       emissive: null,
       emissiveIntensity: null,
+      cameraHidden: false,
+      destroyed: false,
+      cameraMaterial: null,
+      cameraMesh: null,
       // octree
     }
     this.items.push(item)
-    this.iMesh.setMatrixAt(item.idx, item.matrix) // silently fails if too small, gets increased in clean()
+    this.writeMatrix(item) // silently fails if too small, gets increased in clean()
     this.dirty = true
     const sItem = {
       matrix,
@@ -895,6 +919,8 @@ class Model {
     }
     return {
       material: this.material.proxy,
+      occludesCamera: !this.material.raw.transparent && this.material.raw.opacity > 0,
+      clipForCamera: plane => this.clipForCamera(item, plane),
       hideForPhoto: () => {
         const matrix = new THREE.Matrix4()
         this.iMesh.getMatrixAt(item.idx, matrix)
@@ -935,13 +961,24 @@ class Model {
 
   move(item, matrix) {
     item.matrix.copy(matrix)
-    this.iMesh.setMatrixAt(item.idx, matrix)
+    this.writeMatrix(item)
+    item.cameraMesh?.matrixWorld.copy(matrix)
     // Moves can happen after clean(), before a main or shadow camera renders.
     this.iMesh.boundingSphere = null
+    if (this.cameraOriginalMatrix) {
+      this.iMesh.instanceMatrix = this.cameraOriginalMatrix
+      this.iMesh.computeBoundingSphere()
+      this.iMesh.instanceMatrix = this.cameraMatrix
+      this.cameraBatch.boundingSphere = this.iMesh.boundingSphere
+    }
     this.dirty = true
   }
 
   destroy(item) {
+    this.setCameraHidden(item, false)
+    item.cameraMesh?.removeFromParent()
+    item.cameraMaterial?.dispose()
+    item.destroyed = true
     const last = this.items[this.items.length - 1]
     const isOnly = this.items.length === 1
     const isLast = item === last
@@ -954,13 +991,13 @@ class Model {
       this.dirty = true
     } else {
       // there are other instances after this one in the buffer, swap it with the last one and pop it off the end
-      this.iMesh.setMatrixAt(item.idx, last.matrix)
+      last.idx = item.idx
+      this.writeMatrix(last)
       if (last.color) this.iMesh.setColorAt(item.idx, last.color)
       if (last.emissive) this.iMesh.setEmissiveAt(item.idx, last.emissive)
       if (last.emissiveIntensity || last.emissiveIntensity === 0) {
         this.iMesh.setEmissiveIntensityAt(item.idx, last.emissiveIntensity)
       }
-      last.idx = item.idx
       this.items[item.idx] = last
       this.items.pop()
       this.dirty = true
@@ -974,6 +1011,8 @@ class Model {
       if (now - this.idleSince >= MODEL_IDLE_SECONDS) return this.release()
     }
     if (!this.dirty) return
+    // Resize and update the ordinary buffer first, then refresh the camera mask.
+    if (this.cameraOriginalMatrix) this.iMesh.instanceMatrix = this.cameraOriginalMatrix
     const size = this.iMesh.instanceMatrix.array.length / 16
     const count = this.items.length
     if (!count) {
@@ -1004,6 +1043,7 @@ class Model {
       this.stage.scene.add(this.iMesh)
     }
     this.iMesh.instanceMatrix.needsUpdate = true
+    if (this.cameraHiddenCount) this.applyCameraMatrix()
     if (this.iMesh.instanceColor) {
       this.iMesh.instanceColor.needsUpdate = true
     }
@@ -1016,10 +1056,135 @@ class Model {
     this.dirty = false
   }
 
+  writeMatrix(item) {
+    if (this.cameraOriginalMatrix) {
+      item.matrix.toArray(this.cameraOriginalMatrix.array, item.idx * 16)
+      this.cameraOriginalMatrix.needsUpdate = true
+    }
+    this.iMesh.setMatrixAt(item.idx, item.cameraHidden ? hiddenMatrix : item.matrix)
+  }
+
+  clipForCamera(item, plane) {
+    if (!this.sourceGeometry.boundingBox) this.sourceGeometry.computeBoundingBox()
+    cameraBounds.copy(this.sourceGeometry.boundingBox).applyMatrix4(item.matrix)
+    if (!cameraBounds.intersectsPlane(plane)) {
+      if (plane.distanceToPoint(cameraBounds.getCenter(cameraCenter)) >= 0) return
+      // Entire upper floors need only a batch mask, without extra meshes or materials.
+      this.setCameraHidden(item, true)
+      return () => this.setCameraHidden(item, false)
+    }
+    if (!item.cameraMesh) {
+      item.cameraMaterial = this.stage.createMaterial({ raw: this.material.raw })
+      item.cameraMaterialVersion = this.material.raw.version
+      item.cameraMesh = new THREE.Mesh(this.sourceGeometry, item.cameraMaterial.raw)
+      item.cameraMesh.matrixAutoUpdate = false
+      item.cameraMesh.matrixWorldAutoUpdate = false
+      item.cameraMesh.castShadow = this.castShadow
+      item.cameraMesh.receiveShadow = this.receiveShadow
+    }
+    const raw = item.cameraMaterial.raw
+    const source = this.material.raw
+    if (item.cameraMaterialVersion !== source.version) {
+      raw.copy(source)
+      item.cameraMaterialVersion = source.version
+      raw.needsUpdate = true
+    }
+    // This draw represents one instance with ordinary material properties.
+    // Keep the source hooks (wind, CSM, etc), without the batch-only attributes.
+    if (raw.defines) delete raw.defines.USE_UBER_SHADER
+    if (source.color) raw.color.copy(source.color)
+    if (source.emissive) raw.emissive.copy(source.emissive)
+    raw.emissiveIntensity = source.emissiveIntensity
+    if (item.color) raw.color.multiply(item.color)
+    if (item.emissive) raw.emissive.copy(item.emissive)
+    if (item.emissiveIntensity !== null) raw.emissiveIntensity = item.emissiveIntensity
+    raw.clippingPlanes = [...(this.material.raw.clippingPlanes || []), plane]
+    raw.clipShadows = true
+    item.cameraMesh.matrixWorld.copy(item.matrix)
+    item.cameraMesh.layers.mask = this.iMesh.layers.mask
+    // The full instance is replaced by its clipped draw, leaving its geometry
+    // query, physics and every other instance of the same model untouched.
+    this.setCameraHidden(item, true)
+    this.stage.scene.add(item.cameraMesh)
+    return () => {
+      if (item.destroyed) return
+      item.cameraMesh.removeFromParent()
+      this.setCameraHidden(item, false)
+    }
+  }
+
+  applyCameraMatrix() {
+    // Keep a separate GPU buffer for this view. A portal can upload the ordinary
+    // matrices mid-render; returning to the cached mask preserves the main draw.
+    this.cameraOriginalMatrix = this.iMesh.instanceMatrix
+    // Masking must not shrink the bounds used by a later portal or photo camera.
+    if (!this.iMesh.boundingSphere) this.iMesh.computeBoundingSphere()
+    const original = this.cameraOriginalMatrix
+    if (this.cameraMatrix?.count !== original.count) {
+      if (this.cameraMatrix) this.cameraRetiredMatrices.push(this.cameraMatrix)
+      this.cameraMatrix = new THREE.InstancedBufferAttribute(new Float32Array(original.array.length), 16)
+    }
+    this.cameraMatrix.array.set(original.array)
+    this.iMesh.instanceMatrix = this.cameraMatrix
+    for (const item of this.items) {
+      if (item.cameraHidden) this.iMesh.setMatrixAt(item.idx, hiddenMatrix)
+    }
+    this.cameraMatrix.needsUpdate = true
+    // Three caches instance-buffer uploads by draw object. Sharing one object
+    // with the shadow pass leaves its camera buffer stale on consecutive frames.
+    // Keep the native instanced draw separate, sharing geometry and materials.
+    if (!this.cameraBatch) {
+      this.cameraBatch = this.iMesh.clone()
+      this.cameraBatch.castShadow = false
+    }
+    this.cameraBatch.instanceMatrix = this.cameraMatrix
+    this.cameraBatch.instanceColor = this.iMesh.instanceColor
+    this.cameraBatch.count = this.iMesh.count
+    this.cameraBatch.boundingSphere = this.iMesh.boundingSphere
+    this.cameraBatch.layers.mask = this.iMesh.layers.mask
+    this.cameraBatch.matrixWorld.copy(this.iMesh.matrixWorld)
+    this.cameraBatch.visible = this.cameraOriginalVisible
+    this.iMesh.visible = false
+    this.stage.scene.add(this.cameraBatch)
+  }
+
+  setCameraHidden(item, hidden) {
+    if (item.destroyed || item.cameraHidden === hidden) return
+    item.cameraHidden = hidden
+    if (hidden) {
+      if (!this.cameraHiddenCount++) {
+        this.cameraOriginalVisible = this.iMesh.visible
+        this.applyCameraMatrix()
+      }
+      this.iMesh.setMatrixAt(item.idx, hiddenMatrix)
+    } else if (--this.cameraHiddenCount) {
+      this.iMesh.setMatrixAt(item.idx, item.matrix)
+    } else {
+      this.iMesh.instanceMatrix = this.cameraOriginalMatrix
+      this.cameraOriginalMatrix = null
+      this.iMesh.visible = this.cameraOriginalVisible
+      this.cameraBatch.removeFromParent()
+    }
+    this.iMesh.instanceMatrix.needsUpdate = true
+  }
+
   // releases what only this Model used: its instanced mesh, its geometry clone and the BVH. The material stays in
   // stage.linkedMaterials for a later Model with the same id.
   release() {
     if (this.iMesh.parent) this.stage.scene.remove(this.iMesh)
+    if (this.cameraOriginalMatrix) this.iMesh.instanceMatrix = this.cameraOriginalMatrix
+    this.iMesh.visible = this.cameraOriginalVisible
+    this.cameraBatch?.removeFromParent()
+    this.cameraBatch?.dispose()
+    for (const item of this.items) {
+      item.destroyed = true
+      item.cameraMesh?.removeFromParent()
+      item.cameraMaterial?.dispose()
+    }
+    // Geometry disposal releases every cached mask buffer that Three uploaded.
+    for (const [index, matrix] of [...this.cameraRetiredMatrices, this.cameraMatrix].entries()) {
+      if (matrix) this.geometry.setAttribute(`cameraMatrix${index}`, matrix)
+    }
     this.iMesh.dispose()
     this.geometry.disposeBoundsTree?.()
     this.geometry.dispose()

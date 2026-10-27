@@ -121,6 +121,161 @@ function viewAt(x) {
   )
 }
 
+test('camera clipping survives moves, swap removal and resizing without cutting unrelated instances', () => {
+  const stage = createStage()
+  const batch = createLinkedBatch(stage)
+  const first = batch.insert(0)
+  const second = batch.insert(1)
+  stage.update()
+  const mesh = batch.mesh()
+  const ordinaryBuffer = mesh.instanceMatrix
+  const restore = second.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.25))
+  const model = [...stage.models.values()][0]
+  const clipped = model.items[1].cameraMesh
+  assert.equal(clipped.parent, stage.scene)
+  assert.equal(clipped.material.clippingPlanes[0].constant, 0.25)
+  const matrix = new THREE.Matrix4()
+  mesh.getMatrixAt(1, matrix)
+  assert.equal(matrix.elements[0], 0)
+  second.move(new THREE.Matrix4().makeTranslation(5, 0, 0))
+  assert.equal(clipped.matrixWorld.elements[12], 5)
+  first.destroy() // hidden second instance moves to slot zero
+  stage.update()
+  mesh.getMatrixAt(0, matrix)
+  assert.equal(matrix.elements[0], 0)
+  for (let i = 0; i < 12; i++) batch.insert(10 + i)
+  stage.update()
+  mesh.getMatrixAt(0, matrix)
+  assert.equal(matrix.elements[0], 0)
+  mesh.getMatrixAt(1, matrix)
+  assert.equal(matrix.elements[12], 10)
+  restore()
+  assert.equal(clipped.parent, null)
+  mesh.getMatrixAt(0, matrix)
+  assert.equal(matrix.elements[0], 1)
+  assert.equal(matrix.elements[12], 5)
+  assert.notEqual(mesh.instanceMatrix, ordinaryBuffer, 'growth creates a new ordinary buffer')
+  const destroyedRestore = second.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.25))
+  second.destroy()
+  destroyedRestore()
+  stage.update()
+  mesh.getMatrixAt(0, matrix)
+  assert.equal(matrix.elements[0], 1, 'destroyed hidden instance cannot alter its replacement')
+  assert.ok(raycast(stage, 21).length)
+})
+
+test('camera and shadow instance draws keep separate identities and share the cached mask', () => {
+  const stage = createStage()
+  const batch = createLinkedBatch(stage)
+  batch.insert(0)
+  const handle = batch.insert(1)
+  stage.update()
+  const model = [...stage.models.values()][0]
+  const source = batch.mesh()
+  const originalMatrix = source.instanceMatrix
+  const plane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.25)
+  const restore = handle.clipForCamera(plane)
+  const cameraDraw = model.cameraBatch
+  assert.ok(cameraDraw !== source, 'the native upload cache must not confuse camera and shadow draws')
+  assert.ok(cameraDraw.instanceMatrix === model.cameraMatrix)
+  assert.ok(cameraDraw.geometry === source.geometry && cameraDraw.material === source.material)
+  assert.ok(cameraDraw.boundingSphere === source.boundingSphere)
+  assert.equal(cameraDraw.castShadow, false)
+  assert.equal(cameraDraw.receiveShadow, source.receiveShadow)
+  assert.equal(cameraDraw.parent, stage.scene)
+  assert.equal(source.visible, false)
+  restore()
+  assert.equal(source.visible, true)
+  assert.ok(source.instanceMatrix === originalMatrix)
+  assert.equal(cameraDraw.parent, null)
+  const resumeRestore = handle.clipForCamera(plane)
+  assert.ok(model.cameraBatch === cameraDraw, 'camera draw is cached across shadow and portal suspensions')
+  handle.move(new THREE.Matrix4().makeTranslation(3, 0, 0))
+  assert.ok(cameraDraw.boundingSphere === source.boundingSphere)
+  resumeRestore()
+  let disposed = false
+  cameraDraw.addEventListener('dispose', () => {
+    disposed = true
+  })
+  model.release()
+  assert.equal(disposed, true)
+  assert.equal(cameraDraw.parent, null)
+})
+
+test('clipped primitive draws retain per-instance color and emissive without batch shader attributes', () => {
+  const stage = createStage()
+  const geometry = new THREE.BoxGeometry()
+  const material = new THREE.MeshStandardMaterial()
+  const handle = stage.insertLinked({
+    geometry,
+    material,
+    uberShader: true,
+    castShadow: true,
+    receiveShadow: true,
+    node: { ctx: { entity: { isApp: true } } },
+    matrix: new THREE.Matrix4(),
+  })
+  handle.setColor('#3366ff')
+  handle.setEmissive('#ff2200')
+  handle.setEmissiveIntensity(2)
+  stage.update()
+  const restore = handle.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.25))
+  const model = [...stage.models.values()][0]
+  const item = model.items[0]
+  const draw = item.cameraMesh
+  assert.equal(draw.material.color.getHexString(), '3366ff')
+  assert.equal(draw.material.emissive.getHexString(), 'ff2200')
+  assert.equal(draw.material.emissiveIntensity, 2)
+  assert.equal(Object.hasOwn(draw.material.defines, 'USE_UBER_SHADER'), false)
+  assert.equal(draw.geometry, geometry)
+  assert.equal(model.material.raw.defines.USE_UBER_SHADER, '')
+  restore()
+  handle.setColor('#00ff00')
+  const secondRestore = handle.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.3))
+  assert.equal(item.cameraMesh, draw, 'temporary cut draws and materials are cached')
+  assert.equal(draw.material.color.getHexString(), '00ff00')
+  secondRestore()
+  let disposed = false
+  draw.material.addEventListener('dispose', () => {
+    disposed = true
+  })
+  handle.destroy()
+  assert.equal(disposed, true)
+})
+
+test('pieces entirely above or below the cut need no replacement meshes or materials', () => {
+  const stage = createStage()
+  const batch = createLinkedBatch(stage)
+  const handle = batch.insert(0)
+  stage.update()
+  const model = [...stage.models.values()][0]
+  assert.equal(handle.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.6)), undefined)
+  assert.equal(model.items[0].cameraMesh, null)
+  assert.equal(model.items[0].cameraMaterial, null)
+  const restore = handle.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), -0.6))
+  assert.equal(model.items[0].cameraHidden, true)
+  assert.equal(model.items[0].cameraMesh, null)
+  assert.equal(model.items[0].cameraMaterial, null)
+  restore()
+  assert.equal(model.items[0].cameraHidden, false)
+})
+
+test('camera masking preserves ordinary frustum bounds before and after hidden-instance movement', () => {
+  const stage = createStage()
+  const batch = createLinkedBatch(stage)
+  const handle = batch.insert(100)
+  stage.update()
+  const mesh = batch.mesh()
+  assert.equal(mesh.boundingSphere, null)
+  const restore = handle.clipForCamera(new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.25))
+  assert.equal(viewAt(100).intersectsObject(mesh), true)
+  handle.move(new THREE.Matrix4().makeTranslation(-100, 0, 0))
+  assert.equal(viewAt(-100).intersectsObject(mesh), true)
+  restore()
+  assert.equal(viewAt(-100).intersectsObject(mesh), true)
+  assert.equal(viewAt(100).intersectsObject(mesh), false)
+})
+
 test('linked batches cull outside each camera and refresh bounds for late moves', () => {
   const stage = createStage()
   const batch = createLinkedBatch(stage)

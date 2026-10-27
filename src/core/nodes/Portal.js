@@ -80,10 +80,13 @@ export class Portal extends Node {
         uniform mat4 textureMatrix;
         varying vec4 portalUV;
         varying vec2 surfaceUV;
+        #include <clipping_planes_pars_vertex>
         void main() {
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           surfaceUV = uv;
           portalUV = textureMatrix * vec4(position, 1.0);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          #include <clipping_planes_vertex>
         }
       `,
       fragmentShader: `
@@ -96,7 +99,9 @@ export class Portal extends Node {
         uniform bool showStatus;
         varying vec2 surfaceUV;
         varying vec4 portalUV;
+        #include <clipping_planes_pars_fragment>
         void main() {
+          #include <clipping_planes_fragment>
           if (!doubleside && !gl_FrontFacing) {
             gl_FragColor = vec4(inactive, 1.0);
           } else if (showStatus) {

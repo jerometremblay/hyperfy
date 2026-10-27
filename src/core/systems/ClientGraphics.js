@@ -20,6 +20,7 @@ import { PortalAvatars } from '../extras/PortalAvatars'
 import { PhotoCapture } from '../extras/PhotoCapture'
 import { getPixelViewport, ISOMETRIC_VIEW_HEIGHT } from '../extras/isometricView'
 import { CachedLightShadows } from '../extras/CachedLightShadows'
+import { CameraOcclusion } from '../extras/CameraOcclusion'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -61,6 +62,7 @@ export class ClientGraphics extends System {
     this.renderStyle = 'standard'
     this.renderStyleOverride = null
     this.portalAvatars = new PortalAvatars(world)
+    this.cameraOcclusion = new CameraOcclusion(world)
     this.lightVisibility = new Map()
     this.lightCompilation = null
     this.lightPreparations = []
@@ -161,6 +163,7 @@ export class ClientGraphics extends System {
     const style = this.xrSession || this.world.builder?.enabled ? 'standard' : desired
     if (this.renderStyle === style) return
     this.renderStyle = style
+    this.cameraOcclusion.clear()
     const previous = this.world.camera
     const camera = style === 'standard' ? this.perspectiveCamera : this.isometricCamera
     camera.position.copy(previous.position)
@@ -219,7 +222,10 @@ export class ClientGraphics extends System {
     let disabled = []
     const toneMapping = this.renderer.toneMapping
     const autoClear = this.renderer.autoClear
+    const shadowMap = this.renderer.shadowMap
+    const renderShadows = shadowMap.render
     try {
+      this.cameraOcclusion.update(!restoreCamera && !this.renderer.xr.isPresenting)
       this.updateLightVisibility()
       disabled = this.renderer.shadowMap.enabled
         ? limitLightShadows(
@@ -248,11 +254,26 @@ export class ClientGraphics extends System {
         // Direct render: apply tone mapping on the renderer since the
         // composer's ToneMappingEffect is not in the loop here
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+        this.cameraOcclusion.apply()
+        if (shadowMap.enabled && this.cameraOcclusion.restores.length) {
+          // Three builds the main-view render list before its shadow pass.
+          // Restore complete casters only for shadows, then resume that view's cut.
+          shadowMap.render = (...args) => {
+            const resume = this.cameraOcclusion.suspend()
+            try {
+              return renderShadows.call(shadowMap, ...args)
+            } finally {
+              resume?.()
+            }
+          }
+        }
         this.renderer.render(this.world.stage.scene, this.world.camera)
       } else {
         this.composer.render()
       }
     } finally {
+      shadowMap.render = renderShadows
+      this.cameraOcclusion.restore()
       restoreCamera?.()
       this.renderer.toneMapping = toneMapping
       this.renderer.autoClear = autoClear
@@ -688,6 +709,7 @@ export class ClientGraphics extends System {
       }
     }
     this.renderingPortal = true
+    const restoreOcclusion = destinationWorld === this.world ? this.cameraOcclusion.suspend() : null
     try {
       for (const [mesh] of visible) mesh.visible = false
       renderer.xr.enabled = false
@@ -722,6 +744,7 @@ export class ClientGraphics extends System {
       renderer.setRenderTarget(target, cubeFace, mipLevel)
       renderer.state.viewport(eye.viewport || viewport)
       this.renderingPortal = false
+      restoreOcclusion?.()
     }
     view.lastRender = now
     view.destination = destination
@@ -913,6 +936,7 @@ export class ClientGraphics extends System {
     this.lightVisibility.clear()
     this.lightCompilation = null
     this.photos.destroy()
+    this.cameraOcclusion.clear()
     this.portalAvatars.destroy()
     this.resizer.disconnect()
     this.world.off('xrSession', this.onXRSession)

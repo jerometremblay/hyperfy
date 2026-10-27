@@ -92,6 +92,7 @@ export class Node {
     this._onPointerUp = data.onPointerUp
     this._cursor = data.cursor
     this._active = isBoolean(data.active) ? data.active : defaults.active
+    this.cameraOcclusion = data.cameraOcclusion ?? null
     // this.scale._onChange?
     this.isDirty = false
     this.isTransformed = true
@@ -207,6 +208,17 @@ export class Node {
     }
   }
 
+  get cameraOcclusion() {
+    return this._cameraOcclusion
+  }
+
+  set cameraOcclusion(value) {
+    if (value !== null && typeof value !== 'boolean') {
+      throw new Error('[node] cameraOcclusion must be a boolean or null')
+    }
+    this._cameraOcclusion = value
+  }
+
   clean() {
     if (!this.isDirty) return
     let top = this
@@ -283,6 +295,7 @@ export class Node {
     this._onPointerUp = source._onPointerUp
     this._cursor = source._cursor
     this._active = source._active
+    this._cameraOcclusion = source._cameraOcclusion
     if (recursive) {
       for (let i = 0; i < source.children.length; i++) {
         const child = source.children[i]
@@ -430,6 +443,12 @@ export class Node {
             self,
             []
           )
+        },
+        get cameraOcclusion() {
+          return self.cameraOcclusion
+        },
+        set cameraOcclusion(value) {
+          self.cameraOcclusion = value
         },
         get parent() {
           return self.parent?.getProxy()

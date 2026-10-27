@@ -83,6 +83,7 @@ export class ClientCSS extends System {
 
   render() {
     if (!this.renderer) return
+    this.world.graphics?.cameraOcclusion?.updateCSS()
     this.renderer.render(this.scene, this.world.camera)
     for (const [object, layer] of this.orderedLayers) {
       layer.element.style.zIndex = String(object.renderOrder)

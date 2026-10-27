@@ -130,6 +130,7 @@ export function glbToNodes(glb, world) {
           receiveShadow: props.receiveShadow,
           visible: props.visible, // DEPRECATED: use Node.active
           active: props.active,
+          cameraOcclusion: props.cameraOcclusion,
           position: object3d.position.toArray(),
           quaternion: object3d.quaternion.toArray(),
           scale: object3d.scale.toArray(),
@@ -149,6 +150,7 @@ export function glbToNodes(glb, world) {
       else if (groupTypes.includes(object3d.type)) {
         const node = registerNode('group', {
           id: object3d.name,
+          cameraOcclusion: props.cameraOcclusion,
           position: object3d.position.toArray(),
           quaternion: object3d.quaternion.toArray(),
           scale: object3d.scale.toArray(),
