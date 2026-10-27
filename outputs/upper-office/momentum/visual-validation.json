@@ -1,0 +1,16 @@
+{
+  "valid": true,
+  "script": "asset://60bd53e38133105062448c3faee1e4aa1f801c0262ff707570f51ad6c28cd64a.js",
+  "exactPackageRendered": true,
+  "unchangedGeometry": true,
+  "rendererErrors": [],
+  "viewsReviewed": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "perspective"
+  ],
+  "groundContactAndCasterAssemblies": "pass"
+}

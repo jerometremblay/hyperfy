@@ -1,0 +1,185 @@
+{
+  "firstThrow": {
+    "seq": 4,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "G9UTMuTM5a",
+    "players": [
+      {
+        "id": "G9UTMuTM5a",
+        "name": "Anonymous",
+        "score": 3,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 1
+      }
+    ],
+    "turn": 0,
+    "round": 1,
+    "visit": 1,
+    "aim": {
+      "yaw": 0,
+      "pitch": 0.299,
+      "speed": 7
+    },
+    "darts": [
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0,
+          2.06195305799942,
+          -6.689420721303664
+        ],
+        "duration": 0.31392852796837434,
+        "surface": "board",
+        "impact": [
+          0,
+          1.7139126413395713,
+          0
+        ],
+        "time": 0.31392852796837434,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": 0,
+          "y": -0.016087358660428652,
+          "base": 3,
+          "multiplier": 1,
+          "score": 3,
+          "ring": "single",
+          "label": "3"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": 0,
+      "y": -0.016087358660428652,
+      "base": 3,
+      "multiplier": 1,
+      "score": 3,
+      "ring": "single",
+      "label": "3",
+      "playerId": "G9UTMuTM5a"
+    },
+    "winner": null
+  },
+  "analyticImpactVerified": true,
+  "aimedThrow": {
+    "seq": 6,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "G9UTMuTM5a",
+    "players": [
+      {
+        "id": "G9UTMuTM5a",
+        "name": "Anonymous",
+        "score": 13,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 2
+      }
+    ],
+    "turn": 0,
+    "round": 1,
+    "visit": 2,
+    "aim": {
+      "yaw": 0.027540000000000477,
+      "pitch": 0.299,
+      "speed": 7
+    },
+    "darts": [
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0,
+          2.06195305799942,
+          -6.689420721303664
+        ],
+        "duration": 0.31392852796837434,
+        "surface": "board",
+        "impact": [
+          0,
+          1.7139126413395713,
+          0
+        ],
+        "time": 0.31392852796837434,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": 0,
+          "y": -0.016087358660428652,
+          "base": 3,
+          "multiplier": 1,
+          "score": 3,
+          "ring": "single",
+          "label": "3"
+        }
+      },
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0.18420335971533724,
+          2.06195305799942,
+          -6.686884080711764
+        ],
+        "duration": 0.3140476153994391,
+        "surface": "board",
+        "impact": [
+          0.05784862586716676,
+          1.713791378190046,
+          0
+        ],
+        "time": 0.3140476153994391,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": 0.05784862586716676,
+          "y": -0.01620862180995397,
+          "base": 10,
+          "multiplier": 1,
+          "score": 10,
+          "ring": "single",
+          "label": "10"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": 0.05784862586716676,
+      "y": -0.01620862180995397,
+      "base": 10,
+      "multiplier": 1,
+      "score": 10,
+      "ring": "single",
+      "label": "10",
+      "playerId": "G9UTMuTM5a"
+    },
+    "winner": null
+  },
+  "aimedImpactVerified": true,
+  "leftReadyForVisitors": true
+}

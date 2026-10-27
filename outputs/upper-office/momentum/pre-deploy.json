@@ -1,0 +1,3190 @@
+{
+  "snapshot": {
+    "schemaVersion": 1,
+    "world": {
+      "settings": {
+        "desc": null,
+        "title": "Évain",
+        "image": null,
+        "avatar": null,
+        "customAvatars": true,
+        "voice": "spatial",
+        "rank": 0,
+        "playerLimit": 5,
+        "ao": true,
+        "dayNightCycle": true,
+        "constellationLines": true,
+        "skyAppearance": 0,
+        "bortleClass": 1,
+        "latitude": 45.75689615,
+        "longitude": -74.01942099,
+        "timeZone": "America/Toronto",
+        "timeOffset": 0,
+        "timeTransition": null
+      },
+      "spawn": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "blueprints": [
+      {
+        "id": "$scene",
+        "version": 251,
+        "name": "The Meadow",
+        "image": null,
+        "author": null,
+        "url": null,
+        "desc": null,
+        "model": "asset://845488eb943361c6bda105b8befa17c40c884e15e3cd94cac5a4e55fe91abded.glb",
+        "script": "asset://ac4ae78f0df0e3a434a1bfc39dd87a7de20bda0d140951331a754d3605c2c93e.js",
+        "props": {
+          "hour": 4,
+          "period": "pm",
+          "intensity": 1,
+          "sky": {
+            "type": "texture",
+            "name": "Clear_08_4pm_LDR.2048.webp",
+            "url": "asset://179d71586e675efc4af04185e1b2d3e6b7f4a5b707f1ef5e9b6497c5660ecab7.webp"
+          },
+          "hdr": {
+            "type": "hdr",
+            "name": "Clear_08_4pm_LDR.hdr",
+            "url": "asset://62db0ffbcea86b5e9ba23fb5da739b160e8abfd3b390235fed5ac436750e1e2e.hdr"
+          },
+          "verticalRotation": 20,
+          "horizontalRotation": 160,
+          "rotationY": 0,
+          "fogNear": 450,
+          "fogFar": 1000,
+          "fogColor": ""
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": true,
+        "disabled": false
+      },
+      {
+        "image": null,
+        "author": "Jerome",
+        "url": "",
+        "desc": "Large U-shaped walnut desk with brass edge, drawer pedestals and leather pad. Physical collision preserves the open bay; placement stays grounded.",
+        "script": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+        "props": {
+          "castShadows": true,
+          "receiveShadows": true
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Walnut and Brass U-shaped Work Desk",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "id": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+        "version": 1
+      },
+      {
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": "",
+        "desc": "Seeded procedural oak variant 3 for the Larch House forest.",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "advanced": false,
+          "advancedOptions": "{}",
+          "preset": "Oak Small",
+          "seed": 130363
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Oak Small 03",
+        "model": "script-only",
+        "id": "1d333bca-876a-5afb-96a4-7ce39ceac193",
+        "version": 0
+      },
+      {
+        "image": null,
+        "author": "Jerome",
+        "url": "",
+        "desc": "Luxury leather chair with five offset swivelling twin casters and horizontal axles. Physical, grounded and sittable: WASD/arrows roll; Space/E stands. Wheels self-align and rotate with actual travel.",
+        "script": "asset://3bf6cd1ffb4e45dbec6b55d1db63e82f219462a79c97901703abe3a9d020b508.js",
+        "props": {
+          "castShadows": true,
+          "receiveShadows": true
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Luxury Leather Executive Chair — Five Caster Base",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "id": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+        "version": 11
+      },
+      {
+        "id": "2L4Sx1Qi8l",
+        "version": 46,
+        "name": "Fire and Grate",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Standalone animated fire with iron grate, inspired by the provided reference fire.",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "script": "asset://05106df04d660a4d3cb992f0a5f14b58812d82d11dee0ee051bee8d2fd8524c5.js",
+        "props": {
+          "flickerAmount": 0.33,
+          "flickerSpeed": 0.4,
+          "lightDecay": 2.3000000000000003,
+          "lightHeight": 0.73,
+          "lightIntensity": 37,
+          "lightRange": 9.9,
+          "lightShadows": true,
+          "lightX": -0.01,
+          "lightZ": 0.02,
+          "promptBoxRequestId": "vbfGQmNv0x",
+          "promptBoxTargetEntityId": "uw2zCZ2v2M",
+          "soundVolume": 27,
+          "fireSound": {
+            "type": "audio",
+            "url": "asset://04c9c0864dc8080f330f378c0014f869a40aa464ac9643ddb2c8018d7ad5322d.ogg"
+          },
+          "crackleVolume": 62,
+          "crackleMinInterval": 18,
+          "crackleMaxInterval": 43,
+          "crackle1": {
+            "type": "audio",
+            "url": "asset://4911bef011e3ccf9bda336bfe4574bd675c47600d52a094320341f9937b18c6c.ogg"
+          },
+          "crackle2": {
+            "type": "audio",
+            "url": "asset://dadc9af1a38de375c41642c8302312646b7d70726827f95bfa0999d5212a5eac.ogg"
+          },
+          "crackle3": {
+            "type": "audio",
+            "url": "asset://ce44ac6afa75b34cf96066ebf39d6a09b83cc36353ee42d542a57bc2122ea025.ogg"
+          }
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false,
+        "frozen": false
+      },
+      {
+        "id": "2bY5LbSgCH",
+        "version": 3,
+        "name": "Laser-Cut T-Rex Skeleton",
+        "image": null,
+        "author": "OpenAI",
+        "url": "https://www.atomm.com/project/54537-laser-cut-tyrannosaurus-dinosaur-3d-puzzle-3mm-free-vector",
+        "desc": "Native extruded plywood T-Rex skeleton demo. Corrected spine placement, one extrusion per piece, and separate depth layers for overlapping side plates.",
+        "model": "asset://1c26353779208e271fecb62e605d85382f61aee190ce7d448c2e43252420b2bd.glb",
+        "script": "asset://8d590e7e69212bc8cbf9743e1795d407910612159681f70ff2642f200c8a15a9.js",
+        "props": {},
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false
+      },
+      {
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": "",
+        "desc": "Seeded procedural oak variant 3 for the Larch House forest.",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "advanced": false,
+          "advancedOptions": "{}",
+          "preset": "Oak Medium",
+          "seed": 196613
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Oak Medium 03",
+        "model": "script-only",
+        "id": "2d2fc4f9-1184-5bf6-858f-4de7cab7ba72",
+        "version": 0
+      },
+      {
+        "image": null,
+        "author": "jerometremblay-bot",
+        "url": null,
+        "desc": "Game-owned ballistic flight and scoring from your actual position; free movement and camera, including third person. Count Up, 301, 501 and Cricket; 1–4 players. E: play, Space: start/throw/next, Q/Z: power, M: mode, R: reset, Esc: exit, X: leave.",
+        "script": "asset://e570fe77d52a7470b9e7b8ef990d8b585bf4169d74365cd791fd2ade97f56464.js",
+        "props": {
+          "boardTexture": {
+            "type": "texture",
+            "url": "asset://55dab785541c92a0dbc7fda7d11e3edc77ec5172b86170efd93b375c3a01fd07.png"
+          },
+          "throwAnimation": {
+            "type": "emote",
+            "url": "asset://e246cb385ab400cee7d262c2744cf9ba53b8302f3b4979c648dd15bed7bd89d0.glb"
+          }
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "model": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
+        "name": "Darts — BananaDarts / Dart Room",
+        "id": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+        "version": 2
+      },
+      {
+        "id": "96DFIEdrNO",
+        "version": 4,
+        "name": "Cognac Leather Beveled Sofa - 3 Seat (Correct Sit) (Sit Markers Fixed)",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Beveled couch with correct seated pose, raised seat anchor, and client-side per-couch Sit prompt management that restores on effect end/replacement.",
+        "model": "asset://1c26353779208e271fecb62e605d85382f61aee190ce7d448c2e43252420b2bd.glb",
+        "script": "asset://66a0587269390def2e0bf229b6bf025a53ef9a1878e4659a9b602521c68a08f9.js",
+        "props": {
+          "promptBoxRequestId": "vbfGQmNv0x",
+          "promptBoxTargetEntityId": "iFPYSFRIj2",
+          "castShadows": true,
+          "receiveShadows": true
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false,
+        "frozen": false
+      },
+      {
+        "name": "Campfire Circle",
+        "model": "script-only",
+        "script": "asset://f4d88409b5d4cf61d90ccabd7a328ab86fc722b1b3aa6c76e24789c78aa0b68d.js",
+        "props": {
+          "promptBoxRequestId": "X72hlUBic2",
+          "promptBoxTargetEntityId": "aAKGotg3PA",
+          "lightEnabled": true,
+          "lightIntensity": 5.5,
+          "lightDistance": 12.100000000000001,
+          "flickerStrength": 0.18,
+          "flickerSpeed": 1,
+          "lightHeight": 0.22,
+          "fireLightColor": "#ff923c",
+          "castFireShadows": false
+        },
+        "unique": true,
+        "scene": false,
+        "id": "9G2KYhFLAz",
+        "version": 36,
+        "disabled": false,
+        "image": null,
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "frozen": false
+      },
+      {
+        "id": "9oN3Juy07P",
+        "version": 0,
+        "name": "Bird of Paradise — Terracotta Planter",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Tall tropical houseplant with broad veined leaves, sculpted stems and a decorated handmade terracotta planter.",
+        "model": "script-only",
+        "script": "asset://a797c77b117fe54f49200e56d3ed92d8a3743da4d7e0d49bc3c2053862d19802.js",
+        "props": {
+          "promptBoxRequestId": "SFx6DFfaSN",
+          "promptBoxTargetEntityId": "4l1QAS6q2z"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false
+      },
+      {
+        "id": "Duyq2GzY0v",
+        "version": 7,
+        "name": "Wall Pool Cue Rack — Four Returning Cues",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Wall-mounted hardwood pool-cue rack, four 1.47 m cues, E pickup and X return, multiplayer synchronized.",
+        "model": "script-only",
+        "script": "asset://4c7c0d47742967395e3c734e1d8763b6e307fef5476a9e843d5df373b51ec598.js",
+        "props": {
+          "promptBoxRequestId": "M2Qzasuh09",
+          "promptBoxTargetEntityId": "rpM98Yhyxy",
+          "poolChannel": "classic-8-ft-pool-table"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "EBE4MSm8zh",
+        "version": 46,
+        "name": "Hyperfy News — Folding Journal",
+        "image": null,
+        "author": "Jérôme Tremblay",
+        "url": "https://hyperfy-news.jerometremblay.chatgpt.site/",
+        "desc": "Folded newspaper opens into two full-size interactive pages displaying the latest Hyperfy news.",
+        "model": "script-only",
+        "script": "asset://ef983f90e3bfdbc34f5aba250d23e53d18d10b1a3879855bdbc682d2a302634b.js",
+        "props": {},
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "frozen": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "EDzk7XHqDd",
+        "version": 0,
+        "name": "Tree",
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": null,
+        "desc": "A procedural oak tree with wind-swaying leaves.",
+        "model": "script-only",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "preset": "Oak Small",
+          "seed": "",
+          "advanced": false,
+          "advancedOptions": "{}"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "H41hQ4vzht",
+        "version": 0,
+        "name": "Minwax Plan Adirondack Chair",
+        "model": "script-only",
+        "script": "asset://8668b80b49a9f04fb426831a5002ddf0828141efe65de71825bd768c2f1e6abd.js",
+        "props": {
+          "promptBoxRequestId": "5CZe5k3cz7",
+          "promptBoxTargetEntityId": "au0RlsPSOd",
+          "sitEmote": {
+            "type": "emote",
+            "url": "asset://440bbd2e231ddefbe36f380d6fb0b6b322791a3d79459e649b3f063cf745c7ec.glb"
+          }
+        },
+        "locked": false,
+        "frozen": false,
+        "unique": true,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "H4M7V9E0xC",
+        "version": 27,
+        "name": "Tree",
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": null,
+        "desc": "A procedural oak tree with wind-swaying leaves.",
+        "model": "script-only",
+        "script": "asset://8d66b0d4cccc5d3378ab921bad5cc66aba390e2e93f6bad4f37ab706c6297fd2.js",
+        "props": {
+          "preset": "Oak Large",
+          "advanced": false,
+          "advancedOptions": "{}"
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "IsvmhMmRUs",
+        "version": 0,
+        "name": "jerome-grounded.vrm",
+        "image": null,
+        "author": null,
+        "url": null,
+        "desc": null,
+        "model": "asset://b8582954928c59eea084f57eee6fd38b5a851aabc5b3c2d42b82dd8fe18ffc42.vrm",
+        "script": null,
+        "props": {},
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "Kgiq5aPRVQ",
+        "version": 2,
+        "name": "Pointeur laser",
+        "image": null,
+        "author": null,
+        "url": null,
+        "desc": "Maintenir G : un laser part de la main et suit le point blanc ; visible par tous les joueurs.",
+        "model": "script-only",
+        "script": "asset://7179e54b35a757043563bda412dda4c4dfe1670dece5935cbff0bb307eb0c0b1.js",
+        "props": {
+          "color": "rouge"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "frozen": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "L9zzy9iye1",
+        "version": 2,
+        "name": "Walnut Living-Room Coffee Table",
+        "model": "script-only",
+        "script": "asset://431d49ffeb16d6b0f91bb0426d5b88b8c72100de3cc974554f01f5e31c632e0a.js",
+        "props": {
+          "sourcePrompt": "a low table in the middle of the living room.",
+          "promptBoxTargetEntityId": "VkM1rGBL2O"
+        },
+        "unique": true,
+        "scene": false,
+        "disabled": false,
+        "locked": false,
+        "frozen": false,
+        "desc": "Low walnut plank-top coffee table with four legs and a lower shelf, fitted to the living-room prompt box."
+      },
+      {
+        "id": "LWW92gStoB",
+        "version": 1,
+        "name": "Tree",
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": null,
+        "desc": "A procedural oak tree with wind-swaying leaves.",
+        "model": "script-only",
+        "script": "asset://8d66b0d4cccc5d3378ab921bad5cc66aba390e2e93f6bad4f37ab706c6297fd2.js",
+        "props": {
+          "preset": "Bush 3",
+          "advanced": false,
+          "advancedOptions": "{}"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "NghYvuiACp",
+        "version": 0,
+        "name": "Weathered Adirondack Chair",
+        "model": "script-only",
+        "script": "asset://c65bc61502c970cd6bffc38a1361c6c4fd2539ac4dc636f840290f3f78fe4a3c.js",
+        "props": {
+          "promptBoxRequestId": "5CZe5k3cz7",
+          "promptBoxTargetEntityId": "au0RlsPSOd",
+          "sitEmote": {
+            "type": "emote",
+            "url": "asset://440bbd2e231ddefbe36f380d6fb0b6b322791a3d79459e649b3f063cf745c7ec.glb"
+          }
+        },
+        "locked": false,
+        "frozen": false,
+        "unique": true,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "OWyIfHL3Zw",
+        "version": 20,
+        "name": "World Portal",
+        "image": null,
+        "author": "Custom",
+        "url": null,
+        "desc": "Cross a linked portal; preview same-world destinations in live 3D.",
+        "model": "asset://b88ed0e18ef010eef199fdaa5d8b22db77d0f54857fe1661b8df72a2d32a3422.glb",
+        "script": null,
+        "props": {
+          "destination": "",
+          "destinationPortalId": "f7dada59-f925-4fcd-9fb9-4a6253d86890",
+          "doubleside": "false",
+          "resolution": "max",
+          "updateRate": "0",
+          "portalId": "4b73c1c1-98ab-40b2-92db-cae91208c7cc"
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "OwyXJYHnk3",
+        "version": 54,
+        "name": "World Portal",
+        "image": null,
+        "author": "Custom",
+        "url": null,
+        "desc": "Cross a linked portal; preview same-world destinations in live 3D.",
+        "model": "asset://b88ed0e18ef010eef199fdaa5d8b22db77d0f54857fe1661b8df72a2d32a3422.glb",
+        "script": null,
+        "props": {
+          "destination": "",
+          "destinationPortalId": "4b73c1c1-98ab-40b2-92db-cae91208c7cc",
+          "doubleside": "false",
+          "resolution": "1024",
+          "updateRate": "15",
+          "portalId": "f7dada59-f925-4fcd-9fb9-4a6253d86890",
+          "arrivalImage_f7dada59-f925-4fcd-9fb9-4a6253d86890": {
+            "name": "arrival-preview.jpg",
+            "type": "image",
+            "url": "asset://8678b31fbc1e0dc8b011f74977a0f1d39be1e9a23c59229a6f6585b731ef6434.jpg"
+          }
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "PDN4H3agNZ",
+        "version": 1,
+        "name": "Old Biplane",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Physical old biplane with native primitives and extrusions",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "script": "asset://67a162f7d7a864f337315d24ccca4d103b04dd657c6de2d13fa0a56917589b96.js",
+        "props": {},
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "TcbyFHGv8w",
+        "version": 6,
+        "name": "Polar-Gnomon Solar Clock",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Physical sunlight sundial; latitude from world.getLocation(), true-north orientation independent of app rotation",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "script": "asset://2a32e85f00f212cbfe1626b33e696ce1b9f8b9fe41023bb96ab0f7e12b96aa4e.js",
+        "props": {
+          "stone": "#a69b83",
+          "dialColor": "#bba06b",
+          "castShadows": true,
+          "receiveShadows": true
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "V4E17FbGSN",
+        "version": 34,
+        "name": "Billiards - Triple Green Pendant Light",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Three warm point lights, two auto-ceiling suspension cables, and linked wall-switch control",
+        "model": "asset://ab23dd9c0e9907223003180663b38567b2e6ecf439687ad4251961fed5a89c79.glb",
+        "script": "asset://69baf2108d48288a57bf178d0e254fcad26ed6b707e122868fe1bb8e0849b267.js",
+        "props": {
+          "channel": "billiards-main",
+          "initialOn": true,
+          "mountHeight": 0.61,
+          "fallbackLength": 3,
+          "maxReach": 18,
+          "brightness": 1,
+          "lightRange": 3,
+          "lightColor": "#ffe8ba",
+          "shadeColor": "#125943",
+          "castLightShadows": true
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false,
+        "scene": false,
+        "frozen": false
+      },
+      {
+        "id": "WI0QjsRZ0R",
+        "version": 14,
+        "name": "Larch House — Wired Lighting Circuits",
+        "image": null,
+        "author": "Jerome",
+        "url": null,
+        "desc": "Original log house with existing floorboards continued into the two-storey center-room rear extension; large glazing on three exposed sides and a two-track sliding patio door. Original hinged doors, roof portals and lighting circuits retained.",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "script": "asset://c8c8037e287d4410df6dcce0171cb79193be1d396c23b488cea2963962dd14ae.js",
+        "props": {
+          "castShadows": true,
+          "initialDoors": {
+            "entrance-left": false,
+            "entrance-right": true,
+            "patio-left": true,
+            "bedroom-1": true,
+            "bedroom-2": true,
+            "bedroom-3": true
+          },
+          "initialLighting": {
+            "house-exterior": true,
+            "house-interior-lower": true,
+            "house-interior-upper": true
+          },
+          "promptBoxRequestId": "HRtqa5asTi",
+          "promptBoxTargetEntityId": "HCzjtaVZFI",
+          "receiveShadows": true
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false,
+        "frozen": false
+      },
+      {
+        "id": "Wi7V63mmR7",
+        "version": 3,
+        "name": "Tree",
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.png",
+          "url": "asset://1d12ba26fbe54889d7df857648700eb6a44a7935c2a68b2f4816d12fcc9c379b.png"
+        },
+        "author": "Hyperfy",
+        "url": null,
+        "desc": "A procedural oak tree with wind-swaying leaves.",
+        "model": "script-only",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "preset": "Oak Large",
+          "seed": 571257591,
+          "advanced": false,
+          "advancedOptions": "{}"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "XajRA7cHdV",
+        "version": 13,
+        "name": "Steampunk Gas Street Light",
+        "model": "script-only",
+        "script": "asset://e90820e1bc0ff8b5017bf314bf1f20a523e93b82edbfcb3b1d29e63fd5e09c5f.js",
+        "props": {
+          "promptBoxRequestId": "ZGInEmSGTz",
+          "lightIntensity": 8.5,
+          "lightRange": 10.5,
+          "lightDecay": 0.2,
+          "flickerStrength": 0.12,
+          "flickerSpeed": 1,
+          "lightColor": "#ffbf67",
+          "castLightShadows": true
+        },
+        "unique": true,
+        "scene": false,
+        "preload": true,
+        "image": null,
+        "public": false,
+        "locked": false,
+        "frozen": false,
+        "disabled": false
+      },
+      {
+        "id": "YFX0nmmQcs",
+        "version": 3,
+        "name": "Complex Primitive Cottage v63",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Cottage with clapboard courses around openings allowed to overlap slightly behind head/sill trim vertically, removing the recessed transition above windows.",
+        "model": null,
+        "script": "asset://200d72cb65ed2b16cef587ffae66a92c76fe3db20c952a808cddddda3fd1ae7e.js",
+        "props": {},
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "frozen": false,
+        "unique": false,
+        "scene": false,
+        "disabled": true
+      },
+      {
+        "id": "YwfF8lHqTK",
+        "version": 82,
+        "name": "Tailuge 8 ft Pool Table",
+        "model": "asset://33e17716590151e9ca598ca09a7691a14610259663cf32ba94747099524da8d7.glb",
+        "script": "asset://5e9e985f009fd5807ce81703de2f65c55d56063cd4d8c4065ff5671f6016237c.js",
+        "props": {
+          "castShadows": true,
+          "clothColor": "#d77939",
+          "poolChannel": "classic-8-ft-pool-table",
+          "promptBoxRequestId": "vbfGQmNv0x",
+          "promptBoxTargetEntityId": "PMPL83pUPI",
+          "receiveShadows": true,
+          "soundVolume": 1
+        },
+        "unique": true,
+        "scene": false,
+        "disabled": false,
+        "locked": false,
+        "frozen": false,
+        "preload": false,
+        "image": null,
+        "public": false,
+        "desc": "Original GPL-3.0-only p8 model, Y-up conversion, 8 ft fitting, four plain support legs.",
+        "author": "tailuge and contributors; Hyperfy conversion"
+      },
+      {
+        "id": "Z3syTV9FRg",
+        "version": 47,
+        "name": "World Portal",
+        "image": null,
+        "author": "Custom",
+        "url": null,
+        "desc": "Cross a linked portal; preview same-world destinations in live 3D.",
+        "model": "asset://b88ed0e18ef010eef199fdaa5d8b22db77d0f54857fe1661b8df72a2d32a3422.glb",
+        "script": null,
+        "props": {
+          "destination": "https://rouynhyperfy.duckdns.org",
+          "destinationPortalId": "b3wzvTWCYN",
+          "doubleside": "false",
+          "resolution": "1024",
+          "updateRate": "30",
+          "portalId": "7b846fcc-2366-4782-8259-4390855b234e",
+          "arrivalImage_7b846fcc-2366-4782-8259-4390855b234e": {
+            "type": "image",
+            "name": "arrival-preview.jpg",
+            "url": "asset://b493c7737fbb4e8888b91eb92e6afaaf0da529561d1114009ac1a6b42b1e7a65.jpg"
+          }
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "Zx8CgwIz9W",
+        "version": 7,
+        "name": "Cognac Leather Beveled Sofa - 3 Seat (Correct Sit) (Sit Markers Fixed)",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Beveled couch with correct seated pose, raised seat anchor, and client-side per-couch Sit prompt management that restores on effect end/replacement.",
+        "model": "asset://1c26353779208e271fecb62e605d85382f61aee190ce7d448c2e43252420b2bd.glb",
+        "script": "asset://66a0587269390def2e0bf229b6bf025a53ef9a1878e4659a9b602521c68a08f9.js",
+        "props": {
+          "promptBoxRequestId": "vbfGQmNv0x",
+          "promptBoxTargetEntityId": "JuWb0iDvF2",
+          "castShadows": true,
+          "receiveShadows": true
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false,
+        "frozen": false
+      },
+      {
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": "",
+        "desc": "Seeded procedural oak variant 2 for the Larch House forest.",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "advanced": false,
+          "advancedOptions": "{}",
+          "preset": "Oak Small",
+          "seed": 104729
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Oak Small 02",
+        "model": "script-only",
+        "id": "c8c5dfc0-6741-5a6e-add1-bce09cd1c5ea",
+        "version": 0
+      },
+      {
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": "",
+        "desc": "Seeded procedural oak variant 3 for the Larch House forest.",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "advanced": false,
+          "advancedOptions": "{}",
+          "preset": "Oak Large",
+          "seed": 250007
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Oak Large 03",
+        "model": "script-only",
+        "id": "cd9f92a0-3545-5494-a207-c703acac5165",
+        "version": 0
+      },
+      {
+        "id": "dHf4KYOXnj",
+        "version": 1,
+        "name": "Tree",
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": null,
+        "desc": "A procedural oak tree with wind-swaying leaves.",
+        "model": "script-only",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "preset": "Oak Medium",
+          "seed": "",
+          "advanced": false,
+          "advancedOptions": "{}"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "image": null,
+        "author": "jerometremblay-bot",
+        "url": null,
+        "desc": "Server-owned pool practice, Tailuge physics, WPA 8/9-foot surface. GPL-3.0-only.",
+        "script": "asset://01fb3528c6108cd3826b2a2c1cac4d1f9a06845cf0c576375ccebfcd529f5676.js",
+        "props": {
+          "tableSize": "8",
+          "showSurface": false,
+          "ball1": {
+            "type": "texture",
+            "url": "asset://57e1dd066ccdbcd57ad5740439d7a57213cea1c70a5607220f76577c16393584.png"
+          },
+          "ball2": {
+            "type": "texture",
+            "url": "asset://59b6f66e283c9b285c7621345510586aa1c93fd3b304cd693e86263bc43875d3.png"
+          },
+          "ball3": {
+            "type": "texture",
+            "url": "asset://5ec7943e4a23e95bcaf1412ccbc4e2995ccf8505fb71240180716c3cfde13fc7.png"
+          },
+          "ball4": {
+            "type": "texture",
+            "url": "asset://12cb63cd1a2235f5b3ac628e101745f41a2f7a698a99aa9b2b78789d5a8cc6b5.png"
+          },
+          "ball5": {
+            "type": "texture",
+            "url": "asset://3245fc89203de2c0c71441fdbf3b5b1ce0c011c424c4e12ca373687706533079.png"
+          },
+          "ball6": {
+            "type": "texture",
+            "url": "asset://e42ab0f7ffcc195e0630bcf0bb2a230645dc65896888f056f8304c3b420df3d1.png"
+          },
+          "ball7": {
+            "type": "texture",
+            "url": "asset://725af0e774306d4dd5198919f2add7298199894b389e77300d2343c8c3e6fd6b.png"
+          },
+          "ball8": {
+            "type": "texture",
+            "url": "asset://b4c08c6a6739ab486e7ebfc2402e9789e12f75f70196bc6a4418d7cb011bf76d.png"
+          },
+          "ball9": {
+            "type": "texture",
+            "url": "asset://5a7ba854d9b9e97887480072fb02c8c6c09c4cfa91aefaa972702f4aa6148017.png"
+          },
+          "ball10": {
+            "type": "texture",
+            "url": "asset://7b3023944d422695a72b4b360092bb6a6172270d69d65fe3d653088b4ad066ed.png"
+          },
+          "ball11": {
+            "type": "texture",
+            "url": "asset://3e85b49dd7c0ae2cd259b7121de184a2998cc53bc36bae7b4fd9b1baa2ad8f3d.png"
+          },
+          "ball12": {
+            "type": "texture",
+            "url": "asset://3574fbad38141c5f1416b7db1d5f80697e6f568ba679b375b32983d52bbf2b96.png"
+          },
+          "ball13": {
+            "type": "texture",
+            "url": "asset://67cb4eb820ace10d66f77d10f3fd998551c32f63f1a5f1a7353da6ad030be95a.png"
+          },
+          "ball14": {
+            "type": "texture",
+            "url": "asset://27e6fc1a20542f6c6beff0c211a1986b39f5e1adae6b4c90ccbe9fa82e9edae6.png"
+          },
+          "ball15": {
+            "type": "texture",
+            "url": "asset://9862fbb47d08f5bd2fd1e506e7146e12affe236340f9cdb7c6bfe1aad7bef78b.png"
+          },
+          "playChannel": "classic-8-ft-pool-table",
+          "soundHit": {
+            "type": "audio",
+            "url": "asset://caa47932bec1cbb65befa3c1547c331bade7e7fd4992ed7300e0842554b27090.ogg"
+          },
+          "soundCollision": {
+            "type": "audio",
+            "url": "asset://9c25bb4e737fbfe3e84f166621e52b3f6eb0a507a5ddbe29eed5186a27660af2.ogg"
+          },
+          "soundCushion": {
+            "type": "audio",
+            "url": "asset://5c28fde11e323cbf0dca9181b1e17e318c31e20afb3d53ccf3e97ad083224594.ogg"
+          },
+          "soundPot": {
+            "type": "audio",
+            "url": "asset://cff7442580bce2f65be7f7968688bd827c7a140ee05578f3e41a0f45eec9b479.ogg"
+          }
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Hyperfy Billard — Pool Table Overlay",
+        "model": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
+        "id": "da0d2cbe-f18f-40dc-8b7b-3d2ba8e35e9d",
+        "version": 39
+      },
+      {
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": "",
+        "desc": "Seeded procedural oak variant 2 for the Larch House forest.",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "advanced": false,
+          "advancedOptions": "{}",
+          "preset": "Oak Medium",
+          "seed": 155921
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "frozen": false,
+        "scene": false,
+        "disabled": false,
+        "name": "Oak Medium 02",
+        "model": "script-only",
+        "id": "dd84f544-729f-54ae-828a-5ee45f44d05f",
+        "version": 0
+      },
+      {
+        "name": "Forged-Iron Hearth Set — Five Independently Pickable Objects",
+        "image": null,
+        "author": "OpenAI",
+        "desc": "Independently interactive forged steel fireplace implements. Press E to pick up and X to return.",
+        "model": "script-only",
+        "script": "asset://af97d5bc7f1518c343f9ba7f0f02c79be00cf5bcd46bd0d04ee575ddfb07b834.js",
+        "props": {
+          "promptBoxRequestId": "91LLMH6FXV",
+          "promptBoxTargetEntityId": "uqHvrEL9iS"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false,
+        "id": "eDbTazmsm5",
+        "version": 2,
+        "frozen": false
+      },
+      {
+        "id": "f3HBClx32m",
+        "version": 0,
+        "name": "Four Wall Light Switches — Billiards / Exterior / Downstairs / Upstairs",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Four independent wall-aligned circuit switches; original billiards circuit preserved and three Larch House circuits connected",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "script": "asset://ab97519ed1ae509352a20ad7bc2fd1c401970d3542f83c3fe5306fb44fdc332f.js",
+        "props": {
+          "channel": "billiards-main",
+          "initialOn": true,
+          "plateColor": "#c7bca1",
+          "promptBoxRequestId": "arXh5pxHzn",
+          "promptBoxTargetEntityId": "6rLqNtwGKv"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false
+      },
+      {
+        "id": "h7kPV3DRSd",
+        "version": 28,
+        "name": "Tree",
+        "image": {
+          "type": "texture",
+          "name": "tree-icon.svg",
+          "url": "asset://5acb9334b10c9a9938d035241e57d7ebb10c6b1573b2fe25c91036ca0f641ca0.svg"
+        },
+        "author": "Hyperfy",
+        "url": null,
+        "desc": "A procedural oak tree with wind-swaying leaves.",
+        "model": "script-only",
+        "script": "asset://3292274b62dbe8766a11296e2a5f140c94ae9b67d01f49992fc74e5d0a72a213.js",
+        "props": {
+          "preset": "Oak Large",
+          "seed": 312855923,
+          "advanced": false,
+          "advancedOptions": "{}"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false,
+        "frozen": false
+      },
+      {
+        "id": "jUoVsxovzh",
+        "version": 16,
+        "name": "Steampunk Gas Street Light",
+        "model": "script-only",
+        "script": "asset://79bb756d92e631b1ce593f0fab5d9dd27bcaa2e3fc2dc37cfabde3de90a6e3ce.js",
+        "props": {
+          "promptBoxRequestId": "ZGInEmSGTz",
+          "lightIntensity": 8.5,
+          "lightRange": 10.5,
+          "lightDecay": 0.2,
+          "flickerStrength": 0.12,
+          "flickerSpeed": 1,
+          "lightColor": "#ffbf67",
+          "castLightShadows": true
+        },
+        "unique": true,
+        "scene": false,
+        "preload": true,
+        "image": null,
+        "public": false,
+        "locked": false,
+        "frozen": false,
+        "disabled": false
+      },
+      {
+        "id": "nKqlJ8oWSo",
+        "version": 2,
+        "name": "Cognac Leather Beveled Armchair - 1 Seat (Correct Sit) (Sit Markers Fixed)",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Beveled couch with correct seated pose, raised seat anchor, and client-side per-couch Sit prompt management that restores on effect end/replacement.",
+        "model": "asset://1c26353779208e271fecb62e605d85382f61aee190ce7d448c2e43252420b2bd.glb",
+        "script": "asset://16bec302cbfc0bfd68d61b8e19a1f0e5142122b55ad919484bb060a23ecfc4c1.js",
+        "props": {
+          "promptBoxRequestId": "vbfGQmNv0x",
+          "promptBoxTargetEntityId": "XP012MP8Mp",
+          "castShadows": true,
+          "receiveShadows": true
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false,
+        "frozen": false
+      },
+      {
+        "id": "ogB0RblAWW",
+        "version": 8,
+        "name": "Photomaton rétro",
+        "image": null,
+        "author": null,
+        "url": null,
+        "desc": "v3 — Photomaton années 60 (meuble en bois à gauche, cabine ouverte à droite, banquette 2 places, 5 décors, tableaux en liège) : séance de 5 vraies photos (world.capturePhoto, mannequins en secours), strip qui sort par la fente, maintenir pour voir en grand, relâcher pour la laisser tomber.",
+        "model": "script-only",
+        "script": "asset://e81e725c2d3ec923edbd2042d08bcd5dae14ac3e6adc522dd692ffd449ee8aef.js",
+        "props": {
+          "sndBip": {
+            "type": "audio",
+            "name": "bip.mp3",
+            "url": "asset://9946f63d3eed5d86a673f4defd91e82e7b78b6e4972d66f6044ce6a786182bf2.mp3"
+          },
+          "sndClic": {
+            "type": "audio",
+            "name": "declic.mp3",
+            "url": "asset://33cdadf1c041e705db886b39bdddf79de8f13ce983595ef302d1f5a16d2ad4b1.mp3"
+          },
+          "sndMoteur": {
+            "type": "audio",
+            "name": "moteur.mp3",
+            "url": "asset://1483c588f07b78c3140fcf9a4d6e75a81ec487ab27f201ab1d220cb99faf738b.mp3"
+          },
+          "sndPapier": {
+            "type": "audio",
+            "name": "papier.mp3",
+            "url": "asset://eb0786d98a751468bb40373d7331d92afc2b1ec60decd34df242d42980240139.mp3"
+          },
+          "decorMontagnes": {
+            "type": "image",
+            "name": "decor_montagnes.jpg",
+            "url": "asset://1e3e2e5227103e04cb1a60d40955e289f473ccf9f2c9cf877836f6a6c08feb98.jpg"
+          },
+          "decorVille": {
+            "type": "image",
+            "name": "decor_ville.jpg",
+            "url": "asset://996ba1d1443700e2c068bea6963a1354b40a09b6b3b11a0cbf29326b5bfc5de3.jpg"
+          },
+          "flash": 0.4,
+          "lightOff": false,
+          "camHeight": 1.7,
+          "zoom": "0.75",
+          "shots": "4",
+          "photoMode": "bw",
+          "__test": {
+            "slots": [],
+            "anims": {},
+            "hold": null,
+            "awake": false,
+            "seatCam": false,
+            "S": {
+              "phase": "idle",
+              "strips": []
+            }
+          }
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "frozen": false,
+        "unique": false,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "qfdXij5t1a",
+        "version": 1,
+        "name": "Clockwork Gate — Steampunk Portal Frame",
+        "image": null,
+        "author": "Custom",
+        "url": null,
+        "desc": "Standalone ornate clockwork metal arch, designed as a decorative object separate from the native World Portal.",
+        "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+        "script": "asset://07e29cffb5927fb77e8cbd84669913e8de039d0c6f4a3b43ac2c332f08f695b5.js",
+        "props": {
+          "promptBoxRequestId": "gmqMOF54pq",
+          "promptBoxTargetEntityId": "eJ51nsqOWG"
+        },
+        "preload": true,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "scene": false,
+        "disabled": false
+      },
+      {
+        "id": "qvd9yxCHYg",
+        "version": 5,
+        "name": "PAC-MAN 1980 Arcade Cabinet",
+        "image": null,
+        "author": "OpenAI",
+        "url": null,
+        "desc": "Corrected vintage Pac-Man arcade machine with true recessed sloping CRT, correctly oriented marquee text, 3D extruded sides and endpoint-aligned trim. Playable Pac-Man by HaoLe Zheng (MIT). Click CRT; WASD move, Space pause, Escape leave.",
+        "model": "script-only",
+        "script": "asset://430108ccffb33668194e52d3855d67eb472dbd5c288a72b88449237ea95ec5ff.js",
+        "props": {
+          "promptBoxRequestId": "RKKib34hIn",
+          "promptBoxTargetEntityId": "lrtr77gRDH"
+        },
+        "preload": false,
+        "public": false,
+        "locked": false,
+        "unique": true,
+        "disabled": false,
+        "scene": false
+      },
+      {
+        "id": "zG4e3LCXXZ",
+        "version": 1,
+        "name": "Weathered Adirondack Side Table",
+        "model": "script-only",
+        "script": "asset://75a5af4d5d3513c323f0c81f94fa7e16b7a4986ee225b97cd761824ec197800c.js",
+        "props": {
+          "promptBoxRequestId": "5CZe5k3cz7",
+          "promptBoxTargetEntityId": "cVqclSVEJQ"
+        },
+        "unique": true,
+        "scene": false,
+        "disabled": false,
+        "locked": false,
+        "frozen": false,
+        "image": null,
+        "preload": false,
+        "public": false
+      }
+    ],
+    "entities": [
+      {
+        "id": "06e709d2-7fa5-5ce4-9e36-1b9f1fd71d6a",
+        "blueprint": "dd84f544-729f-54ae-828a-5ee45f44d05f",
+        "position": [
+          50.342,
+          0,
+          -2.959
+        ],
+        "quaternion": [
+          0,
+          0.6058007630151202,
+          0,
+          -0.7956163871680236
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "0b012d46-5af4-58be-9d5f-06a11d30b191",
+        "blueprint": "1d333bca-876a-5afb-96a4-7ce39ceac193",
+        "position": [
+          60.581,
+          0,
+          19.045
+        ],
+        "quaternion": [
+          0,
+          0.28415888321004334,
+          0,
+          -0.9587772051383058
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "1404c8d2-2398-53a6-a7d7-4173173422be",
+        "blueprint": "cd9f92a0-3545-5494-a207-c703acac5165",
+        "position": [
+          67.798,
+          0,
+          9.522
+        ],
+        "quaternion": [
+          0,
+          0.2831196969780087,
+          0,
+          -0.9590845829138744
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "14ea3bf5-9af2-55bb-b573-63b6f7ec1d85",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          54.448,
+          0,
+          42.897
+        ],
+        "quaternion": [
+          0,
+          0.9886957178443858,
+          0,
+          -0.1499359113627372
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "249e6c9e-69c9-58ea-a253-252f0fb4861d",
+        "blueprint": "dHf4KYOXnj",
+        "position": [
+          4.771,
+          0,
+          23.062
+        ],
+        "quaternion": [
+          0,
+          0.6735296032357969,
+          0,
+          0.7391602489075221
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "2uNSg3b9Mr",
+        "blueprint": "PDN4H3agNZ",
+        "position": [
+          -1.2018950524111187,
+          0.006546483237725331,
+          12.630503441994755
+        ],
+        "quaternion": [
+          -0.13174524333726542,
+          0.4159996327853014,
+          0.038080582391165976,
+          0.8989646075487336
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "38063d5e-b5ec-5fce-895c-97c8a3334b3d",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          8.585,
+          0,
+          -12.505
+        ],
+        "quaternion": [
+          0,
+          0.3226434842392599,
+          0,
+          0.9465205661146252
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "387752cb-7d1a-5421-a6d1-fbcef42c91c1",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          59.207,
+          0,
+          10.888
+        ],
+        "quaternion": [
+          0,
+          0.9459809154367353,
+          0,
+          -0.32422231204757673
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "38d5e205-03ba-51c7-81b0-c2bc8b443bfc",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          61.736,
+          0,
+          35.952
+        ],
+        "quaternion": [
+          0,
+          0.7518259101245948,
+          0,
+          -0.6593616616587021
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+        "blueprint": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+        "position": [
+          43.07149424281932,
+          3.3009668527404106,
+          16.897997459249655
+        ],
+        "quaternion": [
+          0,
+          -0.8121068365116655,
+          0,
+          0.5835087712202828
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "3KjopdKeeg",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          -4.812360364639904,
+          0.0005260287497677041,
+          -20.23073365923415
+        ],
+        "quaternion": [
+          0,
+          -0.537299608346824,
+          0,
+          0.8433914458128858
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "3c364c0b-c150-5904-aa66-1422c9e26289",
+        "blueprint": "dHf4KYOXnj",
+        "position": [
+          22.4,
+          0,
+          46.15
+        ],
+        "quaternion": [
+          0,
+          0.8708896904079841,
+          0,
+          0.4914785317194283
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "3w3VjeYcKa",
+        "blueprint": "H41hQ4vzht",
+        "position": [
+          20.024045046489015,
+          0.7431132376080214,
+          6.889134982575702
+        ],
+        "quaternion": [
+          0,
+          0.3007057995042731,
+          0,
+          0.9537169507482269
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "4836acda-62f7-5b5b-ade8-48a10250f4be",
+        "blueprint": "1d333bca-876a-5afb-96a4-7ce39ceac193",
+        "position": [
+          26.831,
+          0,
+          33.163
+        ],
+        "quaternion": [
+          0,
+          0.18161888812735374,
+          0,
+          0.9833689945668327
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "4l1QAS6q2z",
+        "blueprint": "9oN3Juy07P",
+        "position": [
+          28.007577486577723,
+          1.1969521437003325,
+          4.71415880135784
+        ],
+        "quaternion": [
+          0,
+          0.6087614290087207,
+          0,
+          0.7933533402912352
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "5nXPrHe8tJ",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          24.623084081894874,
+          0.0007559939346637456,
+          -0.8358518165536677
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "6883c8cb-5243-5e73-8fd4-b78b398c6010",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          18.807,
+          0,
+          39.392
+        ],
+        "quaternion": [
+          0,
+          0.5097463315908249,
+          0,
+          0.860324751143251
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "69343344-b936-5893-99ff-d0d714b22821",
+        "blueprint": "dd84f544-729f-54ae-828a-5ee45f44d05f",
+        "position": [
+          19.125,
+          0,
+          31.867
+        ],
+        "quaternion": [
+          0,
+          0.7998541707869822,
+          0,
+          0.6001943897394153
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "6d618b00-4edd-5f32-9ab9-ff3d3308c995",
+        "blueprint": "cd9f92a0-3545-5494-a207-c703acac5165",
+        "position": [
+          29.292,
+          0,
+          50.2
+        ],
+        "quaternion": [
+          0,
+          0.7374850991918591,
+          0,
+          -0.6753634047458997
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "6rLqNtwGKv",
+        "blueprint": "f3HBClx32m",
+        "position": [
+          26.58688383731685,
+          1.7074802068918653,
+          6.803516468615533
+        ],
+        "quaternion": [
+          0,
+          0.6427876096865394,
+          0,
+          0.7660444431189781
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "7234b784-4edd-578e-80d1-e89bfff13429",
+        "blueprint": "1d333bca-876a-5afb-96a4-7ce39ceac193",
+        "position": [
+          46.577,
+          0,
+          39.678
+        ],
+        "quaternion": [
+          0,
+          0.9208387658000002,
+          0,
+          -0.3899435438623554
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "78D3rH3a1I",
+        "blueprint": "Kgiq5aPRVQ",
+        "position": [
+          9.083431352528054,
+          0.0013875958892857199,
+          3.6120255606461713
+        ],
+        "quaternion": [
+          0,
+          0.537299608346824,
+          0,
+          0.8433914458128858
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "8333bd31-2104-5b90-bf31-74cdde537177",
+        "blueprint": "EDzk7XHqDd",
+        "position": [
+          51.29,
+          0,
+          5.42
+        ],
+        "quaternion": [
+          0,
+          0.8478308359616855,
+          0,
+          -0.5302667947293228
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "9XGtpVto9S",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          2.1669822932908205,
+          0.0001972857405490025,
+          -7.433034786012689
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "B9oEK3X8Ip",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          -7.216558062121756,
+          0.0007037491908357119,
+          -4.752891558248137
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "BQSSLRH20A",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          -2.262085833168269,
+          0.0044635613077252945,
+          7.455882283920664
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "GdfZC7hfC7",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          43.5147394866142,
+          0.0039851111402400274,
+          29.676854429608714
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "HCzjtaVZFI",
+        "blueprint": "WI0QjsRZ0R",
+        "position": [
+          32.28460777267203,
+          0.0009671766369110379,
+          13.860266481164185
+        ],
+        "quaternion": [
+          0,
+          0.6087614290087207,
+          0,
+          0.7933533402912352
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "JuWb0iDvF2",
+        "blueprint": "Zx8CgwIz9W",
+        "position": [
+          28.858531037074346,
+          0.12096717663691132,
+          12.175796310163067
+        ],
+        "quaternion": [
+          0,
+          -0.8191520442889918,
+          0,
+          0.5735764363510462
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "KzG6iAa1KP",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          -3.1221733317439897,
+          0.00006937961834951878,
+          -6.754805560216965
+        ],
+        "quaternion": [
+          0,
+          -0.537299608346824,
+          0,
+          0.8433914458128858
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "Ms4E9sXLOd",
+        "blueprint": "EDzk7XHqDd",
+        "position": [
+          -5.41274455438036,
+          0.002238664316493111,
+          5.819005196509487
+        ],
+        "quaternion": [
+          0,
+          0.537299608346824,
+          0,
+          0.8433914458128858
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "OAvZN1e3zm",
+        "blueprint": "TcbyFHGv8w",
+        "position": [
+          6.932349521885701,
+          0.005353838046366688,
+          9.70977524035806
+        ],
+        "quaternion": [
+          0,
+          -0.46174861323503397,
+          0,
+          0.8870108331782218
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "OL3wuJiVCk",
+        "blueprint": "Z3syTV9FRg",
+        "position": [
+          39.88010809837483,
+          0.12096717663691132,
+          12.696391155972243
+        ],
+        "quaternion": [
+          0,
+          -0.7933533402912352,
+          0,
+          0.6087614290087207
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "OwDfCWzTzh",
+        "blueprint": "dHf4KYOXnj",
+        "position": [
+          5.234513256918639,
+          0.0002768407025333097,
+          -4.574178354755761
+        ],
+        "quaternion": [
+          0,
+          -0.2588190451025208,
+          0,
+          0.9659258262890684
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "PBETNgBqKt",
+        "blueprint": "OwyXJYHnk3",
+        "position": [
+          35.783623074734976,
+          0.12096717663691105,
+          8.377734855611179
+        ],
+        "quaternion": [
+          0,
+          -0.7933533402912352,
+          0,
+          0.6087614290087207
+        ],
+        "scale": [
+          1.0116520438677394,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "PBWGT16rXY",
+        "blueprint": "LWW92gStoB",
+        "position": [
+          25.132167593873707,
+          0.0007789434846994236,
+          5.537336090219153
+        ],
+        "quaternion": [
+          0,
+          0.2164396139381029,
+          0,
+          0.9762960071199335
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "PMPL83pUPI",
+        "blueprint": "YwfF8lHqTK",
+        "position": [
+          30.960234256474347,
+          0.12096717663691105,
+          7.376745806627403
+        ],
+        "quaternion": [
+          0,
+          -0.9914448613738105,
+          0,
+          -0.13052619222005163
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "R3A9QOuFHs",
+        "blueprint": "ogB0RblAWW",
+        "position": [
+          34.89267506987275,
+          0.12096717663691105,
+          13.900582729609967
+        ],
+        "quaternion": [
+          0,
+          -0.7933533402912352,
+          0,
+          0.6087614290087207
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "SnKxh6z1Fk",
+        "blueprint": "Wi7V63mmR7",
+        "position": [
+          33.35221130145039,
+          0.024217297823923456,
+          -19.568332049011293
+        ],
+        "quaternion": [
+          0,
+          -0.2588190451025208,
+          0,
+          0.9659258262890684
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "VFuOSKdUeX",
+        "blueprint": "EDzk7XHqDd",
+        "position": [
+          -2.992512525323222,
+          -0.00044943829501820076,
+          -1.8652144363031946
+        ],
+        "quaternion": [
+          0,
+          0.537299608346824,
+          0,
+          0.8433914458128858
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "VL9yMTQb2G",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          15.700392781879188,
+          0.006871051140957984,
+          17.94871874985525
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "VkM1rGBL2O",
+        "blueprint": "L9zzy9iye1",
+        "position": [
+          30.792643564203498,
+          0.37874058181996695,
+          13.11932888957003
+        ],
+        "quaternion": [
+          0,
+          -0.7933533402912352,
+          0,
+          0.6087614290087207
+        ],
+        "scale": [
+          1.4396762378555885,
+          0.5155468103661112,
+          1.6204173905883081
+        ],
+        "pinned": false
+      },
+      {
+        "id": "X8RYbTIDwR",
+        "blueprint": "EBE4MSm8zh",
+        "position": [
+          30.770264803656033,
+          0.6365139870030228,
+          13.20033459440882
+        ],
+        "quaternion": [
+          -1.0286949968161441e-8,
+          -0.21643961393810282,
+          -2.280561914254118e-9,
+          0.9762960071199331
+        ],
+        "scale": [
+          1.2,
+          1.2,
+          1.2
+        ],
+        "pinned": false
+      },
+      {
+        "id": "XP012MP8Mp",
+        "blueprint": "nKqlJ8oWSo",
+        "position": [
+          31.16941295961208,
+          0.12096717663691132,
+          11.007600651933046
+        ],
+        "quaternion": [
+          0,
+          0.9848077530122081,
+          0,
+          0.17364817766693044
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "a31393f5-0687-57ba-bce1-796a4c1ebf8c",
+        "blueprint": "cd9f92a0-3545-5494-a207-c703acac5165",
+        "position": [
+          68.595,
+          0,
+          20.963
+        ],
+        "quaternion": [
+          0,
+          0.9998392754789822,
+          0,
+          0.01792827960691868
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "aAKGotg3PA",
+        "blueprint": "9G2KYhFLAz",
+        "position": [
+          16.50527624881007,
+          0.49062854171876014,
+          3.3067842585577845
+        ],
+        "quaternion": [
+          0,
+          0.2588190451025208,
+          0,
+          0.9659258262890684
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "adf709e1-6292-45c9-8aef-967f7d3be0ee",
+        "blueprint": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+        "position": [
+          29.4,
+          0.12096717663691105,
+          4.55
+        ],
+        "quaternion": [
+          0,
+          -0.1305261922200516,
+          0,
+          0.9914448613738105
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "b29a3751-7ed0-5ce7-93fd-bdd81e4fcf41",
+        "blueprint": "EDzk7XHqDd",
+        "position": [
+          39.388,
+          0,
+          36.368
+        ],
+        "quaternion": [
+          0,
+          0.5496768998270225,
+          0,
+          -0.8353773433584092
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "b9553463-cc47-55e3-9633-c79fa26ebb05",
+        "blueprint": "2d2fc4f9-1184-5bf6-858f-4de7cab7ba72",
+        "position": [
+          61.706,
+          0,
+          26.58
+        ],
+        "quaternion": [
+          0,
+          0.556615056805915,
+          0,
+          -0.8307705330215728
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "cVqclSVEJQ",
+        "blueprint": "zG4e3LCXXZ",
+        "position": [
+          18.977757670621855,
+          0.49625174229458735,
+          5.568240644741479
+        ],
+        "quaternion": [
+          0,
+          0.8870108331782218,
+          0,
+          0.4617486132350339
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "cd05bb13-8505-5869-bcf1-ebd5d22985c8",
+        "blueprint": "c8c5dfc0-6741-5a6e-add1-bce09cd1c5ea",
+        "position": [
+          24.357,
+          0,
+          -9.77
+        ],
+        "quaternion": [
+          0,
+          0.5568519288303357,
+          0,
+          0.8306117801704564
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "cdcf3a42-9fb8-54df-aa86-f2380255ccd5",
+        "blueprint": "dHf4KYOXnj",
+        "position": [
+          12.316,
+          0,
+          35.385
+        ],
+        "quaternion": [
+          0,
+          0.9919569989175986,
+          0,
+          0.1265753226280363
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+        "blueprint": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+        "position": [
+          42.88400561516337,
+          3.302967176636911,
+          16.846898913569728
+        ],
+        "quaternion": [
+          0,
+          0.6087614290087207,
+          0,
+          0.7933533402912352
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "d22ea234-e539-5cf2-a14f-08ead9d3edac",
+        "blueprint": "dd84f544-729f-54ae-828a-5ee45f44d05f",
+        "position": [
+          57.616,
+          0,
+          -5.244
+        ],
+        "quaternion": [
+          0,
+          0.6867022246059876,
+          0,
+          0.7269388246071244
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "d260aeb7-1c61-52c6-9993-0cf723e26444",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          16.998747314185643,
+          0.014524506177495233,
+          -13.389972563851273
+        ],
+        "quaternion": [
+          0,
+          0.9238795325112867,
+          0,
+          0.38268343236508984
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "dzXd0dntKL",
+        "blueprint": "jUoVsxovzh",
+        "position": [
+          -4.119474132412279,
+          0.00048315405920229537,
+          -0.7792471848356554
+        ],
+        "quaternion": [
+          0,
+          -0.9537169507482269,
+          0,
+          0.30070579950427306
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "e162ab81-cd07-5eab-9be2-fecf631f900c",
+        "blueprint": "2d2fc4f9-1184-5bf6-858f-4de7cab7ba72",
+        "position": [
+          35.321,
+          0,
+          45.664
+        ],
+        "quaternion": [
+          0,
+          0.7484552707566913,
+          0,
+          0.6631852740196573
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "e24a2b45-2208-4173-aca9-e6ccbcd2e171",
+        "blueprint": "da0d2cbe-f18f-40dc-8b7b-3d2ba8e35e9d",
+        "position": [
+          30.960234256474347,
+          0.828967176636911,
+          7.376745806627403
+        ],
+        "quaternion": [
+          0,
+          -0.9914448613738105,
+          0,
+          -0.13052619222005163
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "e95da25a-62c1-5782-9743-843e6521671d",
+        "blueprint": "EDzk7XHqDd",
+        "position": [
+          52.73,
+          0,
+          34.224
+        ],
+        "quaternion": [
+          0,
+          0.9273937663751354,
+          0,
+          -0.37408662377655355
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "eJ51nsqOWG",
+        "blueprint": "qfdXij5t1a",
+        "position": [
+          -0.1785126231588457,
+          1.839049922796976,
+          -4.3281278407245845
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "eacaed84-6ab7-5773-b28f-04dcce7df49b",
+        "blueprint": "2d2fc4f9-1184-5bf6-858f-4de7cab7ba72",
+        "position": [
+          62.432,
+          0,
+          1.593
+        ],
+        "quaternion": [
+          0,
+          0.926821184933765,
+          0,
+          0.37550298421979555
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "f2oNdV5a8R",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          8.871369100901159,
+          0.00038037817217073666,
+          -30.719523574849617
+        ],
+        "quaternion": [
+          0,
+          0.3420201433256687,
+          0,
+          0.9396926207859084
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "f6786f09-a1c4-592d-8ec1-c541838015c8",
+        "blueprint": "c8c5dfc0-6741-5a6e-add1-bce09cd1c5ea",
+        "position": [
+          54.103,
+          0,
+          24.93
+        ],
+        "quaternion": [
+          0,
+          0.7252101307292685,
+          0,
+          -0.6885276074985209
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "fa8547b5-0e34-53d9-820f-d1226d3b659f",
+        "blueprint": "c8c5dfc0-6741-5a6e-add1-bce09cd1c5ea",
+        "position": [
+          29.071,
+          0,
+          41.064
+        ],
+        "quaternion": [
+          0,
+          0.47243288566419667,
+          0,
+          -0.8813666481907516
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "gZ9lQxngI5",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          -11.983163884993044,
+          0.0008373571839614957,
+          -20.47213251245944
+        ],
+        "quaternion": [
+          0,
+          -0.7372773368101241,
+          0,
+          0.6755902076156602
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "iFPYSFRIj2",
+        "blueprint": "96DFIEdrNO",
+        "position": [
+          29.735740909211344,
+          0.12096717663691103,
+          15.067814330353947
+        ],
+        "quaternion": [
+          0,
+          -0.17364817766693036,
+          0,
+          0.9848077530122081
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "iqq2ZJFqzy",
+        "blueprint": "IsvmhMmRUs",
+        "position": [
+          39.73129884573235,
+          3.300952113086702,
+          8.398898896174366
+        ],
+        "quaternion": [
+          0,
+          0.6427876096865394,
+          0,
+          0.7660444431189781
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "j0NQHZTD3y",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          50.91293710306957,
+          0.0014221720548914796,
+          14.202174685904762
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "kpt3yL1Ehv",
+        "blueprint": "V4E17FbGSN",
+        "position": [
+          30.975088895212156,
+          0.8859671766369112,
+          7.359237896711217
+        ],
+        "quaternion": [
+          0,
+          0.9914448613738105,
+          0,
+          0.1305261922200516
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "lrtr77gRDH",
+        "blueprint": "qvd9yxCHYg",
+        "position": [
+          24.678573047540677,
+          1.4439543050357897,
+          19.42204928446847
+        ],
+        "quaternion": [
+          0,
+          -0.17364817766693025,
+          0,
+          0.9848077530122081
+        ],
+        "scale": [
+          1.4516037803168003,
+          1.4516037803168003,
+          1.4516037803168003
+        ],
+        "pinned": false
+      },
+      {
+        "id": "p1kJhPll9R",
+        "blueprint": "h7kPV3DRSd",
+        "position": [
+          18.44312965935573,
+          0.008963784779924877,
+          23.55413216118536
+        ],
+        "quaternion": [
+          0,
+          0.9990482215818578,
+          0,
+          -0.04361938736533589
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "rpM98Yhyxy",
+        "blueprint": "Duyq2GzY0v",
+        "position": [
+          31.92479552244702,
+          1.8334094502795224,
+          4.622366406268535
+        ],
+        "quaternion": [
+          0,
+          -0.1305261922200516,
+          0,
+          0.9914448613738105
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "s2JsJNNwnM",
+        "blueprint": "YFX0nmmQcs",
+        "position": [
+          39.15853805348483,
+          0.026823572057435463,
+          -23.270515575541545
+        ],
+        "quaternion": [
+          0,
+          -0.6755902076156604,
+          0,
+          0.7372773368101241
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "uPOFtrqbln",
+        "blueprint": "OWyIfHL3Zw",
+        "position": [
+          0.12736849734164718,
+          0.00015266055521689914,
+          -4.3281278407245845
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "uj1r36fLs0",
+        "blueprint": "NghYvuiACp",
+        "position": [
+          20.289268875773427,
+          0.7171725816651625,
+          4.8724668758552845
+        ],
+        "quaternion": [
+          0,
+          0.8660254037844386,
+          0,
+          0.5000000000000001
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "uqHvrEL9iS",
+        "blueprint": "eDbTazmsm5",
+        "position": [
+          31.72711947738037,
+          0.8523169091361932,
+          15.536046356263068
+        ],
+        "quaternion": [
+          0,
+          -0.7933533402912352,
+          0,
+          0.6087614290087207
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "uw2zCZ2v2M",
+        "blueprint": "2L4Sx1Qi8l",
+        "position": [
+          33.07519871984491,
+          0.40746717663691123,
+          14.055608645381133
+        ],
+        "quaternion": [
+          0,
+          0.7933533402912352,
+          0,
+          -0.6087614290087207
+        ],
+        "scale": [
+          0.9483154037580614,
+          0.9483154037580614,
+          0.9483154037580614
+        ],
+        "pinned": true
+      },
+      {
+        "id": "vtZt34nbrF",
+        "blueprint": "$scene",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": true
+      },
+      {
+        "id": "w5G1hDdTFj",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          -12.912682547305014,
+          0.0006500107063494021,
+          -12.998633533248226
+        ],
+        "quaternion": [
+          0,
+          0.08715574274765817,
+          0,
+          0.9961946980917455
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "yPtP2cxXN6",
+        "blueprint": "2bY5LbSgCH",
+        "position": [
+          37.27447375549037,
+          6.050967176636911,
+          15.342814664317716
+        ],
+        "quaternion": [
+          0,
+          -0.7660444431189781,
+          0,
+          0.6427876096865395
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "zJbWjqgFD7",
+        "blueprint": "XajRA7cHdV",
+        "position": [
+          3.0909629372115512,
+          0.001695901482056783,
+          0.49865036551952313
+        ],
+        "quaternion": [
+          0,
+          0.8660254037844386,
+          0,
+          0.5000000000000001
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      },
+      {
+        "id": "zdm2yy2ahX",
+        "blueprint": "H4M7V9E0xC",
+        "position": [
+          37.407358609169876,
+          0.00106804253766013,
+          -0.726032767294759
+        ],
+        "quaternion": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "pinned": false
+      }
+    ],
+    "revision": "f469a1d397e3964ee1f8dbd606bb930cdaeb3e656b8bc9135aa37875005e6be3"
+  },
+  "blueprint": {
+    "image": null,
+    "author": "Jerome",
+    "url": "",
+    "desc": "Luxury leather chair with five offset swivelling twin casters and horizontal axles. Physical, grounded and sittable: WASD/arrows roll; Space/E stands. Wheels self-align and rotate with actual travel.",
+    "script": "asset://3bf6cd1ffb4e45dbec6b55d1db63e82f219462a79c97901703abe3a9d020b508.js",
+    "props": {
+      "castShadows": true,
+      "receiveShadows": true
+    },
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "frozen": false,
+    "scene": false,
+    "disabled": false,
+    "name": "Luxury Leather Executive Chair — Five Caster Base",
+    "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+    "id": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+    "version": 11
+  },
+  "entity": {
+    "state": {
+      "slot": {
+        "owner": "i3i2IJ4HPw",
+        "token": "dZdhX7Hs05",
+        "request": 1
+      },
+      "pose": {
+        "position": [
+          42.31941083379841,
+          3.3009666739264762,
+          16.687045356300768
+        ],
+        "quaternion": [
+          0,
+          -0.766199113613804,
+          0,
+          0.642603235517384
+        ],
+        "casters": [
+          [
+            3.1415626002773536,
+            -720.4527309008458,
+            -720.612710409726
+          ],
+          [
+            21.9911392981128,
+            -725.9614576917118,
+            -746.6465334430593
+          ],
+          [
+            -3.141572746553165,
+            -749.8680762238636,
+            -739.7655780180928
+          ],
+          [
+            28.274343216446574,
+            -721.5073113379088,
+            -746.590638517294
+          ],
+          [
+            9.424873539868853,
+            -727.4972544151873,
+            -729.1234570668912
+          ]
+        ],
+        "sequence": 17
+      },
+      "casters": [
+        [
+          3.1415626002773536,
+          -720.4527309008458,
+          -720.612710409726
+        ],
+        [
+          21.9911392981128,
+          -725.9614576917118,
+          -746.6465334430593
+        ],
+        [
+          -3.141572746553165,
+          -749.8680762238636,
+          -739.7655780180928
+        ],
+        [
+          28.274343216446574,
+          -721.5073113379088,
+          -746.590638517294
+        ],
+        [
+          9.424873539868853,
+          -727.4972544151873,
+          -729.1234570668912
+        ]
+      ]
+    },
+    "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+    "type": "app",
+    "blueprint": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+    "position": [
+      43.07149424281932,
+      3.3009668527404106,
+      16.897997459249655
+    ],
+    "quaternion": [
+      0,
+      -0.8121068365116655,
+      0,
+      0.5835087712202828
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "mover": null,
+    "uploader": null,
+    "pinned": false
+  }
+}

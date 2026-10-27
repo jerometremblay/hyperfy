@@ -1,0 +1,71 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "houseVersion": 9,
+  "objects": [
+    {
+      "key": "desk",
+      "blueprintId": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "entityId": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "position": [
+        42.57171782265061,
+        3.302967176636911,
+        16.61668931150603
+      ],
+      "houseLocalPosition": [
+        0,
+        3.302,
+        10.65
+      ],
+      "individuallyMovable": true
+    },
+    {
+      "key": "chair",
+      "blueprintId": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+      "entityId": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+      "position": [
+        42.455806723495925,
+        3.302967176636911,
+        16.58563102609373
+      ],
+      "houseLocalPosition": [
+        0,
+        3.302,
+        10.53
+      ],
+      "individuallyMovable": true
+    }
+  ],
+  "verified": true,
+  "independentlySelectableApps": 2,
+  "sourceReadback": true,
+  "transformsVerified": true,
+  "houseAndOtherObjectsUnchanged": true,
+  "serverProfile": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1792975616048,
+    "ageMs": 261,
+    "stale": false,
+    "sampleSeconds": 1.016310333998874,
+    "rows": [
+      {
+        "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+        "blueprintId": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+        "blueprintVersion": 0,
+        "name": "Walnut and Brass U-shaped Work Desk",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      },
+      {
+        "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+        "blueprintId": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+        "blueprintVersion": 0,
+        "name": "Luxury Leather Executive Chair — Five Caster Base",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  }
+}

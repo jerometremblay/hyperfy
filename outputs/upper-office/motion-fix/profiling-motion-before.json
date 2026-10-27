@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "staleAfterMs": 10000,
+  "clients": [],
+  "server": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1792977820814,
+    "ageMs": 460,
+    "stale": false,
+    "sampleSeconds": 1.0024377089999617,
+    "rows": [
+      {
+        "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+        "blueprintId": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+        "blueprintVersion": 2,
+        "name": "Luxury Leather Executive Chair — Five Caster Base",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  },
+  "limitations": "Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling."
+}

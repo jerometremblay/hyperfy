@@ -1,0 +1,41 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "expectedVersion": 7,
+  "version": 8,
+  "floorboards": {
+    "originalGroundBoards": 60,
+    "originalUpperRearBoards": 50,
+    "extendedGroundBoards": 20,
+    "extendedUpperBoards": 16,
+    "addedPlanks": 0,
+    "originalGridAndFinishes": "pass",
+    "continuousThroughFormerWall": "pass"
+  },
+  "preserveState": true,
+  "verified": true,
+  "sourceReadback": true,
+  "statePreserved": true,
+  "transformsAndOtherAppsPreserved": true,
+  "serverProfile": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1792974615423,
+    "ageMs": 256,
+    "stale": false,
+    "sampleSeconds": 1.016280249999836,
+    "rows": [
+      {
+        "id": "HCzjtaVZFI",
+        "blueprintId": "WI0QjsRZ0R",
+        "blueprintVersion": 8,
+        "name": "Larch House — Wired Lighting Circuits",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  },
+  "runtimeChecks": "Original plank geometry, grid, finishes and continuous endpoints verified with actual engine nodes; live API source/state readback and server idle profiling verified"
+}

@@ -109,6 +109,12 @@ All options are optional.
 
 **emote**: a url to an emote to play while this effect is active
 
+In this fork, `?m=rightArm` overlays only the right shoulder, upper arm,
+forearm and hand rotation tracks while retaining locomotion and head look.
+Combine it with `&l=0` for a single throw. Optional `&t=0.2` starts that
+arm clip at 0.2 seconds for a late snapshot; playback speed still uses `s`.
+Movement remains enabled unless the effect also sets `freeze` or `snare`.
+
 **snare**: a multiplier from 0 to 1 that reduces movement speed, where zero means no snaring and one means entirely snared. when snared, players can still turn and attempt to move.
 
 **freeze**: when true, the player is frozen in place and all movement keys are ignored.

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "key": "apps/darts",
+  "mode": "files",
+  "blueprint": {
+    "name": "Darts — BananaDarts / Dart Room",
+    "author": "jerometremblay-bot",
+    "desc": "Game-owned ballistic flight and scoring from your actual position; free movement and camera, including third person. Count Up, 301, 501 and Cricket; 1–4 players. E: play, Space: start/throw/next, Q/Z: power, M: mode, R: reset, Esc: exit, X: leave.",
+    "model": "file:./model.glb",
+    "script": "file:./script.js",
+    "props": {
+      "boardTexture": {
+        "type": "texture",
+        "url": "file:./board.png"
+      },
+      "throwAnimation": {
+        "type": "emote",
+        "url": "file:./throw.glb"
+      }
+    },
+    "public": false,
+    "preload": true,
+    "locked": false,
+    "unique": false,
+    "frozen": false,
+    "disabled": false
+  }
+}

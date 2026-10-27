@@ -1,0 +1,12 @@
+{
+  "nativeImportApp": true,
+  "nativeClientBuilderAddApp": true,
+  "independentBlueprint": true,
+  "independentInstance": true,
+  "sceneReplacement": false,
+  "assetsEmbeddedAndHashed": 4,
+  "packageBytes": 138606,
+  "packageSha256": "2206e884c7737b133fb7d5b30dc0c95821b78836282624d54ad02308fe3ab803",
+  "runtime": "Hyperfy 0.16.0 fork",
+  "armMaskRequiresFork": true
+}

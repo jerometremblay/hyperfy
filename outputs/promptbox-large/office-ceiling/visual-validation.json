@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "views": [
+    "Front",
+    "Rear",
+    "Left",
+    "Right",
+    "Plan",
+    "Exterior",
+    "Office roof",
+    "Original office roof"
+  ],
+  "errors": []
+}

@@ -1,0 +1,177 @@
+{
+  "valid": true,
+  "actualPhysXWasm": true,
+  "actualScriptSandbox": true,
+  "actualPlayerLateUpdate": true,
+  "script": "asset://60bd53e38133105062448c3faee1e4aa1f801c0262ff707570f51ad6c28cd64a.js",
+  "checks": [
+    "30/60/120 FPS, varying and 80 ms frames, both camera views: gentle acceleration, 31.25 cm coast, no rebound, exact final packet and no idle work",
+    "Continuous reversals, diagonal speed limit and gentle repeated starts",
+    "Q/E acceleration and short angular coast, scale-safe floor pivot, stable stops and world-space rolling momentum",
+    "Physical coast-to-wall stop and no momentum buildup under blocked input",
+    "Space during coast stops immediately, publishes exact final pose and removes controller/callbacks"
+  ],
+  "cases": [
+    {
+      "zoom": 0,
+      "deltas": [
+        0.03333333333333333
+      ],
+      "firstStep": 0.002777777845199836,
+      "fullSpeed": 1.2500000372541822,
+      "coast": 0.31250000942964246,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 0,
+      "deltas": [
+        0.016666666666666666
+      ],
+      "firstStep": 0.0006944444618994794,
+      "fullSpeed": 1.2500000372541948,
+      "coast": 0.31250000235741165,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 0,
+      "deltas": [
+        0.008333333333333333
+      ],
+      "firstStep": 0.0001736111178729515,
+      "fullSpeed": 1.2500000372580733,
+      "coast": 0.3124999973297241,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 0,
+      "deltas": [
+        0.0261,
+        0.0329,
+        0.017,
+        0.031
+      ],
+      "firstStep": 0.0017030249585211223,
+      "fullSpeed": 1.2499999720702135,
+      "coast": 0.31249999855937316,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 0,
+      "deltas": [
+        0.08
+      ],
+      "firstStep": 0.016000000759986976,
+      "fullSpeed": 1.250000018626676,
+      "coast": 0.31249999714783033,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 2,
+      "deltas": [
+        0.03333333333333333
+      ],
+      "firstStep": 0.002777777845199836,
+      "fullSpeed": 1.2500000372541822,
+      "coast": 0.31250000942964246,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 2,
+      "deltas": [
+        0.016666666666666666
+      ],
+      "firstStep": 0.0006944444618994794,
+      "fullSpeed": 1.2500000372541948,
+      "coast": 0.31250000235741165,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 2,
+      "deltas": [
+        0.008333333333333333
+      ],
+      "firstStep": 0.0001736111178729515,
+      "fullSpeed": 1.2500000372580733,
+      "coast": 0.3124999973297241,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 2,
+      "deltas": [
+        0.0261,
+        0.0329,
+        0.017,
+        0.031
+      ],
+      "firstStep": 0.0017030249585211223,
+      "fullSpeed": 1.2499999720702135,
+      "coast": 0.31249999855937316,
+      "idleCallbacks": 0
+    },
+    {
+      "zoom": 2,
+      "deltas": [
+        0.08
+      ],
+      "firstStep": 0.016000000759986976,
+      "fullSpeed": 1.250000018626676,
+      "coast": 0.31249999714783033,
+      "idleCallbacks": 0
+    },
+    {
+      "repeatedStarts": [
+        0.0006944444638179447,
+        0.0006944444618994794,
+        0.000694444471491806
+      ],
+      "diagonalSpeed": 1.2500000049540703
+    },
+    {
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "angularCoastRadians": 0.15421256876707184,
+      "unpoweredTravel": [
+        -0.20131802635136165,
+        -4.0978193283081055e-8,
+        -0.2390131832760488
+      ]
+    },
+    {
+      "scale": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "angularCoastRadians": 0.15421256876707184,
+      "unpoweredTravel": [
+        -0.20131802667524945,
+        1.3783574814851818e-7,
+        -0.2390131846783859
+      ]
+    },
+    {
+      "scale": [
+        2,
+        1,
+        0.5
+      ],
+      "angularCoastRadians": 0.15421256876707184,
+      "unpoweredTravel": [
+        -0.20131802641400875,
+        -5.960464477539063e-8,
+        -0.23901318372908104
+      ]
+    },
+    {
+      "wallStop": [
+        0,
+        -1.5228986738335948e-8,
+        -0.7550000345217995
+      ],
+      "firstStepAwayFromWall": 0.0006944444638179447
+    }
+  ]
+}

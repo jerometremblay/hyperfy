@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "staleAfterMs": 10000,
+  "clients": [],
+  "server": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1792973777780,
+    "ageMs": 280,
+    "stale": false,
+    "sampleSeconds": 1.0043450419995934,
+    "rows": [
+      {
+        "id": "HCzjtaVZFI",
+        "blueprintId": "WI0QjsRZ0R",
+        "blueprintVersion": 4,
+        "name": "Larch House — Wired Lighting Circuits",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  },
+  "limitations": "Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling."
+}

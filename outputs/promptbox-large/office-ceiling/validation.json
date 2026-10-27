@@ -1,0 +1,62 @@
+{
+  "valid": true,
+  "source": "asset://3dd54307b077419da9b67c9451d77b7080894efc67de300fe367864505074201.js",
+  "packageSourceAndHashes": true,
+  "removedOfficeCeilingPanels": 2,
+  "retainedOtherRoomCeilingPanels": 2,
+  "allOtherGeometryPreserved": true,
+  "allPhysicalShapesPreserved": true,
+  "roofDecks": 8,
+  "retainedRafters": 18,
+  "physicsShapes": 92,
+  "officeClearance": [
+    {
+      "origin": [
+        1.4,
+        4.7,
+        5.3
+      ],
+      "ceilingY": 9.078888866497717,
+      "surface": "roof:roof-deck:1674"
+    },
+    {
+      "origin": [
+        -1.4,
+        4.7,
+        6.5
+      ],
+      "ceilingY": 9.078888866497717,
+      "surface": "roof:roof-deck:1665"
+    },
+    {
+      "origin": [
+        1.4,
+        4.7,
+        9
+      ],
+      "ceilingY": 6.535555354224312,
+      "surface": "extension-roof:roof-deck:2178"
+    },
+    {
+      "origin": [
+        -1.4,
+        4.7,
+        11.1
+      ],
+      "ceilingY": 6.535555354224311,
+      "surface": "extension-roof:roof-deck:2176"
+    }
+  ],
+  "officeDownlight": {
+    "position": [
+      0,
+      6.916666666666667,
+      10.2
+    ],
+    "beamAttachmentGap": -0.001048219927287021
+  },
+  "stateRestored": true,
+  "idleClientCallbacks": 0,
+  "idleServerCallbacks": 0,
+  "geometry": "Actual Hyperfy Prim.mount geometry and native node transforms"
+}

@@ -1,0 +1,22 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "views": [
+    "Front",
+    "Rear",
+    "Left",
+    "Right",
+    "Plan",
+    "Exterior",
+    "Office roof",
+    "Original office roof",
+    "Left room",
+    "Center room",
+    "Right room",
+    "Extension front",
+    "Extension rear"
+  ],
+  "errors": [],
+  "auditReviewed": true,
+  "auditFindings": "The same flat extension slab now reaches the rear wall with no added seam. All original room ceilings, exterior, sloped roof and beams remain unchanged."
+}

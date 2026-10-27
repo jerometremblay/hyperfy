@@ -1,0 +1,87 @@
+{
+  "entity": {
+    "state": {
+      "darts": {
+        "seq": 0,
+        "mode": "countup",
+        "phase": "lobby",
+        "host": null,
+        "players": [],
+        "turn": 0,
+        "round": 1,
+        "visit": 0,
+        "aim": {
+          "yaw": 0,
+          "pitch": 0.299,
+          "speed": 7
+        },
+        "windup": null,
+        "darts": [],
+        "flight": null,
+        "lastHit": null,
+        "winner": null
+      }
+    },
+    "id": "adf709e1-6292-45c9-8aef-967f7d3be0ee",
+    "type": "app",
+    "blueprint": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+    "position": [
+      29.4,
+      0.12096717663691105,
+      4.55
+    ],
+    "quaternion": [
+      0,
+      -0.1305261922200516,
+      0,
+      0.9914448613738105
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "mover": null,
+    "uploader": null,
+    "pinned": true
+  },
+  "players": [],
+  "world": {
+    "settings": {
+      "desc": null,
+      "title": "Évain",
+      "image": null,
+      "avatar": null,
+      "customAvatars": true,
+      "voice": "spatial",
+      "rank": 0,
+      "playerLimit": 5,
+      "ao": true,
+      "dayNightCycle": true,
+      "constellationLines": true,
+      "skyAppearance": 0,
+      "bortleClass": 1,
+      "latitude": 45.75689615,
+      "longitude": -74.01942099,
+      "timeZone": "America/Toronto",
+      "timeOffset": 0,
+      "timeTransition": null
+    },
+    "spawn": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "apps": 48,
+    "entities": 83,
+    "players": 0
+  }
+}

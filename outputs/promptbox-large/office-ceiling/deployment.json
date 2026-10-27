@@ -1,0 +1,34 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "expectedVersion": 9,
+  "version": 10,
+  "removedOfficeCeilingPanels": 2,
+  "retainedSlopedRoofAndBeams": true,
+  "physicalShapesUnchanged": true,
+  "verified": true,
+  "sourceReadback": true,
+  "statePreserved": true,
+  "housePlacementPreserved": true,
+  "otherBlueprintsPreserved": true,
+  "furniturePlacements": [
+    {
+      "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "preserved": true
+    },
+    {
+      "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+      "preserved": true
+    }
+  ],
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 10,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  }
+}

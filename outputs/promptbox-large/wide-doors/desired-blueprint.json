@@ -1,0 +1,37 @@
+{
+  "author": "Jerome",
+  "desc": "Original log house with existing floorboards continued into the two-storey center-room rear extension; large glazing on three exposed sides and a two-track sliding patio door. Original hinged doors, roof portals and lighting circuits retained.",
+  "disabled": false,
+  "frozen": false,
+  "id": "WI0QjsRZ0R",
+  "image": null,
+  "locked": false,
+  "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+  "name": "Larch House — Wired Lighting Circuits",
+  "preload": true,
+  "props": {
+    "castShadows": true,
+    "initialDoors": {
+      "entrance-left": true,
+      "entrance-right": true,
+      "patio-left": false,
+      "bedroom-1": true,
+      "bedroom-2": true,
+      "bedroom-3": true
+    },
+    "initialLighting": {
+      "house-exterior": true,
+      "house-interior-lower": true,
+      "house-interior-upper": true
+    },
+    "promptBoxRequestId": "HRtqa5asTi",
+    "promptBoxTargetEntityId": "HCzjtaVZFI",
+    "receiveShadows": true
+  },
+  "public": false,
+  "scene": false,
+  "script": "asset://920e03d8b0f33563caf1bd6f550e0349464360f55997fc2764d83968e9ce67d9.js",
+  "unique": true,
+  "url": null,
+  "version": 13
+}

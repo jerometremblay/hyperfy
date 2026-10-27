@@ -1,0 +1,200 @@
+{
+  "verified": true,
+  "version": 5,
+  "script": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js",
+  "sourceReadback": true,
+  "onlyChairUpdated": true,
+  "deskHouseAndOtherObjectsUnchanged": true,
+  "preservedCurrentRidePosition": true,
+  "endedRideForUpdate": true,
+  "positionBeforeUpdate": [
+    40.997756464306335,
+    3.30296697807312,
+    16.43906238847715
+  ],
+  "positionImmediatelyAfterUpdate": [
+    40.997756464306335,
+    3.30296697807312,
+    16.43906238847715
+  ],
+  "nativeRotationValidation": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "actualPlayerLateUpdate": true,
+    "checks": [
+      "Q/E floor pivot, scaled collision alignment, turning caster arcs, combined rolling and saved final yaw",
+      "Captured Q/E inputs, immediate response, opposite-key cancellation, stale-reply rejection and Space exit",
+      "Native rotating blocker stops at the desktop, holds the floor pivot and stops blocked wheels",
+      "Native delayed Q/E and WASD ride: attached avatar position/yaw, smooth prediction and zero idle callbacks"
+    ],
+    "metrics": {
+      "desktopStoppedYawRadians": 0.3403392041388993,
+      "multiplayer": {
+        "maximumAngleStep": 0.026179938781226014,
+        "maximumFrameStep": 0.020833334141449007,
+        "maximumAvatarError": 0,
+        "maximumAvatarAngleError": 2.1073424255447025e-7,
+        "inputPackets": 23,
+        "latencyRangeMs": [
+          65,
+          95
+        ]
+      }
+    },
+    "script": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js"
+  },
+  "nativeDeskClearanceValidation": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "approximation": "Rear-half rolling blocker; complete collision shell when unoccupied",
+    "checks": [
+      "Half-seat insertion, solid desktop stop, stationary wheels, grounded root and safe standing exit",
+      "Native controller offset, floor contact and seat anchor align at identity, uniform, nonuniform and rotated scale"
+    ],
+    "measurements": [
+      {
+        "scenario": "real U desk",
+        "stoppedRoot": [
+          0,
+          -4.503130912603126e-8,
+          0.42999998815357693
+        ],
+        "seatOverlapUnderDesktop": 0.2649999881535769,
+        "desktopFrontEdge": 0.45,
+        "safeExit": [
+          0,
+          0.01,
+          -0.6200000118464231
+        ]
+      },
+      {
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "yaw": 0,
+        "controllerRadius": 0.2375,
+        "worldOffset": [
+          0,
+          0,
+          0.2375
+        ]
+      },
+      {
+        "scale": [
+          1.5,
+          1.5,
+          1.5
+        ],
+        "yaw": 0,
+        "controllerRadius": 0.35624999999999996,
+        "worldOffset": [
+          0,
+          0,
+          0.35624999999999996
+        ]
+      },
+      {
+        "scale": [
+          2,
+          1,
+          0.5
+        ],
+        "yaw": 0,
+        "controllerRadius": 0.475,
+        "worldOffset": [
+          0,
+          0,
+          0.11875
+        ]
+      },
+      {
+        "scale": [
+          2,
+          1,
+          0.5
+        ],
+        "yaw": 1.3089969389957472,
+        "controllerRadius": 0.475,
+        "worldOffset": [
+          0.11470369187182686,
+          0,
+          0.030734761605924338
+        ]
+      }
+    ],
+    "script": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js"
+  },
+  "nativeMotionValidation": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "actualPlayerLateUpdateAndCamera": true,
+    "checks": [
+      "camera remains clear during a ride; standing restores five physical boxes",
+      "native delayed multiplayer ride: immediate input, collision, attached avatar, smooth motion and zero idle callbacks",
+      "open-floor WASD reversals: smooth server reconciliation, attached avatar and zero idle callbacks",
+      "stale replies rejected, disconnected prediction bounded, replacement effect removes controller and callbacks",
+      "remote observers keep physical chair collision and smooth server pose playback"
+    ],
+    "metrics": {
+      "multiplayer": {
+        "firstMovement": 0.016666666666666666,
+        "largestAvatarError": 0,
+        "maximumFrameStep": 0.02092911701603173,
+        "smallestCameraZoom": 2,
+        "finalPoseError": 0,
+        "inputPackets": 23,
+        "serverPosePackets": 33,
+        "latencyRangeMs": [
+          65,
+          95
+        ]
+      },
+      "openFloorReversals": {
+        "firstMovement": 0.016666666666666666,
+        "largestAvatarError": 0,
+        "maximumFrameStep": 0.021066403666864564,
+        "smallestCameraZoom": 2,
+        "finalPoseError": 0,
+        "inputPackets": 28,
+        "serverPosePackets": 32,
+        "latencyRangeMs": [
+          65,
+          95
+        ]
+      }
+    }
+  },
+  "nativePhysicsValidation": {
+    "valid": true,
+    "actualScriptSandbox": true,
+    "actualPhysXWasm": true,
+    "checks": [
+      "native collision shells, nonuniform scale, floor snapping and zero idle callbacks",
+      "exclusive occupancy, CCT rolling and wall collision, saved final position, disconnect cleanup",
+      "native seated effect, roll controls, standing exit, effect replacement and late-joining clients",
+      "rolling collides with the U desk; builder movement releases the seat and grounds the chair",
+      "invalid claims rejected; destruction removes the controller, anchor and leave listener",
+      "actual WASD travel aligns casters; reversals swing them around; blocked motion stops wheels; no server visual animation"
+    ],
+    "scripts": {
+      "desk": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+      "chair": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js"
+    }
+  },
+  "serverProfile": {
+    "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+    "blueprintId": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+    "blueprintVersion": 5,
+    "name": "Luxury Leather Executive Chair — Five Caster Base",
+    "cpuMsPerSecond": 16.76336079718595,
+    "peakCallbackMs": 9.175834000110626,
+    "callbackMsPerSecond": {
+      "chair-input": 0.2617536446370215,
+      "fixedUpdate": 16.44561551983499,
+      "transform": 0.055991632713938616
+    }
+  },
+  "liveClientProfilingAvailable": false
+}

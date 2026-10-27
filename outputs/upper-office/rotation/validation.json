@@ -1,0 +1,26 @@
+{
+  "valid": true,
+  "actualPhysXWasm": true,
+  "actualPlayerLateUpdate": true,
+  "checks": [
+    "Q/E floor pivot, scaled collision alignment, turning caster arcs, combined rolling and saved final yaw",
+    "Captured Q/E inputs, immediate response, opposite-key cancellation, stale-reply rejection and Space exit",
+    "Native rotating blocker stops at the desktop, holds the floor pivot and stops blocked wheels",
+    "Native delayed Q/E and WASD ride: attached avatar position/yaw, smooth prediction and zero idle callbacks"
+  ],
+  "metrics": {
+    "desktopStoppedYawRadians": 0.3403392041388993,
+    "multiplayer": {
+      "maximumAngleStep": 0.026179938781226014,
+      "maximumFrameStep": 0.020833334141449007,
+      "maximumAvatarError": 0,
+      "maximumAvatarAngleError": 2.1073424255447025e-7,
+      "inputPackets": 23,
+      "latencyRangeMs": [
+        65,
+        95
+      ]
+    }
+  },
+  "script": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js"
+}

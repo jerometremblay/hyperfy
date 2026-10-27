@@ -1,0 +1,19 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "views": [
+    "Front",
+    "Rear",
+    "Left",
+    "Right",
+    "Plan",
+    "Exterior",
+    "Entrance open",
+    "Room doors open",
+    "Left door open",
+    "Right door open"
+  ],
+  "errors": [],
+  "auditReviewed": true,
+  "auditFindings": "Front, rear, both sides, plan, isometric and four door opening views reviewed from the final deployed package. Five hinged leaves fold beside their walls; closed geometry was numerically verified unchanged."
+}

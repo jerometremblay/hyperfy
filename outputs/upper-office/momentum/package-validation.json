@@ -1,0 +1,15 @@
+{
+  "valid": true,
+  "path": "outputs/upper-office/office-furniture.zip",
+  "type": "zip",
+  "packages": [
+    {
+      "name": "desk.hyp",
+      "smoke": "{\"ok\":true,\"actualForkConstructors\":true,\"nodes\":53,\"visualMeshes\":45,\"idleCallbacks\":0}"
+    },
+    {
+      "name": "chair.hyp",
+      "smoke": "{\"ok\":true,\"actualForkConstructors\":true,\"nodes\":141,\"visualMeshes\":120,\"idleCallbacks\":0}"
+    }
+  ]
+}

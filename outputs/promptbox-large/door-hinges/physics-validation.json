@@ -1,0 +1,62 @@
+{
+  "valid": true,
+  "source": "asset://c8c8037e287d4410df6dcce0171cb79193be1d396c23b488cea2963962dd14ae.js",
+  "actualPhysXWasm": true,
+  "actualFullHouseScript": true,
+  "checks": [
+    "Full server script opens all five native kinematic leaves to 175 degrees, closes them, and stops frame callbacks",
+    "Full client script moves native action targets with each opening and closing leaf, keeps patio sliding, and stops all idle callbacks"
+  ],
+  "cases": [
+    {
+      "id": "bedroom-1",
+      "nativeRayDistance": 0.29749998450279236,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "bedroom-2",
+      "nativeRayDistance": 0.29749995470046997,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "bedroom-3",
+      "nativeRayDistance": 0.29749998450279236,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "entrance-left",
+      "nativeRayDistance": 0.2840004563331604,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "entrance-right",
+      "nativeRayDistance": 0.2840004563331604,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "bedroom-1",
+      "nativeRayDistance": 0.29749998450279236,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "bedroom-2",
+      "nativeRayDistance": 0.29749995470046997,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "bedroom-3",
+      "nativeRayDistance": 0.29749998450279236,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "entrance-left",
+      "nativeRayDistance": 0.2840004563331604,
+      "nativePhysicalLeafAt175Degrees": true
+    },
+    {
+      "id": "entrance-right",
+      "nativeRayDistance": 0.2840004563331604,
+      "nativePhysicalLeafAt175Degrees": true
+    }
+  ]
+}

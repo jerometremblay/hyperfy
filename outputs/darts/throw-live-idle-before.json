@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "staleAfterMs": 10000,
+  "clients": [
+    {
+      "playerId": "G9UTMuTM5a",
+      "source": "client",
+      "receivedAt": 1792938420081,
+      "ageMs": 367,
+      "stale": false,
+      "sampleSeconds": 0.5539999999999999,
+      "smoothingSeconds": 2,
+      "totalApps": 80,
+      "truncated": false,
+      "rows": [
+        {
+          "id": "adf709e1-6292-45c9-8aef-967f7d3be0ee",
+          "blueprintVersion": 2,
+          "cpuMsPerSecond": 0,
+          "peakCallbackMs": 0,
+          "sentBytesPerSecond": 0,
+          "receivedBytesPerSecond": 0,
+          "messagesPerSecond": 0,
+          "triangles": 190,
+          "meshes": 11,
+          "materials": 3,
+          "bodies": 0,
+          "colliders": 0,
+          "activeBodies": 0,
+          "contactLinks": 0,
+          "lights": 1,
+          "shadowCasters": 0,
+          "callbackMsPerSecond": {},
+          "blueprintId": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+          "name": "Darts — BananaDarts / Dart Room"
+        }
+      ]
+    }
+  ],
+  "server": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1792938420353,
+    "ageMs": 95,
+    "stale": false,
+    "sampleSeconds": 1.035081291999988,
+    "rows": [
+      {
+        "id": "adf709e1-6292-45c9-8aef-967f7d3be0ee",
+        "blueprintId": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+        "blueprintVersion": 2,
+        "name": "Darts — BananaDarts / Dart Room",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  },
+  "limitations": "Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling."
+}

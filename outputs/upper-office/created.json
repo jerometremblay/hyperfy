@@ -1,0 +1,102 @@
+[
+  {
+    "key": "desk",
+    "blueprint": {
+      "image": null,
+      "author": "Jerome",
+      "url": "",
+      "desc": "Large continuous U-shaped walnut work surface, brass edge, twin drawer pedestals and leather writing pad.",
+      "script": "asset://35bf342f9462b9e024d719bf2bdc731a2c3fe2aa134ad5b35278a0aa3ef8d2b7.js",
+      "props": {
+        "castShadows": true,
+        "receiveShadows": true
+      },
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Walnut and Brass U-shaped Work Desk",
+      "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+      "id": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "version": 0
+    },
+    "entity": {
+      "position": [
+        42.57171782265061,
+        3.302967176636911,
+        16.61668931150603
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "blueprint": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  },
+  {
+    "key": "chair",
+    "blueprint": {
+      "image": null,
+      "author": "Jerome",
+      "url": "",
+      "desc": "High padded leather back, headrest, lumbar support, walnut shell, brass frame and ten wheels on five twin casters.",
+      "script": "asset://1f8cb8d266f2f3312fb0cdeb4fb661de9e17e37454f874ae53bfd721f560677e.js",
+      "props": {
+        "castShadows": true,
+        "receiveShadows": true
+      },
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Luxury Leather Executive Chair — Five Caster Base",
+      "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+      "id": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+      "version": 0
+    },
+    "entity": {
+      "position": [
+        42.455806723495925,
+        3.302967176636911,
+        16.58563102609373
+      ],
+      "quaternion": [
+        0,
+        0.7933533402912352,
+        0,
+        -0.6087614290087207
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+      "blueprint": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  }
+]

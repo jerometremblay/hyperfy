@@ -1,0 +1,222 @@
+{
+  "nativeMovementVerified": true,
+  "initialLocalPosition": [
+    -0.4,
+    0,
+    3.5
+  ],
+  "currentLocalPosition": [
+    -0.5771326666794276,
+    -1.210719346028677e-7,
+    5.049910978080906
+  ],
+  "shotOrigin": [
+    -0.5464750870675501,
+    1.5499998789280653,
+    4.781657156464084
+  ],
+  "realStanceImpactVerified": true,
+  "firstThrow": {
+    "seq": 5,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "G9UTMuTM5a",
+    "players": [
+      {
+        "id": "G9UTMuTM5a",
+        "name": "Anonymous",
+        "score": 0,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 1
+      },
+      {
+        "id": "OeJG8qdjov",
+        "name": "Grand Shaftoe",
+        "score": 0,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 0
+      }
+    ],
+    "turn": 0,
+    "round": 1,
+    "visit": 1,
+    "aim": {
+      "yaw": 0.11379200714370812,
+      "pitch": 0.03720061220085058,
+      "speed": 7
+    },
+    "darts": [
+      {
+        "origin": [
+          -0.5464750870675501,
+          1.5499998789280653,
+          4.781657156464084
+        ],
+        "velocity": [
+          0.7942762273444016,
+          0.2603442279405307,
+          -6.949916989263512
+        ],
+        "duration": 0.589307151249806,
+        "surface": "floor",
+        "impact": [
+          -0.07840242622577748,
+          -1.210719346028677e-7,
+          0.6860213740985754
+        ],
+        "time": 0.589307151249806,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": -0.07840242622577748,
+          "y": -1.73,
+          "base": 0,
+          "multiplier": 0,
+          "score": 0,
+          "ring": "miss",
+          "label": "Miss"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": -0.07840242622577748,
+      "y": -1.73,
+      "base": 0,
+      "multiplier": 0,
+      "score": 0,
+      "ring": "miss",
+      "label": "Miss",
+      "playerId": "G9UTMuTM5a"
+    },
+    "winner": null
+  },
+  "secondThrow": {
+    "seq": 8,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "G9UTMuTM5a",
+    "players": [
+      {
+        "id": "G9UTMuTM5a",
+        "name": "Anonymous",
+        "score": 0,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 2
+      }
+    ],
+    "turn": 0,
+    "round": 1,
+    "visit": 2,
+    "aim": {
+      "yaw": 0.11379200714370812,
+      "pitch": 0.037200612200850525,
+      "speed": 7
+    },
+    "darts": [
+      {
+        "origin": [
+          -0.5464750870675501,
+          1.5499998789280653,
+          4.781657156464084
+        ],
+        "velocity": [
+          0.7942762273444016,
+          0.2603442279405307,
+          -6.949916989263512
+        ],
+        "duration": 0.589307151249806,
+        "surface": "floor",
+        "impact": [
+          -0.07840242622577748,
+          -1.210719346028677e-7,
+          0.6860213740985754
+        ],
+        "time": 0.589307151249806,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": -0.07840242622577748,
+          "y": -1.73,
+          "base": 0,
+          "multiplier": 0,
+          "score": 0,
+          "ring": "miss",
+          "label": "Miss"
+        }
+      },
+      {
+        "origin": [
+          -0.6350414204038867,
+          1.549999899417162,
+          5.556612645502676
+        ],
+        "velocity": [
+          0.7942762273444016,
+          0.2603442279405303,
+          -6.949916989263512
+        ],
+        "duration": 0.589307151249806,
+        "surface": "floor",
+        "impact": [
+          -0.16696875956211404,
+          -1.0058283796132717e-7,
+          1.4609768631371667
+        ],
+        "time": 0.589307151249806,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": -0.16696875956211404,
+          "y": -1.73,
+          "base": 0,
+          "multiplier": 0,
+          "score": 0,
+          "ring": "miss",
+          "label": "Miss"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": -0.16696875956211404,
+      "y": -1.73,
+      "base": 0,
+      "multiplier": 0,
+      "score": 0,
+      "ring": "miss",
+      "label": "Miss",
+      "playerId": "G9UTMuTM5a"
+    },
+    "winner": null
+  },
+  "movementDuringMatchVerified": true,
+  "thirdPersonPreserved": true,
+  "nativeWheelZoomVerified": true,
+  "liveScript": "asset://d67d5fa79ee081577d7a7df379b24b22f825427d0ed65d90fb05607d01e851e5.js",
+  "blueprintVersion": 1,
+  "installedSourceVerified": true,
+  "testPlayerDisconnected": true,
+  "idleCpuMsPerSecond": 0
+}

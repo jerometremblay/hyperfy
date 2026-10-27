@@ -1,0 +1,241 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "expectedVersion": 13,
+  "version": 14,
+  "hingedDoors": 5,
+  "openingDegrees": 175,
+  "hingeAxesClearJambs": true,
+  "hingePinsTouchLeafEdges": true,
+  "movingActionsPerDoor": 2,
+  "patioSlidingUnchanged": true,
+  "otherGeometryAndPhysicalShapesUnchanged": true
+}
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "expectedVersion": 13,
+  "version": 14,
+  "hingedDoors": 5,
+  "openingDegrees": 175,
+  "hingeAxesClearJambs": true,
+  "hingePinsTouchLeafEdges": true,
+  "movingActionsPerDoor": 2,
+  "patioSlidingUnchanged": true,
+  "otherGeometryAndPhysicalShapesUnchanged": true,
+  "verified": true,
+  "sourceReadback": true,
+  "statePreserved": true,
+  "housePlacementPreserved": true,
+  "otherBlueprintsPreserved": true,
+  "furniturePlacements": [
+    {
+      "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "preserved": true
+    },
+    {
+      "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+      "preserved": true
+    }
+  ],
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 14,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  },
+  "nativeCameraAndPhysicsValidation": {
+    "valid": true,
+    "source": "asset://c8c8037e287d4410df6dcce0171cb79193be1d396c23b488cea2963962dd14ae.js",
+    "actualPhysXWasm": true,
+    "actualFullHouseScript": true,
+    "checks": [
+      "Full server script opens all five native kinematic leaves to 175 degrees, closes them, and stops frame callbacks",
+      "Full client script moves native action targets with each opening and closing leaf, keeps patio sliding, and stops all idle callbacks"
+    ],
+    "cases": [
+      {
+        "id": "bedroom-1",
+        "nativeRayDistance": 0.29749998450279236,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "bedroom-2",
+        "nativeRayDistance": 0.29749995470046997,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "bedroom-3",
+        "nativeRayDistance": 0.29749998450279236,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "entrance-left",
+        "nativeRayDistance": 0.2840004563331604,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "entrance-right",
+        "nativeRayDistance": 0.2840004563331604,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "bedroom-1",
+        "nativeRayDistance": 0.29749998450279236,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "bedroom-2",
+        "nativeRayDistance": 0.29749995470046997,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "bedroom-3",
+        "nativeRayDistance": 0.29749998450279236,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "entrance-left",
+        "nativeRayDistance": 0.2840004563331604,
+        "nativePhysicalLeafAt175Degrees": true
+      },
+      {
+        "id": "entrance-right",
+        "nativeRayDistance": 0.2840004563331604,
+        "nativePhysicalLeafAt175Degrees": true
+      }
+    ]
+  },
+  "visualValidation": {
+    "valid": true,
+    "exactPackageRendered": true,
+    "views": [
+      "Front",
+      "Rear",
+      "Left",
+      "Right",
+      "Plan",
+      "Exterior",
+      "Entrance open",
+      "Room doors open",
+      "Left door open",
+      "Right door open",
+      "Entrance closed",
+      "Room doors closed",
+      "Left door closed",
+      "Right door closed"
+    ],
+    "errors": [],
+    "auditReviewed": true,
+    "auditFindings": "Reviewed all exterior sides, plan, isometric, and four open plus four closed door views. Visible hinge pins and plates attach to panel edges and jambs; 175-degree open panels remain alongside walls. Other house geometry is preserved."
+  },
+  "actionValidation": {
+    "valid": true,
+    "actualNativeClientActions": true,
+    "actualNativeActionNodes": true,
+    "actualGeometryRaycast": true,
+    "cases": [
+      {
+        "id": "bedroom-1",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962551984,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "bedroom-2",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962551989,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "bedroom-3",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962551994,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "entrance-left",
+        "open": false,
+        "actionOffsetToPointerHit": 0.7206984459536456,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "entrance-right",
+        "open": false,
+        "actionOffsetToPointerHit": 0.7206984459536456,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "patio-left",
+        "open": false,
+        "actionOffsetToPointerHit": 0.8499044063893305,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "bedroom-1",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962551996,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "bedroom-2",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962551997,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "bedroom-3",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962551996,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "entrance-left",
+        "open": true,
+        "actionOffsetToPointerHit": 0.7065578532576083,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "entrance-right",
+        "open": true,
+        "actionOffsetToPointerHit": 0.7065578532576083,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "patio-left",
+        "open": true,
+        "actionOffsetToPointerHit": 0.8807986432777924,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "valid": true,
+  "actualNativeClientActions": true,
+  "actualNativeActionNodes": true,
+  "actualGeometryRaycast": true,
+  "cases": [
+    {
+      "id": "bedroom-1",
+      "open": false,
+      "actionOffsetToPointerHit": 0.6343943962551984,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "bedroom-2",
+      "open": false,
+      "actionOffsetToPointerHit": 0.6343943962551989,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "bedroom-3",
+      "open": false,
+      "actionOffsetToPointerHit": 0.6343943962551994,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "entrance-left",
+      "open": false,
+      "actionOffsetToPointerHit": 0.7206984459536456,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "entrance-right",
+      "open": false,
+      "actionOffsetToPointerHit": 0.7206984459536456,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "patio-left",
+      "open": false,
+      "actionOffsetToPointerHit": 0.8499044063893305,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "bedroom-1",
+      "open": true,
+      "actionOffsetToPointerHit": 0.6343943962551996,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "bedroom-2",
+      "open": true,
+      "actionOffsetToPointerHit": 0.6343943962551997,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "bedroom-3",
+      "open": true,
+      "actionOffsetToPointerHit": 0.6343943962551996,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "entrance-left",
+      "open": true,
+      "actionOffsetToPointerHit": 0.7065578532576083,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "entrance-right",
+      "open": true,
+      "actionOffsetToPointerHit": 0.7065578532576083,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "patio-left",
+      "open": true,
+      "actionOffsetToPointerHit": 0.8807986432777924,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    }
+  ]
+}

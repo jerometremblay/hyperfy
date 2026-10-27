@@ -1,0 +1,8 @@
+{
+  "valid": false,
+  "actualPhysXWasm": true,
+  "approximation": "Rear-half rolling blocker; complete collision shell when unoccupied",
+  "checks": [],
+  "measurements": [],
+  "script": "asset://4949cabcbcda843521aed246e9d8fea93edcf8ffa16d1fc635ad441aada3e9ff.js"
+}

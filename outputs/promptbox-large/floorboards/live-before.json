@@ -1,0 +1,76 @@
+{
+  "blueprint": {
+    "id": "WI0QjsRZ0R",
+    "version": 7,
+    "name": "Larch House — Wired Lighting Circuits",
+    "image": null,
+    "author": "Jerome",
+    "url": null,
+    "desc": "Original log house, hinged doors, roof portals and lighting circuits retained; two-storey center-room rear extension with large glazing on three exposed sides and a two-track sliding patio door.",
+    "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+    "script": "asset://e9249d8f67f3f66d448707f59d4905eccefd2cfdf5f78c7c9b5eb44f44a5c1bf.js",
+    "props": {
+      "castShadows": true,
+      "receiveShadows": true,
+      "promptBoxRequestId": "HRtqa5asTi",
+      "promptBoxTargetEntityId": "HCzjtaVZFI",
+      "initialDoors": {
+        "entrance-left": true,
+        "entrance-right": true,
+        "patio-left": true,
+        "bedroom-1": true,
+        "bedroom-2": false
+      },
+      "initialLighting": {
+        "house-exterior": true,
+        "house-interior-lower": true,
+        "house-interior-upper": true
+      }
+    },
+    "preload": true,
+    "public": false,
+    "locked": false,
+    "unique": true,
+    "disabled": false,
+    "scene": false,
+    "frozen": false
+  },
+  "entity": {
+    "id": "HCzjtaVZFI",
+    "type": "app",
+    "blueprint": "WI0QjsRZ0R",
+    "position": [
+      32.28460777267203,
+      0.0009671766369110379,
+      13.860266481164185
+    ],
+    "quaternion": [
+      0,
+      0.6087614290087207,
+      0,
+      0.7933533402912352
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "mover": null,
+    "uploader": null,
+    "pinned": true,
+    "state": {
+      "doors": {
+        "entrance-left": true,
+        "entrance-right": true,
+        "patio-left": true,
+        "bedroom-1": true,
+        "bedroom-2": false
+      },
+      "lighting": {
+        "house-exterior": true,
+        "house-interior-lower": true,
+        "house-interior-upper": true
+      }
+    }
+  }
+}

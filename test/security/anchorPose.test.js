@@ -163,7 +163,7 @@ for (const kind of ['Local', 'Remote']) {
     assert.equal(positionSnaps, 1)
     assert.equal(quaternionSnaps, kind === 'Remote' ? 1 : 0)
     assert.equal(capsuleReads, 0)
-    assert.equal(cleans, kind === 'Remote' ? 1 : 0)
+    assert.equal(cleans, 1)
     if (kind === 'Local') assert.deepEqual(pose.p, { x: 1, y: 2, z: 3 })
     player.setEffect(null)
     assert.equal(player.data.effect, null)

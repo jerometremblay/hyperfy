@@ -1,0 +1,15 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "version": [
+    9,
+    10
+  ],
+  "occupied": false,
+  "currentPosition": [
+    41.28233516938024,
+    3.3009668417721985,
+    16.06857186988892
+  ],
+  "nativeChecks": 1,
+  "shortTapCases": 24
+}

@@ -1,0 +1,23 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "views": [
+    "Front",
+    "Rear",
+    "Left",
+    "Right",
+    "Plan",
+    "Exterior",
+    "Entrance open",
+    "Room doors open",
+    "Left door open",
+    "Right door open",
+    "Entrance closed",
+    "Room doors closed",
+    "Left door closed",
+    "Right door closed"
+  ],
+  "errors": [],
+  "auditReviewed": true,
+  "auditFindings": "Reviewed exterior front, rear, sides, plan, isometric, and four open plus four closed door views from the exact final deployed package. Hinge pins and plates attach to the panel edge and jamb. Open leaves lie alongside walls; closed leaves fit the openings."
+}

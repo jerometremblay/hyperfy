@@ -36,15 +36,13 @@ export function rewriteWebViewDocument(html, baseURL, proxyPath = PROXY_PATH) {
   let rewritten = html
     .replace(/<base\b[^>]*>/gi, '')
     .replace(/<meta\b[^>]*http-equiv\s*=\s*(["']?)content-security-policy(?:-report-only)?\1[^>]*>/gi, '')
-    .replace(
-      /(\s(?:src|href|action|poster|cite|formaction)\s*=\s*)(["'])(.*?)\2/gi,
-      (match, prefix, quote, value) => {
-        const url = toProxyURL(value, baseURL, proxyPath)
-        return `${prefix}${quote}${escapeAttribute(url)}${quote}`
-      }
-    )
+    .replace(/(\s(?:src|href|action|poster|cite|formaction)\s*=\s*)(["'])(.*?)\2/gi, (match, prefix, quote, value) => {
+      const url = toProxyURL(value, baseURL, proxyPath)
+      return `${prefix}${quote}${escapeAttribute(url)}${quote}`
+    })
 
-  const baseTag = `<base href="${escapeAttribute(baseURL)}">`
+  // Rewritten root-relative resources must resolve on the proxy's host.
+  const baseTag = `<base href="${escapeAttribute(toProxyURL(baseURL, baseURL, proxyPath))}">`
   if (/<head\b[^>]*>/i.test(rewritten)) {
     rewritten = rewritten.replace(/(<head\b[^>]*>)/i, `$1${baseTag}`)
   } else {
@@ -64,7 +62,10 @@ async function assertSafeWebURL(value, lookupImpl = lookup) {
   const url = new URL(value)
   if (url.username || url.password) throw new Error('WebView URL must not contain credentials')
 
-  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '')
+  const hostname = url.hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '')
   if (isBlockedHostname(hostname)) throw new Error('WebView URL must target a public host')
 
   const ipVersion = net.isIP(hostname)
@@ -113,7 +114,13 @@ function isPrivateIPAddress(value, family) {
 
   const normalized = value.toLowerCase()
   if (normalized === '::' || normalized === '::1') return true
-  if (normalized.startsWith('fc') || normalized.startsWith('fd') || normalized.startsWith('fe8') || normalized.startsWith('fe9')) return true
+  if (
+    normalized.startsWith('fc') ||
+    normalized.startsWith('fd') ||
+    normalized.startsWith('fe8') ||
+    normalized.startsWith('fe9')
+  )
+    return true
   if (normalized.startsWith('fea') || normalized.startsWith('feb') || normalized.startsWith('2001:db8:')) return true
 
   const mappedIPv4 = normalized.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/)

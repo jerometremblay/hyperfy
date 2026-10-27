@@ -22,11 +22,24 @@ test('rewrites WebView document resources and removes frame-blocking CSP metadat
   `
 
   const rewritten = rewriteWebViewDocument(html, 'https://slashdot.org/', '/api/webview/proxy')
-  assert.match(rewritten, /<base href="https:\/\/slashdot\.org\/">/)
+  assert.match(rewritten, /<base href="\/api\/webview\/proxy\?url=https%3A%2F%2Fslashdot\.org%2F">/)
   assert.doesNotMatch(rewritten, /Content-Security-Policy/)
   assert.match(rewritten, /\/api\/webview\/proxy\?url=https%3A%2F%2Fslashdot\.org%2Fstyles%2Fsite\.css/)
   assert.match(rewritten, /\/api\/webview\/proxy\?url=https%3A%2F%2Fslashdot\.org%2Fstory/)
   assert.match(rewritten, /\/api\/webview\/proxy\?url=https%3A%2F%2Fslashdot\.org%2Fimages%2Flogo\.png/)
+})
+
+test('rewritten stylesheets resolve on the world host rather than the upstream host', () => {
+  const html =
+    '<head><base href="https://github.com/"><link rel="stylesheet" href="https://github.githubassets.com/assets/site.css"></head>'
+  const rewritten = rewriteWebViewDocument(html, 'https://github.com/jerometremblay/hyperfy')
+  const documentURL = 'https://world.example/api/webview/proxy?url=https%3A%2F%2Fgithub.com'
+  const baseHref = rewritten.match(/<base href="([^"]+)"/)[1]
+  const stylesheetHref = rewritten.match(/rel="stylesheet" href="([^"]+)"/)[1]
+  const stylesheetURL = new URL(stylesheetHref, new URL(baseHref, documentURL))
+  assert.equal(stylesheetURL.origin, 'https://world.example')
+  assert.equal(stylesheetURL.pathname, '/api/webview/proxy')
+  assert.equal(stylesheetURL.searchParams.get('url'), 'https://github.githubassets.com/assets/site.css')
 })
 
 test('rewrites WebView stylesheet resources relative to the stylesheet URL', () => {

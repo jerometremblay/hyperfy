@@ -1,0 +1,191 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "expectedVersion": 11,
+  "version": 12,
+  "originalRoomCeilings": 3,
+  "extensionCeilingDepth": 5,
+  "extendedExistingPanel": true,
+  "staticCeilingColliders": 4,
+  "retainedSlopedRoofAndBeams": true,
+  "existingPhysicalShapesUnchanged": true,
+  "verified": true,
+  "sourceReadback": true,
+  "statePreserved": true,
+  "housePlacementPreserved": true,
+  "otherBlueprintsPreserved": true,
+  "furniturePlacements": [
+    {
+      "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "preserved": true
+    },
+    {
+      "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+      "preserved": true
+    }
+  ],
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 12,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  },
+  "nativeCameraAndPhysicsValidation": {
+    "valid": true,
+    "source": "asset://eb7c0b75c3be46ce70b7753cd9cae721f1cb1f64d04ea403506f58fabfc496b1.js",
+    "actualPhysXWasm": true,
+    "actualAppOwnedPrimPhysics": true,
+    "actualNativeCameraSweep": true,
+    "checks": [
+      "Four matching physical ceiling slabs stop the native camera and player, including the full extension rear",
+      "App-owned static ceilings retain matching poses and dimensions after translated, rotated, uniform and nonuniform scale edits"
+    ],
+    "cases": [
+      {
+        "panel": "rooms:bedroom-ceiling:647",
+        "point": [
+          -5.915,
+          4.7,
+          5.775
+        ],
+        "nativeCameraZoom": 1.0100001096725464,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "rooms:bedroom-ceiling:657",
+        "point": [
+          0,
+          4.7,
+          5.775
+        ],
+        "nativeCameraZoom": 1.0100001096725464,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "rooms:bedroom-ceiling:667",
+        "point": [
+          5.915,
+          4.7,
+          5.775
+        ],
+        "nativeCameraZoom": 1.0100001096725464,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "extension-floor:bedroom-ceiling:2008",
+        "point": [
+          0,
+          4.7,
+          9.85
+        ],
+        "nativeCameraZoom": 1.0100001096725464,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "extension-rear",
+        "point": [
+          0,
+          4.7,
+          10.7
+        ],
+        "nativeCameraZoom": 1.0100001096725464,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "extension-rear",
+        "point": [
+          1.4,
+          4.7,
+          11.4
+        ],
+        "nativeCameraZoom": 1.010000228881836,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "extension-rear",
+        "point": [
+          -1.4,
+          4.7,
+          11.7
+        ],
+        "nativeCameraZoom": 1.0100001096725464,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "panel": "extension-rear",
+        "point": [
+          2.5,
+          4.7,
+          12.25
+        ],
+        "nativeCameraZoom": 1.010000228881836,
+        "ceilingHeight": 5.909999847412109,
+        "physicalPlayerCeilingContact": true
+      },
+      {
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "yaw": 0.73,
+        "expectedY": 6.3100000000000005,
+        "actualY": 6.309999942779541,
+        "scaledPanelEdgeCovered": true
+      },
+      {
+        "scale": [
+          1.5,
+          1.5,
+          1.5
+        ],
+        "yaw": 0.73,
+        "expectedY": 9.265,
+        "actualY": 9.265000343322754,
+        "scaledPanelEdgeCovered": true
+      },
+      {
+        "scale": [
+          2,
+          0.8,
+          1.4
+        ],
+        "yaw": 0.73,
+        "expectedY": 5.128000000000001,
+        "actualY": 5.127999782562256,
+        "scaledPanelEdgeCovered": true
+      }
+    ]
+  },
+  "visualValidation": {
+    "valid": true,
+    "exactPackageRendered": true,
+    "views": [
+      "Front",
+      "Rear",
+      "Left",
+      "Right",
+      "Plan",
+      "Exterior",
+      "Office roof",
+      "Original office roof",
+      "Left room",
+      "Center room",
+      "Right room",
+      "Extension front",
+      "Extension rear"
+    ],
+    "errors": []
+  }
+}

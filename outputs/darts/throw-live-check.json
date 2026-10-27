@@ -1,0 +1,121 @@
+{
+  "version": 2,
+  "testPlayerId": "G9UTMuTM5a",
+  "state": {
+    "seq": 99,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "G9UTMuTM5a",
+    "players": [
+      {
+        "id": "G9UTMuTM5a",
+        "name": "Anonymous",
+        "score": 0,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 1
+      }
+    ],
+    "turn": 0,
+    "round": 1,
+    "visit": 1,
+    "aim": {
+      "yaw": -9.159181260812555e-17,
+      "pitch": 0.037200612200850414,
+      "speed": 7
+    },
+    "windup": null,
+    "darts": [
+      {
+        "origin": [
+          0.5586858688479961,
+          1.5499999034346574,
+          2.7135001871612934
+        ],
+        "velocity": [
+          -6.406991053658012e-16,
+          0.2603442279405295,
+          -6.9951569591380895
+        ],
+        "duration": 0.3879112653242935,
+        "surface": "board",
+        "impact": [
+          0.5586858688479959,
+          0.9129097527151943,
+          0
+        ],
+        "time": 0.3879112653242935,
+        "playerId": "G9UTMuTM5a",
+        "hit": {
+          "x": 0.5586858688479959,
+          "y": -0.8170902472848057,
+          "base": 0,
+          "multiplier": 0,
+          "score": 0,
+          "ring": "miss",
+          "label": "Miss"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": 0.5586858688479959,
+      "y": -0.8170902472848057,
+      "base": 0,
+      "multiplier": 0,
+      "score": 0,
+      "ring": "miss",
+      "label": "Miss",
+      "playerId": "G9UTMuTM5a"
+    },
+    "winner": null
+  },
+  "expected": {
+    "origin": [
+      0.5586858688479961,
+      1.5499999034346574,
+      2.7135001871612934
+    ],
+    "velocity": [
+      -6.406991053658012e-16,
+      0.2603442279405295,
+      -6.9951569591380895
+    ],
+    "duration": 0.3879112653242935,
+    "surface": "board",
+    "impact": [
+      0.5586858688479959,
+      0.9129097527151943,
+      0
+    ]
+  },
+  "physicsMatched": true,
+  "thirdPersonScreenshot": "throw-live.png",
+  "players": [
+    {
+      "id": "G9UTMuTM5a",
+      "name": "Anonymous",
+      "position": [
+        29.116604497683735,
+        0.12096703983843327,
+        7.766242846853458
+      ]
+    },
+    {
+      "id": "i3i2IJ4HPw",
+      "name": "Jay",
+      "position": [
+        28.45657511484609,
+        0.12096703550772814,
+        7.006218384632168
+      ]
+    }
+  ]
+}

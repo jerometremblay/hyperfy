@@ -1,0 +1,274 @@
+{
+  "twoPlayerLobby": true,
+  "hostOnlyMode": true,
+  "firstVisit": {
+    "seq": 9,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "eEeNIOmPqI",
+    "players": [
+      {
+        "id": "eEeNIOmPqI",
+        "name": "Anonymous",
+        "score": 9,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 3
+      },
+      {
+        "id": "25scLoqYm5",
+        "name": "Anonymous",
+        "score": 0,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 0
+      }
+    ],
+    "turn": 0,
+    "round": 1,
+    "visit": 3,
+    "aim": {
+      "yaw": 0,
+      "pitch": 0.299,
+      "speed": 7
+    },
+    "darts": [
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0,
+          2.06195305799942,
+          -6.689420721303664
+        ],
+        "duration": 0.31392852796837434,
+        "surface": "board",
+        "impact": [
+          0,
+          1.7139126413395713,
+          0
+        ],
+        "time": 0.31392852796837434,
+        "playerId": "eEeNIOmPqI",
+        "hit": {
+          "x": 0,
+          "y": -0.016087358660428652,
+          "base": 3,
+          "multiplier": 1,
+          "score": 3,
+          "ring": "single",
+          "label": "3"
+        }
+      },
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0,
+          2.06195305799942,
+          -6.689420721303664
+        ],
+        "duration": 0.31392852796837434,
+        "surface": "board",
+        "impact": [
+          0,
+          1.7139126413395713,
+          0
+        ],
+        "time": 0.31392852796837434,
+        "playerId": "eEeNIOmPqI",
+        "hit": {
+          "x": 0,
+          "y": -0.016087358660428652,
+          "base": 3,
+          "multiplier": 1,
+          "score": 3,
+          "ring": "single",
+          "label": "3"
+        }
+      },
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0,
+          2.06195305799942,
+          -6.689420721303664
+        ],
+        "duration": 0.31392852796837434,
+        "surface": "board",
+        "impact": [
+          0,
+          1.7139126413395713,
+          0
+        ],
+        "time": 0.31392852796837434,
+        "playerId": "eEeNIOmPqI",
+        "hit": {
+          "x": 0,
+          "y": -0.016087358660428652,
+          "base": 3,
+          "multiplier": 1,
+          "score": 3,
+          "ring": "single",
+          "label": "3"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": 0,
+      "y": -0.016087358660428652,
+      "base": 3,
+      "multiplier": 1,
+      "score": 3,
+      "ring": "single",
+      "label": "3",
+      "playerId": "eEeNIOmPqI"
+    },
+    "winner": null
+  },
+  "secondPlayerVisit": {
+    "seq": 12,
+    "mode": "countup",
+    "phase": "playing",
+    "host": "eEeNIOmPqI",
+    "players": [
+      {
+        "id": "eEeNIOmPqI",
+        "name": "Anonymous",
+        "score": 9,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 3
+      },
+      {
+        "id": "25scLoqYm5",
+        "name": "Anonymous",
+        "score": 3,
+        "marks": {
+          "15": 0,
+          "16": 0,
+          "17": 0,
+          "18": 0,
+          "19": 0,
+          "20": 0,
+          "25": 0
+        },
+        "throws": 1
+      }
+    ],
+    "turn": 1,
+    "round": 1,
+    "visit": 1,
+    "aim": {
+      "yaw": 0,
+      "pitch": 0.299,
+      "speed": 7
+    },
+    "darts": [
+      {
+        "origin": [
+          0,
+          1.55,
+          2.1
+        ],
+        "velocity": [
+          0,
+          2.06195305799942,
+          -6.689420721303664
+        ],
+        "duration": 0.31392852796837434,
+        "surface": "board",
+        "impact": [
+          0,
+          1.7139126413395713,
+          0
+        ],
+        "time": 0.31392852796837434,
+        "playerId": "25scLoqYm5",
+        "hit": {
+          "x": 0,
+          "y": -0.016087358660428652,
+          "base": 3,
+          "multiplier": 1,
+          "score": 3,
+          "ring": "single",
+          "label": "3"
+        }
+      }
+    ],
+    "flight": null,
+    "lastHit": {
+      "x": 0,
+      "y": -0.016087358660428652,
+      "base": 3,
+      "multiplier": 1,
+      "score": 3,
+      "ring": "single",
+      "label": "3",
+      "playerId": "25scLoqYm5"
+    },
+    "winner": null
+  },
+  "disconnectTransferredTurn": true,
+  "idleProfiling": {
+    "schemaVersion": 1,
+    "staleAfterMs": 10000,
+    "clients": [],
+    "server": {
+      "source": "server",
+      "active": true,
+      "sampledAt": 1792899598042,
+      "ageMs": 625,
+      "stale": false,
+      "sampleSeconds": 1.0063107079999754,
+      "rows": [
+        {
+          "id": "d0f1b532-aad9-4c20-91ac-1a189fdccf69",
+          "blueprintId": "c28f25de-1d38-4744-92d3-cddba5d327d8",
+          "blueprintVersion": 2,
+          "name": "Darts — BananaDarts / Dart Room",
+          "cpuMsPerSecond": 0,
+          "peakCallbackMs": 0,
+          "callbackMsPerSecond": {}
+        }
+      ]
+    },
+    "limitations": "Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling."
+  },
+  "finalScript": "asset://c63e0eeab303c1a204ac57fccc40d8a726442e252e656a75bef0e4273a0ede22.js",
+  "finalLocalSmoke": true,
+  "browserAppErrors": [],
+  "controlsReleased": true
+}

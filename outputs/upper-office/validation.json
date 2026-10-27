@@ -1,0 +1,59 @@
+{
+  "valid": true,
+  "target": "Hyperfy 0.16.0 fork",
+  "actualEngineGeometry": true,
+  "individualFurnitureObjects": 2,
+  "continuousUDeskAndOpenWorkingBay": "pass",
+  "chair": {
+    "casterAssemblies": 5,
+    "wheels": 10,
+    "groundContact": "pass",
+    "recliningBack": "pass"
+  },
+  "floorContactAtOwnerPlacements": "pass",
+  "originalDesignChairInsideU": "pass",
+  "endpointAlignment": "pass",
+  "passageBeforeDeskMetres": 1.98,
+  "objects": [
+    {
+      "key": "desk",
+      "primitives": 45,
+      "idleClientCallbacks": 0,
+      "idleServerCallbacks": 0,
+      "physicsShapes": 8,
+      "bounds": {
+        "min": [
+          -2.118000030517578,
+          0,
+          -1.168000078201294
+        ],
+        "max": [
+          2.118000030517578,
+          0.7860000000260771,
+          1.2180000782012939
+        ]
+      },
+      "packageAssets": 2
+    },
+    {
+      "key": "chair",
+      "primitives": 120,
+      "idleClientCallbacks": 0,
+      "idleServerCallbacks": 0,
+      "physicsShapes": 5,
+      "bounds": {
+        "min": [
+          -0.45200979623139315,
+          -6.938893903907228e-18,
+          -0.46
+        ],
+        "max": [
+          0.45200979623139315,
+          1.3506521749180997,
+          0.3997737242702222
+        ]
+      },
+      "packageAssets": 2
+    }
+  ]
+}

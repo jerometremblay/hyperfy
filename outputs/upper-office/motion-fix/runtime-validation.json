@@ -1,0 +1,40 @@
+{
+  "valid": true,
+  "actualPhysXWasm": true,
+  "actualPlayerLateUpdateAndCamera": true,
+  "checks": [
+    "camera remains clear during a ride; standing restores five physical boxes",
+    "native delayed multiplayer ride: immediate input, collision, attached avatar, smooth motion and zero idle callbacks",
+    "open-floor WASD reversals: smooth server reconciliation, attached avatar and zero idle callbacks",
+    "stale replies rejected, disconnected prediction bounded, replacement effect removes controller and callbacks",
+    "remote observers keep physical chair collision and smooth server pose playback"
+  ],
+  "metrics": {
+    "multiplayer": {
+      "firstMovement": 0.016666666666666666,
+      "largestAvatarError": 0,
+      "maximumFrameStep": 0.02092911701603173,
+      "smallestCameraZoom": 2,
+      "finalPoseError": 0,
+      "inputPackets": 23,
+      "serverPosePackets": 33,
+      "latencyRangeMs": [
+        65,
+        95
+      ]
+    },
+    "openFloorReversals": {
+      "firstMovement": 0.016666666666666666,
+      "largestAvatarError": 0,
+      "maximumFrameStep": 0.021066403666864564,
+      "smallestCameraZoom": 2,
+      "finalPoseError": 0,
+      "inputPackets": 28,
+      "serverPosePackets": 32,
+      "latencyRangeMs": [
+        65,
+        95
+      ]
+    }
+  }
+}

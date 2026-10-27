@@ -1,0 +1,70 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "sourceReadback": true,
+  "individualPhysicalObjects": 2,
+  "ownerPlacementsPreserved": true,
+  "houseAndOtherObjectsUnchanged": true,
+  "actualEngineRuntimeTests": {
+    "valid": true,
+    "actualScriptSandbox": true,
+    "actualPhysXWasm": true,
+    "checks": [
+      "native collision shells, nonuniform scale, floor snapping and zero idle callbacks",
+      "exclusive occupancy, CCT rolling and wall collision, saved final position, disconnect cleanup",
+      "native seated effect, roll controls, standing exit, effect replacement and late-joining clients",
+      "rolling collides with the U desk; builder movement releases the seat and grounds the chair",
+      "invalid claims rejected; destruction removes the controller, anchor and leave listener"
+    ],
+    "scripts": {
+      "desk": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+      "chair": "asset://ee62fb0ea3eed55ede37cd58845d343fe8722ec714ed66391579e3c1a4fc3081.js"
+    }
+  },
+  "furniture": [
+    {
+      "key": "desk",
+      "version": 1,
+      "position": [
+        42.88400561516337,
+        3.302967176636911,
+        16.846898913569728
+      ],
+      "serverProfile": {
+        "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+        "blueprintId": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+        "blueprintVersion": 1,
+        "name": "Walnut and Brass U-shaped Work Desk",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      },
+      "state": {}
+    },
+    {
+      "key": "chair",
+      "version": 1,
+      "position": [
+        40.242839126252775,
+        3.30296717663691,
+        16.11803431083233
+      ],
+      "serverProfile": {
+        "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+        "blueprintId": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+        "blueprintVersion": 1,
+        "name": "Luxury Leather Executive Chair — Five Caster Base",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      },
+      "state": {
+        "slot": {
+          "owner": null,
+          "token": null
+        },
+        "pose": null
+      }
+    }
+  ]
+}

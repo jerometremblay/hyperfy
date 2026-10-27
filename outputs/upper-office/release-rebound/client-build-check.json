@@ -1,0 +1,15 @@
+{
+  "verified": true,
+  "entry": "/index-Z5I7UVB5.js",
+  "nativeCameraFixServed": true,
+  "checkedAt": "2026-10-26T02:07:13.199Z",
+  "results": [
+    {
+      "path": "/index-Z5I7UVB5.js",
+      "sourceMatches": true,
+      "bundleSha256": "11f58d18594fd44792829d424b2e8117f90caf3a232f7870c614f470304b54be",
+      "sourceSha256": "ba87cfc1a9ce7a1444114e08ab9401e15fbb0a14b336de2b676b86548aa73efd",
+      "commitsSeatBeforeCamera": true
+    }
+  ]
+}

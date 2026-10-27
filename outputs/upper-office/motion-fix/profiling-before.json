@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "staleAfterMs": 10000,
+  "clients": [],
+  "server": {
+    "source": "server",
+    "active": false,
+    "sampledAt": null,
+    "ageMs": null,
+    "stale": true,
+    "sampleSeconds": null,
+    "rows": []
+  },
+  "limitations": "Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling."
+}

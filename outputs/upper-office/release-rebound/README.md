@@ -1,0 +1,13 @@
+The chair release symptom came from the native third-person camera reading the posed avatar head before committing the current seat transform. The chair, controller and seat had already stopped. Live traces recorded approximately 6.65 cm of camera focus catch-up with constant zoom and orientation.
+
+The engine change commits the anchored player transform before reading avatar bone matrices. It uses the existing Node.clean path, as the remote anchored player already does. This also makes the first-person eye offset initialize from the current seated pose. Native orbit, zoom, camera collision and standing behavior are retained.
+
+The 3333 development watcher rebuilt the client. Its served JavaScript source map was checked against the exact tested PlayerLocal source. Existing open clients need one page reload to use this engine change. This native engine correction is separate from the chair package; native-camera.patch contains only this correction and excludes pre-existing workspace edits.
+
+The chair was updated through the online-world Agent API to version 11 to remove temporary tracing, retaining local rider movement and eventual server consistency. The guarded deployment retained the latest chair placement and verified that the desk, house and other objects were unchanged. The idle server profiler shows no movement callbacks.
+
+Validation: the actual PlayerLocal, Group/Avatar commit path and PhysX runtime reproduce the old third-person camera lag. Eighteen movement/release cases cover first- and third-person at 30, 60 and 120 FPS; the fixed focus error is below 1e-6 m and post-release camera drift is zero. Scaled rotations, custom avatar offsets, initial first-person eye placement and standing focus also pass. Thirteen focused engine tests, nine rider-control regressions and the existing caster/package checks pass.
+
+Evidence is in camera-baseline-validation.json, camera-runtime-validation.json, rider-validation.json, client-build-check.json and final-deployment.json. The user confirmed that release is smooth in both views and that the final startup is smooth.
+
+The startup trace showed exact physical movement with no correction, but an immediate full-speed step of 3.26 cm at 26.1 ms. Rolling and Q/E turning now use a 120 ms acceleration ramp, integrated across frame durations. At the captured first-frame duration, the rolling step is 3.55 mm. Release clears the ramp immediately and does not introduce coast. Startup regression checks cover 30/60/120 FPS, varying frame times, repeated starts, turns and zero post-release drift. The current deployment evidence is smooth-deployment.json and the current rider checks are smooth-rider-validation.json.

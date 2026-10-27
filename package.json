@@ -30,6 +30,8 @@
     "node-client:dev": "node scripts/build-node-client.mjs --dev",
     "node-client:build": "node scripts/build-node-client.mjs",
     "prototype:snowman": "node prototypes/watch-snowman.mjs",
+    "build:darts": "node apps/darts/build.mjs",
+    "test:darts": "npm run build:darts && node --test apps/darts/*.test.mjs",
     "prototype:spiral-climb": "node prototypes/watch-spiral-climb.mjs",
     "test:prototype:snowman": "node --test prototypes/snowman.test.mjs",
     "test:prototype:spiral-climb": "node --test prototypes/spiral-climb.test.mjs",

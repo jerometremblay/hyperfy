@@ -1,0 +1,148 @@
+{
+  "format": "hyperfy-prompt-box",
+  "version": 2,
+  "requestId": "HRtqa5asTi",
+  "world": "https://monstre.duckdns.org:3333/api",
+  "blueprintVersion": 2,
+  "coordinates": {
+    "units": "meters",
+    "handedness": "right",
+    "up": "+Y",
+    "forward": "-Z",
+    "origin": "box-center"
+  },
+  "box": {
+    "entityId": "mC9OpZ5oR2",
+    "blueprintId": "KP88mxXmz5",
+    "prompt": "create an expension to the house. the upper room should be expanded. the center room  should be expanded, with  large windows on every outside sides. on the first floor there should be patio door.",
+    "position": [
+      41.69699480762927,
+      4.84949861692885,
+      16.610242764650796
+    ],
+    "quaternion": [
+      0,
+      0.6087614290087207,
+      0,
+      0.7933533402912352
+    ],
+    "dimensions": [
+      7.0416655520550115,
+      9.775944323627398,
+      5.266827919680333
+    ]
+  },
+  "boxes": [
+    {
+      "entityId": "mC9OpZ5oR2",
+      "blueprintId": "KP88mxXmz5",
+      "prompt": "create an expension to the house. the upper room should be expanded. the center room  should be expanded, with  large windows on every outside sides. on the first floor there should be patio door.",
+      "position": [
+        41.69699480762927,
+        4.84949861692885,
+        16.610242764650796
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "dimensions": [
+        7.0416655520550115,
+        9.775944323627398,
+        5.266827919680333
+      ]
+    }
+  ],
+  "intersectionMethod": "transformed-geometry-bounds",
+  "intersections": [
+    {
+      "entityId": "HCzjtaVZFI",
+      "blueprintId": "WI0QjsRZ0R",
+      "blueprintVersion": 4,
+      "name": "Larch House — Wired Lighting Circuits",
+      "file": "apps/HCzjtaVZFI.hyp",
+      "position": [
+        32.28460777267203,
+        0.0009671766369110379,
+        13.860266481164185
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "state": {
+        "doors": {
+          "entrance-left": true,
+          "entrance-right": true
+        },
+        "lighting": {
+          "house-exterior": true,
+          "house-interior-lower": true,
+          "house-interior-upper": true
+        }
+      },
+      "editable": true,
+      "boxLocalMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.2201680893791682,
+        -4.848531440291939,
+        -9.803413959840164,
+        1
+      ],
+      "boxInAppMatrix": [
+        7.0416655520550115,
+        0,
+        2.220446049250313e-16,
+        0,
+        0,
+        9.775944323627398,
+        0,
+        0,
+        0,
+        0,
+        5.266827919680334,
+        0,
+        -0.2201680893791682,
+        4.848531440291939,
+        9.803413959840164,
+        1
+      ]
+    }
+  ],
+  "result": {
+    "file": "result.zip",
+    "standalone": {
+      "file": "generated.hyp",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "baseY": -4.887972161813699
+    },
+    "targetProperty": "promptBoxTargetEntityId",
+    "constructionCoordinates": "preserve-app-local",
+    "boxRole": "approximate-edit-region",
+    "removeBoxIfUntargeted": true
+  }
+}

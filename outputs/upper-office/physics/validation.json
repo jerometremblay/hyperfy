@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "actualScriptSandbox": true,
+  "actualPhysXWasm": true,
+  "checks": [
+    "native collision shells, nonuniform scale, floor snapping and zero idle callbacks",
+    "exclusive occupancy, CCT rolling and wall collision, saved final position, disconnect cleanup",
+    "native seated effect, roll controls, standing exit, effect replacement and late-joining clients",
+    "rolling collides with the U desk; builder movement releases the seat and grounds the chair",
+    "invalid claims rejected; destruction removes the controller, anchor and leave listener",
+    "actual WASD travel aligns casters; reversals swing them around; blocked motion stops wheels; no server visual animation"
+  ],
+  "scripts": {
+    "desk": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+    "chair": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js"
+  }
+}

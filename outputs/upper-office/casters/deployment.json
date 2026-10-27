@@ -1,0 +1,97 @@
+{
+  "verified": true,
+  "sourceReadback": true,
+  "onlyChairUpdated": true,
+  "deskHouseAndOtherObjectsUnchanged": true,
+  "preservedCurrentRidePosition": true,
+  "positionBeforeUpdate": [
+    42.90907472690268,
+    3.30296697807312,
+    16.775970972431008
+  ],
+  "positionImmediatelyAfterUpdate": [
+    42.90907472690268,
+    3.30296697807312,
+    16.775970972431008
+  ],
+  "endedRideForUpdate": true,
+  "version": 2,
+  "entity": {
+    "position": [
+      42.90907472690268,
+      3.30296697807312,
+      16.775970972431008
+    ],
+    "quaternion": [
+      0,
+      -0.7933533402912352,
+      0,
+      0.6087614290087207
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "pinned": false,
+    "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+    "blueprint": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+    "type": "app",
+    "mover": null,
+    "uploader": null,
+    "state": {
+      "slot": {
+        "owner": null,
+        "token": null
+      },
+      "pose": null
+    }
+  },
+  "casterValidation": {
+    "valid": true,
+    "exactPackageSource": true,
+    "actualEngineNodes": true,
+    "horizontalSharedAxles": 5,
+    "verticalOffsetSwivels": 5,
+    "independentlyRollingTires": 10,
+    "trailMetres": 0.025,
+    "wheelRadiusMetres": 0.06,
+    "differentialRotation": "pass",
+    "noLateralSlip": "pass",
+    "reversal": "pass",
+    "frameRateInvariance": "pass",
+    "floorContactThroughoutAnimation": "pass",
+    "collisionEnvelope": {
+      "maximumExtent": 0.46,
+      "halfWidth": 0.475
+    },
+    "idleAnimationCallbacks": 0,
+    "script": "asset://d18d739696229e8d754be078b39faae45006074635be9eeb7b31dbf4add9b9e1.js"
+  },
+  "runtimeValidation": {
+    "valid": true,
+    "actualScriptSandbox": true,
+    "actualPhysXWasm": true,
+    "checks": [
+      "native collision shells, nonuniform scale, floor snapping and zero idle callbacks",
+      "exclusive occupancy, CCT rolling and wall collision, saved final position, disconnect cleanup",
+      "native seated effect, roll controls, standing exit, effect replacement and late-joining clients",
+      "rolling collides with the U desk; builder movement releases the seat and grounds the chair",
+      "invalid claims rejected; destruction removes the controller, anchor and leave listener",
+      "actual WASD travel aligns casters; reversals swing them around; blocked motion stops wheels; no server visual animation"
+    ],
+    "scripts": {
+      "desk": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+      "chair": "asset://d18d739696229e8d754be078b39faae45006074635be9eeb7b31dbf4add9b9e1.js"
+    }
+  },
+  "serverProfile": {
+    "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+    "blueprintId": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+    "blueprintVersion": 2,
+    "name": "Luxury Leather Executive Chair — Five Caster Base",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  }
+}

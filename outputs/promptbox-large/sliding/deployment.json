@@ -1,0 +1,35 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "expectedVersion": 6,
+  "version": 7,
+  "motion": "left panel slides behind the fixed right panel",
+  "slideMetres": 1.365,
+  "rotation": 0,
+  "preserveState": true,
+  "verified": true,
+  "sourceReadback": true,
+  "statePreserved": true,
+  "transformsAndOtherAppsPreserved": true,
+  "serverProfile": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1792974392483,
+    "ageMs": 299,
+    "stale": false,
+    "sampleSeconds": 1.0088087080009283,
+    "rows": [
+      {
+        "id": "HCzjtaVZFI",
+        "blueprintId": "WI0QjsRZ0R",
+        "blueprintVersion": 7,
+        "name": "Larch House — Wired Lighting Circuits",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  },
+  "runtimeChecks": "Translation, collision placement, reversal and server authority verified in the actual-node harness; live API source/state readback and server idle profiling verified"
+}

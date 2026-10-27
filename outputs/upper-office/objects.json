@@ -1,0 +1,110 @@
+[
+  {
+    "key": "desk",
+    "name": "Walnut and Brass U-shaped Work Desk",
+    "desc": "Large U-shaped walnut desk with brass edge, drawer pedestals and leather pad. Physical collision preserves the open bay; placement stays grounded.",
+    "position": [
+      -0.14153937183772758,
+      3.302,
+      11.011229473402432
+    ],
+    "rotation": 0,
+    "blueprint": {
+      "image": null,
+      "author": "Jerome",
+      "url": "",
+      "desc": "Large U-shaped walnut desk with brass edge, drawer pedestals and leather pad. Physical collision preserves the open bay; placement stays grounded.",
+      "script": "asset://b7b6854082a1ab481bcba2316cf3ba1bb823f63b2b3c94461606a7eea313cc1c.js",
+      "props": {
+        "castShadows": true,
+        "receiveShadows": true
+      },
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Walnut and Brass U-shaped Work Desk",
+      "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+      "id": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "version": 1
+    },
+    "entity": {
+      "id": "d16ab219-9538-445c-a9c1-02a9cbf2ae2e",
+      "blueprint": "152b0ee1-6524-4a4f-b7db-4e1df8ae612e",
+      "position": [
+        42.88400561516337,
+        3.302967176636911,
+        16.846898913569728
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false
+    }
+  },
+  {
+    "key": "chair",
+    "name": "Luxury Leather Executive Chair — Five Caster Base",
+    "desc": "Luxury leather chair with five offset swivelling twin casters and horizontal axles. Physical, grounded and sittable: WASD/arrows roll; Space/E stands. Wheels self-align and rotate with actual travel.",
+    "position": [
+      -0.13326057463020646,
+      3.301999801436209,
+      10.424499647645394
+    ],
+    "rotation": -3.054807509165501,
+    "blueprint": {
+      "image": null,
+      "author": "Jerome",
+      "url": "",
+      "desc": "Luxury leather chair with five offset swivelling twin casters and horizontal axles. Physical, grounded and sittable: WASD/arrows roll; Space/E stands. Wheels self-align and rotate with actual travel.",
+      "script": "asset://60bd53e38133105062448c3faee1e4aa1f801c0262ff707570f51ad6c28cd64a.js",
+      "props": {
+        "castShadows": true,
+        "receiveShadows": true
+      },
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Luxury Leather Executive Chair — Five Caster Base",
+      "model": "asset://2b332a8c564f68a0b5be0b283c1859979bfe8a0bd7fce465a8de8339e530fa41.glb",
+      "id": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+      "version": 12
+    },
+    "entity": {
+      "id": "39fc1d1e-9bd0-42f6-b3f2-2022c70d4f26",
+      "blueprint": "28d7a42b-b838-4c48-8a23-8f561b8bb706",
+      "position": [
+        42.31941083379841,
+        3.30296697807312,
+        16.687045356300768
+      ],
+      "quaternion": [
+        0,
+        -0.7661991136138048,
+        0,
+        0.6426032355173914
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false
+    }
+  }
+]

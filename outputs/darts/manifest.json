@@ -1,0 +1,73 @@
+{
+  "blueprint": {
+    "id": "hyperfy-darts",
+    "version": 0,
+    "name": "Darts — BananaDarts / Dart Room",
+    "author": "jerometremblay-bot",
+    "desc": "Game-owned ballistic flight and scoring from your actual position; free movement and camera, including third person. Count Up, 301, 501 and Cricket; 1–4 players. E: play, Space: start/throw/next, Q/Z: power, M: mode, R: reset, Esc: exit, X: leave.",
+    "model": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
+    "script": "asset://4480a3bbb4272f362f0fd5eaab4d710f03fcdb01ac21c5ae9ab3bd08e3a9f54a.js",
+    "props": {
+      "boardTexture": {
+        "type": "texture",
+        "url": "asset://55dab785541c92a0dbc7fda7d11e3edc77ec5172b86170efd93b375c3a01fd07.png"
+      },
+      "throwAnimation": {
+        "type": "emote",
+        "url": "asset://e246cb385ab400cee7d262c2744cf9ba53b8302f3b4979c648dd15bed7bd89d0.glb"
+      }
+    },
+    "public": false,
+    "preload": true,
+    "locked": false,
+    "unique": false,
+    "frozen": false,
+    "disabled": false
+  },
+  "assets": [
+    {
+      "mime": "text/javascript",
+      "size": 48625,
+      "type": "script",
+      "url": "asset://4480a3bbb4272f362f0fd5eaab4d710f03fcdb01ac21c5ae9ab3bd08e3a9f54a.js",
+      "sha256": "4480a3bbb4272f362f0fd5eaab4d710f03fcdb01ac21c5ae9ab3bd08e3a9f54a",
+      "extension": "js",
+      "types": [
+        "script"
+      ]
+    },
+    {
+      "mime": "image/png",
+      "size": 67376,
+      "type": "texture",
+      "url": "asset://55dab785541c92a0dbc7fda7d11e3edc77ec5172b86170efd93b375c3a01fd07.png",
+      "sha256": "55dab785541c92a0dbc7fda7d11e3edc77ec5172b86170efd93b375c3a01fd07",
+      "extension": "png",
+      "types": [
+        "texture"
+      ]
+    },
+    {
+      "mime": "model/gltf-binary",
+      "size": 20712,
+      "type": "emote",
+      "url": "asset://e246cb385ab400cee7d262c2744cf9ba53b8302f3b4979c648dd15bed7bd89d0.glb",
+      "sha256": "e246cb385ab400cee7d262c2744cf9ba53b8302f3b4979c648dd15bed7bd89d0",
+      "extension": "glb",
+      "types": [
+        "emote"
+      ]
+    },
+    {
+      "mime": "model/gltf-binary",
+      "size": 84,
+      "type": "model",
+      "url": "asset://eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa.glb",
+      "sha256": "eda47e6f1c7979c42270d417d8c2504dda431eefe221b91862be6c63685660aa",
+      "extension": "glb",
+      "types": [
+        "model"
+      ]
+    }
+  ]
+}

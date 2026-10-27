@@ -313,6 +313,7 @@ test('keeps the seated shoulder camera aligned and the first-person eye referenc
     base: {
       position: basePosition,
       quaternion: new THREE.Quaternion(),
+      clean() {},
     },
     controller: { teleport() {} },
     getAnchorMatrix: () => anchor,

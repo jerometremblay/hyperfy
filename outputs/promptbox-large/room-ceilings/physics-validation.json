@@ -1,0 +1,70 @@
+{
+  "valid": true,
+  "source": "asset://7748f7d7c9a3c152bc95a514a8189665579448145833d37cbf561c9299b8f4e9.js",
+  "actualPhysXWasm": true,
+  "actualAppOwnedPrimPhysics": true,
+  "actualNativeCameraSweep": true,
+  "checks": [
+    "Four matching physical ceiling slabs stop the native camera and player; extension rear has no flat ceiling",
+    "App-owned static ceilings retain matching poses and dimensions after translated, rotated, uniform and nonuniform scale edits"
+  ],
+  "cases": [
+    {
+      "panel": "rooms:bedroom-ceiling:647",
+      "nativeCameraZoom": 1.0100001096725464,
+      "ceilingHeight": 5.909999847412109,
+      "physicalPlayerCeilingContact": true
+    },
+    {
+      "panel": "rooms:bedroom-ceiling:657",
+      "nativeCameraZoom": 1.0100001096725464,
+      "ceilingHeight": 5.909999847412109,
+      "physicalPlayerCeilingContact": true
+    },
+    {
+      "panel": "rooms:bedroom-ceiling:667",
+      "nativeCameraZoom": 1.0100001096725464,
+      "ceilingHeight": 5.909999847412109,
+      "physicalPlayerCeilingContact": true
+    },
+    {
+      "panel": "extension-floor:bedroom-ceiling:2008",
+      "nativeCameraZoom": 1.0100001096725464,
+      "ceilingHeight": 5.909999847412109,
+      "physicalPlayerCeilingContact": true
+    },
+    {
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "yaw": 0.73,
+      "expectedY": 6.3100000000000005,
+      "actualY": 6.309999942779541,
+      "scaledPanelEdgeCovered": true
+    },
+    {
+      "scale": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "yaw": 0.73,
+      "expectedY": 9.265,
+      "actualY": 9.265000343322754,
+      "scaledPanelEdgeCovered": true
+    },
+    {
+      "scale": [
+        2,
+        0.8,
+        1.4
+      ],
+      "yaw": 0.73,
+      "expectedY": 5.128000000000001,
+      "actualY": 5.127999782562256,
+      "scaledPanelEdgeCovered": true
+    }
+  ]
+}

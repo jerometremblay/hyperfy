@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "staleAfterMs": 10000,
+  "clients": [],
+  "server": {
+    "source": "server",
+    "active": true,
+    "sampledAt": 1793051018076,
+    "ageMs": 805,
+    "stale": false,
+    "sampleSeconds": 1.0333109999988228,
+    "rows": [
+      {
+        "id": "adf709e1-6292-45c9-8aef-967f7d3be0ee",
+        "blueprintId": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+        "blueprintVersion": 3,
+        "name": "Darts — BananaDarts / Dart Room",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  },
+  "limitations": "Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling."
+}

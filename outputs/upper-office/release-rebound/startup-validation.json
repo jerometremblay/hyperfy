@@ -1,0 +1,60 @@
+{
+  "valid": true,
+  "actualPhysXWasm": true,
+  "actualScriptSandbox": true,
+  "script": "asset://3bf6cd1ffb4e45dbec6b55d1db63e82f219462a79c97901703abe3a9d020b508.js",
+  "checks": [
+    "Immediate small startup, full speed after 120 ms, frame independent travel and no release drift",
+    "Repeated starts reset the ramp; Q/E turns accelerate gently, stop exactly and leave no idle callbacks"
+  ],
+  "cases": [
+    {
+      "deltas": [
+        0.03333333333333333
+      ],
+      "firstStep": 0.005787036847399918,
+      "lastStepSpeed": 1.2500000372541822,
+      "totalDistance": 0.6750000170432031,
+      "postReleaseDrift": 0
+    },
+    {
+      "deltas": [
+        0.016666666666666666
+      ],
+      "firstStep": 0.0014467592121377494,
+      "lastStepSpeed": 1.2500000372541948,
+      "totalDistance": 0.6750000187894329,
+      "postReleaseDrift": 0
+    },
+    {
+      "deltas": [
+        0.008333333333333333
+      ],
+      "firstStep": 0.00036168980418551657,
+      "lastStepSpeed": 1.250000037273421,
+      "totalDistance": 0.6750000173633459,
+      "postReleaseDrift": 0
+    },
+    {
+      "deltas": [
+        0.0261,
+        0.0329,
+        0.017,
+        0.031
+      ],
+      "firstStep": 0.0035479688086867307,
+      "lastStepSpeed": 1.2499999720702135,
+      "totalDistance": 0.6750000054016716,
+      "postReleaseDrift": 0
+    },
+    {
+      "repeatedFirstSteps": [
+        0.0014467592121377494,
+        0.0014467592130586128,
+        0.0014467592121377494
+      ],
+      "firstTurn": 0.0018180513041740872,
+      "turnStopDrift": 0
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "profile": "online-world",
+  "scene": "local-world",
+  "blueprintId": "77bac209-79e9-4c2e-bf03-574fd5738daf",
+  "entityId": "adf709e1-6292-45c9-8aef-967f7d3be0ee",
+  "createBlueprint": false,
+  "createInstance": false,
+  "placement": {
+    "key": "instances/darts/001",
+    "object": "apps/darts",
+    "pinned": true,
+    "position": [
+      29.4,
+      0.12096717663691105,
+      4.55
+    ],
+    "quaternion": [
+      0,
+      -0.1305261922200516,
+      0,
+      0.9914448613738105
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ]
+  },
+  "assets": 4,
+  "unrelatedMutations": 0,
+  "verified": true,
+  "script": "asset://4480a3bbb4272f362f0fd5eaab4d710f03fcdb01ac21c5ae9ab3bd08e3a9f54a.js",
+  "version": 4,
+  "sourceRegistered": true,
+  "unrelatedAppsUnchanged": true,
+  "unrelatedPlacementsUnchanged": true,
+  "settingsAndSpawnUnchanged": true
+}

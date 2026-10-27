@@ -1,0 +1,21 @@
+{
+  "valid": true,
+  "exactPackageSource": true,
+  "actualEngineNodes": true,
+  "horizontalSharedAxles": 5,
+  "verticalOffsetSwivels": 5,
+  "independentlyRollingTires": 10,
+  "trailMetres": 0.025,
+  "wheelRadiusMetres": 0.06,
+  "differentialRotation": "pass",
+  "noLateralSlip": "pass",
+  "reversal": "pass",
+  "frameRateInvariance": "pass",
+  "floorContactThroughoutAnimation": "pass",
+  "collisionEnvelope": {
+    "maximumExtent": 0.46,
+    "halfWidth": 0.475
+  },
+  "idleAnimationCallbacks": 0,
+  "script": "asset://60bd53e38133105062448c3faee1e4aa1f801c0262ff707570f51ad6c28cd64a.js"
+}

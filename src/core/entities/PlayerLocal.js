@@ -19,6 +19,7 @@ import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 import { getAvatarCameraFocus, getAvatarEyePosition } from '../extras/avatarFocus'
 import { XR_HAND_BONES } from '../extras/handTracking'
 import { isEmoteUrl, sanitizeName, sanitizePlayerSelfModify } from '../extras/entityModifyPolicy'
+import { isRightArmEmote } from '../extras/rightArmEmote'
 import { readAnchorPose } from '../extras/anchorPose'
 import {
   readVec3,
@@ -1214,6 +1215,7 @@ export class PlayerLocal extends Entity {
     if (!Object.is(this.effectEmoteRaw, rawEmote)) {
       this.effectEmoteRaw = rawEmote
       this.effectEmoteValid = typeof rawEmote === 'string' && isEmoteUrl(rawEmote)
+      this.effectEmoteMasked = isRightArmEmote(rawEmote)
     }
     const emote = this.effectEmoteValid ? rawEmote : undefined
     if (this.emote !== emote) {
@@ -1223,7 +1225,7 @@ export class PlayerLocal extends Entity {
 
     // get locomotion mode
     let mode
-    if (emote) {
+    if (emote && !this.effectEmoteMasked) {
       // emote overrides locomotion
     } else if (this.flying) {
       mode = Modes.FLY
@@ -1363,6 +1365,9 @@ export class PlayerLocal extends Entity {
       this.base.position.copy(anchorPosition)
       this.base.quaternion.copy(anchorQuaternion)
       this.controller.teleport(this.base.position)
+      // Camera focus reads avatar bone matrices. Commit the current seat pose
+      // first so the camera and rendered avatar follow the same anchor frame.
+      this.base.clean()
     }
     if (this.poseEditorActive) {
       this.seatedEyeOffset = null

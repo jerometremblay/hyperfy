@@ -11,6 +11,7 @@ import { applyNormalizedPose, createNormalizedPoseMapping, getNormalizedPose } f
 import { XR_HAND_BONES } from './handTracking'
 import { createHandTrackingMapping } from './handRetargeting'
 import { clampBoneRotation } from './poseEditorMath'
+import { createRightArmEmote } from './rightArmEmote'
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -303,10 +304,13 @@ export function createVRMFactory(glb, setupMaterial) {
       // }
     }
     let currentEmote
+    let armEmote = null
+    let emoteClock = 0
     const setEmote = url => {
       if (currentEmote?.url === url) return
       if (currentEmote) {
         currentEmote.action?.fadeOut(0.15)
+        currentEmote.arm?.stop(emoteClock)
         currentEmote = null
       }
       if (!url) return
@@ -315,9 +319,17 @@ export function createVRMFactory(glb, setupMaterial) {
       let speed = parseFloat(opts.s || 1)
       if (!Number.isFinite(speed) || speed < 0.01 || speed > 100) speed = 1
       const gaze = opts.g == '1'
+      const masked = opts.m === 'rightArm'
+      const offset = Math.max(0, Math.min(parseFloat(opts.t) || 0, 30))
 
       if (emotes[url]) {
         currentEmote = emotes[url]
+        currentEmote.started = emoteClock
+        if (currentEmote.arm) {
+          armEmote?.restore()
+          armEmote = currentEmote.arm
+          armEmote.play(emoteClock, offset, speed)
+        }
         if (currentEmote.action) {
           currentEmote.action.clampWhenFinished = !loop
           currentEmote.action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce)
@@ -330,15 +342,26 @@ export function createVRMFactory(glb, setupMaterial) {
           loading: true,
           action: null,
           gaze,
+          masked,
+          started: emoteClock,
         }
         emotes[url] = emote
         currentEmote = emote
-        hooks.loader.load('emote', url).then(emo => {
+        hooks.loader.load('emote', masked ? url.split('?')[0] : url).then(emo => {
           const clip = emo.toClip({
             rootToHips,
             version,
             getBoneName,
           })
+          if (masked) {
+            emote.arm = createRightArmEmote(clip, findBone)
+            if (currentEmote === emote) {
+              armEmote?.restore()
+              armEmote = emote.arm
+              armEmote.play(emoteClock, offset + (emoteClock - emote.started) * speed, speed)
+            }
+            return
+          }
           const action = mixer.clipAction(clip)
           action.timeScale = speed
           emote.action = action
@@ -377,17 +400,24 @@ export function createVRMFactory(glb, setupMaterial) {
     }
 
     const update = delta => {
+      emoteClock += delta
       elapsed += delta
       const should = rateCheck ? elapsed >= rate : true
       if (should) {
         if (avatarVisible) facial.update(elapsed, speaking)
+        armEmote?.restore()
         mixer.update(elapsed)
+        if (armEmote && !armEmote.update(emoteClock)) armEmote = null
         skeleton.bones.forEach(bone => bone.updateMatrixWorld())
         skeleton.update = THREE.Skeleton.prototype.update
-        if (!currentEmote) {
+        if (!currentEmote || currentEmote.masked) {
           updateLocomotion(delta)
         }
-        if (loco.gazeDir && distance < MAX_GAZE_DISTANCE && (currentEmote ? currentEmote.gaze : true)) {
+        if (
+          loco.gazeDir &&
+          distance < MAX_GAZE_DISTANCE &&
+          (!currentEmote || currentEmote.masked || currentEmote.gaze)
+        ) {
           // aimBone('chest', loco.gazeDir, delta, {
           //   minAngle: -90,
           //   maxAngle: 90,
@@ -1040,6 +1070,7 @@ export function createVRMFactory(glb, setupMaterial) {
         rateCheck = false
       },
       destroy() {
+        armEmote?.restore()
         if (hooks.isPreview) skeleton.dispose()
         const sourceMaterials = new Set()
         glb.scene.traverse(object => {

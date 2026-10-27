@@ -1,0 +1,15 @@
+{
+  "doors": {
+    "entrance-left": false,
+    "entrance-right": true,
+    "patio-left": true,
+    "bedroom-1": true,
+    "bedroom-2": true,
+    "bedroom-3": true
+  },
+  "lighting": {
+    "house-exterior": true,
+    "house-interior-lower": true,
+    "house-interior-upper": true
+  }
+}

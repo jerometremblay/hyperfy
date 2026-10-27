@@ -1,0 +1,64 @@
+{
+  "valid": true,
+  "target": "Hyperfy 0.16.0 fork",
+  "constructors": "Actual Prim, Group, Action, Light and Portal",
+  "geometry": "Actual Prim.mount geometry and YXZ transforms",
+  "extension": {
+    "width": 6,
+    "depth": 4.85,
+    "floorLevels": [
+      0.12,
+      3.3
+    ],
+    "roofRidge": 7.266666666666667
+  },
+  "connectedRoomOpenings": 18,
+  "clearPatioCollisionSamples": 15,
+  "checkedWindows": 5,
+  "totalDoors": 6,
+  "floorboards": {
+    "originalGroundBoards": 60,
+    "originalUpperRearBoards": 50,
+    "extendedGroundBoards": 20,
+    "extendedUpperBoards": 16,
+    "addedPlanks": 0,
+    "originalGridAndFinishes": "pass",
+    "continuousThroughFormerWall": "pass"
+  },
+  "patioDoor": {
+    "motion": "one panel slides behind one fixed panel",
+    "travelMetres": 1.365,
+    "translationAndColliderAlignment": "pass",
+    "zeroRotation": "pass",
+    "reversal": "pass",
+    "serverState": "pass",
+    "handles": {
+      "placement": "outer latch stile beside the left jamb",
+      "grips": 2,
+      "outerStile": "pass",
+      "bothFaces": "pass",
+      "movingPanelAttachment": "pass"
+    }
+  },
+  "lightingCircuits": "pass",
+  "addedLights": 3,
+  "idleClientCallbacks": 0,
+  "idleServerCallbacks": 0,
+  "primitives": 2253,
+  "physicsShapes": 92,
+  "bounds": {
+    "min": [
+      -9.959999999999999,
+      0,
+      -8.54489250807632
+    ],
+    "max": [
+      9.959999999999999,
+      11.264999999999999,
+      13.29
+    ]
+  },
+  "packageAssets": 2,
+  "packageSourceAndHashes": "pass",
+  "physXSimulation": "Not performed by this isolated geometry audit"
+}

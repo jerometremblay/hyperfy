@@ -1,0 +1,83 @@
+{
+  "valid": true,
+  "actualPhysXWasm": true,
+  "approximation": "Rear-half rolling blocker; complete collision shell when unoccupied",
+  "checks": [
+    "Half-seat insertion, solid desktop stop, stationary wheels, grounded root and safe standing exit",
+    "Native controller offset, floor contact and seat anchor align at identity, uniform, nonuniform and rotated scale"
+  ],
+  "measurements": [
+    {
+      "scenario": "real U desk",
+      "stoppedRoot": [
+        0,
+        -4.503130912603126e-8,
+        0.42999998815357693
+      ],
+      "seatOverlapUnderDesktop": 0.2649999881535769,
+      "desktopFrontEdge": 0.45,
+      "safeExit": [
+        0,
+        0.01,
+        -0.6200000118464231
+      ]
+    },
+    {
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "yaw": 0,
+      "controllerRadius": 0.2375,
+      "worldOffset": [
+        0,
+        0,
+        0.2375
+      ]
+    },
+    {
+      "scale": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "yaw": 0,
+      "controllerRadius": 0.35624999999999996,
+      "worldOffset": [
+        0,
+        0,
+        0.35624999999999996
+      ]
+    },
+    {
+      "scale": [
+        2,
+        1,
+        0.5
+      ],
+      "yaw": 0,
+      "controllerRadius": 0.475,
+      "worldOffset": [
+        0,
+        0,
+        0.11875
+      ]
+    },
+    {
+      "scale": [
+        2,
+        1,
+        0.5
+      ],
+      "yaw": 1.3089969389957472,
+      "controllerRadius": 0.475,
+      "worldOffset": [
+        0.11470369187182686,
+        0,
+        0.030734761605924338
+      ]
+    }
+  ],
+  "script": "asset://8ed45d83da1c883f42361d3b7cb47ec599efeae4f21318f9da61e5a61096829b.js"
+}

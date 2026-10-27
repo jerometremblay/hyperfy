@@ -1,0 +1,36 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "views": [
+    "Front",
+    "Rear",
+    "Left",
+    "Right",
+    "Plan",
+    "Exterior",
+    "Office roof",
+    "Original office roof",
+    "Left room",
+    "Center room",
+    "Right room",
+    "Extension front",
+    "Extension rear"
+  ],
+  "errors": [],
+  "inspectedViews": [
+    "Front",
+    "Rear",
+    "Left",
+    "Right",
+    "Plan",
+    "Exterior",
+    "Office roof",
+    "Original office roof",
+    "Left room",
+    "Center room",
+    "Right room",
+    "Extension front",
+    "Extension rear"
+  ],
+  "extensionRearRetainsExposedRoofAndRafters": true
+}

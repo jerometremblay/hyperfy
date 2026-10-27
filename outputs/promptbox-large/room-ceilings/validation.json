@@ -1,0 +1,311 @@
+{
+  "valid": true,
+  "source": "asset://7748f7d7c9a3c152bc95a514a8189665579448145833d37cbf561c9299b8f4e9.js",
+  "exactPackageSource": true,
+  "actualEngineGeometryAndTransforms": true,
+  "restoredCeilingPanels": 2,
+  "totalCeilingPanels": 4,
+  "originalRooms": 3,
+  "ceilingDepth": 3.15,
+  "extensionCeilingRange": [
+    7.35,
+    10.5
+  ],
+  "exposedExtensionRearRange": [
+    10.5,
+    12.35
+  ],
+  "ceilings": [
+    {
+      "kind": "prim",
+      "id": "rooms:bedroom-ceiling:647",
+      "type": "box",
+      "color": "#93734e",
+      "roughness": 0.82,
+      "metalness": 0,
+      "physics": null,
+      "size": [
+        5.83,
+        0.14,
+        3.15
+      ],
+      "position": [
+        -5.915,
+        5.98,
+        5.775
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "castShadow": true,
+      "receiveShadow": true
+    },
+    {
+      "kind": "prim",
+      "id": "rooms:bedroom-ceiling:657",
+      "type": "box",
+      "color": "#93734e",
+      "roughness": 0.82,
+      "metalness": 0,
+      "physics": null,
+      "size": [
+        6,
+        0.14,
+        3.15
+      ],
+      "position": [
+        0,
+        5.98,
+        5.775
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "castShadow": true,
+      "receiveShadow": true
+    },
+    {
+      "kind": "prim",
+      "id": "rooms:bedroom-ceiling:667",
+      "type": "box",
+      "color": "#93734e",
+      "roughness": 0.82,
+      "metalness": 0,
+      "physics": null,
+      "size": [
+        5.83,
+        0.14,
+        3.15
+      ],
+      "position": [
+        5.915,
+        5.98,
+        5.775
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "castShadow": true,
+      "receiveShadow": true
+    },
+    {
+      "kind": "prim",
+      "id": "extension-floor:bedroom-ceiling:2008",
+      "type": "box",
+      "color": "#93734e",
+      "roughness": 0.82,
+      "metalness": 0,
+      "physics": null,
+      "size": [
+        5.7,
+        0.14,
+        3.15
+      ],
+      "position": [
+        0,
+        5.98,
+        8.924999999999999
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "castShadow": true,
+      "receiveShadow": true
+    }
+  ],
+  "colliders": [
+    {
+      "kind": "prim",
+      "id": "physics:room-ceiling-1:92",
+      "type": "box",
+      "size": [
+        5.83,
+        0.14,
+        3.15
+      ],
+      "position": [
+        -5.915,
+        5.98,
+        5.775
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "opacity": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "physics": "static",
+      "staticFriction": 0.8,
+      "dynamicFriction": 0.65,
+      "restitution": 0
+    },
+    {
+      "kind": "prim",
+      "id": "physics:room-ceiling-2:93",
+      "type": "box",
+      "size": [
+        6,
+        0.14,
+        3.15
+      ],
+      "position": [
+        0,
+        5.98,
+        5.775
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "opacity": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "physics": "static",
+      "staticFriction": 0.8,
+      "dynamicFriction": 0.65,
+      "restitution": 0
+    },
+    {
+      "kind": "prim",
+      "id": "physics:room-ceiling-3:94",
+      "type": "box",
+      "size": [
+        5.83,
+        0.14,
+        3.15
+      ],
+      "position": [
+        5.915,
+        5.98,
+        5.775
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "opacity": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "physics": "static",
+      "staticFriction": 0.8,
+      "dynamicFriction": 0.65,
+      "restitution": 0
+    },
+    {
+      "kind": "prim",
+      "id": "physics:extension-front-ceiling:95",
+      "type": "box",
+      "size": [
+        5.7,
+        0.14,
+        3.15
+      ],
+      "position": [
+        0,
+        5.98,
+        8.924999999999999
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "opacity": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "physics": "static",
+      "staticFriction": 0.8,
+      "dynamicFriction": 0.65,
+      "restitution": 0
+    }
+  ],
+  "coverage": [
+    {
+      "origin": [
+        -5.5,
+        4.7,
+        5.3
+      ],
+      "ceilingY": 5.91
+    },
+    {
+      "origin": [
+        1.4,
+        4.7,
+        5.3
+      ],
+      "ceilingY": 5.91
+    },
+    {
+      "origin": [
+        5.5,
+        4.7,
+        5.3
+      ],
+      "ceilingY": 5.91
+    },
+    {
+      "origin": [
+        1.4,
+        4.7,
+        8.9
+      ],
+      "ceilingY": 5.91
+    },
+    {
+      "origin": [
+        1.4,
+        4.7,
+        10.35
+      ],
+      "ceilingY": 5.91
+    },
+    {
+      "origin": [
+        0,
+        4.7,
+        10.7
+      ],
+      "roofY": 7.126666346655952,
+      "surface": "extension-roof:roof-deck:2178"
+    },
+    {
+      "origin": [
+        1.4,
+        4.7,
+        11.4
+      ],
+      "roofY": 6.535555354224312,
+      "surface": "extension-roof:roof-deck:2180"
+    },
+    {
+      "origin": [
+        -1.4,
+        4.7,
+        11.7
+      ],
+      "roofY": 6.535555354224311,
+      "surface": "extension-roof:roof-deck:2178"
+    }
+  ],
+  "existingGeometryAndPhysicalShapesPreserved": true,
+  "retainedRafters": 18,
+  "roofDecks": 8,
+  "physicsShapes": 96,
+  "stateRestored": true,
+  "idleClientCallbacks": 0,
+  "idleServerCallbacks": 0,
+  "upstairsFixtureBelowCeiling": true
+}

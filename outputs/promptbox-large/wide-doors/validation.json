@@ -1,0 +1,490 @@
+{
+  "valid": true,
+  "source": "asset://920e03d8b0f33563caf1bd6f550e0349464360f55997fc2764d83968e9ce67d9.js",
+  "exactPackageSource": true,
+  "actualEngineGeometryAndTransforms": true,
+  "hingedDoors": 5,
+  "openingDegrees": 175,
+  "existingGeometryAndPhysicalShapesPreserved": true,
+  "closed": [
+    {
+      "id": "bedroom-1",
+      "originalClosedGeometryPreserved": true
+    },
+    {
+      "id": "bedroom-2",
+      "originalClosedGeometryPreserved": true
+    },
+    {
+      "id": "bedroom-3",
+      "originalClosedGeometryPreserved": true
+    },
+    {
+      "id": "entrance-left",
+      "originalClosedGeometryPreserved": true
+    },
+    {
+      "id": "entrance-right",
+      "originalClosedGeometryPreserved": true
+    },
+    {
+      "id": "patio-left",
+      "originalClosedGeometryPreserved": true
+    }
+  ],
+  "doors": [
+    {
+      "id": "bedroom-1",
+      "signedAngle": -3.0543261909900763,
+      "hingeOffsetZ": 0.2
+    },
+    {
+      "id": "bedroom-2",
+      "signedAngle": -3.0543261909900763,
+      "hingeOffsetZ": 0.2
+    },
+    {
+      "id": "bedroom-3",
+      "signedAngle": -3.0543261909900763,
+      "hingeOffsetZ": 0.2
+    },
+    {
+      "id": "entrance-left",
+      "signedAngle": 3.0543261909900763,
+      "hingeOffsetZ": -0.2
+    },
+    {
+      "id": "entrance-right",
+      "signedAngle": -3.0543261909900763,
+      "hingeOffsetZ": -0.2
+    }
+  ],
+  "sweeps": [
+    {
+      "id": "bedroom-1",
+      "wallClearanceVerifiedAtEveryDegree": true,
+      "samples": [
+        {
+          "degrees": 0,
+          "centre": [
+            -5.9,
+            4.390000000000001,
+            4.2
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "degrees": 35,
+          "centre": [
+            -5.877517170142405,
+            4.390000000000001,
+            4.5286935736812355
+          ],
+          "rotation": [
+            0,
+            -0.6108652381980153,
+            0
+          ]
+        },
+        {
+          "degrees": 70,
+          "centre": [
+            -6.047631202746728,
+            4.390000000000001,
+            4.81083920793568
+          ],
+          "rotation": [
+            0,
+            -1.2217304763960306,
+            0
+          ]
+        },
+        {
+          "degrees": 105,
+          "centre": [
+            -6.348812547744473,
+            4.390000000000001,
+            4.9443859804279295
+          ],
+          "rotation": [
+            0,
+            -1.8325957145940461,
+            0
+          ]
+        },
+        {
+          "degrees": 140,
+          "centre": [
+            -6.67212514405337,
+            4.390000000000001,
+            4.881030569563931
+          ],
+          "rotation": [
+            0,
+            -2.443460952792061,
+            0
+          ]
+        },
+        {
+          "degrees": 175,
+          "centre": [
+            -6.900628147477258,
+            4.390000000000001,
+            4.643688368419655
+          ],
+          "rotation": [
+            0,
+            -3.0543261909900763,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bedroom-2",
+      "wallClearanceVerifiedAtEveryDegree": true,
+      "samples": [
+        {
+          "degrees": 0,
+          "centre": [
+            0,
+            4.390000000000001,
+            4.2
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "degrees": 35,
+          "centre": [
+            0.022482829857595005,
+            4.390000000000001,
+            4.5286935736812355
+          ],
+          "rotation": [
+            0,
+            -0.6108652381980153,
+            0
+          ]
+        },
+        {
+          "degrees": 70,
+          "centre": [
+            -0.14763120274672722,
+            4.390000000000001,
+            4.81083920793568
+          ],
+          "rotation": [
+            0,
+            -1.2217304763960306,
+            0
+          ]
+        },
+        {
+          "degrees": 105,
+          "centre": [
+            -0.4488125477444719,
+            4.390000000000001,
+            4.9443859804279295
+          ],
+          "rotation": [
+            0,
+            -1.8325957145940461,
+            0
+          ]
+        },
+        {
+          "degrees": 140,
+          "centre": [
+            -0.772125144053371,
+            4.390000000000001,
+            4.881030569563931
+          ],
+          "rotation": [
+            0,
+            -2.443460952792061,
+            0
+          ]
+        },
+        {
+          "degrees": 175,
+          "centre": [
+            -1.0006281474772585,
+            4.390000000000001,
+            4.643688368419655
+          ],
+          "rotation": [
+            0,
+            -3.0543261909900763,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bedroom-3",
+      "wallClearanceVerifiedAtEveryDegree": true,
+      "samples": [
+        {
+          "degrees": 0,
+          "centre": [
+            5.9,
+            4.390000000000001,
+            4.2
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "degrees": 35,
+          "centre": [
+            5.9224828298575956,
+            4.390000000000001,
+            4.5286935736812355
+          ],
+          "rotation": [
+            0,
+            -0.6108652381980153,
+            0
+          ]
+        },
+        {
+          "degrees": 70,
+          "centre": [
+            5.752368797253273,
+            4.390000000000001,
+            4.81083920793568
+          ],
+          "rotation": [
+            0,
+            -1.2217304763960306,
+            0
+          ]
+        },
+        {
+          "degrees": 105,
+          "centre": [
+            5.451187452255528,
+            4.390000000000001,
+            4.9443859804279295
+          ],
+          "rotation": [
+            0,
+            -1.8325957145940461,
+            0
+          ]
+        },
+        {
+          "degrees": 140,
+          "centre": [
+            5.12787485594663,
+            4.390000000000001,
+            4.881030569563931
+          ],
+          "rotation": [
+            0,
+            -2.443460952792061,
+            0
+          ]
+        },
+        {
+          "degrees": 175,
+          "centre": [
+            4.8993718525227425,
+            4.390000000000001,
+            4.643688368419655
+          ],
+          "rotation": [
+            0,
+            -3.0543261909900763,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "entrance-left",
+      "wallClearanceVerifiedAtEveryDegree": true,
+      "samples": [
+        {
+          "degrees": 0,
+          "centre": [
+            -0.5999999999999999,
+            1.39,
+            -7.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "degrees": 35,
+          "centre": [
+            -0.5865595679279553,
+            1.39,
+            -7.857372395498787
+          ],
+          "rotation": [
+            0,
+            0.6108652381980153,
+            0
+          ]
+        },
+        {
+          "degrees": 70,
+          "centre": [
+            -0.7805301955804437,
+            1.39,
+            -8.157823838974975
+          ],
+          "rotation": [
+            0,
+            1.2217304763960306,
+            0
+          ]
+        },
+        {
+          "degrees": 105,
+          "centre": [
+            -1.111753499999598,
+            1.39,
+            -8.292682271742384
+          ],
+          "rotation": [
+            0,
+            1.8325957145940461,
+            0
+          ]
+        },
+        {
+          "degrees": 140,
+          "centre": [
+            -1.4604273662093197,
+            1.39,
+            -8.21316995004826
+          ],
+          "rotation": [
+            0,
+            2.443460952792061,
+            0
+          ]
+        },
+        {
+          "degrees": 175,
+          "centre": [
+            -1.7004378823818456,
+            1.39,
+            -7.948046155557038
+          ],
+          "rotation": [
+            0,
+            3.0543261909900763,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "entrance-right",
+      "wallClearanceVerifiedAtEveryDegree": true,
+      "samples": [
+        {
+          "degrees": 0,
+          "centre": [
+            0.5999999999999999,
+            1.39,
+            -7.5
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "degrees": 35,
+          "centre": [
+            0.5865595679279553,
+            1.39,
+            -7.857372395498787
+          ],
+          "rotation": [
+            0,
+            -0.6108652381980153,
+            0
+          ]
+        },
+        {
+          "degrees": 70,
+          "centre": [
+            0.7805301955804437,
+            1.39,
+            -8.157823838974975
+          ],
+          "rotation": [
+            0,
+            -1.2217304763960306,
+            0
+          ]
+        },
+        {
+          "degrees": 105,
+          "centre": [
+            1.111753499999598,
+            1.39,
+            -8.292682271742384
+          ],
+          "rotation": [
+            0,
+            -1.8325957145940461,
+            0
+          ]
+        },
+        {
+          "degrees": 140,
+          "centre": [
+            1.4604273662093197,
+            1.39,
+            -8.21316995004826
+          ],
+          "rotation": [
+            0,
+            -2.443460952792061,
+            0
+          ]
+        },
+        {
+          "degrees": 175,
+          "centre": [
+            1.7004378823818456,
+            1.39,
+            -7.948046155557038
+          ],
+          "rotation": [
+            0,
+            -3.0543261909900763,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "patioSlidingUnchanged": true,
+  "wallsClearThroughoutSweep": true,
+  "physicsShapes": 96,
+  "stateRestored": true,
+  "idleClientCallbacks": 0,
+  "idleServerCallbacks": 0
+}

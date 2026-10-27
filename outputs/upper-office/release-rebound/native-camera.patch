@@ -1,0 +1,12 @@
+--- a/src/core/entities/PlayerLocal.js
++++ b/src/core/entities/PlayerLocal.js
+@@ -1338,6 +1338,9 @@
+       this.base.position.copy(anchorPosition)
+       this.base.quaternion.copy(anchorQuaternion)
+       this.controller.teleport(this.base.position)
++      // Camera focus reads avatar bone matrices. Commit the current seat pose
++      // first so the camera and rendered avatar follow the same anchor frame.
++      this.base.clean()
+     }
+     if (this.poseEditorActive) {
+       this.seatedEyeOffset = null

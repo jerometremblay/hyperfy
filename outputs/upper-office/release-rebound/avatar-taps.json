@@ -1,0 +1,314 @@
+{
+  "valid": false,
+  "actualPhysXWasm": true,
+  "actualScriptSandbox": true,
+  "actualPlayerLateUpdateAndCamera": true,
+  "checks": [
+    "24 short-tap cases at 30/60/120 FPS and varying delay: no rebound, no stop drift, exact eventual consistency"
+  ],
+  "metrics": {
+    "shortTaps": [
+      {
+        "fps": 30,
+        "tapMs": 33.333333333333336,
+        "delaysMs": [
+          0
+        ],
+        "peakDistance": 0.0416666679084301,
+        "finalDistance": 0.0416666679084301,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 100,
+        "delaysMs": [
+          0
+        ],
+        "peakDistance": 0.1250000037252903,
+        "finalDistance": 0.1250000037252903,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 33.333333333333336,
+        "delaysMs": [
+          80
+        ],
+        "peakDistance": 0.0416666679084301,
+        "finalDistance": 0.0416666679084301,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 100,
+        "delaysMs": [
+          80
+        ],
+        "peakDistance": 0.1250000037252903,
+        "finalDistance": 0.1250000037252903,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 33.333333333333336,
+        "delaysMs": [
+          95,
+          65
+        ],
+        "peakDistance": 0.0416666679084301,
+        "finalDistance": 0.0416666679084301,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 100,
+        "delaysMs": [
+          95,
+          65
+        ],
+        "peakDistance": 0.1250000037252903,
+        "finalDistance": 0.1250000037252903,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 33.333333333333336,
+        "delaysMs": [
+          65,
+          95
+        ],
+        "peakDistance": 0.0416666679084301,
+        "finalDistance": 0.0416666679084301,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 30,
+        "tapMs": 100,
+        "delaysMs": [
+          65,
+          95
+        ],
+        "peakDistance": 0.1250000037252903,
+        "finalDistance": 0.1250000037252903,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 16.666666666666668,
+        "delaysMs": [
+          0
+        ],
+        "peakDistance": 0.02083333395421505,
+        "finalDistance": 0.02083333395421505,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 50,
+        "delaysMs": [
+          0
+        ],
+        "peakDistance": 0.06250000186264515,
+        "finalDistance": 0.06250000186264515,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 16.666666666666668,
+        "delaysMs": [
+          80
+        ],
+        "peakDistance": 0.02083333395421505,
+        "finalDistance": 0.02083333395421505,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 50,
+        "delaysMs": [
+          80
+        ],
+        "peakDistance": 0.06250000186264515,
+        "finalDistance": 0.06250000186264515,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 16.666666666666668,
+        "delaysMs": [
+          95,
+          65
+        ],
+        "peakDistance": 0.02083333395421505,
+        "finalDistance": 0.02083333395421505,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 50,
+        "delaysMs": [
+          95,
+          65
+        ],
+        "peakDistance": 0.06250000186264515,
+        "finalDistance": 0.06250000186264515,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 16.666666666666668,
+        "delaysMs": [
+          65,
+          95
+        ],
+        "peakDistance": 0.02083333395421505,
+        "finalDistance": 0.02083333395421505,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 60,
+        "tapMs": 50,
+        "delaysMs": [
+          65,
+          95
+        ],
+        "peakDistance": 0.06250000186264515,
+        "finalDistance": 0.06250000186264515,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 8.333333333333334,
+        "delaysMs": [
+          0
+        ],
+        "peakDistance": 0.010416666977107525,
+        "finalDistance": 0.010416666977107525,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 25,
+        "delaysMs": [
+          0
+        ],
+        "peakDistance": 0.031250000931322575,
+        "finalDistance": 0.031250000931322575,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 8.333333333333334,
+        "delaysMs": [
+          80
+        ],
+        "peakDistance": 0.010416666977107525,
+        "finalDistance": 0.010416666977107525,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 25,
+        "delaysMs": [
+          80
+        ],
+        "peakDistance": 0.031250000931322575,
+        "finalDistance": 0.031250000931322575,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 8.333333333333334,
+        "delaysMs": [
+          95,
+          65
+        ],
+        "peakDistance": 0.010416666977107525,
+        "finalDistance": 0.010416666977107525,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 25,
+        "delaysMs": [
+          95,
+          65
+        ],
+        "peakDistance": 0.031250000931322575,
+        "finalDistance": 0.031250000931322575,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 8.333333333333334,
+        "delaysMs": [
+          65,
+          95
+        ],
+        "peakDistance": 0.010416666977107525,
+        "finalDistance": 0.010416666977107525,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      },
+      {
+        "fps": 120,
+        "tapMs": 25,
+        "delaysMs": [
+          65,
+          95
+        ],
+        "peakDistance": 0.031250000931322575,
+        "finalDistance": 0.031250000931322575,
+        "backwardsMetres": 0,
+        "stopDrift": 0,
+        "serverError": 0
+      }
+    ]
+  },
+  "script": "asset://3855a4a5672eef3c5fdb2ac0d4730f25af781295abb2705fa5374c7323dc442a.js"
+}

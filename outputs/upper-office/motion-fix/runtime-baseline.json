@@ -1,0 +1,9 @@
+{
+  "valid": false,
+  "actualPhysXWasm": true,
+  "actualPlayerLateUpdateAndCamera": true,
+  "checks": [
+    "remote observers keep physical chair collision and smooth server pose playback"
+  ],
+  "metrics": {}
+}

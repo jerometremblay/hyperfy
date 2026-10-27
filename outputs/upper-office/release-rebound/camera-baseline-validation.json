@@ -1,0 +1,168 @@
+{
+  "valid": true,
+  "baseline": true,
+  "actualPhysXWasm": true,
+  "actualPlayerLateUpdate": true,
+  "actualNodeAndAvatarCommits": true,
+  "playerSourceSha256": "e2885e7bf26ed689c10959712c5c2b22d8280fda80dd78b278cf42d8c836cb69",
+  "checks": [
+    "Third-person starts and stops with the chair at 30/60/120 FPS",
+    "First-person starts and stops with the chair at 30/60/120 FPS",
+    "Scaled rotating seat and customized avatar offset match the rendered head",
+    "Initial seated eye capture uses the posed head; standing focus and eye cache reset remain native"
+  ],
+  "cases": [
+    {
+      "firstPerson": false,
+      "fps": 30,
+      "tapFrames": 1,
+      "startError": 0.04166666790869655,
+      "maximumFocusError": 0.04166666790869655,
+      "releaseDrift": 0.04166666790869655
+    },
+    {
+      "firstPerson": false,
+      "fps": 30,
+      "tapFrames": 3,
+      "startError": 0.04166666790869655,
+      "maximumFocusError": 0.04166666790869655,
+      "releaseDrift": 0.041666667908440785
+    },
+    {
+      "firstPerson": false,
+      "fps": 30,
+      "tapFrames": 10,
+      "startError": 0.04166666790869655,
+      "maximumFocusError": 0.04166666790869655,
+      "releaseDrift": 0.04166666790847273
+    },
+    {
+      "firstPerson": false,
+      "fps": 60,
+      "tapFrames": 1,
+      "startError": 0.020833333954300315,
+      "maximumFocusError": 0.020833333954300315,
+      "releaseDrift": 0.020833333954300315
+    },
+    {
+      "firstPerson": false,
+      "fps": 60,
+      "tapFrames": 3,
+      "startError": 0.020833333954300315,
+      "maximumFocusError": 0.020833333954300315,
+      "releaseDrift": 0.020833333954236366
+    },
+    {
+      "firstPerson": false,
+      "fps": 60,
+      "tapFrames": 10,
+      "startError": 0.020833333954300315,
+      "maximumFocusError": 0.020833333954300315,
+      "releaseDrift": 0.020833333954300315
+    },
+    {
+      "firstPerson": false,
+      "fps": 120,
+      "tapFrames": 1,
+      "startError": 0.010416666977150157,
+      "maximumFocusError": 0.010416666977150157,
+      "releaseDrift": 0.010416666977150157
+    },
+    {
+      "firstPerson": false,
+      "fps": 120,
+      "tapFrames": 3,
+      "startError": 0.010416666977150157,
+      "maximumFocusError": 0.010416666977278055,
+      "releaseDrift": 0.010416666977278055
+    },
+    {
+      "firstPerson": false,
+      "fps": 120,
+      "tapFrames": 10,
+      "startError": 0.010416666977150157,
+      "maximumFocusError": 0.010416666977278055,
+      "releaseDrift": 0.010416666977150185
+    },
+    {
+      "firstPerson": true,
+      "fps": 30,
+      "tapFrames": 1,
+      "startError": 0,
+      "maximumFocusError": 0,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 30,
+      "tapFrames": 3,
+      "startError": 0,
+      "maximumFocusError": 1.1102230246251565e-16,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 30,
+      "tapFrames": 10,
+      "startError": 0,
+      "maximumFocusError": 1.1102230246251565e-16,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 60,
+      "tapFrames": 1,
+      "startError": 0,
+      "maximumFocusError": 0,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 60,
+      "tapFrames": 3,
+      "startError": 0,
+      "maximumFocusError": 0,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 60,
+      "tapFrames": 10,
+      "startError": 0,
+      "maximumFocusError": 1.1102230246251565e-16,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 120,
+      "tapFrames": 1,
+      "startError": 0,
+      "maximumFocusError": 0,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 120,
+      "tapFrames": 3,
+      "startError": 0,
+      "maximumFocusError": 0,
+      "releaseDrift": 0
+    },
+    {
+      "firstPerson": true,
+      "fps": 120,
+      "tapFrames": 10,
+      "startError": 0,
+      "maximumFocusError": 1.1102230246251565e-16,
+      "releaseDrift": 0
+    },
+    {
+      "kind": "scaled-turn",
+      "maximumHeadError": 0.023826253807159224
+    },
+    {
+      "kind": "initial-sit-and-stand",
+      "initialEyeError": 0.9770619130216396
+    }
+  ]
+}

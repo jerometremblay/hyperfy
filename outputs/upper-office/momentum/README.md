@@ -1,0 +1,13 @@
+The executive chair now accelerates into rolling and retains momentum when the rider releases WASD or the arrow keys. Its existing maximum speed is 1.25 m/s. It reaches that speed in 0.25 seconds and, from full speed, coasts forward for 0.5 seconds over 31.25 cm. Short taps produce shorter coasts. An opposite push first brakes the existing motion before reversing.
+
+Q/E rotation also accelerates and has a short angular coast (about 9 degrees from full turning speed). Rolling velocity stays in world space, so rotating an unpowered chair does not bend its travel path. Casters continue swivelling and rolling from actual collision-resolved movement. Space stops the ride immediately.
+
+The existing native controller, floor anchoring, half-chair desk clearance, seat occupancy and rider-owned poses are retained. Collision removes momentum into the obstruction while preserving sliding along it. The native rotation sweep now rejects discrepancies above 10 micrometres; its previous 1 mm tolerance allowed slow initial turns to creep at a desk. Pose updates continue throughout the coast, send the exact settled pose and stop their callbacks when idle. The server relays poses without independently simulating motion.
+
+Fourteen tests run the actual fork script sandbox, PhysX WASM and player seat transforms. They cover 30/60/120 FPS, variable and 80 ms frames, both camera views, reversals, diagonal speed, repeated starts, scaled rotations, desk insertion, physical wall stops, wheel motion, network jitter, observers, eventual consistency, occupancy, exit, destruction and builder grounding. Geometry and caster tests also pass.
+
+The bundled generic preflight mock cannot run the existing app.configure API. The native-preflight copy retains its syntax, package hash and ZIP checks and replaces that mock with the existing adapter's actual fork constructors. Source, HYP and archive all pass that preflight. The exact-package preview is regenerated; furniture geometry is unchanged.
+
+Deployment uses the configured online-world Agent API with a fresh expected-version check. Chair version 12 is verified at asset://60bd53e38133105062448c3faee1e4aa1f801c0262ff707570f51ad6c28cd64a.js. The current ride placement was saved before the seat reset. All other blueprints and placements are unchanged. The fresh server profiler records zero movement callbacks and zero idle script CPU; a live browser profiler report was unavailable. The captured world repository's chair script matches the deployed bytes.
+
+Evidence: validation.json, rider-validation.json, deployment.json, ../casters/validation.json and ../validation.json.
