@@ -56,6 +56,12 @@ export class ClientGraphics extends System {
     this.portals = new Set()
     this.renderingPortal = false
     this.portalAvatars = new PortalAvatars(world)
+    this.lightVisibility = new Map()
+    this.lightCompilation = null
+    this.lightPreparations = []
+    this.lightPrograms = new WeakSet()
+    this.lightProgramsInitialized = false
+    this.lightDraws = new Set()
   }
 
   async init({ viewport }) {
@@ -150,17 +156,19 @@ export class ClientGraphics extends System {
     this.portalAvatars.update()
     const restoreCamera = this.portalAvatars.mapCamera()
     this.renderer.toneMappingExposure = this.world.environment?.renderExposure ?? 1
-    const disabled = this.renderer.shadowMap.enabled
-      ? limitLightShadows(
-          this.world.stage.scene,
-          this.world.camera,
-          this.renderer.capabilities.maxTextures,
-          this.world.environment?.csm?.lights
-        )
-      : []
+    let disabled = []
     const toneMapping = this.renderer.toneMapping
     const autoClear = this.renderer.autoClear
     try {
+      this.updateLightVisibility()
+      disabled = this.renderer.shadowMap.enabled
+        ? limitLightShadows(
+            this.world.stage.scene,
+            this.world.camera,
+            this.renderer.capabilities.maxTextures,
+            this.world.environment?.csm?.lights
+          )
+        : []
       if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
         // The composer disables autoClear. XR must clear color/depth for the
         // current eye pose, including when Three uses an internal output target.
@@ -182,6 +190,339 @@ export class ClientGraphics extends System {
       this.checkXRDimensions()
     }
     this.emit('render')
+  }
+
+  setLightVisibility(light, visible) {
+    if (!this.renderer?.compileAsync || !this.renderer.extensions.has('KHR_parallel_shader_compile')) {
+      light.visible = visible
+      return
+    }
+    if (light.visible === visible) this.lightVisibility.delete(light)
+    else this.lightVisibility.set(light, visible)
+  }
+
+  updateLightVisibility() {
+    for (const preparation of this.lightPreparations) {
+      if (--preparation.frames === 0) {
+        for (const material of preparation.materials) material.dispose()
+        preparation.target?.dispose()
+      }
+    }
+    this.lightPreparations = this.lightPreparations.filter(preparation => preparation.frames > 0)
+    for (const light of this.lightVisibility.keys()) {
+      if (!light.parent) this.lightVisibility.delete(light)
+    }
+    const direct = this.renderer.xr.isPresenting || !this.usePostprocessing
+    const compilation = this.lightCompilation
+    if (compilation) {
+      const programs = new Set(this.renderer.info.programs)
+      if (!compilation.ready || !compilation.programs.every(program => !programs.has(program) || program.isReady()))
+        return
+      this.lightCompilation = null
+      // Apply the entire prepared configuration. Applying only the requests
+      // that survived a rapid toggle would introduce another, uncompiled count.
+      if (
+        compilation.direct === direct &&
+        compilation.changes.size === this.lightVisibility.size &&
+        [...compilation.changes].every(([light, visible]) => this.lightVisibility.get(light) === visible)
+      ) {
+        // Initialize shader reflection before drawing. Interleaving first-use
+        // GL queries with draws can stall even after parallel linking completes.
+        if (!compilation.initialized) {
+          for (const program of compilation.programs) {
+            if (programs.has(program)) program.getUniforms()
+          }
+          compilation.initialized = true
+        }
+        if (compilation.draws.length) {
+          this.lightCompilation = compilation
+          try {
+            this.prepareLightDraw(compilation)
+          } catch (error) {
+            console.warn('[graphics] light pipeline preparation failed', error)
+          }
+          return
+        }
+        for (const [light, visible] of compilation.changes) light.visible = visible
+        this.lightVisibility.clear()
+        // Shadow rendering uses the preceding frame's light state. Keep its
+        // prepared materials until the new configuration has rendered twice.
+        this.lightPreparations.push({
+          frames: 3,
+          materials: compilation.materials,
+          target: compilation.shadowTarget,
+        })
+      } else {
+        for (const material of compilation.materials) material.dispose()
+        compilation.shadowTarget?.dispose()
+      }
+    }
+    if (!this.lightVisibility.size) return
+
+    const renderer = this.renderer
+    const scene = this.world.stage.scene
+    const camera = this.world.camera
+    if (!this.lightProgramsInitialized) {
+      for (const program of renderer.info.programs) this.lightPrograms.add(program)
+      this.lightProgramsInitialized = true
+    }
+    const pending = {
+      changes: new Map(this.lightVisibility),
+      direct,
+      ready: false,
+      programs: [],
+      materials: [],
+      draws: [],
+      drawKeys: new Set(),
+    }
+    this.lightCompilation = pending
+    const visibility = [...pending.changes.keys()].map(light => [light, light.visible])
+    const target = renderer.getRenderTarget()
+    const cubeFace = renderer.getActiveCubeFace()
+    const mipLevel = renderer.getActiveMipmapLevel()
+    const toneMapping = renderer.toneMapping
+    let disabled = []
+    const materials = []
+    try {
+      for (const [light, visible] of pending.changes) light.visible = visible
+      disabled = renderer.shadowMap.enabled
+        ? limitLightShadows(scene, camera, renderer.capabilities.maxTextures, this.world.environment?.csm?.lights)
+        : []
+      renderer.setRenderTarget(direct ? null : this.composer.inputBuffer)
+      renderer.toneMapping = direct ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping
+      const preparations = [renderer.compileAsync(scene, camera)]
+      this.collectLightDraws(pending, direct)
+      if (direct && this.portals.size) {
+        // Portals render linear HDR even when the main view uses direct output.
+        renderer.setRenderTarget(this.composer.inputBuffer)
+        renderer.toneMapping = THREE.NoToneMapping
+        preparations.push(renderer.compileAsync(scene, camera))
+        this.collectLightDraws(pending, false)
+      }
+      if (renderer.shadowMap.enabled) {
+        // compileAsync visits scene materials, so prepare the depth/distance
+        // variants too. These mirror Three's shadow material properties.
+        const casters = []
+        scene.traverse(object => {
+          if (object.material && (object.isMesh || object.isPoints || object.isLine)) {
+            materials.push([object, object.material])
+            if (object.castShadow) casters.push([object, object.material])
+            object.material = null
+          }
+        })
+        const shadowTypes = new Set()
+        scene.traverseVisible(object => {
+          if (object.isLight && object.castShadow) shadowTypes.add(object.isPointLight ? 'distance' : 'depth')
+        })
+        renderer.setRenderTarget(this.composer.inputBuffer)
+        renderer.toneMapping = THREE.NoToneMapping
+        for (const type of casters.length ? shadowTypes : []) {
+          const cache = new Map()
+          const shadowMaterial = source => {
+            if (cache.has(source)) return cache.get(source)
+            const material = type === 'distance' ? new THREE.MeshDistanceMaterial() : new THREE.MeshDepthMaterial()
+            material.side =
+              source.shadowSide ??
+              (renderer.shadowMap.type === THREE.VSMShadowMap
+                ? source.side
+                : source.side === THREE.DoubleSide
+                  ? THREE.DoubleSide
+                  : source.side === THREE.FrontSide
+                    ? THREE.BackSide
+                    : THREE.FrontSide)
+            for (const key of [
+              'visible',
+              'wireframe',
+              'alphaMap',
+              'map',
+              'clipShadows',
+              'clippingPlanes',
+              'clipIntersection',
+              'displacementMap',
+              'displacementScale',
+              'displacementBias',
+            ])
+              material[key] = source[key]
+            material.alphaTest = source.alphaToCoverage ? 0.5 : source.alphaTest
+            cache.set(source, material)
+            pending.materials.push(material)
+            return material
+          }
+          for (const [object, source] of casters) {
+            const custom = type === 'distance' ? object.customDistanceMaterial : object.customDepthMaterial
+            object.material = custom || (Array.isArray(source) ? source.map(shadowMaterial) : shadowMaterial(source))
+          }
+          preparations.push(renderer.compileAsync(scene, camera))
+          let shadowLight
+          scene.traverseVisible(object => {
+            if (object.isLight && object.castShadow && (object.isPointLight ? 'distance' : 'depth') === type) {
+              shadowLight = object
+            }
+          })
+          this.collectLightDraws(pending, false, shadowLight)
+        }
+        for (const [object, material] of materials) object.material = material
+      }
+      for (const [light, visible] of visibility) light.visible = visible
+      for (const light of disabled) light.castShadow = true
+      disabled = renderer.shadowMap.enabled
+        ? limitLightShadows(scene, camera, renderer.capabilities.maxTextures, this.world.environment?.csm?.lights)
+        : []
+      renderer.setRenderTarget(direct ? null : this.composer.inputBuffer)
+      renderer.toneMapping = direct ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping
+      // compile mutates the scene's cached light state. Restore it before the
+      // old configuration renders its shadows while preparation is pending.
+      renderer.compile(scene, camera)
+      // Three polls material.currentProgram, which switches back to the old
+      // program while frames continue. Retain the actual programs being warmed.
+      pending.programs = [...renderer.info.programs]
+      Promise.all(preparations).then(
+        () => {
+          pending.ready = true
+        },
+        error => {
+          console.warn('[graphics] light shader preparation failed', error)
+          pending.programs = []
+          pending.draws = []
+          pending.ready = true
+        }
+      )
+    } catch (error) {
+      console.warn('[graphics] light shader preparation failed', error)
+      pending.programs = []
+      pending.draws = []
+      pending.ready = true
+    } finally {
+      for (const [object, material] of materials) object.material = material
+      for (const [light, visible] of visibility) light.visible = visible
+      for (const light of disabled) light.castShadow = true
+      renderer.setRenderTarget(target, cubeFace, mipLevel)
+      renderer.toneMapping = toneMapping
+    }
+  }
+
+  collectLightDraws(preparation, direct, shadowLight) {
+    const renderer = this.renderer
+    if (!renderer.renderBufferDirect) return
+    this.world.stage.scene.traverse(object => {
+      if (!object.material || !object.geometry || (object.isInstancedMesh && !object.count)) return
+      const geometry = object.geometry
+      const layout = Object.entries(geometry.attributes)
+        .map(([name, attribute]) =>
+          [
+            name,
+            attribute.itemSize,
+            attribute.normalized,
+            attribute.array?.constructor.name,
+            attribute.data?.stride,
+            attribute.offset,
+            attribute.gpuType,
+          ].join(':')
+        )
+        .join(',')
+      for (const [index, material] of [object.material].flat().entries()) {
+        const program = renderer.properties.get(material).currentProgram
+        if (!program) continue
+        const sides =
+          material.transparent && material.side === THREE.DoubleSide && !material.forceSinglePass
+            ? [THREE.BackSide, THREE.FrontSide]
+            : [material.side]
+        for (const side of sides) {
+          const key = [
+            program.id,
+            direct,
+            !!shadowLight,
+            side,
+            layout,
+            object.isSkinnedMesh,
+            object.isInstancedMesh,
+            !!object.instanceColor,
+            !!object.morphTexture,
+            object.isBatchedMesh,
+            !!object._colorsTexture,
+            ...Object.entries(geometry.morphAttributes).map(([name, attributes]) => `${name}:${attributes.length}`),
+          ].join('/')
+          if (preparation.drawKeys.has(key)) continue
+          preparation.drawKeys.add(key)
+          if (this.lightPrograms.has(program) || this.lightDraws.has(key)) continue
+          const group = Array.isArray(object.material)
+            ? geometry.groups.find(group => group.materialIndex === index)
+            : null
+          if (Array.isArray(object.material) && !group) continue
+          preparation.draws.push({ object, material, side, group, direct, shadowLight, key })
+        }
+      }
+    })
+  }
+
+  prepareLightDraw(preparation) {
+    // Some drivers compile their native pipeline only on the first draw, after
+    // KHR_parallel_shader_compile reports ready. Warm one layout per frame.
+    const draw = preparation.draws.shift()
+    if (!draw.object.parent) return
+    const renderer = this.renderer
+    const scene = this.world.stage.scene
+    const camera = this.world.camera
+    const target = renderer.getRenderTarget()
+    const cubeFace = renderer.getActiveCubeFace()
+    const mipLevel = renderer.getActiveMipmapLevel()
+    const viewport = renderer.getCurrentViewport(new THREE.Vector4())
+    const toneMapping = renderer.toneMapping
+    const visibility = [...preparation.changes.keys()].map(light => [light, light.visible])
+    const side = draw.material.side
+    const modelView = draw.object.modelViewMatrix.clone()
+    const normal = draw.object.normalMatrix.clone()
+    let disabled = []
+    try {
+      for (const [light, visible] of preparation.changes) light.visible = visible
+      disabled = renderer.shadowMap.enabled
+        ? limitLightShadows(scene, camera, renderer.capabilities.maxTextures, this.world.environment?.csm?.lights)
+        : []
+      if (draw.shadowLight && !preparation.shadowTarget) {
+        preparation.shadowTarget = new THREE.WebGLRenderTarget(1, 1, {
+          depthTexture: new THREE.DepthTexture(1, 1, THREE.UnsignedIntType),
+        })
+      }
+      renderer.setRenderTarget(
+        draw.shadowLight ? preparation.shadowTarget : draw.direct ? null : this.composer.inputBuffer
+      )
+      renderer.toneMapping = draw.direct ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping
+      renderer.compile(scene, camera)
+      renderer.state.viewport(new THREE.Vector4(0, 0, 1, 1))
+      renderer.state.scissor(new THREE.Vector4(0, 0, 1, 1))
+      renderer.state.setScissorTest(true)
+      if (draw.material.isMeshDistanceMaterial) renderer.properties.get(draw.material).light = draw.shadowLight
+      if (draw.material.side !== draw.side) {
+        draw.material.side = draw.side
+        draw.material.needsUpdate = true
+      }
+      draw.object.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, draw.object.matrixWorld)
+      draw.object.normalMatrix.getNormalMatrix(draw.object.modelViewMatrix)
+      renderer.renderBufferDirect(camera, scene, draw.object.geometry, draw.material, draw.object, draw.group)
+      this.lightDraws.add(draw.key)
+    } finally {
+      if (draw.material.side !== side) {
+        draw.material.side = side
+        draw.material.needsUpdate = true
+      }
+      draw.object.modelViewMatrix.copy(modelView)
+      draw.object.normalMatrix.copy(normal)
+      for (const [light, visible] of visibility) light.visible = visible
+      for (const light of disabled) light.castShadow = true
+      disabled = renderer.shadowMap.enabled
+        ? limitLightShadows(scene, camera, renderer.capabilities.maxTextures, this.world.environment?.csm?.lights)
+        : []
+      renderer.setRenderTarget(preparation.direct ? null : this.composer.inputBuffer)
+      renderer.toneMapping = preparation.direct ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping
+      try {
+        renderer.compile(scene, camera)
+      } finally {
+        for (const light of disabled) light.castShadow = true
+        renderer.setRenderTarget(target, cubeFace, mipLevel)
+        renderer.state.viewport(viewport)
+        renderer.toneMapping = toneMapping
+      }
+    }
   }
 
   // Like Three's Reflector, render just before drawing the aperture. Three calls
@@ -466,6 +807,16 @@ export class ClientGraphics extends System {
   }
 
   destroy() {
+    this.lightCompilation?.shadowTarget?.dispose()
+    for (const material of this.lightCompilation?.materials || []) material.dispose()
+    for (const preparation of this.lightPreparations) {
+      for (const material of preparation.materials) material.dispose()
+      preparation.target?.dispose()
+    }
+    this.lightPreparations = []
+    this.lightDraws.clear()
+    this.lightVisibility.clear()
+    this.lightCompilation = null
     this.photos.destroy()
     this.portalAvatars.destroy()
     this.resizer.disconnect()

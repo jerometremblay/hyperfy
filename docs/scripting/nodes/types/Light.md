@@ -13,7 +13,7 @@ visuals. Server-side light nodes can exist, but do not create rendering objects.
 | --- | --- | --- |
 | `type` | `'point'` | `'point'`, `'spot'`, or `'directional'`. |
 | `color` | `'#ffffff'` | Light color as a string, such as a hex color. |
-| `intensity` | `1` | Brightness; `0` switches the light off. |
+| `intensity` | `1` | Brightness; `0` disables the renderer light and its shadows. A nonzero value restores it. |
 | `distance` | `100` | Point/spot cutoff distance; `0` removes the distance cutoff. |
 | `decay` | `2` | Point/spot distance falloff. Keep `2` for inverse-square falloff. |
 | `angle` | `Math.PI / 3` | Spotlight cone half-angle in radians. |
@@ -24,6 +24,11 @@ Directional light intensity is illuminance; point and spot intensity is luminous
 intensity. The same numeric intensity will not give the same result across all types.
 Use nonnegative intensity/distance values and a spotlight angle between `0` and
 `Math.PI / 2`. Start with a small number of lights and tune them in the actual scene.
+
+Zero intensity makes the light dark immediately. On clients with parallel shader
+compilation, the engine prepares the new lighting configuration in the background
+before removing the light from rendering or showing it again. The first switch to
+a new configuration can temporarily lower the frame rate while the GPU warms up.
 
 Point lights radiate in all directions. Spot and directional lights point along
 local **−Y**, transformed by the node's rotation and its parents. There is no script
@@ -118,6 +123,11 @@ light.intensity = 40          // Switch back on.
 light.position.set(1, 2, 0)   // Move relative to its parent.
 app.remove(light)            // Remove a direct child of this app.
 ```
+
+At zero intensity the renderer skips the light entirely, including its shadow
+passes. This applies to point, spot, and directional light nodes. Changing the
+intensity back to a nonzero value restores rendering with the same properties.
+The node's explicit `active` state and its children are unaffected.
 
 Removing a mounted light removes its renderer light and target. Lights attached to
 the app are also cleaned up when the app is destroyed or rebuilt. If you add the node

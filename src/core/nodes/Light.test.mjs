@@ -20,6 +20,63 @@ function context(isServer = false) {
 }
 
 for (const type of ['point', 'spot', 'directional']) {
+  test(`${type} light at zero intensity skips rendering and shadows, then restores without rebuilding`, () => {
+    const ctx = context()
+    const node = new Light({ type, intensity: 0, castShadow: true })
+    node.activate(ctx)
+    const light = node.light
+    const renderedLights = () => {
+      const lights = []
+      ctx.world.stage.scene.traverseVisible(object => {
+        if (object.isLight) lights.push(object)
+      })
+      return lights
+    }
+    assert.equal(light.visible, false)
+    assert.deepEqual(renderedLights(), [])
+
+    const proxy = node.getProxy()
+    proxy.intensity = 4
+    assert.equal(node.light, light)
+    assert.equal(light.visible, true)
+    assert.equal(light.intensity, 4)
+    assert.equal(light.castShadow, true)
+    assert.deepEqual(renderedLights(), [light])
+
+    proxy.intensity = 0
+    assert.equal(light.visible, false)
+    assert.deepEqual(renderedLights(), [])
+    node.matrixWorld.makeTranslation(5, 6, 7)
+    node.commit(true)
+    proxy.intensity = 0.01
+    assert.equal(node.light, light)
+    assert.equal(light.visible, true)
+    assert.deepEqual(light.position.toArray(), [5, 6, 7])
+    assert.equal(light.castShadow, true)
+    node.deactivate()
+    assert.equal(ctx.world.stage.scene.children.length, 0)
+  })
+
+  test(`${type} light remains off after rebuilding and preserves explicit node activation`, () => {
+    const ctx = context()
+    const node = new Light({ type, intensity: 0, castShadow: true })
+    node.activate(ctx)
+    node.distance = 12
+    node.commit(false)
+    assert.equal(node.light.visible, false)
+
+    node.active = false
+    node.intensity = 3
+    assert.equal(node.active, false)
+    assert.equal(node.mounted, false)
+    assert.equal(node.light, null)
+    assert.equal(ctx.world.stage.scene.children.length, 0)
+    node.active = true
+    assert.equal(node.light.visible, true)
+    assert.equal(node.light.intensity, 3)
+    node.deactivate()
+  })
+
   test(`${type} light can enable shadows, move, and unmount without leaving scene objects`, () => {
     const ctx = context()
     const node = new Light({ type, position: [2, 3, 4] })

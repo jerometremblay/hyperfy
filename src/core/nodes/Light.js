@@ -45,7 +45,14 @@ export class Light extends Node {
         this.light = new THREE.PointLight(color, this._intensity, this._distance, this._decay)
         break
       case 'spot':
-        this.light = new THREE.SpotLight(color, this._intensity, this._distance, this._angle, this._penumbra, this._decay)
+        this.light = new THREE.SpotLight(
+          color,
+          this._intensity,
+          this._distance,
+          this._angle,
+          this._penumbra,
+          this._decay
+        )
         this.light.position.set(0, 10, 0)
         this.light.target.position.set(0, 0, 0)
         break
@@ -53,6 +60,7 @@ export class Light extends Node {
         this.light = new THREE.PointLight(color, this._intensity, this._distance, this._decay)
     }
 
+    this.light.visible = this._intensity !== 0
     this.light.castShadow = !this.ctx.world.isPreview && this._castShadow
     if (this._type === 'point' && this._castShadow) {
       // Point lights default to a 0.5–500 m shadow camera. Match it to the
@@ -164,6 +172,9 @@ export class Light extends Node {
     this._intensity = value
     if (this.light) {
       this.light.intensity = value
+      const graphics = this.ctx.world.graphics
+      if (graphics?.setLightVisibility) graphics.setLightVisibility(this.light, value !== 0)
+      else this.light.visible = value !== 0
     }
   }
 
