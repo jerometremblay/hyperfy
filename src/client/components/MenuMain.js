@@ -122,6 +122,7 @@ const shadowOptions = [
 function MenuMainGraphics({ world, pop, push }) {
   const [dpr, setDPR] = useState(world.prefs.dpr)
   const [shadows, setShadows] = useState(world.prefs.shadows)
+  const [cacheFixtureShadows, setCacheFixtureShadows] = useState(world.prefs.cacheFixtureShadows)
   const [postprocessing, setPostprocessing] = useState(world.prefs.postprocessing)
   const [bloom, setBloom] = useState(world.prefs.bloom)
   const dprOptions = useMemo(() => {
@@ -146,6 +147,7 @@ function MenuMainGraphics({ world, pop, push }) {
     const onChange = changes => {
       if (changes.dpr) setDPR(changes.dpr.value)
       if (changes.shadows) setShadows(changes.shadows.value)
+      if (changes.cacheFixtureShadows) setCacheFixtureShadows(changes.cacheFixtureShadows.value)
       if (changes.postprocessing) setPostprocessing(changes.postprocessing.value)
       if (changes.bloom) setBloom(changes.bloom.value)
     }
@@ -170,6 +172,14 @@ function MenuMainGraphics({ world, pop, push }) {
         options={shadowOptions}
         value={shadows}
         onChange={shadows => world.prefs.setShadows(shadows)}
+      />
+      <MenuItemToggle
+        label='Cache fixture shadows (experimental)'
+        hint='Keep shadows from still objects; moving objects do not cast fixture shadows'
+        trueLabel='On'
+        falseLabel='Off'
+        value={cacheFixtureShadows}
+        onChange={value => world.prefs.setCacheFixtureShadows(value)}
       />
       <MenuItemToggle
         label='Postprocessing'

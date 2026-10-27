@@ -19,6 +19,7 @@ import { getPortalArrival } from '../extras/portalArrival'
 import { PortalAvatars } from '../extras/PortalAvatars'
 import { PhotoCapture } from '../extras/PhotoCapture'
 import { getPixelViewport, ISOMETRIC_VIEW_HEIGHT } from '../extras/isometricView'
+import { CachedLightShadows } from '../extras/CachedLightShadows'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -66,6 +67,7 @@ export class ClientGraphics extends System {
     this.lightPrograms = new WeakSet()
     this.lightProgramsInitialized = false
     this.lightDraws = new Set()
+    this.cachedLightShadows = new CachedLightShadows()
   }
 
   async init({ viewport }) {
@@ -74,6 +76,7 @@ export class ClientGraphics extends System {
     this.height = this.viewport.offsetHeight
     this.aspect = this.width / this.height
     this.renderer = getRenderer()
+    this.renderer.domElement.addEventListener('webglcontextrestored', this.onShadowContextRestored)
     this.perspectiveCamera = this.world.camera
     this.isometricCamera = new THREE.OrthographicCamera(-16, 16, 9, -9, 0.2, 1200)
     this.renderer.localClippingEnabled = true
@@ -226,6 +229,18 @@ export class ClientGraphics extends System {
             this.world.environment?.csm?.lights
           )
         : []
+      const renderingPortal = this.renderingPortal
+      try {
+        this.renderingPortal = true
+        this.cachedLightShadows.render(
+          this.renderer,
+          this.world.stage.scene,
+          this.world.camera,
+          this.world.prefs?.cacheFixtureShadows && !this.world.builder?.enabled
+        )
+      } finally {
+        this.renderingPortal = renderingPortal
+      }
       if (this.renderer.xr.isPresenting || !this.usePostprocessing || this.renderStyle !== 'standard') {
         // The composer disables autoClear. XR must clear color/depth for the
         // current eye pose, including when Three uses an internal output target.
@@ -828,6 +843,8 @@ export class ClientGraphics extends System {
     }
   }
 
+  onShadowContextRestored = () => this.cachedLightShadows.reset()
+
   onXRSession = session => {
     if (session) {
       this.xrSession = session
@@ -883,6 +900,8 @@ export class ClientGraphics extends System {
   }
 
   destroy() {
+    this.cachedLightShadows.dispose()
+    this.renderer.domElement.removeEventListener('webglcontextrestored', this.onShadowContextRestored)
     this.lightCompilation?.shadowTarget?.dispose()
     for (const material of this.lightCompilation?.materials || []) material.dispose()
     for (const preparation of this.lightPreparations) {

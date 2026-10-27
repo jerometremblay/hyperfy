@@ -1,0 +1,1927 @@
+{
+  "recordedAt": "2026-10-27T13:58:59.772Z",
+  "kind": "3333-desktop-WebGL",
+  "bundle": "index-7UEF53FH.js",
+  "sampleSeconds": 30,
+  "order": ["normal-before", "cached", "normal-after"],
+  "summary": {
+    "baselineFps": 17.045652593045574,
+    "cachedFps": 18.360057046122765,
+    "fpsImprovementPercent": 7.711083197914359,
+    "normalDraws": 4551,
+    "cachedDraws": 2702,
+    "drawReductionPercent": 40.62843331136015,
+    "cameraFixed": true,
+    "valid": true,
+    "preferenceRestored": true,
+    "errorsDuringComparison": [
+      {
+        "level": "error",
+        "message": "SES_UNHANDLED_REJECTION: (InvalidStateError#12)",
+        "timestamp": "2026-10-27T13:56:56.210Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "InvalidStateError#12: Failed to execute 'stop' on 'AudioScheduledSourceNode': cannot call stop without calling start first.",
+        "timestamp": "2026-10-27T13:56:56.210Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "  at GQ.stop (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:137105)\n  at GQ.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:135581)\n  at Object.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:138369)\n  at eval (eval at <anonymous> (eval at makeEvaluate (https://monstre.duckdns.org:3333/index-BZX2F2VT.js:76055:27)), <anonymous>:336:15)\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:146466\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:133322\n",
+        "timestamp": "2026-10-27T13:56:56.210Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "SES_UNHANDLED_REJECTION: (InvalidStateError#13)",
+        "timestamp": "2026-10-27T13:57:38.608Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "InvalidStateError#13: Failed to execute 'stop' on 'AudioScheduledSourceNode': cannot call stop without calling start first.",
+        "timestamp": "2026-10-27T13:57:38.608Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "  at GQ.stop (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:137105)\n  at GQ.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:135581)\n  at Object.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:138369)\n  at eval (eval at <anonymous> (eval at makeEvaluate (https://monstre.duckdns.org:3333/index-BZX2F2VT.js:76055:27)), <anonymous>:336:15)\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:146466\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:133322\n",
+        "timestamp": "2026-10-27T13:57:38.608Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "SES_UNHANDLED_REJECTION: (InvalidStateError#14)",
+        "timestamp": "2026-10-27T13:57:38.609Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "InvalidStateError#14: Failed to execute 'stop' on 'AudioScheduledSourceNode': cannot call stop without calling start first.",
+        "timestamp": "2026-10-27T13:57:38.609Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "  at GQ.stop (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:137105)\n  at GQ.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:135581)\n  at Object.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:138369)\n  at eval (eval at <anonymous> (eval at makeEvaluate (https://monstre.duckdns.org:3333/index-BZX2F2VT.js:76055:27)), <anonymous>:336:15)\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:146466\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:133322\n",
+        "timestamp": "2026-10-27T13:57:38.609Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "SES_UNHANDLED_REJECTION: (InvalidStateError#15)",
+        "timestamp": "2026-10-27T13:58:21.934Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "InvalidStateError#15: Failed to execute 'stop' on 'AudioScheduledSourceNode': cannot call stop without calling start first.",
+        "timestamp": "2026-10-27T13:58:21.934Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      },
+      {
+        "level": "error",
+        "message": "  at GQ.stop (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:137105)\n  at GQ.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:135581)\n  at Object.play (https://monstre.duckdns.org:3333/index-7UEF53FH.js:280:138369)\n  at eval (eval at <anonymous> (eval at makeEvaluate (https://monstre.duckdns.org:3333/index-BZX2F2VT.js:76055:27)), <anonymous>:336:15)\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:146466\n  at https://monstre.duckdns.org:3333/index-7UEF53FH.js:729:133322\n",
+        "timestamp": "2026-10-27T13:58:21.934Z",
+        "url": "https://monstre.duckdns.org:3333/index-7UEF53FH.js"
+      }
+    ]
+  },
+  "samples": [
+    {
+      "after": {
+        "cameraMatrix": [
+          0.3489175912255513, 1.3877787807814457e-17, -0.9371534103514532, 0, -0.24255315078173395, 0.9659258262890684,
+          -0.09030651778046889, 0, 0.9052206822533456, 0.2588190451025208, 0.33702851261133204, 0, 39.61159832005582,
+          2.1338236096508494, 12.157088267025037, 1
+        ],
+        "cameraProjection": [
+          0.6906190178588693, 0, 0, 0, 0, 1.4281480067421146, 0, 0, 0, 0, -1.0003333888981498, -1, 0, 0,
+          -0.4000666777796299, 0
+        ],
+        "casters": 477,
+        "dayNightCycle": true,
+        "devicePixelRatio": 2,
+        "drawingBuffer": [3288, 1590],
+        "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+        "lights": [
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 9.05002877450744,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 9.05002877450744,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5.567701735950076,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 2,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 37.325069283495274,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          }
+        ],
+        "meshes": 880,
+        "preferences": {
+          "ao": true,
+          "bloom": true,
+          "dpr": 2,
+          "postprocessing": true,
+          "shadows": "high"
+        },
+        "receivers": 730,
+        "rendererShadows": {
+          "autoUpdate": true,
+          "enabled": true,
+          "needsUpdate": false,
+          "type": 1
+        },
+        "sun": {
+          "cascades": 3,
+          "direction": [-0.6353729375862205, -0.3563216592944062, -0.6850810939594946],
+          "mapSize": 2048,
+          "maxFar": 100
+        },
+        "uncullableCasters": 0,
+        "url": "https://monstre.duckdns.org:3333/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "viewport": [1644, 795]
+      },
+      "before": {
+        "cameraMatrix": [
+          0.3489175912255513, 1.3877787807814457e-17, -0.9371534103514532, 0, -0.24255315078173395, 0.9659258262890684,
+          -0.09030651778046889, 0, 0.9052206822533456, 0.2588190451025208, 0.33702851261133204, 0, 39.61159832005582,
+          2.1338236096508494, 12.157088267025037, 1
+        ],
+        "cameraProjection": [
+          0.6906190178588693, 0, 0, 0, 0, 1.4281480067421146, 0, 0, 0, 0, -1.0003333888981498, -1, 0, 0,
+          -0.4000666777796299, 0
+        ],
+        "casters": 477,
+        "dayNightCycle": true,
+        "devicePixelRatio": 2,
+        "drawingBuffer": [3288, 1590],
+        "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+        "lights": [
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.408941247852791,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.408941247852791,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5.58728407788868,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 2,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 35.21707754618746,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          }
+        ],
+        "meshes": 880,
+        "preferences": {
+          "ao": true,
+          "bloom": true,
+          "dpr": 2,
+          "postprocessing": true,
+          "shadows": "high"
+        },
+        "receivers": 730,
+        "rendererShadows": {
+          "autoUpdate": true,
+          "enabled": true,
+          "needsUpdate": false,
+          "type": 1
+        },
+        "sun": {
+          "cascades": 3,
+          "direction": [-0.6369696910493149, -0.3553654665583187, -0.6840942901839838],
+          "mapSize": 2048,
+          "maxFar": 100
+        },
+        "uncullableCasters": 0,
+        "url": "https://monstre.duckdns.org:3333/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "viewport": [1644, 795]
+      },
+      "cameraUnchanged": true,
+      "cpuFrameMs": {
+        "count": 513,
+        "max": 70.89999997615814,
+        "mean": 58.31364522354412,
+        "median": 58.5,
+        "min": 28.30000001192093,
+        "p95": 61.30000001192093
+      },
+      "drawCallsPerFrame": {
+        "count": 513,
+        "max": 4551,
+        "mean": 4550.787524366472,
+        "median": 4551,
+        "min": 4442,
+        "p95": 4551
+      },
+      "elapsedSeconds": 30.06639999997616,
+      "fps": 17.061491347611,
+      "frameIntervalMs": {
+        "count": 512,
+        "max": 71.30000001192093,
+        "mean": 58.611523437546566,
+        "median": 58.69999998807907,
+        "min": 28.5,
+        "p95": 61.69999998807907
+      },
+      "frames": 513,
+      "gpuFrameMs": {
+        "count": 513,
+        "max": 124.737375,
+        "mean": 102.76004570955176,
+        "median": 102.553083,
+        "min": 73.795208,
+        "p95": 107.322041
+      },
+      "label": "normal-before",
+      "startedAt": "2026-10-27T13:56:40.809Z",
+      "trianglesPerFrame": {
+        "count": 513,
+        "max": 10185978,
+        "mean": 10183757.155945418,
+        "median": 10185978,
+        "min": 9046685,
+        "p95": 10185978
+      },
+      "valid": true
+    },
+    {
+      "after": {
+        "cameraMatrix": [
+          0.3489175912255513, 1.3877787807814457e-17, -0.9371534103514532, 0, -0.24255315078173395, 0.9659258262890684,
+          -0.09030651778046889, 0, 0.9052206822533456, 0.2588190451025208, 0.33702851261133204, 0, 39.61159832005582,
+          2.1338236096508494, 12.157088267025037, 1
+        ],
+        "cameraProjection": [
+          0.6906190178588693, 0, 0, 0, 0, 1.4281480067421146, 0, 0, 0, 0, -1.0003333888981498, -1, 0, 0,
+          -0.4000666777796299, 0
+        ],
+        "casters": 477,
+        "dayNightCycle": true,
+        "devicePixelRatio": 2,
+        "drawingBuffer": [3288, 1590],
+        "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+        "lights": [
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.56859790734311,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.56859790734311,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5.867187852305051,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 2,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 39.88703329031375,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          }
+        ],
+        "meshes": 880,
+        "preferences": {
+          "ao": true,
+          "bloom": true,
+          "dpr": 2,
+          "postprocessing": true,
+          "shadows": "high"
+        },
+        "receivers": 730,
+        "rendererShadows": {
+          "autoUpdate": true,
+          "enabled": true,
+          "needsUpdate": false,
+          "type": 1
+        },
+        "sun": {
+          "cascades": 3,
+          "direction": [-0.6331413102451522, -0.3576510671777912, -0.68645305404495],
+          "mapSize": 2048,
+          "maxFar": 100
+        },
+        "uncullableCasters": 0,
+        "url": "https://monstre.duckdns.org:3333/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "viewport": [1644, 795]
+      },
+      "before": {
+        "cameraMatrix": [
+          0.3489175912255513, 1.3877787807814457e-17, -0.9371534103514532, 0, -0.24255315078173395, 0.9659258262890684,
+          -0.09030651778046889, 0, 0.9052206822533456, 0.2588190451025208, 0.33702851261133204, 0, 39.61159832005582,
+          2.1338236096508494, 12.157088267025037, 1
+        ],
+        "cameraProjection": [
+          0.6906190178588693, 0, 0, 0, 0, 1.4281480067421146, 0, 0, 0, 0, -1.0003333888981498, -1, 0, 0,
+          -0.4000666777796299, 0
+        ],
+        "casters": 477,
+        "dayNightCycle": true,
+        "devicePixelRatio": 2,
+        "drawingBuffer": [3288, 1590],
+        "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+        "lights": [
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 9.04656467200356,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 9.04656467200356,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 4.619997435436627,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 2,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 29.609971779115817,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": false,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          }
+        ],
+        "meshes": 880,
+        "preferences": {
+          "ao": true,
+          "bloom": true,
+          "dpr": 2,
+          "postprocessing": true,
+          "shadows": "high"
+        },
+        "receivers": 730,
+        "rendererShadows": {
+          "autoUpdate": true,
+          "enabled": true,
+          "needsUpdate": false,
+          "type": 1
+        },
+        "sun": {
+          "cascades": 3,
+          "direction": [-0.6347503245759305, -0.35669337271409646, -0.6854647061027969],
+          "mapSize": 2048,
+          "maxFar": 100
+        },
+        "uncullableCasters": 0,
+        "url": "https://monstre.duckdns.org:3333/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "viewport": [1644, 795]
+      },
+      "cameraUnchanged": true,
+      "cpuFrameMs": {
+        "count": 552,
+        "max": 63.90000003576279,
+        "mean": 54.18278985578513,
+        "median": 54.20000004768371,
+        "min": 25.399999976158146,
+        "p95": 57.10000002384186
+      },
+      "drawCallsPerFrame": {
+        "count": 552,
+        "max": 2702,
+        "mean": 2701.802536231884,
+        "median": 2702,
+        "min": 2593,
+        "p95": 2702
+      },
+      "elapsedSeconds": 30.06480000001192,
+      "fps": 18.360057046122765,
+      "frameIntervalMs": {
+        "count": 551,
+        "max": 64.60000002384186,
+        "mean": 54.46606170601075,
+        "median": 54.5,
+        "min": 25.599999964237213,
+        "p95": 57.40000003576279
+      },
+      "frames": 552,
+      "gpuFrameMs": {
+        "count": 552,
+        "max": 133.52070799999998,
+        "mean": 100.06584559239126,
+        "median": 99.654166,
+        "min": 93.001833,
+        "p95": 105.207666
+      },
+      "label": "cached",
+      "startedAt": "2026-10-27T13:57:22.224Z",
+      "trianglesPerFrame": {
+        "count": 552,
+        "max": 4602025,
+        "mean": 4599961.063405797,
+        "median": 4602025,
+        "min": 3462732,
+        "p95": 4602025
+      },
+      "valid": true
+    },
+    {
+      "after": {
+        "cameraMatrix": [
+          0.3489175912255513, 1.3877787807814457e-17, -0.9371534103514532, 0, -0.24255315078173395, 0.9659258262890684,
+          -0.09030651778046889, 0, 0.9052206822533456, 0.2588190451025208, 0.33702851261133204, 0, 39.61159832005582,
+          2.1338236096508494, 12.157088267025037, 1
+        ],
+        "cameraProjection": [
+          0.6906190178588693, 0, 0, 0, 0, 1.4281480067421146, 0, 0, 0, 0, -1.0003333888981498, -1, 0, 0,
+          -0.4000666777796299, 0
+        ],
+        "casters": 477,
+        "dayNightCycle": true,
+        "devicePixelRatio": 2,
+        "drawingBuffer": [3288, 1590],
+        "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+        "lights": [
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.672797916375409,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.672797916375409,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 6.131409092640135,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 2,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 34.786304615503674,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          }
+        ],
+        "meshes": 880,
+        "preferences": {
+          "ao": true,
+          "bloom": true,
+          "dpr": 2,
+          "postprocessing": true,
+          "shadows": "high"
+        },
+        "receivers": 730,
+        "rendererShadows": {
+          "autoUpdate": true,
+          "enabled": true,
+          "needsUpdate": false,
+          "type": 1
+        },
+        "sun": {
+          "cascades": 3,
+          "direction": [-0.630972583629465, -0.3589352723471685, -0.6877783574473844],
+          "mapSize": 2048,
+          "maxFar": 100
+        },
+        "uncullableCasters": 0,
+        "url": "https://monstre.duckdns.org:3333/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "viewport": [1644, 795]
+      },
+      "before": {
+        "cameraMatrix": [
+          0.3489175912255513, 1.3877787807814457e-17, -0.9371534103514532, 0, -0.24255315078173395, 0.9659258262890684,
+          -0.09030651778046889, 0, 0.9052206822533456, 0.2588190451025208, 0.33702851261133204, 0, 39.61159832005582,
+          2.1338236096508494, 12.157088267025037, 1
+        ],
+        "cameraProjection": [
+          0.6906190178588693, 0, 0, 0, 0, 1.4281480067421146, 0, 0, 0, 0, -1.0003333888981498, -1, 0, 0,
+          -0.4000666777796299, 0
+        ],
+        "casters": 477,
+        "dayNightCycle": true,
+        "devicePixelRatio": 2,
+        "drawingBuffer": [3288, 1590],
+        "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+        "lights": [
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [2048, 2048],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "DirectionalLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.367332962478123,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 8.367332962478123,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 5,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 25,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 15,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 10,
+            "mapSize": [512, 512],
+            "type": "SpotLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 4.589895461627544,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 2,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": false,
+            "intensity": 0,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 30.399075965678616,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          },
+          {
+            "autoUpdate": true,
+            "castShadow": true,
+            "intensity": 1,
+            "mapSize": [512, 512],
+            "type": "PointLight"
+          }
+        ],
+        "meshes": 880,
+        "preferences": {
+          "ao": true,
+          "bloom": true,
+          "dpr": 2,
+          "postprocessing": true,
+          "shadows": "high"
+        },
+        "receivers": 730,
+        "rendererShadows": {
+          "autoUpdate": true,
+          "enabled": true,
+          "needsUpdate": false,
+          "type": 1
+        },
+        "sun": {
+          "cascades": 3,
+          "direction": [-0.6325843226605211, -0.3579816107814764, -0.6867941766398645],
+          "mapSize": 2048,
+          "maxFar": 100
+        },
+        "uncullableCasters": 0,
+        "url": "https://monstre.duckdns.org:3333/",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "viewport": [1644, 795]
+      },
+      "cameraUnchanged": true,
+      "cpuFrameMs": {
+        "count": 512,
+        "max": 65,
+        "mean": 58.43105468689464,
+        "median": 58.5,
+        "min": 28.69999998807907,
+        "p95": 61.10000002384186
+      },
+      "drawCallsPerFrame": {
+        "count": 512,
+        "max": 4551,
+        "mean": 4550.787109375,
+        "median": 4551,
+        "min": 4442,
+        "p95": 4551
+      },
+      "elapsedSeconds": 30.064900000035763,
+      "fps": 17.02981383848015,
+      "frameIntervalMs": {
+        "count": 511,
+        "max": 65.60000002384186,
+        "mean": 58.72054794518215,
+        "median": 58.80000001192093,
+        "min": 28.899999976158146,
+        "p95": 61.30000001192093
+      },
+      "frames": 512,
+      "gpuFrameMs": {
+        "count": 513,
+        "max": 146.37625,
+        "mean": 102.82170970175446,
+        "median": 102.523708,
+        "min": 71.703166,
+        "p95": 106.932874
+      },
+      "label": "normal-after",
+      "startedAt": "2026-10-27T13:58:02.659Z",
+      "trianglesPerFrame": {
+        "count": 512,
+        "max": 10185978,
+        "mean": 10183752.818359377,
+        "median": 10185978,
+        "min": 9046685,
+        "p95": 10185978
+      },
+      "valid": true
+    }
+  ]
+}
