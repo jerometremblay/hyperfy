@@ -56,9 +56,10 @@ change; deployment requires the reviewed engine build and server/client restart.
   constructor failures, joint remounts, quotas, retries and resource eviction.
   The existing physics input and shape-failure mocks were updated without
   removing their cleanup assertions.
-- Full security suite: 787/788 pass. Unchanged main reproduces the remaining
-  `blueprintPolicy.test.js` failure: the checked-in collection has nine
-  blueprints while the assertion expects twelve (baseline: 713/714 pass).
+- Full security suite: 788/788 pass. The catalog test checks that the bundled
+  `.hyp` files match the nonempty collection manifest, then validates all
+  production and catalog blueprints unchanged. This replaces the stale
+  twelve-file assertion after the three pool apps were removed in `00d40a1`.
 - Existing fork suite: 502/504 pass, matching the unchanged-main results. The
   remaining failures are `promptBox.test.mjs` missing-asset expectations and
   `Portal.test.mjs` catalog asset-count expectations.
