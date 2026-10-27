@@ -140,18 +140,19 @@ test('blueprintPolicy: unknown-key hook is escaped and bounded without inspectin
 
 // the shapes of the five production blueprints (keys, nulls, nesting, prop records) with ids, names and asset hashes replaced
 const production = JSON.parse(fs.readFileSync(new URL('./fixtures/blueprint-shapes.json', import.meta.url)))
-const collection = fs
-  .readdirSync(new URL('../../src/world/collections/default/', import.meta.url))
-  .filter(n => n.endsWith('.hyp'))
-  .map(name => {
-    const bytes = fs.readFileSync(new URL(`../../src/world/collections/default/${name}`, import.meta.url))
-    const blueprint = JSON.parse(bytes.subarray(4, 4 + bytes.readUInt32LE(0))).blueprint
-    return { ...blueprint, id: blueprint.id || name, version: blueprint.version ?? 0 }
-  })
+const collectionDirectory = new URL('../../src/world/collections/default/', import.meta.url)
+const collectionManifest = JSON.parse(fs.readFileSync(new URL('manifest.json', collectionDirectory)))
+const collectionFiles = fs.readdirSync(collectionDirectory).filter(name => name.endsWith('.hyp'))
+const collection = collectionFiles.map(name => {
+  const bytes = fs.readFileSync(new URL(name, collectionDirectory))
+  const blueprint = JSON.parse(bytes.subarray(4, 4 + bytes.readUInt32LE(0))).blueprint
+  return { ...blueprint, id: blueprint.id || name, version: blueprint.version ?? 0 }
+})
 
-test('blueprintPolicy: five production-shaped blueprints (anonymized) and four collection .hyp blueprints pass unchanged', () => {
+test('blueprintPolicy: production shapes and every manifest-listed collection blueprint pass unchanged', () => {
   assert.equal(production.length, 5)
-  assert.equal(collection.length, 12)
+  assert.ok(collectionManifest.apps.length > 0, 'the default catalog must not be empty')
+  assert.deepEqual([...collectionFiles].sort(), [...collectionManifest.apps].sort())
   for (const blueprint of [...production, ...collection]) {
     assert.deepEqual(sanitizeBlueprintAdd(blueprint), { ok: true, value: blueprint, changed: false }, blueprint.name)
   }

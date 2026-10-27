@@ -1,12 +1,13 @@
 // Adapted from https://github.com/dwebxr/coo-world/blob/bfa578afee8b08133018ac637a548f45a374f739/test/lib/realPhysxWorld.mjs
 import assert from 'node:assert/strict'
+import { physxHeap } from './physxHeap.mjs'
 
 export async function makeWorld(B) {
   const world = {
     network: { id: 'local', isClient: false, isServer: true },
     loader: null,
     stage: {
-      octree: { insert() {}, remove() {} },
+      octree: { insert() {}, remove() {}, move() {} },
       scene: { add() {}, remove() {} },
       dirtyNodes: new Set(),
       insertLinked: () => ({ move() {}, destroy() {} }),
@@ -96,5 +97,7 @@ export async function makeWorld(B) {
     assert.ok(Number.isFinite(p.x) && p.x > 100, 'unrelated body still simulates')
     root.remove(sentinel)
   }
-  return { B, PHYSX, world, physics, entity, root, step, body, move, handleOf, actorOf, healthy, callbacks }
+  let counter = null
+  const liveChunks = () => (counter ??= physxHeap(PHYSX))()
+  return { B, PHYSX, world, physics, entity, root, step, body, move, handleOf, actorOf, healthy, callbacks, liveChunks }
 }

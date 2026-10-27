@@ -8,11 +8,13 @@
 cp .env.example .env
 ```
 
-Edit `.env` and set at minimum:
+Generate a secret with `openssl rand -hex 32`, then put it in `.env` as
+`JWT_SECRET`. Empty and known public template values stop startup. Edit `.env`
+and set at minimum:
 
 | Variable | Description |
 |---|---|
-| `JWT_SECRET` | Secret key for signing auth tokens (16+ chars recommended) |
+| `JWT_SECRET` | Random secret key for signing auth tokens (32+ chars recommended) |
 | `ADMIN_CODE` | Password for admin operations (backup, restore) |
 | `PORT` | HTTP port (default: `3000`) |
 | `PUBLIC_WS_URL` | Public WebSocket URL, e.g. `wss://your-server.com/ws` |

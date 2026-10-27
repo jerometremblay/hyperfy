@@ -28,6 +28,8 @@ The size of the shape, depending on the `type` (defaults shown):
 
 Default sizes all roughly fit inside a 1m cubed space for consistency.
 
+The `.size` and `.profile` getters return copies. Assign a new array to the property to update and rebuild the primitive.
+
 **Note**: The origin of all primitives are at the center of the volume. To position a primitive with its bottom at y=0:
 - Box: `position.y = height / 2`
 - Sphere: `position.y = radius`
@@ -37,7 +39,7 @@ Default sizes all roughly fit inside a 1m cubed space for consistency.
 
 ### `.profile`: Array
 
-The polygon used by an `extrude` primitive. Each point is an `[x, y]` pair in the primitive's local XY plane. The engine closes the polygon automatically, so do not repeat the first point. The profile must contain at least three finite points and must be a simple, non-self-intersecting polygon; holes are not supported.
+The polygon used by an `extrude` primitive. Each point is an `[x, y]` pair in the primitive's local XY plane. The engine closes the polygon automatically, so do not repeat the first point. The profile must contain 3 to 256 finite points and must be a simple, non-self-intersecting polygon; holes are not supported.
 
 The generated geometry is centered on its bounds. Use the node's `position`, `rotation`, and `scale` to place and size it. The extrusion depth runs along the primitive's local Z axis.
 
@@ -70,11 +72,11 @@ The bevel size in the profile plane. Must be non-negative. Defaults to `0.04`.
 
 ### `.bevelSegments`: Number
 
-The number of segments used to represent the bevel. Must be a non-negative integer. Defaults to `2`.
+The number of segments used to represent the bevel. Must be an integer from `0` to `16`. Defaults to `2`.
 
 ### `.curveSegments`: Number
 
-The number of segments used when triangulating curved shape data. Must be a positive integer. Defaults to `12`.
+The number of segments used when triangulating curved shape data. Must be an integer from `1` to `64`. Defaults to `12`.
 
 ### `.smooth`: Boolean
 

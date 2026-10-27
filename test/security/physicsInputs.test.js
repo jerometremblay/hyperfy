@@ -45,6 +45,7 @@ class PxTransform {
 }
 const velocity = { ptr: 4, x: 4, y: 5, z: 6 }
 const physics = {
+  destroy() {},
   PxVec3,
   PxExtendedVec3: PxVec3,
   PxTransform,
@@ -373,7 +374,7 @@ for (const name of ['teleport', 'move']) {
     for (const v of vectors()) {
       calls.length = 0
       proxy[name](v)
-      assert.deepEqual(xyz(calls[0].args[0]), [1, 2, 3])
+      assert.deepEqual(xyz(calls.find(call => call.name !== 'getFootPosition').args[0]), [1, 2, 3])
       assert.deepEqual(xyz(node.position), name === 'move' ? [4, 5, 6] : [1, 2, 3])
     }
     if (name === 'move') {

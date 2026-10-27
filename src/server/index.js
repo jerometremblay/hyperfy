@@ -26,6 +26,8 @@ import { createUploadLimits, readUploadLimitsEnv, clientIpKeys } from './uploadL
 import { createConnectionLimits, readConnectionLimitsEnv } from './connectionLimits'
 import { renderShell } from './escapeHtml'
 import { compressOptions } from './compressOptions'
+import { errorHandler } from './errorHandler'
+import { checkJwtSecret } from './jwtSecret'
 import { readJWT } from '../core/utils-server'
 import { PROTOCOL_VERSION, writePacket } from '../core/packets'
 import { BrowserCapture } from './BrowserCapture'
@@ -50,8 +52,12 @@ if (!process.env.WORLD) {
 if (!process.env.PORT) {
   throw new Error('[envs] PORT not set')
 }
-if (!process.env.JWT_SECRET) {
-  throw new Error('[envs] JWT_SECRET not set')
+try {
+  checkJwtSecret(process.env.JWT_SECRET)
+} catch (err) {
+  // SES reports uncaught errors without setting the process status; startup rejection must still fail the launcher.
+  process.exitCode = 1
+  throw err
 }
 if (!process.env.ADMIN_CODE) {
   console.warn('[envs] ADMIN_CODE not set - all users will have admin permissions!')
@@ -80,6 +86,9 @@ if (!process.env.ASSETS) {
 }
 if (!process.env.ASSETS_BASE_URL) {
   throw new Error(`[envs] ASSETS_BASE_URL must be set`)
+}
+if (process.env.ASSETS_BASE_URL.endsWith('/')) {
+  throw new Error('[envs] ASSETS_BASE_URL must not end with /')
 }
 if (process.env.ASSETS === 's3' && !process.env.ASSETS_S3_URI) {
   throw new Error(`[envs] ASSETS_S3_URI must be set when using ASSETS=s3`)
@@ -427,12 +436,7 @@ fastify.get('/status', async (request, reply) => {
   }
 })
 
-fastify.setErrorHandler((err, req, reply) => {
-  console.error(err)
-  const status =
-    Number.isInteger(err.statusCode) && err.statusCode >= 400 && err.statusCode < 500 ? err.statusCode : 500
-  reply.status(status).send({ error: status < 500 ? err.message : 'Internal server error' })
-})
+fastify.setErrorHandler(errorHandler)
 
 try {
   await fastify.listen({ port, host: '0.0.0.0' })

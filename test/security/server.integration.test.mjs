@@ -96,7 +96,11 @@ test('built server protects sessions, uploads, assets and reconnects with the re
   const chat = await peer.waitFor('onChatAdded', data => data.body === 'test message')
   assert.equal(chat.fromId, visitor.snapshot.id)
   assert.notEqual(chat.id, 'spoof')
-  assert.equal(visitor.messages.some(([name]) => name === 'onChatAdded'), false, 'the sender keeps its local echo')
+  assert.equal(
+    visitor.messages.some(([name]) => name === 'onChatAdded'),
+    false,
+    'the sender keeps its local echo'
+  )
   assert.match(output, /\[fetch\] brotli guard installed/)
   const headless = spawn(
     process.execPath,
@@ -166,3 +170,39 @@ test('built server protects sessions, uploads, assets and reconnects with the re
   assert.equal(returning.snapshot.id, visitor.snapshot.id)
   assert.ok(!output.includes(token), 'the session token must never reach server logs')
 })
+
+for (const secret of ['hyper', ' HYPER ', 'CHANGE_ME_TO_A_RANDOM_SECRET', ' change_me_to_a_random_secret ']) {
+  test(`built server rejects the known JWT placeholder ${JSON.stringify(secret)}`, async t => {
+    const root = path.resolve(import.meta.dirname, '../..')
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'hyperfy-jwt-startup-'))
+    await fs.writeFile(path.join(directory, '.env'), '')
+    const child = spawn(process.execPath, [path.join(root, 'build/index.js')], {
+      cwd: root,
+      env: {
+        PATH: process.env.PATH,
+        HOME: process.env.HOME,
+        NODE_ENV: 'test',
+        DOTENV_FLOW_PATH: directory,
+        WORLD: path.relative(root, directory),
+        PORT: '0',
+        JWT_SECRET: secret,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    let output = ''
+    for (const stream of [child.stdout, child.stderr])
+      stream.on('data', data => {
+        output += data
+      })
+    const timeout = setTimeout(() => child.kill('SIGTERM'), 10000)
+    t.after(async () => {
+      clearTimeout(timeout)
+      child.kill('SIGTERM')
+      if (child.exitCode === null && child.signalCode === null) await once(child, 'exit')
+      await fs.rm(directory, { recursive: true, force: true })
+    })
+    const [code] = await once(child, 'exit')
+    assert.equal(code, 1, output)
+    assert.match(output, /JWT_SECRET.*(?:default|placeholder|template)/)
+  })
+}

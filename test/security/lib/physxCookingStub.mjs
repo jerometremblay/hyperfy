@@ -199,6 +199,8 @@ export function makePhysX(options = {}) {
     PxIDENTITYEnum: { PxIdentity: 0 },
     PxRigidBodyFlagEnum: { eKINEMATIC: 1 },
     PxRigidBodyExt: { prototype: { setMassAndUpdateInertia: actor => live(actor) } },
+    // Real-wasm probes cover invalid geometry; these failure fixtures supply valid geometry.
+    PxGeometryQuery: { prototype: { isValid: geometry => (live(geometry), true) } },
     PxTransform: class extends Resource {
       constructor() {
         super('transform')

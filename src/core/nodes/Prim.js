@@ -9,6 +9,16 @@ import { getTrianglesFromGeometry } from '../extras/getTrianglesFromGeometry'
 import { getTextureBytesFromMaterial } from '../extras/getTextureBytesFromMaterial'
 import { Layers } from '../extras/Layers'
 import { geometryToPxMesh } from '../extras/geometryToPxMesh'
+import {
+  extentOk,
+  finiteNumber,
+  geometryOk,
+  lengthOk,
+  MIN_MASS,
+  positionOk,
+  scaleOk,
+  warnPhysicsOnce,
+} from '../extras/physicsValidate.js'
 
 const defaults = {
   type: 'box',
@@ -56,12 +66,15 @@ const defaults = {
 
 const _v1 = new THREE.Vector3()
 const _v2 = new THREE.Vector3()
+const _v3 = new THREE.Vector3()
 const _q1 = new THREE.Quaternion()
 const _m1 = new THREE.Matrix4()
 const _m2 = new THREE.Matrix4()
 const _m3 = new THREE.Matrix4()
 const _defaultScale = new THREE.Vector3(1, 1, 1)
 
+const TRANSFORM_SKIPS = new Set(['size', 'scale', 'extent', 'position', 'mirror'])
+const layers = ['environment', 'prop', 'player', 'tool']
 const types = ['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane', 'extrude']
 
 const defaultSizes = {
@@ -76,6 +89,53 @@ const defaultSizes = {
 
 // Geometry cache
 let geometryCache = new Map()
+const geometryRefs = new Map()
+const materialRefs = new Map()
+const IDLE_GEOMETRY_LIMIT = 1024
+const IDLE_MATERIAL_LIMIT = 1024
+const IDLE_GEOMETRY_BYTES = 64 * 1024 * 1024
+const MAX_PROFILE_POINTS = 256
+const MAX_BEVEL_SEGMENTS = 16
+const MAX_CURVE_SEGMENTS = 64
+
+function geometryBytes(geometry) {
+  return (
+    Object.values(geometry.attributes).reduce((bytes, attribute) => bytes + attribute.array.byteLength, 0) +
+    (geometry.index?.array.byteLength || 0)
+  )
+}
+
+function retainResource(refs, resource) {
+  refs.set(resource, (refs.get(resource) || 0) + 1)
+}
+
+function releaseResource(cache, refs, resource, limit) {
+  if (!resource) return
+  const count = (refs.get(resource) || 0) - 1
+  if (count > 0) refs.set(resource, count)
+  else refs.delete(resource)
+  trimResources(cache, refs, limit)
+}
+
+function trimResources(cache, refs, limit) {
+  let idle = 0
+  let bytes = 0
+  for (const resource of cache.values()) {
+    if (refs.has(resource)) continue
+    idle++
+    if (resource.isBufferGeometry) bytes += geometryBytes(resource)
+  }
+  for (const [key, resource] of cache) {
+    if (idle <= limit && bytes <= IDLE_GEOMETRY_BYTES) break
+    if (refs.has(resource)) continue
+    cache.delete(key)
+    if (resource.isBufferGeometry) bytes -= geometryBytes(resource)
+    resource.disposeBoundsTree?.()
+    resource.dispose()
+    if (resource.map) resource.map.dispose()
+    idle--
+  }
+}
 
 const getGeometry = (type, size, extrudeOptions) => {
   // All primitives of the same type share one unit-sized geometry
@@ -125,9 +185,11 @@ const getGeometry = (type, size, extrudeOptions) => {
       default:
         geometry = new THREE.BoxGeometry(1, 1, 1)
     }
-    geometryCache.set(key, geometry)
+    geometry.uuid = `prim:${key}`
   }
-  return geometryCache.get(key)
+  geometryCache.delete(key)
+  geometryCache.set(key, geometry)
+  return geometry
 }
 
 // Material cache - reuse materials with identical properties
@@ -136,11 +198,20 @@ const materialCache = new Map()
 // Create material with specific properties
 const getMaterial = (props, cache = materialCache) => {
   // Create a cache key from material properties
-  const cacheKey = `${props.metalness}_${props.roughness}_${props.opacity}_${props.texture}_${props.doubleside}`
+  const cacheKey = JSON.stringify([
+    props.metalness,
+    props.roughness,
+    props.opacity,
+    props.texture || null,
+    props.doubleside,
+  ])
 
   // Check cache first
   if (cache.has(cacheKey)) {
-    return cache.get(cacheKey)
+    const material = cache.get(cacheKey)
+    cache.delete(cacheKey)
+    cache.set(cacheKey, material)
+    return material
   }
 
   const material = new THREE.MeshStandardMaterial({
@@ -161,6 +232,7 @@ const getMaterial = (props, cache = materialCache) => {
   })
 
   // Cache the material
+  material.uuid = `prim-material:${cacheKey}`
   cache.set(cacheKey, material)
 
   return material
@@ -180,12 +252,14 @@ if (typeof window !== 'undefined') {
 
 const applyTexture = (material, textureUrl, loader) => {
   if (!material._texPromise) {
-    material._texPromise = new Promise(async resolve => {
+    material._texPromise = (async () => {
       let texture = loader.get('texture', textureUrl)
       if (!texture) texture = await loader.load('texture', textureUrl)
       material.map = texture
       material._texApplied = true
-      resolve()
+    })().catch(err => {
+      delete material._texPromise // a later mount can retry a failed load
+      throw err
     })
   }
   return material._texPromise
@@ -245,6 +319,7 @@ export class Prim extends Node {
   }
 
   async mount() {
+    const n = ++this.n
     try {
       this.needsRebuild = false
 
@@ -252,12 +327,21 @@ export class Prim extends Node {
       // essentially lets us use unit-sized geometry and transfers the offset to scale.
       // for example there will only ever be ONE box geometry used, scaling will form its size.
       // but for shapes with varying config, eg cylinder top and bottom radii, these are normalized by ratio.
-      const { size, scaleOffset } = getGeometryConfig(this._type, this._size)
+      const config = getGeometryConfig(this._type, this._size)
+      if (config.invalid) {
+        // no visual and no physics: these sizes divide by zero or lack values
+        warnPhysicsOnce(this, 'config', `[prim] ${this._type} size ${config.invalid}; skipped`)
+        return
+      }
+      const { size, scaleOffset } = config
       this.scaleOffset.fromArray(scaleOffset)
       this.updateMatrixWorldOffset()
 
       // Get unit-sized geometry for this type
       const geometry = getGeometry(this._type, size, this.getExtrudeOptions())
+      retainResource(geometryRefs, geometry)
+      this.cachedGeometry = geometry
+      trimResources(geometryCache, geometryRefs, IDLE_GEOMETRY_LIMIT)
 
       // Create material with current properties
       const cache = this.ctx.world.isPreview ? (this.ctx.world.primMaterials ||= new Map()) : materialCache
@@ -275,12 +359,22 @@ export class Prim extends Node {
         cache
       )
 
+      retainResource(materialRefs, material)
+      this.cachedMaterial = material
+      this.materialCache = cache
+      trimResources(cache, materialRefs, IDLE_MATERIAL_LIMIT)
+
       // Get loader if available (client-side only)
       const loader = this.ctx.world.loader || null
 
       if (this._texture && !material._texApplied) {
-        const n = ++this.n
-        await applyTexture(material, this._texture, loader)
+        // An unmount during the load releases the node's pin; keep a second one until the texture settles.
+        retainResource(materialRefs, material)
+        try {
+          await applyTexture(material, this._texture, loader)
+        } finally {
+          releaseResource(cache, materialRefs, material, IDLE_MATERIAL_LIMIT)
+        }
         if (n !== this.n) return // remounted or destroyed
       }
 
@@ -320,8 +414,10 @@ export class Prim extends Node {
         this.mountPhysics(size, geometry)
       }
     } catch (err) {
+      if (n !== this.n) return // an older texture load must not tear down a newer mount
       handlePhysicsFailure(err, { entity: this.ctx.entity, world: this.ctx.world, phase: 'Prim.mount' })
       console.error('[prim] mount failed')
+      this.unmount()
     }
   }
 
@@ -341,6 +437,19 @@ export class Prim extends Node {
   }
 
   mountPhysics(size, geometry) {
+    this.physicsSize = size
+    this.physicsGeometry = geometry
+    this.physicsSkip = null
+    const held = this.heldPmesh
+    this.heldPmesh = null
+    try {
+      this.mountPhysicsChecked(size, geometry)
+    } finally {
+      held?.release()
+    }
+  }
+
+  mountPhysicsChecked(size, geometry) {
     if (!PHYSX) return
 
     const type = this._physics // 'static' | 'kinematic' | 'dynamic'
@@ -349,8 +458,102 @@ export class Prim extends Node {
     const angularDamping = this._angularDamping
     const trigger = this._trigger
 
-    // Create transform
+    // Decompose once. A mirror folds into the scale and every prim shape is symmetric under it, so the pose keeps
+    // the decomposed rotation and the shape uses the absolute scale. Every size is checked before PhysX sees it,
+    // and the actor is created only once the geometry is known to be valid.
     this.matrixWorldOffset.decompose(_v1, _q1, _v2)
+    const absScale = _v3.set(Math.abs(_v2.x), Math.abs(_v2.y), Math.abs(_v2.z))
+    if (!positionOk(_v1)) {
+      return this.skipPhysics('position', 'position is outside the physics range')
+    }
+    // a mirror (decompose puts it in a negative x) is exact for the static shape, but a moving prim's actor pose is
+    // copied back into the node without it, so its visual would flip away from its collider
+    if (_v2.x < 0 && type !== 'static') {
+      return this.skipPhysics('mirror', 'a mirrored prim only has static physics')
+    }
+
+    let pxGeometry = null
+    let pmesh = null
+
+    if (this._type === 'box') {
+      const hx = 0.5 * absScale.x
+      const hy = 0.5 * absScale.y
+      const hz = 0.5 * absScale.z
+      if (!lengthOk(hx) || !lengthOk(hy) || !lengthOk(hz)) {
+        return this.skipPhysics('size', 'box size is outside the physics range')
+      }
+      pxGeometry = new PHYSX.PxBoxGeometry(hx, hy, hz)
+    } else if (this._type === 'sphere' && isUniformScale(absScale)) {
+      const [radius] = size
+      if (!lengthOk(radius * absScale.x)) {
+        return this.skipPhysics('size', 'sphere radius is outside the physics range')
+      }
+      pxGeometry = new PHYSX.PxSphereGeometry(radius * absScale.x)
+    } else {
+      if (!scaleOk(absScale)) {
+        return this.skipPhysics('scale', 'scale is outside the physics range')
+      }
+      // Use a convex mesh for cylinder, cone, torus, plane, and extrude.
+      // Concave extrude profiles therefore use their convex hull for physics.
+      const threeGeometry = geometry
+
+      // Create convex mesh
+      pmesh = geometryToPxMesh(this.ctx.world, threeGeometry, true, this.ctx.entity)
+      if (pmesh && pmesh.value) {
+        if (!extentOk(pmesh.maxAbs, absScale)) {
+          this.heldPmesh = pmesh
+          return this.skipPhysics('extent', 'shape is larger than the physics range')
+        }
+        // Create scale and its components explicitly so we can free them; the cooked mesh handle is the node's from
+        // here (unmountPhysics releases it), so a throw below cannot strand it
+        this.pmesh = pmesh
+        // each temporary is destroyed if it was created, whichever constructor throws
+        let _scaleVec, _scaleQuat, _scale
+        try {
+          _scaleVec = new PHYSX.PxVec3(absScale.x, absScale.y, absScale.z)
+          _scaleQuat = new PHYSX.PxQuat(0, 0, 0, 1)
+          _scale = new PHYSX.PxMeshScale(_scaleVec, _scaleQuat)
+          pxGeometry = new PHYSX.PxConvexMeshGeometry(pmesh.value, _scale)
+        } finally {
+          if (_scale) PHYSX.destroy(_scale)
+          if (_scaleVec) PHYSX.destroy(_scaleVec)
+          if (_scaleQuat) PHYSX.destroy(_scaleQuat)
+        }
+      } else {
+        // cooking failed: a box from the unit geometry's own bounds (host-made, so trustworthy) times the scale
+        console.warn(`[prim] Failed to create convex mesh for ${this._type}, falling back to box`)
+        if (!threeGeometry.boundingBox) threeGeometry.computeBoundingBox()
+        const box = threeGeometry.boundingBox
+        const hx = 0.5 * (box.max.x - box.min.x) * absScale.x
+        const hy = 0.5 * (box.max.y - box.min.y) * absScale.y
+        const hz = 0.5 * (box.max.z - box.min.z) * absScale.z
+        if (!lengthOk(hx) || !lengthOk(hy) || !lengthOk(hz)) {
+          return this.skipPhysics('size', 'fallback box is outside the physics range')
+        }
+        pxGeometry = new PHYSX.PxBoxGeometry(hx, hy, hz)
+      }
+    }
+    if (!geometryOk(pxGeometry)) {
+      PHYSX.destroy(pxGeometry)
+      this.pmesh?.release()
+      this.pmesh = null
+      return this.skipPhysics('invalid', 'geometry is not valid for physics')
+    }
+
+    // the geometry is copied into the shape, so it is destroyed on every exit, a throw included
+    try {
+      this.mountActor(pxGeometry, { type, mass, linearDamping, angularDamping, trigger })
+    } finally {
+      PHYSX.destroy(pxGeometry)
+    }
+    if (this.actor && type === 'static' && !trigger && ['environment', 'prop'].includes(this._layer)) {
+      this.portalCollisionGeometry = geometry
+      this.ctx.world.physics.portalCollisions?.colliders.add(this)
+    }
+  }
+
+  mountActor(pxGeometry, { type, mass, linearDamping, angularDamping, trigger }) {
+    // Create transform
     if (!this._tm) this._tm = new PHYSX.PxTransform(PHYSX.PxIDENTITYEnum.PxIdentity)
     vec3ToPxPos(_v1, this._tm)
     quatToPxRot(_q1, this._tm)
@@ -369,65 +572,26 @@ export class Prim extends Node {
       this.actor.setAngularDamping(angularDamping)
     }
 
-    // Create collider shape
-    let pxGeometry = null
-    let pmesh = null
-
-    if (this._type === 'box') {
-      const [width, height, depth] = size
-      pxGeometry = new PHYSX.PxBoxGeometry((width / 2) * _v2.x, (height / 2) * _v2.y, (depth / 2) * _v2.z)
-    } else if (this._type === 'sphere' && isUniformScale(_v2)) {
-      const [radius] = size
-      pxGeometry = new PHYSX.PxSphereGeometry(radius * _v2.x)
-    } else {
-      // Use a convex mesh for cylinder, cone, torus, plane, and extrude.
-      // Concave extrude profiles therefore use their convex hull for physics.
-      const threeGeometry = getGeometry(this._type, size, this.getExtrudeOptions())
-
-      // Create convex mesh
-      pmesh = geometryToPxMesh(this.ctx.world, threeGeometry, true, this.ctx.entity)
-      if (pmesh && pmesh.value) {
-        // Create scale and its components explicitly so we can free them
-        const _scaleVec = new PHYSX.PxVec3(_v2.x, _v2.y, _v2.z)
-        const _scaleQuat = new PHYSX.PxQuat(0, 0, 0, 1)
-        const _scale = new PHYSX.PxMeshScale(_scaleVec, _scaleQuat)
-        pxGeometry = new PHYSX.PxConvexMeshGeometry(pmesh.value, _scale)
-        // free temporary PhysX objects
-        PHYSX.destroy(_scale)
-        PHYSX.destroy(_scaleVec)
-        PHYSX.destroy(_scaleQuat)
-        this.pmesh = pmesh // Store for cleanup
-      } else {
-        // TODO: think we can remove this? why would this happen?
-        console.warn(`[prim] Failed to create convex mesh for ${this._type}, falling back to box`)
-        const boxSize = this.getColliderSize()
-        pxGeometry = new PHYSX.PxBoxGeometry(boxSize[0] / 2, boxSize[1] / 2, boxSize[2] / 2)
-      }
-    }
-
     // Get material
     const staticFriction = this._staticFriction
     const dynamicFriction = this._dynamicFriction
     const restitution = this._restitution
     const material = this.ctx.world.physics.getMaterial(staticFriction, dynamicFriction, restitution)
 
-    // Create shape flags
+    // Create shape flags and the shape; the flags are destroyed on every exit, a throw from raise() included
     const flags = new PHYSX.PxShapeFlags()
-    if (trigger) {
-      flags.raise(PHYSX.PxShapeFlagEnum.eTRIGGER_SHAPE)
-    } else {
-      flags.raise(PHYSX.PxShapeFlagEnum.eSCENE_QUERY_SHAPE | PHYSX.PxShapeFlagEnum.eSIMULATION_SHAPE)
-    }
-
-    // Create shape
     let shape
     try {
+      if (trigger) {
+        flags.raise(PHYSX.PxShapeFlagEnum.eTRIGGER_SHAPE)
+      } else {
+        flags.raise(PHYSX.PxShapeFlagEnum.eSCENE_QUERY_SHAPE | PHYSX.PxShapeFlagEnum.eSIMULATION_SHAPE)
+      }
       shape = this.ctx.world.physics.physics.createShape(pxGeometry, material, true, flags)
     } finally {
       PHYSX.destroy(flags)
       if (!shape || shape.ptr === 0) {
         this.shape = null
-        PHYSX.destroy(pxGeometry)
         this.pmesh?.release()
         this.pmesh = null
         this.actor.release()
@@ -448,9 +612,12 @@ export class Prim extends Node {
       pairFlags |= PHYSX.PxPairFlagEnum.eNOTIFY_CONTACT_POINTS
     }
     const filterData = new PHYSX.PxFilterData(layer.group, layer.mask, pairFlags, 0)
-    this.shape.setQueryFilterData(filterData)
-    this.shape.setSimulationFilterData(filterData)
-    PHYSX.destroy(filterData)
+    try {
+      this.shape.setQueryFilterData(filterData)
+      this.shape.setSimulationFilterData(filterData)
+    } finally {
+      PHYSX.destroy(filterData)
+    }
 
     // const position = _v1.copy(this.position).multiply(this.parent.scale)
     // const pose = new PHYSX.PxTransform()
@@ -487,12 +654,38 @@ export class Prim extends Node {
         return self._onTriggerLeave
       },
     })
+  }
 
-    // Clean up
-    PHYSX.destroy(pxGeometry)
-    if (type === 'static' && !trigger && ['environment', 'prop'].includes(this._layer)) {
-      this.portalCollisionGeometry = geometry
-      this.ctx.world.physics.portalCollisions?.colliders.add(this)
+  // no physics for this prim (its visual stays); a property setter rebuilds it, a transform edit does not
+  skipPhysics(reason, message) {
+    warnPhysicsOnce(this, reason, `[prim] ${message}; physics skipped`)
+    if (TRANSFORM_SKIPS.has(reason)) this.physicsSkip = { reason, key: this.physicsKey(), n: this.n }
+  }
+
+  // the signed decomposed scale the physics checks depend on (position is checked on its own)
+  physicsKey() {
+    this.matrixWorldOffset.decompose(_v1, _q1, _v2)
+    // exact values: any change can change what the checks decide, so none is rounded away
+    return `${_v2.x},${_v2.y},${_v2.z}`
+  }
+
+  // a prim whose physics was skipped for its transform tries again once the transform changed; only for the current
+  // mount (Prim.mount awaits a texture before mountPhysics) and never while an actor exists
+  retryPhysics() {
+    const skip = this.physicsSkip
+    if (!skip || skip.n !== this.n || this.actor || this.ctx.moving || !this._physics) return
+    if (skip.reason === 'position') {
+      this.matrixWorldOffset.decompose(_v1, _q1, _v2)
+      if (!positionOk(_v1)) return
+    } else if (this.physicsKey() === skip.key) {
+      return
+    }
+    try {
+      this.mountPhysics(this.physicsSize, this.physicsGeometry)
+    } catch (err) {
+      handlePhysicsFailure(err, { entity: this.ctx.entity, world: this.ctx.world, phase: 'Prim.retryPhysics' })
+      console.error('[prim] physics retry failed')
+      console.error(err)
     }
   }
 
@@ -517,6 +710,9 @@ export class Prim extends Node {
       this.pmesh.release()
       this.pmesh = null
     }
+    this.heldPmesh?.release()
+    this.heldPmesh = null
+    this.physicsGeometry = null
   }
 
   onInterpolate = (position, quaternion) => {
@@ -567,11 +763,13 @@ export class Prim extends Node {
       if (this.sItem) {
         this.ctx.world.stage.octree.move(this.sItem)
       }
+      this.retryPhysics()
     }
   }
 
   unmount() {
     this.n++
+    this.physicsSkip = null
     if (this.handle) {
       this.handle.destroy()
       this.handle = null
@@ -582,12 +780,17 @@ export class Prim extends Node {
       this.sItem = null
     }
     this.unmountPhysics()
+    releaseResource(geometryCache, geometryRefs, this.cachedGeometry, IDLE_GEOMETRY_LIMIT)
+    if (this.materialCache) releaseResource(this.materialCache, materialRefs, this.cachedMaterial, IDLE_MATERIAL_LIMIT)
+    this.cachedGeometry = null
+    this.cachedMaterial = null
+    this.materialCache = null
   }
 
   copy(source, recursive) {
     super.copy(source, recursive)
     this._type = source._type
-    this._size = source._size
+    this._size = source._size.slice()
     this._profile = source._profile.map(point => point.slice())
     this._depth = source._depth
     this._bevelEnabled = source._bevelEnabled
@@ -659,16 +862,28 @@ export class Prim extends Node {
   }
 
   get size() {
-    return this._size
+    return this._size.slice()
   }
 
   set size(value) {
     if (value === null || value === undefined) {
       value = defaultSizes[this._type].slice()
     }
-    if (!isArray(value)) {
-      throw new Error('[prim] size must be an array')
+    // the length read once, and a primitive integer within bounds: an array proxy could report any length, a different
+    // one each time, or an object whose valueOf answers differently on every comparison
+    const length = isArray(value) ? value.length : undefined
+    if (!Number.isInteger(length) || length < 0 || length > MAX_SIZE_VALUES) {
+      throw new Error('[prim] size must be an array of finite numbers')
     }
+    // a plain copy first and the checks on the copy: the script's array could carry its own iterator or index getters
+    // and hand different values to the checks and to the geometry (a loop over every index, because every() would
+    // skip the holes of a sparse array such as new Array(3))
+    const copy = []
+    for (let i = 0; i < length; i++) copy.push(value[i])
+    if (!allFinite(copy, copy.length)) {
+      throw new Error('[prim] size must be an array of finite numbers')
+    }
+    value = copy
     if (isEqual(this._size, value)) return
     this._size = value
     this.needsRebuild = true
@@ -676,13 +891,24 @@ export class Prim extends Node {
   }
 
   get profile() {
-    return this._profile
+    return this._profile.map(point => point.slice())
   }
 
   set profile(value = defaults.profile) {
-    validateProfile(value)
-    if (isEqual(this._profile, value)) return
-    this._profile = value.map(point => point.slice())
+    const length = isArray(value) ? value.length : undefined
+    if (!Number.isInteger(length) || length < 3 || length > MAX_PROFILE_POINTS) {
+      throw new Error('[prim] profile must contain 3 to 256 points')
+    }
+    const copy = []
+    for (let i = 0; i < length; i++) {
+      const point = value[i]
+      if (!isArray(point) || point.length !== 2)
+        throw new Error('[prim] profile points must be [x, y] finite number pairs')
+      copy.push([point[0], point[1]])
+    }
+    validateProfile(copy)
+    if (isEqual(this._profile, copy)) return
+    this._profile = copy
     this.needsRebuild = true
     this.setDirty()
   }
@@ -692,7 +918,7 @@ export class Prim extends Node {
   }
 
   set depth(value = defaults.depth) {
-    if (!isNumber(value) || !Number.isFinite(value) || value <= 0) {
+    if (!finiteNumber(value) || value <= 0) {
       throw new Error('[prim] depth must be a positive number')
     }
     if (this._depth === value) return
@@ -706,7 +932,7 @@ export class Prim extends Node {
   }
 
   set bevelEnabled(value = defaults.bevelEnabled) {
-    if (!isBoolean(value)) {
+    if (typeof value !== 'boolean') {
       throw new Error('[prim] bevelEnabled must be a boolean')
     }
     if (this._bevelEnabled === value) return
@@ -720,7 +946,7 @@ export class Prim extends Node {
   }
 
   set bevelThickness(value = defaults.bevelThickness) {
-    if (!isNumber(value) || !Number.isFinite(value) || value < 0) {
+    if (!finiteNumber(value) || value < 0) {
       throw new Error('[prim] bevelThickness must be a non-negative number')
     }
     if (this._bevelThickness === value) return
@@ -734,7 +960,7 @@ export class Prim extends Node {
   }
 
   set bevelSize(value = defaults.bevelSize) {
-    if (!isNumber(value) || !Number.isFinite(value) || value < 0) {
+    if (!finiteNumber(value) || value < 0) {
       throw new Error('[prim] bevelSize must be a non-negative number')
     }
     if (this._bevelSize === value) return
@@ -748,8 +974,8 @@ export class Prim extends Node {
   }
 
   set bevelSegments(value = defaults.bevelSegments) {
-    if (!Number.isInteger(value) || value < 0) {
-      throw new Error('[prim] bevelSegments must be a non-negative integer')
+    if (!Number.isInteger(value) || value < 0 || value > MAX_BEVEL_SEGMENTS) {
+      throw new Error('[prim] bevelSegments must be an integer from 0 to 16')
     }
     if (this._bevelSegments === value) return
     this._bevelSegments = value
@@ -762,8 +988,8 @@ export class Prim extends Node {
   }
 
   set curveSegments(value = defaults.curveSegments) {
-    if (!Number.isInteger(value) || value < 1) {
-      throw new Error('[prim] curveSegments must be a positive integer')
+    if (!Number.isInteger(value) || value < 1 || value > MAX_CURVE_SEGMENTS) {
+      throw new Error('[prim] curveSegments must be an integer from 1 to 64')
     }
     if (this._curveSegments === value) return
     this._curveSegments = value
@@ -830,7 +1056,7 @@ export class Prim extends Node {
   }
 
   set castShadow(value = defaults.castShadow) {
-    if (!isBoolean(value)) {
+    if (typeof value !== 'boolean') {
       throw new Error('[prim] castShadow not a boolean')
     }
     if (this._castShadow === value) return
@@ -844,7 +1070,7 @@ export class Prim extends Node {
   }
 
   set receiveShadow(value = defaults.receiveShadow) {
-    if (!isBoolean(value)) {
+    if (typeof value !== 'boolean') {
       throw new Error('[prim] receiveShadow not a boolean')
     }
     if (this._receiveShadow === value) return
@@ -871,7 +1097,7 @@ export class Prim extends Node {
   }
 
   set metalness(value = defaults.metalness) {
-    if (!isNumber(value) || value < 0 || value > 1) {
+    if (!finiteNumber(value) || value < 0 || value > 1) {
       throw new Error('[prim] metalness must be number between 0 and 1')
     }
     if (this._metalness === value) return
@@ -885,7 +1111,7 @@ export class Prim extends Node {
   }
 
   set roughness(value = defaults.roughness) {
-    if (!isNumber(value) || value < 0 || value > 1) {
+    if (!finiteNumber(value) || value < 0 || value > 1) {
       throw new Error('[prim] roughness must be number between 0 and 1')
     }
     if (this._roughness === value) return
@@ -899,7 +1125,7 @@ export class Prim extends Node {
   }
 
   set opacity(value = defaults.opacity) {
-    if (!isNumber(value) || value < 0 || value > 1) {
+    if (!finiteNumber(value) || value < 0 || value > 1) {
       throw new Error('[prim] opacity must be number between 0 and 1')
     }
     if (this._opacity === value) return
@@ -913,7 +1139,7 @@ export class Prim extends Node {
   }
 
   set texture(value = defaults.texture) {
-    if (value !== null && !isString(value)) {
+    if (value !== null && typeof value !== 'string') {
       throw new Error('[prim] texture must be string or null')
     }
     if (this._texture === value) return
@@ -941,8 +1167,9 @@ export class Prim extends Node {
   }
 
   set mass(value = defaults.mass) {
-    if (!isNumber(value) || value <= 0) {
-      throw new Error('[prim] mass must be positive number')
+    // below MIN_MASS PhysX rounds the mass to 0 with an infinite inverse, and a body that hits it goes NaN
+    if (!finiteNumber(value) || !(Math.fround(value) >= Math.fround(MIN_MASS))) {
+      throw new Error(`[prim] mass must be a finite number >= ${MIN_MASS}`)
     }
     if (this._mass === value) return
     this._mass = value
@@ -955,7 +1182,7 @@ export class Prim extends Node {
   }
 
   set linearDamping(value = defaults.linearDamping) {
-    if (!isNumber(value) || value < 0) {
+    if (!finiteNumber(value) || value < 0) {
       throw new Error('[prim] linearDamping must be non-negative number')
     }
     if (this._linearDamping === value) return
@@ -969,7 +1196,7 @@ export class Prim extends Node {
   }
 
   set angularDamping(value = defaults.angularDamping) {
-    if (!isNumber(value) || value < 0) {
+    if (!finiteNumber(value) || value < 0) {
       throw new Error('[prim] angularDamping must be non-negative number')
     }
     if (this._angularDamping === value) return
@@ -983,7 +1210,7 @@ export class Prim extends Node {
   }
 
   set staticFriction(value = defaults.staticFriction) {
-    if (!isNumber(value) || value < 0 || value > 1) {
+    if (!finiteNumber(value) || value < 0 || value > 1) {
       throw new Error('[prim] staticFriction must be number between 0 and 1')
     }
     if (this._staticFriction === value) return
@@ -997,7 +1224,7 @@ export class Prim extends Node {
   }
 
   set dynamicFriction(value = defaults.dynamicFriction) {
-    if (!isNumber(value) || value < 0 || value > 1) {
+    if (!finiteNumber(value) || value < 0 || value > 1) {
       throw new Error('[prim] dynamicFriction must be number between 0 and 1')
     }
     if (this._dynamicFriction === value) return
@@ -1011,7 +1238,7 @@ export class Prim extends Node {
   }
 
   set restitution(value = defaults.restitution) {
-    if (!isNumber(value) || value < 0 || value > 1) {
+    if (!finiteNumber(value) || value < 0 || value > 1) {
       throw new Error('[prim] restitution must be number between 0 and 1')
     }
     if (this._restitution === value) return
@@ -1025,8 +1252,8 @@ export class Prim extends Node {
   }
 
   set layer(value = defaults.layer) {
-    if (!isString(value)) {
-      throw new Error('[prim] layer must be string')
+    if (!layers.includes(value)) {
+      throw new Error(`[prim] invalid layer: ${value}`)
     }
     if (this._layer === value) return
     this._layer = value
@@ -1114,7 +1341,7 @@ export class Prim extends Node {
   }
 
   set doubleside(value = defaults.doubleside) {
-    if (!isBoolean(value)) {
+    if (typeof value !== 'boolean') {
       throw new Error('[prim] doubleside must be boolean')
     }
     if (this._doubleside === value) return
@@ -1300,6 +1527,9 @@ export class Prim extends Node {
           return self.layer
         },
         set layer(value) {
+          if (value === 'player') {
+            throw new Error('[prim] layer invalid: player')
+          }
           self.layer = value
         },
         get trigger() {
@@ -1356,9 +1586,24 @@ function isUniformScale(vec3) {
   return vec3.x === vec3.y && vec3.y === vec3.z
 }
 
+function allFinite(values, count) {
+  for (let i = 0; i < count; i++) if (!finiteNumber(values[i])) return false
+  return true
+}
+
+// how many numbers each type reads from size (extra ones are ignored)
+const MAX_SIZE_VALUES = 16
+const sizeArity = { box: 3, sphere: 1, cylinder: 3, cone: 2, torus: 2, plane: 2 }
+
+// returns { size, scaleOffset }, or { invalid } for sizes that lack values or would divide by zero
 function getGeometryConfig(type, requestedSize) {
   let size
   let scaleOffset
+
+  const arity = sizeArity[type]
+  if (arity && !(requestedSize?.length >= arity && allFinite(requestedSize, arity))) {
+    return { invalid: 'lacks values' }
+  }
 
   switch (type) {
     case 'box': {
@@ -1377,14 +1622,15 @@ function getGeometryConfig(type, requestedSize) {
 
     case 'cylinder': {
       const [rt, rb, h] = requestedSize
+      if (rt === 0 && rb === 0) return { invalid: 'has zero radii' }
       // Only create different geometry if the taper ratio is different
       // If rt === rb, it's a uniform cylinder - use unit cylinder
       if (rt === rb) {
         size = [1, 1, 1] // Unit cylinder (uniform radius)
         scaleOffset = [rt, h, rt] // Scale X/Z for radius, Y for height
       } else {
-        // Tapered cylinder - normalize by the ratio
-        const maxR = Math.max(rt, rb)
+        // Tapered cylinder - normalize by the ratio (of the magnitudes: a radius may be negative, a mirror)
+        const maxR = Math.max(Math.abs(rt), Math.abs(rb))
         size = [rt / maxR, rb / maxR, 1]
         scaleOffset = [maxR, h, maxR]
       }
@@ -1402,6 +1648,7 @@ function getGeometryConfig(type, requestedSize) {
 
     case 'torus': {
       const [r, tube] = requestedSize
+      if (r === 0) return { invalid: 'has a zero radius' }
       // Only the tube-to-main ratio matters for shape
       // Normalize so main radius is 1
       size = [1, tube / r]
@@ -1430,6 +1677,10 @@ function getGeometryConfig(type, requestedSize) {
     }
   }
 
+  // a ratio such as tube / r can leave float32 even when both inputs are finite (torus [1e-6, 1e38])
+  if (!allFinite(size, size.length) || !allFinite(scaleOffset, scaleOffset.length)) {
+    return { invalid: 'gives a shape outside float32' }
+  }
   return { size, scaleOffset }
 }
 
@@ -1463,14 +1714,7 @@ function validateProfile(value) {
     throw new Error('[prim] profile must be an array of at least 3 points')
   }
   for (const point of value) {
-    if (
-      !isArray(point) ||
-      point.length !== 2 ||
-      !isNumber(point[0]) ||
-      !isNumber(point[1]) ||
-      !Number.isFinite(point[0]) ||
-      !Number.isFinite(point[1])
-    ) {
+    if (!isArray(point) || point.length !== 2 || !finiteNumber(point[0]) || !finiteNumber(point[1])) {
       throw new Error('[prim] profile points must be [x, y] finite number pairs')
     }
   }
