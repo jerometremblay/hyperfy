@@ -1,0 +1,124 @@
+{
+  "recordedAt": "2026-10-27T13:51:06.559Z",
+  "kind": "isolated-desktop-WebGL",
+  "liveBenchmark": "completed-with-explicit-user-approval",
+  "liveResults": "experimental-static-shadow-cache-live.json",
+  "pass": true,
+  "checks": [
+    {
+      "label": "Native capture renders six point faces and one spot face",
+      "pass": true
+    },
+    {
+      "label": "Cached static shadows match the normal static-only image",
+      "pass": true,
+      "changedPixels": 0,
+      "max": 0
+    },
+    {
+      "label": "The cached image still contains visible fixture shadows",
+      "pass": true,
+      "changedPixels": 4928,
+      "max": 97
+    },
+    {
+      "label": "Camera/player movement produces zero new fixture faces",
+      "pass": true
+    },
+    {
+      "label": "Sun maps remain dynamic and still include the avatar",
+      "pass": true
+    },
+    {
+      "label": "The avatar is excluded from cached maps and its normal flags are restored",
+      "pass": true
+    },
+    {
+      "label": "Moving props are removed once rather than rebaked every frame",
+      "pass": true
+    },
+    {
+      "label": "Settled geometry joins the cache again",
+      "pass": true
+    },
+    {
+      "label": "A moving instance is hidden during capture while its stationary neighbor still casts",
+      "pass": true
+    },
+    {
+      "label": "Normal instance bounds include the restored moving object",
+      "pass": true
+    },
+    {
+      "label": "The composer also reuses fixture maps while updating sun shadows",
+      "pass": true
+    },
+    {
+      "label": "Switching off restores normal fixture rendering",
+      "pass": true
+    },
+    {
+      "label": "Build mode restores dynamic shadows for editing",
+      "pass": true
+    },
+    {
+      "label": "No shader or WebGL errors",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "label": "Cached workload eliminates most shadow draw calls",
+      "pass": true
+    },
+    {
+      "label": "All three CSM sun cascades refresh every frame while fixture maps stay cached",
+      "pass": true
+    },
+    {
+      "label": "Cached maps work with the CSM shaders without WebGL errors",
+      "pass": true
+    }
+  ],
+  "samples": [
+    {
+      "label": "normal-before",
+      "seconds": 4.384600000023842,
+      "frames": 20,
+      "fps": 4.819888381532217,
+      "frameMeanMs": 207.47368421052633,
+      "frameP95Ms": 518,
+      "cpuMeanMs": 207.97000000476837,
+      "drawsPerFrame": 3831
+    },
+    {
+      "label": "cached",
+      "seconds": 4.079099999964237,
+      "frames": 68,
+      "fps": 16.89487354040759,
+      "frameMeanMs": 59.18955223951767,
+      "frameP95Ms": 156.39999997615814,
+      "cpuMeanMs": 59.160294119049524,
+      "drawsPerFrame": 779
+    },
+    {
+      "label": "normal-after",
+      "seconds": 4.480299999952316,
+      "frames": 6,
+      "fps": 1.6089069086215793,
+      "frameMeanMs": 621.5400000095367,
+      "frameP95Ms": 808.5,
+      "cpuMeanMs": 745.6999999880791,
+      "drawsPerFrame": 3831
+    }
+  ],
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+  "viewport": [384, 384],
+  "camera": [
+    0.813733471206735, 2.7755575615628914e-17, -0.5812381937190964, 0, -0.2920831821803256, 0.864566219253764,
+    -0.40891645505245594, 0, 0.502518907629606, 0.502518907629606, 0.7035264706814486, 0, 5.099999999999998, 5, 7, 1
+  ],
+  "renderer": "WebKit WebGL",
+  "errors": [],
+  "baselineDrift": 1.9957534247035,
+  "timingComparisonValid": false
+}

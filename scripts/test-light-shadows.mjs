@@ -5,9 +5,11 @@ import { build } from 'esbuild'
 const bundle = await build({
   entryPoints: [
     new URL(
-      process.argv.includes('--budget')
-        ? '../src/core/systems/ClientGraphics.browser-test.js'
-        : '../src/core/libs/csm/CSM.browser-test.js',
+      process.argv.includes('--cached')
+        ? '../src/core/extras/CachedLightShadows.browser-test.js'
+        : process.argv.includes('--budget')
+          ? '../src/core/systems/ClientGraphics.browser-test.js'
+          : '../src/core/libs/csm/CSM.browser-test.js',
       import.meta.url
     ).pathname,
   ],

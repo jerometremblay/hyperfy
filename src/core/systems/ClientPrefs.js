@@ -37,6 +37,7 @@ export class ClientPrefs extends System {
     this.stats = isBoolean(data.stats) ? data.stats : false
     this.dpr = isNumber(data.dpr) ? data.dpr : 1
     this.shadows = data.shadows ? data.shadows : isTouch ? 'low' : 'med' // none, low=1, med=2048cascade, high=4096cascade
+    this.cacheFixtureShadows = isBoolean(data.cacheFixtureShadows) ? data.cacheFixtureShadows : false
     this.postprocessing = isBoolean(data.postprocessing) ? data.postprocessing : true
     this.bloom = isBoolean(data.bloom) ? data.bloom : true
     this.ao = isBoolean(data.ao) ? data.ao : true
@@ -79,6 +80,7 @@ export class ClientPrefs extends System {
       stats: this.stats,
       dpr: this.dpr,
       shadows: this.shadows,
+      cacheFixtureShadows: this.cacheFixtureShadows,
       postprocessing: this.postprocessing,
       bloom: this.bloom,
       ao: this.ao,
@@ -107,6 +109,10 @@ export class ClientPrefs extends System {
 
   setShadows(value) {
     this.modify('shadows', value)
+  }
+
+  setCacheFixtureShadows(value) {
+    this.modify('cacheFixtureShadows', value)
   }
 
   setPostprocessing(value) {
