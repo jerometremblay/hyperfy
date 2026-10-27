@@ -69,3 +69,17 @@ test('HTTPS world keeps shared TLS certificates and derives secure public URLs',
   assert.equal(actual.PUBLIC_API_URL, 'https://world.example:3334/api')
   assert.equal(actual.ASSETS_BASE_URL, 'https://world.example:3334/assets')
 })
+
+test('world-2d inherits the default admin code and signing secret unless explicitly overridden', t => {
+  const root = fixture(t, {
+    '.env': 'ADMIN_CODE=shared-test-code\nJWT_SECRET=shared-test-secret',
+    '.env.world-2d': 'WORLD=worlds/world-2d\nPORT=3335\nPUBLIC_ORIGIN=http://localhost:3335',
+  })
+  const inherited = resolveWorldProfile('world-2d', { root, env: {} })
+  assert.equal(inherited.ADMIN_CODE, 'shared-test-code')
+  assert.equal(inherited.JWT_SECRET, 'shared-test-secret')
+  fs.writeFileSync(path.join(root, '.env.world-2d.local'), 'ADMIN_CODE=world-test-code')
+  const overridden = resolveWorldProfile('world-2d', { root, env: {} })
+  assert.equal(overridden.ADMIN_CODE, 'world-test-code')
+  assert.equal(overridden.JWT_SECRET, 'shared-test-secret')
+})

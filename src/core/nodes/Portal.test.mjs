@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import test, { mock } from 'node:test'
 import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
 import { build } from 'esbuild'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { parseHyp } from '../../../tools/worldsync/src/hyp-format.mjs'
 
 const bundle = await build({
   stdin: {
@@ -116,7 +116,7 @@ test('portal defaults to one side, supports proxy edits, copying, and cleans up 
   assert.equal(hot.size, 0)
 })
 
-test('arrival screenshot uses the endpoint camera, flips pixels and restores renderer state after capture and failure', async t => {
+test('arrival screenshot uses a finite perspective view in both render styles and restores state after capture and failure', async t => {
   const ctx = context()
   const { portal } = mounted({ position: [10, 1.2, 20] }, ctx)
   const previousTarget = {}
@@ -148,6 +148,7 @@ test('arrival screenshot uses the endpoint camera, flips pixels and restores ren
     render(_scene, camera) {
       assert.deepEqual(camera.position.toArray(), [10, 1.2, 21])
       assert.ok(Math.abs(camera.rotation.y) === Math.PI)
+      assert.ok(camera.projectionMatrix.elements.every(Number.isFinite))
       assert.equal(renderer.xr.enabled, false)
     },
     readRenderTargetPixels(_target, _x, _y, width, height, pixels) {
@@ -177,7 +178,7 @@ test('arrival screenshot uses the endpoint camera, flips pixels and restores ren
   t.after(() => {
     delete globalThis.document
   })
-  const graphics = { world: ctx.world, renderer, renderingPortal: false }
+  const graphics = { world: ctx.world, perspectiveCamera: ctx.world.camera, renderer, renderingPortal: false }
   const blob = await ClientGraphics.prototype.capturePortalArrival.call(graphics, portal)
   assert.equal(blob.type, 'image/jpeg')
   assert.equal(image.data[0], 99)
@@ -188,6 +189,10 @@ test('arrival screenshot uses the endpoint camera, flips pixels and restores ren
   assert.equal(renderer.autoClear, false)
   assert.equal(graphics.renderingPortal, false)
   assert.equal(disposed, true)
+  ctx.world.camera = new THREE.OrthographicCamera(-12, 12, 9, -9, 0.2, 1200)
+  await ClientGraphics.prototype.capturePortalArrival.call(graphics, portal)
+  assert.equal(target, previousTarget)
+  assert.equal(renderer.xr.enabled, true)
   renderer.render = () => {
     throw new Error('capture failed')
   }
@@ -414,13 +419,15 @@ test('one-sided camera clearance stops only front approaches', async () => {
 
 test('catalog package loads and configures a native portal with no JavaScript asset', async () => {
   const bytes = readFileSync(new URL('../../../src/world/collections/default/WorldPortal.hyp', import.meta.url))
-  const length = bytes.readUInt32LE(0)
-  const header = JSON.parse(bytes.subarray(4, 4 + length))
-  assert.equal(header.blueprint.script, null)
-  assert.equal(header.assets.length, 1)
-  const model = bytes.subarray(4 + length)
-  assert.equal(model.length, header.assets[0].size)
-  assert.equal(header.blueprint.model, `asset://${createHash('sha256').update(model).digest('hex')}.glb`)
+  const { blueprint, assets } = parseHyp(bytes)
+  assert.equal(blueprint.script, null)
+  assert.equal(
+    assets.some(asset => asset.type === 'script'),
+    false
+  )
+  // The catalog also carries its icon; select the verified model by its URL.
+  const model = assets.find(asset => asset.url === blueprint.model)?.bytes
+  assert.ok(model)
   const glb = await new GLTFLoader().parseAsync(
     model.buffer.slice(model.byteOffset, model.byteOffset + model.byteLength),
     ''
@@ -429,9 +436,9 @@ test('catalog package loads and configures a native portal with no JavaScript as
   const entity = {
     data: { id: 'instance' },
     blueprint: {
-      ...header.blueprint,
+      ...blueprint,
       props: {
-        ...header.blueprint.props,
+        ...blueprint.props,
         destination: 'https://example.com',
         destinationPortalId: 'remote',
       },

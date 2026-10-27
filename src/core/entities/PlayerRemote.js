@@ -9,6 +9,7 @@ import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
 import { cloneHandTrackingPose } from '../extras/handTracking'
+import { stylePlayerBubble } from '../extras/playerBubble'
 
 const anchorPosition = new THREE.Vector3()
 const anchorQuaternion = new THREE.Quaternion()
@@ -86,6 +87,8 @@ export class PlayerRemote extends Entity {
     this.bubble.add(this.bubbleBox)
     this.bubbleBox.add(this.bubbleText)
     this.aura.add(this.bubble)
+    this.updateBubble()
+    this.world.graphics?.on('render-style', this.updateBubble)
 
     this.aura.activate({ world: this.world, entity: this })
     this.base.activate({ world: this.world, entity: this })
@@ -116,7 +119,7 @@ export class PlayerRemote extends Entity {
       this.avatar.setHandTrackingPose(this.data.h)
       this.base.add(this.avatar)
       this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
-      this.bubble.position.y = this.avatar.getHeadToHeight() + 0.2
+      this.updateBubble()
       if (!this.bubble.active) {
         this.nametag.active = true
       }
@@ -282,7 +285,10 @@ export class PlayerRemote extends Entity {
     }
   }
 
+  updateBubble = () => stylePlayerBubble(this)
+
   chat(msg) {
+    this.updateBubble()
     this.nametag.active = false
     this.bubbleText.value = msg
     this.bubble.active = true
@@ -297,6 +303,7 @@ export class PlayerRemote extends Entity {
     for (const timer of this.expressionTimers?.values() || []) clearTimeout(timer)
     if (this.destroyed) return
     this.destroyed = true
+    this.world.graphics?.off('render-style', this.updateBubble)
 
     clearTimeout(this.chatTimer)
     this.base.deactivate()

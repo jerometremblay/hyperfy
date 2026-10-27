@@ -10,17 +10,38 @@ import {
   normalizeSettingValue,
 } from '../../src/core/extras/settingsPolicy.js'
 
-const serializedKeys = ['title', 'desc', 'image', 'avatar', 'customAvatars', 'voice', 'rank', 'playerLimit', 'ao']
+const serializedKeys = [
+  'title',
+  'desc',
+  'image',
+  'avatar',
+  'customAvatars',
+  'voice',
+  'rank',
+  'playerLimit',
+  'ao',
+  'renderStyle',
+]
 const ok = (key, value) => normalizeSettingValue(key, value).ok
 const file = { type: 'image', name: 'x.png', url: 'asset://x.png' }
 
-test('isKnownSettingKey: true for the nine serialized keys only', () => {
+test('isKnownSettingKey: allows the serialized world setting keys', () => {
   for (const key of serializedKeys) assert.equal(isKnownSettingKey(key), true, key)
   assert.equal(BUILDER_SETTING_KEYS.size + ADMIN_SETTING_KEYS.size, serializedKeys.length)
   const unknown = ['hasAdminCode', 'effectiveRank', 'world', 'deserialize', 'serialize', 'set', 'modify', 'emit']
   for (const key of [...unknown, '__proto__', 'constructor', '', undefined, null, 1]) {
     assert.equal(isKnownSettingKey(key), false, String(key))
   }
+})
+
+test('renderStyle accepts supported views and rejects malformed or unsupported settings', () => {
+  for (const style of ['standard', 'pixel-isometric', 'pixel-retro']) {
+    assert.deepEqual(normalizeSettingValue('renderStyle', style), { ok: true, value: style, changed: false })
+  }
+  for (const style of [null, undefined, true, {}, [], 'isometric', 'cinematic', '']) {
+    assert.equal(ok('renderStyle', style), false)
+  }
+  assert.equal(isAdminOnlySettingKey('renderStyle'), false)
 })
 
 test('isAdminOnlySettingKey: rank and customAvatars only', () => {

@@ -4,7 +4,7 @@
 *.notes.md
 localstorage.json
 .notes/
-node_modules/
+node_modules
 build/
 tools/worldsync/dist/
 /world*

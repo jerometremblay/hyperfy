@@ -89,6 +89,24 @@ function fixture(t, { client = false, script = '' } = {}) {
   return { world, parent, broadcasts, options, proxy: parent.getWorldProxy() }
 }
 
+test('scripts read the current server spawn without changing saved spawn data', t => {
+  const { world, proxy } = fixture(t)
+  world.network.spawn = { position: [1, 2, 3], quaternion: [0, 0, 0, 1] }
+  const first = proxy.getSpawn()
+  assert.deepEqual(first.position.toArray(), [1, 2, 3])
+  first.position.set(9, 9, 9)
+  first.quaternion.set(0, 1, 0, 0)
+  assert.deepEqual(world.network.spawn, { position: [1, 2, 3], quaternion: [0, 0, 0, 1] })
+  world.network.spawn = { position: [4, 5, 6], quaternion: [0, 1, 0, 0] }
+  assert.deepEqual(proxy.getSpawn().position.toArray(), [4, 5, 6])
+  assert.deepEqual(proxy.getSpawn().quaternion.toArray(), [0, 1, 0, 0])
+})
+
+test('client scripts cannot read the server-only spawn', t => {
+  const { proxy } = fixture(t, { client: true })
+  assert.throws(() => proxy.getSpawn(), /server-only/)
+})
+
 async function database(t, network) {
   const db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true })
   t.after(() => db.destroy())

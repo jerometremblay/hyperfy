@@ -23,6 +23,7 @@ export class Settings extends System {
     this.rank = null
     this.playerLimit = null
     this.ao = null
+    this.renderStyle = 'standard'
     this.dayNightCycle = true
     this.constellationLines = false
     this.skyAppearance = 30
@@ -61,6 +62,8 @@ export class Settings extends System {
     this.rank = data.rank
     this.playerLimit = data.playerLimit
     this.ao = data.ao
+    const renderStyle = normalizeSettingValue('renderStyle', data.renderStyle)
+    this.renderStyle = renderStyle.ok ? renderStyle.value : 'standard'
     this.dayNightCycle = typeof data.dayNightCycle === 'boolean' ? data.dayNightCycle : true
     this.constellationLines = data.constellationLines === true
     this.skyAppearance = isValidDayNightSetting('skyAppearance', data.skyAppearance) ? data.skyAppearance : 30
@@ -84,6 +87,7 @@ export class Settings extends System {
       rank: { value: this.rank },
       playerLimit: { value: this.playerLimit },
       ao: { value: this.ao },
+      renderStyle: { value: this.renderStyle },
       dayNightCycle: { value: this.dayNightCycle },
       constellationLines: { value: this.constellationLines },
       skyAppearance: { value: this.skyAppearance },
@@ -110,6 +114,7 @@ export class Settings extends System {
       rank: this.rank,
       playerLimit: this.playerLimit,
       ao: this.ao,
+      renderStyle: this.renderStyle,
       dayNightCycle: this.dayNightCycle,
       constellationLines: this.constellationLines,
       skyAppearance: this.skyAppearance,

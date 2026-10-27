@@ -455,6 +455,11 @@ const shadowOptions = [
   { label: 'Med', value: 'med' },
   { label: 'High', value: 'high' },
 ]
+const renderStyleOptions = [
+  { label: 'Standard 3D', value: 'standard' },
+  { label: 'Pixel isometric', value: 'pixel-isometric' },
+  { label: 'Retro orthographic', value: 'pixel-retro' },
+]
 function Prefs({ world, hidden }) {
   const player = world.entities.player
   const { isBuilder } = useRank(world, player)
@@ -473,6 +478,7 @@ function Prefs({ world, hidden }) {
   const [canFullscreen, isFullscreen, toggleFullscreen] = useFullscreen()
   const [actions, setActions] = useState(world.prefs.actions)
   const [stats, setStats] = useState(world.prefs.stats)
+  const [renderStyle, setRenderStyle] = useState(world.graphics.renderStyleOverride || 'default')
   const changeName = name => {
     if (!name) return setName(player.data.name)
     player.setName(name)
@@ -542,11 +548,14 @@ function Prefs({ world, hidden }) {
       if (changes.actions) setActions(changes.actions.value)
       if (changes.stats) setStats(changes.stats.value)
     }
+    const onRenderStyle = () => setRenderStyle(world.graphics.renderStyleOverride || 'default')
     world.prefs.on('change', onPrefsChange)
+    world.graphics.on('render-style', onRenderStyle)
     return () => {
       world.prefs.off('change', onPrefsChange)
+      world.graphics.off('render-style', onRenderStyle)
     }
-  }, [])
+  }, [world])
   return (
     <Pane hidden={hidden}>
       <div
@@ -625,6 +634,16 @@ function Prefs({ world, hidden }) {
           />
         )}
         <Group label='Graphics' />
+        <FieldSwitch
+          label='Rendering'
+          hint='Choose a view for this session, or use the saved world default'
+          options={[{ label: 'World default', value: 'default' }, ...renderStyleOptions]}
+          value={renderStyle}
+          onChange={style => {
+            world.graphics.setRenderStyle(style === 'default' ? null : style)
+            setRenderStyle(style)
+          }}
+        />
         <FieldSwitch
           label='Resolution'
           hint='Change your display resolution'
@@ -719,6 +738,7 @@ function World({ world, hidden }) {
   const [voice, setVoice] = useState(world.settings.voice)
   const [playerLimit, setPlayerLimit] = useState(world.settings.playerLimit)
   const [ao, setAO] = useState(world.settings.ao)
+  const [renderStyle, setRenderStyle] = useState(world.settings.renderStyle)
   const [dayNightCycle, setDayNightCycle] = useState(world.settings.dayNightCycle)
   const [constellationLines, setConstellationLines] = useState(world.settings.constellationLines)
   const [skyAppearance, setSkyAppearance] = useState(world.settings.skyAppearance)
@@ -750,6 +770,7 @@ function World({ world, hidden }) {
       if (changes.voice) setVoice(changes.voice.value)
       if (changes.playerLimit) setPlayerLimit(changes.playerLimit.value)
       if (changes.ao) setAO(changes.ao.value)
+      if (changes.renderStyle) setRenderStyle(changes.renderStyle.value)
       if (changes.dayNightCycle) setDayNightCycle(changes.dayNightCycle.value)
       if (changes.constellationLines) setConstellationLines(changes.constellationLines.value)
       if (changes.skyAppearance) setSkyAppearance(changes.skyAppearance.value)
@@ -818,6 +839,13 @@ function World({ world, hidden }) {
             value={image}
             onChange={value => world.settings.set('image', value, true)}
             world={world}
+          />
+          <FieldSwitch
+            label='Default Rendering'
+            hint='The view players start with when joining this world'
+            options={renderStyleOptions}
+            value={renderStyle}
+            onChange={style => world.settings.set('renderStyle', style, true)}
           />
           <FieldFile
             label='Default Avatar'

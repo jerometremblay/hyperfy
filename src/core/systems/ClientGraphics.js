@@ -18,6 +18,7 @@ import { limitLightShadows } from '../extras/shadowBudget'
 import { getPortalArrival } from '../extras/portalArrival'
 import { PortalAvatars } from '../extras/PortalAvatars'
 import { PhotoCapture } from '../extras/PhotoCapture'
+import { getPixelViewport, ISOMETRIC_VIEW_HEIGHT } from '../extras/isometricView'
 
 // NOTE: postprocessing is pinned to 6.x. The 7.x GeometryPass renders the scene
 // with MRT (multiple render targets), which conflicts with Spark.js splat shaders
@@ -26,6 +27,7 @@ import { PhotoCapture } from '../extras/PhotoCapture'
 
 const v1 = new THREE.Vector3()
 const portalInverse = new THREE.Matrix4()
+const snapAxis = new THREE.Vector3()
 
 let renderer
 function getRenderer() {
@@ -55,6 +57,8 @@ export class ClientGraphics extends System {
     this.photos = new PhotoCapture(this)
     this.portals = new Set()
     this.renderingPortal = false
+    this.renderStyle = 'standard'
+    this.renderStyleOverride = null
     this.portalAvatars = new PortalAvatars(world)
     this.lightVisibility = new Map()
     this.lightCompilation = null
@@ -70,6 +74,8 @@ export class ClientGraphics extends System {
     this.height = this.viewport.offsetHeight
     this.aspect = this.width / this.height
     this.renderer = getRenderer()
+    this.perspectiveCamera = this.world.camera
+    this.isometricCamera = new THREE.OrthographicCamera(-16, 16, 9, -9, 0.2, 1200)
     this.renderer.localClippingEnabled = true
     this.renderer.setSize(this.width, this.height)
     this.renderer.setClearColor(0xffffff, 0)
@@ -136,17 +142,68 @@ export class ClientGraphics extends System {
 
   start() {
     this.world.on('xrSession', this.onXRSession)
+    this.world.on('build-mode', this.onBuildMode)
     this.world.settings.on('change', this.onSettingsChange)
+    this.applyRenderStyle()
   }
+
+  setRenderStyle(style) {
+    if (style !== null && !['standard', 'pixel-isometric', 'pixel-retro'].includes(style)) return
+    this.renderStyleOverride = style
+    this.applyRenderStyle()
+  }
+
+  applyRenderStyle() {
+    const desired = this.renderStyleOverride || this.world.settings.renderStyle
+    const style = this.xrSession || this.world.builder?.enabled ? 'standard' : desired
+    if (this.renderStyle === style) return
+    this.renderStyle = style
+    const previous = this.world.camera
+    const camera = style === 'standard' ? this.perspectiveCamera : this.isometricCamera
+    camera.position.copy(previous.position)
+    camera.quaternion.copy(previous.quaternion)
+    camera.layers.mask = previous.layers.mask
+    for (const child of [...previous.children]) camera.add(child)
+    previous.removeFromParent()
+    this.world.rig.add(camera)
+    this.world.camera = camera
+    this.renderPass.mainCamera = camera
+    this.aoPass.camera = camera
+    this.effectPass.mainCamera = camera
+    if (this.world.environment?.csm) this.world.environment.csm.camera = camera
+    if (this.world.builder?.gizmo) this.world.builder.gizmo.camera = camera
+    this.resize(this.width, this.height)
+    this.emit('render-style', style)
+  }
+
+  onBuildMode = () => this.applyRenderStyle()
 
   resize(width, height) {
     this.width = width
     this.height = height
     this.aspect = this.width / this.height
-    this.world.camera.aspect = this.aspect
-    this.world.camera.updateProjectionMatrix()
-    this.renderer.setSize(this.width, this.height)
-    this.composer.setSize(this.width, this.height)
+    const camera = this.world.camera
+    const pixel = this.renderStyle !== 'standard'
+    if (camera.isOrthographicCamera) {
+      camera.top = ISOMETRIC_VIEW_HEIGHT / 2
+      camera.bottom = -camera.top
+      camera.left = -camera.top * this.aspect
+      camera.right = -camera.left
+    } else {
+      camera.aspect = this.aspect
+    }
+    camera.updateProjectionMatrix()
+    const size = pixel ? getPixelViewport(width, height) : { width, height }
+    this.renderWidth = size.width
+    this.renderHeight = size.height
+    this.renderer.setPixelRatio(pixel ? 1 : this.world.prefs.dpr)
+    this.renderer.setSize(size.width, size.height, false)
+    Object.assign(this.renderer.domElement.style, {
+      width: `${width}px`,
+      height: `${height}px`,
+      imageRendering: pixel ? 'pixelated' : 'auto',
+    })
+    this.composer.setSize(size.width, size.height)
     this.emit('resize')
     this.render()
   }
@@ -169,7 +226,7 @@ export class ClientGraphics extends System {
             this.world.environment?.csm?.lights
           )
         : []
-      if (this.renderer.xr.isPresenting || !this.usePostprocessing) {
+      if (this.renderer.xr.isPresenting || !this.usePostprocessing || this.renderStyle !== 'standard') {
         // The composer disables autoClear. XR must clear color/depth for the
         // current eye pose, including when Three uses an internal output target.
         this.renderer.autoClear = true
@@ -212,7 +269,7 @@ export class ClientGraphics extends System {
     for (const light of this.lightVisibility.keys()) {
       if (!light.parent) this.lightVisibility.delete(light)
     }
-    const direct = this.renderer.xr.isPresenting || !this.usePostprocessing
+    const direct = this.renderer.xr.isPresenting || !this.usePostprocessing || this.renderStyle !== 'standard'
     const compilation = this.lightCompilation
     if (compilation) {
       const programs = new Set(this.renderer.info.programs)
@@ -661,7 +718,7 @@ export class ClientGraphics extends System {
     const width = 1280
     const height = 720
     const arrival = getPortalArrival(portal)
-    const camera = new THREE.PerspectiveCamera(this.world.camera.fov, width / height, 0.2, 1200)
+    const camera = new THREE.PerspectiveCamera(this.perspectiveCamera.fov, width / height, 0.2, 1200)
     camera.zoom = 1.5
     camera.position.copy(arrival.position)
     camera.position.y += 1.2
@@ -725,12 +782,29 @@ export class ClientGraphics extends System {
     this.render()
   }
 
+  postLateUpdate() {
+    if (this.renderStyle === 'standard') return
+    const rig = this.world.rig
+    const unitsPerPixel = ISOMETRIC_VIEW_HEIGHT / this.renderHeight
+    // Snap the visual rig; physics and the network player pose stay continuous.
+    for (const basis of [
+      [1, 0, 0],
+      [0, 1, 0],
+    ]) {
+      snapAxis.fromArray(basis).applyQuaternion(rig.quaternion)
+      const coordinate = rig.position.dot(snapAxis)
+      rig.position.addScaledVector(snapAxis, Math.round(coordinate / unitsPerPixel) * unitsPerPixel - coordinate)
+    }
+    rig.updateMatrixWorld(true)
+  }
+
   preTick() {
     // calc world to screen factor
     const camera = this.world.camera
-    const fovRadians = camera.fov * (Math.PI / 180)
     const rendererHeight = this.xrHeight || this.height
-    this.worldToScreenFactor = (Math.tan(fovRadians / 2) * 2) / rendererHeight
+    this.worldToScreenFactor = camera.isOrthographicCamera
+      ? (camera.top - camera.bottom) / camera.zoom / rendererHeight
+      : (Math.tan((camera.fov * Math.PI) / 360) * 2) / rendererHeight
   }
 
   onPrefsChange = changes => {
@@ -766,6 +840,7 @@ export class ClientGraphics extends System {
       this.xrHeight = null
       this.xrDimensionsNeeded = false
     }
+    this.applyRenderStyle()
   }
 
   checkXRDimensions = () => {
@@ -790,6 +865,7 @@ export class ClientGraphics extends System {
   }
 
   onSettingsChange = changes => {
+    if (changes.renderStyle) this.applyRenderStyle()
     if (changes.ao) {
       this.aoPass.enabled = changes.ao.value && this.world.prefs.ao
     }
@@ -820,6 +896,9 @@ export class ClientGraphics extends System {
     this.photos.destroy()
     this.portalAvatars.destroy()
     this.resizer.disconnect()
+    this.world.off('xrSession', this.onXRSession)
+    this.world.off('build-mode', this.onBuildMode)
+    this.world.settings.off('change', this.onSettingsChange)
     this.viewport.removeChild(this.renderer.domElement)
   }
 }

@@ -203,6 +203,28 @@ test('lights still switch immediately when parallel shader compilation is unavai
   assert.equal(compilations.length, 0)
 })
 
+for (const style of ['pixel-isometric', 'pixel-retro']) {
+  test(`${style} prepares direct light shaders and discards them when returning to standard`, async () => {
+    const { graphics, light, compilations } = lightCompilationContext()
+    graphics.renderStyle = style
+    graphics.setLightVisibility(light, false)
+    graphics.render()
+    assert.equal(compilations[0].target, null)
+    assert.equal(compilations[0].toneMapping, THREE.ACESFilmicToneMapping)
+    graphics.renderStyle = 'standard'
+    await new Promise(setImmediate)
+    compilations[0].program.ready = true
+    graphics.render()
+    assert.equal(light.visible, true)
+    assert.equal(compilations.length, 2)
+    assert.equal(compilations[1].target, graphics.composer.inputBuffer)
+    await new Promise(setImmediate)
+    compilations[1].program.ready = true
+    graphics.render()
+    assert.equal(light.visible, false)
+  })
+}
+
 test('point, spot and directional node setters use the same asynchronous circuit preparation', async () => {
   const { graphics, scene, light, compilations } = lightCompilationContext()
   scene.remove(light)

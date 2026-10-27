@@ -24,6 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:security
+      - run: npm run test:rendering
       - run: npm run client:build
       - run: npm run node-client:build
       - run: npm run build

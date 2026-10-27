@@ -9,6 +9,8 @@ import { DEG2RAD, RAD2DEG } from '../extras/general'
 import { createNode } from '../extras/createNode'
 import { bindRotations } from '../extras/bindRotations'
 import { simpleCamLerp } from '../extras/simpleCamLerp'
+import { ISOMETRIC_PITCH, ISOMETRIC_YAW, ISOMETRIC_DISTANCE, RETRO_PITCH } from '../extras/isometricView'
+import { stylePlayerBubble } from '../extras/playerBubble'
 import { Emotes } from '../extras/playerEmotes'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
@@ -207,6 +209,8 @@ export class PlayerLocal extends Entity {
     this.bubble.add(this.bubbleBox)
     this.bubbleBox.add(this.bubbleText)
     this.aura.add(this.bubble)
+    this.updateBubble()
+    this.world.graphics?.on('render-style', this.updateBubble)
 
     this.aura.activate({ world: this.world, entity: this })
     this.base.activate({ world: this.world, entity: this })
@@ -238,6 +242,10 @@ export class PlayerLocal extends Entity {
       this.setCamera({ ...camera, quaternion: new THREE.Quaternion().fromArray(camera.quaternion) })
       delete this.data.resumeCamera
     }
+    if (this.pendingTeleport) {
+      this.teleport(this.pendingTeleport)
+      this.pendingTeleport = null
+    }
 
     this.world.setHot(this, true)
     this.world.on('xrSession', this.onXRSession)
@@ -263,7 +271,7 @@ export class PlayerLocal extends Entity {
         this.avatar.setHandTrackingPose(this.xrHandPose)
         this.base.add(this.avatar)
         this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
-        this.bubble.position.y = this.avatar.getHeadToHeight() + 0.2
+        this.updateBubble()
         if (!this.bubble.active) {
           this.nametag.active = true
         }
@@ -621,6 +629,7 @@ export class PlayerLocal extends Entity {
   destroy(local) {
     if (this.destroyed) return
     this.destroyed = true
+    this.world.graphics?.off('render-style', this.updateBubble)
 
     this.control?.release()
     this.control = null
@@ -1028,8 +1037,22 @@ export class PlayerLocal extends Entity {
       this.base.position.copy(this.controller.position)
     }
 
+    const isometric = this.world.camera.isOrthographicCamera && !xr
+    if (isometric && !this.isometricCameraState) {
+      this.isometricCameraState = this.getCamera()
+      this.firstPerson = false
+      this.avatar?.setFirstPerson(false)
+      if (this.avatar) this.avatar.visible = true
+    } else if (!isometric && this.isometricCameraState) {
+      this.setCamera(this.isometricCameraState)
+      this.isometricCameraState = null
+    }
     // update cam look direction
-    if (xr) {
+    if (isometric) {
+      const retro = this.world.graphics.renderStyle === 'pixel-retro'
+      this.cam.rotation.set(retro ? RETRO_PITCH : ISOMETRIC_PITCH, retro ? 0 : ISOMETRIC_YAW, 0, 'YXZ')
+      this.cam.zoom = ISOMETRIC_DISTANCE
+    } else if (xr) {
       // in xr clear camera rotation (handled internally)
       // in xr we only track turn here, which is added to the xr camera later on
       // this.cam.rotation.x = 0
@@ -1062,7 +1085,7 @@ export class PlayerLocal extends Entity {
       this.cam.rotation.x = clamp(this.cam.rotation.x, -89 * DEG2RAD, 89 * DEG2RAD)
     }
 
-    this.updateZoom(delta)
+    if (!isometric) this.updateZoom(delta)
 
     // stick movement threshold
     if (this.stick && !this.stick.active) {
@@ -1176,7 +1199,6 @@ export class PlayerLocal extends Entity {
 
     // get initial facing angle matching camera
     let rotY = 0
-    let applyRotY
     if (xr) {
       this.world.camera.getWorldQuaternion(q1)
       e1.setFromQuaternion(q1).reorder('YXZ')
@@ -1185,19 +1207,7 @@ export class PlayerLocal extends Entity {
     } else {
       rotY = this.cam.rotation.y
     }
-    if (this.data.effect?.turn === true) {
-      applyRotY = true
-    } else if (this.moving || this.firstPerson) {
-      applyRotY = true
-    }
-
-    // when moving, or in first person or effect.turn, continually slerp to face that angle
-    if (applyRotY) {
-      e1.set(0, rotY, 0)
-      q1.setFromEuler(e1)
-      const alpha = 1 - Math.pow(0.00000001, delta)
-      this.base.quaternion.slerp(q1, alpha)
-    }
+    this.updateFacing(delta, rotY, isometric)
 
     // apply emote
     const rawEmote = this.data.effect?.emote
@@ -1235,6 +1245,8 @@ export class PlayerLocal extends Entity {
     if (xr) {
       this.world.camera.getWorldQuaternion(q1)
       this.gaze.copy(FORWARD).applyQuaternion(q1)
+    } else if (isometric) {
+      this.gaze.copy(FORWARD).applyQuaternion(this.base.quaternion)
     } else {
       this.gaze.copy(FORWARD).applyQuaternion(this.cam.quaternion)
       if (!this.firstPerson) {
@@ -1318,6 +1330,21 @@ export class PlayerLocal extends Entity {
     this.updateEffectDuration(delta)
   }
 
+  updateFacing(delta, cameraYaw, orthographic = false) {
+    if (!this.moving && !this.firstPerson && this.data.effect?.turn !== true) return
+    const faceMovement = orthographic && this.moving && this.data.effect?.turn !== true
+    const yaw = faceMovement ? Math.atan2(-this.moveDir.x, -this.moveDir.z) : cameraYaw
+    e1.set(0, yaw, 0)
+    q1.setFromEuler(e1)
+    this.base.quaternion.slerp(q1, 1 - Math.pow(0.00000001, delta))
+    if (orthographic) {
+      // Animate movement in body space, so turning doesn't leave a strafe/backward walk.
+      this.axis.copy(this.moveDir).applyQuaternion(q1.copy(this.base.quaternion).invert())
+    }
+  }
+
+  updateBubble = () => stylePlayerBubble(this)
+
   updateEffectDuration(delta) {
     if (!this.data.effect?.duration) return
     this.data.effect.duration -= delta
@@ -1396,7 +1423,15 @@ export class PlayerLocal extends Entity {
         this.control.camera.zoom = target.zoom
         if (t === 1) this.cameraTransition = null
       }
-      simpleCamLerp(this.world, this.control.camera, target, delta)
+      if (this.world.camera.isOrthographicCamera) {
+        // The isometric camera sits outside the scene; third-person wall sweeps
+        // would pull it through foreground roofs and change the composition.
+        this.control.camera.position.lerp(this.cam.position, 1 - Math.exp(-5 * delta))
+        this.control.camera.quaternion.copy(this.cam.quaternion)
+        this.control.camera.zoom = ISOMETRIC_DISTANCE
+      } else {
+        simpleCamLerp(this.world, this.control.camera, target, delta)
+      }
       const nearBlend = clamp((this.control.camera.zoom - THIRD_PERSON_MIN_ZOOM) / CAMERA_NEAR_BLEND_RANGE, 0, 1)
       const near = CAMERA_CLOSE_NEAR + (CAMERA_DEFAULT_NEAR - CAMERA_CLOSE_NEAR) * nearBlend
       if (this.world.camera.near !== near) {
@@ -1552,10 +1587,19 @@ export class PlayerLocal extends Entity {
     if (Array.isArray(position)) position = teleportPosition.fromArray(position)
     if (!readVec3(position, teleportPosition, '[player] teleport position must be Vector3')) return
     position = teleportPosition
+    // Server recovery can arrive while the initial scene is still preloading.
+    if (!this.controller || !this.control) {
+      this.pendingTeleport = { position: position.toArray(), rotationY }
+      return
+    }
     const hasRotation = Number.isFinite(rotationY)
     // snap to position
     this.controller.teleport(position)
     this.velocity.set(0, 0, 0)
+    this.grounded = false
+    this.falling = false
+    this.fallTimer = 0
+    this.fallDistance = 0
     this.platform.actor = null
     this.base.position.copy(this.controller.position)
     if (hasRotation) this.base.rotation.y = rotationY
@@ -1633,6 +1677,7 @@ export class PlayerLocal extends Entity {
   }
 
   chat(msg) {
+    this.updateBubble()
     this.nametag.active = false
     this.bubbleText.value = msg
     this.bubble.active = true

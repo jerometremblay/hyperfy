@@ -112,6 +112,14 @@ a {
     U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/games/pacman/vendor/PressStart2P.ttf) format('truetype');
+}
+
 /* disable scroll bounce */
 
 :root {

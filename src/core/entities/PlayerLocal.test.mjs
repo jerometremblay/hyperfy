@@ -15,6 +15,91 @@ const { PlayerLocal, getPlatformActor } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`
 )
 
+test('orthographic walking faces all eight directions with forward locomotion and retains idle facing', () => {
+  for (const cameraYaw of [0, Math.PI / 4]) {
+    for (const [x, z] of [
+      [0, -1],
+      [1, -1],
+      [1, 0],
+      [1, 1],
+      [0, 1],
+      [-1, 1],
+      [-1, 0],
+      [-1, -1],
+    ]) {
+      const direction = new THREE.Vector3(x, 0, z).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw)
+      const player = {
+        moving: true,
+        firstPerson: false,
+        data: {},
+        moveDir: direction,
+        axis: new THREE.Vector3(),
+        base: new THREE.Object3D(),
+      }
+      for (let i = 0; i < 90; i++) PlayerLocal.prototype.updateFacing.call(player, 1 / 60, cameraYaw, true)
+      const facing = new THREE.Vector3(0, 0, -1).applyQuaternion(player.base.quaternion)
+      assert.ok(facing.dot(direction) > 0.99999, `faces movement ${x},${z} at camera yaw ${cameraYaw}`)
+      assert.ok(player.axis.distanceTo(new THREE.Vector3(0, 0, -1)) < 1e-5, 'walks forward in body space')
+      const idleOrientation = player.base.quaternion.clone()
+      player.moving = false
+      player.moveDir.set(0, 0, 0)
+      PlayerLocal.prototype.updateFacing.call(player, 1, cameraYaw, true)
+      assert.equal(player.base.quaternion.angleTo(idleOrientation), 0)
+    }
+  }
+})
+
+test('standard strafing and script-forced turning keep camera-facing behavior', () => {
+  const player = {
+    moving: true,
+    firstPerson: false,
+    data: {},
+    moveDir: new THREE.Vector3(1, 0, 0),
+    axis: new THREE.Vector3(1, 0, 0),
+    base: new THREE.Object3D(),
+  }
+  PlayerLocal.prototype.updateFacing.call(player, 1, 0, false)
+  assert.ok(player.base.quaternion.angleTo(new THREE.Quaternion()) < 1e-5)
+  assert.deepEqual(player.axis.toArray(), [1, 0, 0])
+  player.data.effect = { turn: true }
+  PlayerLocal.prototype.updateFacing.call(player, 1, 0, true)
+  assert.ok(player.base.quaternion.angleTo(new THREE.Quaternion()) < 1e-5)
+})
+
+test('teleports received during preload are copied and applied after the player is ready', () => {
+  const sent = []
+  const player = Object.create(PlayerLocal.prototype)
+  const position = [0.3, 0.6, 4.8]
+  player.teleport({ position, rotationY: 0.5 })
+  position[1] = -1000
+  assert.deepEqual(player.pendingTeleport, { position: [0.3, 0.6, 4.8], rotationY: 0.5 })
+  Object.assign(player, {
+    controller: {
+      position: new THREE.Vector3(),
+      teleport(p) {
+        this.position.copy(p)
+      },
+    },
+    control: { camera: new THREE.Object3D() },
+    base: new THREE.Object3D(),
+    cam: new THREE.Object3D(),
+    camHeight: 1.2,
+    velocity: new THREE.Vector3(0, -500, 0),
+    platform: {},
+    falling: true,
+    fallTimer: 20,
+    fallDistance: 1000,
+    world: { network: { send: (...args) => sent.push(args) } },
+    data: { id: 'falling-player' },
+  })
+  player.teleport(player.pendingTeleport)
+  assert.deepEqual(player.base.position.toArray(), [0.3, 0.6, 4.8])
+  assert.deepEqual(player.velocity.toArray(), [0, 0, 0])
+  assert.equal(player.falling, false)
+  assert.equal(player.fallTimer, 0)
+  assert.equal(sent[0][1].t, true)
+})
+
 test('does not carry the player with an app that is being moved', () => {
   const actor = {}
   const movingApp = { data: { mover: 'builder-1' } }
