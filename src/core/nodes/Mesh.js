@@ -1,5 +1,5 @@
 import * as THREE from '../extras/three'
-import { isBoolean, isNumber } from 'lodash-es'
+import { isBoolean } from 'lodash-es'
 
 import { Node, resolveValueRef, secureRef } from './Node'
 import { getTrianglesFromGeometry } from '../extras/getTrianglesFromGeometry'
@@ -24,23 +24,52 @@ const defaults = {
 
 const types = ['box', 'sphere', 'geometry']
 
-let boxes = {}
-const getBox = (width, height, depth) => {
-  const key = `${width},${height},${depth}`
-  if (!boxes[key]) {
-    boxes[key] = new THREE.BoxGeometry(width, height, depth)
+// Box and sphere geometries are shared by size. A mounted mesh holds its geometry, so nothing renders an evicted one;
+// at most GEOMETRY_IDLE_LIMIT unused ones stay cached, least recently released first out and disposed then, so a script
+// that keeps changing a size cannot grow the cache without bound. A geometry's uuid is its shape and size, so one made
+// again after eviction keeps the linked Model and the material edits kept under that id.
+const GEOMETRY_IDLE_LIMIT = 1024
+class SharedGeometries {
+  constructor(shape, create) {
+    this.shape = shape
+    this.create = create
+    this.used = new Map()
+    this.idle = new Map()
   }
-  return boxes[key]
+
+  acquire(key) {
+    let entry = this.used.get(key)
+    if (!entry) {
+      entry = this.idle.get(key)
+      if (entry) {
+        this.idle.delete(key)
+      } else {
+        entry = { key, geometry: this.create(key), users: 0 }
+        entry.geometry.uuid = `mesh-${this.shape}:${key}`
+      }
+      this.used.set(key, entry)
+    }
+    entry.users++
+    return entry
+  }
+
+  release(entry) {
+    if (--entry.users > 0) return
+    this.used.delete(entry.key)
+    this.idle.set(entry.key, entry)
+    if (this.idle.size > GEOMETRY_IDLE_LIMIT) {
+      const [oldest, evicted] = this.idle.entries().next().value
+      this.idle.delete(oldest)
+      evicted.geometry.dispose()
+    }
+  }
 }
 
-let spheres = {}
-const getSphere = radius => {
-  const key = radius
-  if (!spheres[key]) {
-    spheres[key] = new THREE.SphereGeometry(radius, 16, 12)
-  }
-  return spheres[key]
-}
+const boxes = new SharedGeometries('box', key => new THREE.BoxGeometry(...key.split(',').map(Number)))
+const spheres = new SharedGeometries('sphere', key => new THREE.SphereGeometry(Number(key), 16, 12))
+
+// a primitive finite number: a Number object could mint cache keys through its own toString
+const finiteNumber = value => typeof value === 'number' && Number.isFinite(value)
 
 export class Mesh extends Node {
   constructor(data = {}) {
@@ -61,16 +90,29 @@ export class Mesh extends Node {
   }
 
   mount() {
+    // a second mount replaces the first, so neither its insertion nor its geometry user is left behind
+    if (this.handle || this.sItem || this.shared) this.unmount()
     this.needsRebuild = false
     if (!this._geometry) return
     let geometry
     if (this._type === 'box') {
-      geometry = getBox(this._width, this._height, this._depth)
+      this.shared = { cache: boxes, entry: boxes.acquire(`${this._width},${this._height},${this._depth}`) }
+      geometry = this.shared.entry.geometry
     } else if (this._type === 'sphere') {
-      geometry = getSphere(this._radius)
+      this.shared = { cache: spheres, entry: spheres.acquire(`${this._radius}`) }
+      geometry = this.shared.entry.geometry
     } else if (this._type === 'geometry') {
       geometry = this._geometry
     }
+    try {
+      this.insertGeometry(geometry)
+    } catch (err) {
+      this.releaseShared()
+      throw err
+    }
+  }
+
+  insertGeometry(geometry) {
     if (this._visible) {
       this.handle = this.ctx.world.stage.insert({
         geometry,
@@ -82,14 +124,20 @@ export class Mesh extends Node {
         node: this,
       })
     } else {
-      this.sItem = {
+      const sItem = {
         matrix: this.matrixWorld,
         geometry,
         material: this._material,
         getEntity: () => this.ctx.entity,
         node: this,
       }
-      this.ctx.world.stage.octree.insert(this.sItem)
+      try {
+        this.ctx.world.stage.octree.insert(sItem)
+      } catch (err) {
+        this.ctx.world.stage.octree.remove(sItem)
+        throw err
+      }
+      this.sItem = sItem
     }
   }
 
@@ -116,6 +164,13 @@ export class Mesh extends Node {
       this.sItem = null
     }
     this.handle = null
+    this.releaseShared()
+  }
+
+  releaseShared() {
+    if (!this.shared) return
+    this.shared.cache.release(this.shared.entry)
+    this.shared = null
   }
 
   copy(source, recursive) {
@@ -166,7 +221,7 @@ export class Mesh extends Node {
   }
 
   set width(value = defaults.width) {
-    if (!isNumber(value)) {
+    if (!finiteNumber(value)) {
       throw new Error('[mesh] width not a number')
     }
     if (this._width === value) return
@@ -182,7 +237,7 @@ export class Mesh extends Node {
   }
 
   set height(value = defaults.height) {
-    if (!isNumber(value)) {
+    if (!finiteNumber(value)) {
       throw new Error('[mesh] height not a number')
     }
     if (this._height === value) return
@@ -198,7 +253,7 @@ export class Mesh extends Node {
   }
 
   set depth(value = defaults.depth) {
-    if (!isNumber(value)) {
+    if (!finiteNumber(value)) {
       throw new Error('[mesh] depth not a number')
     }
     if (this._depth === value) return
@@ -220,7 +275,7 @@ export class Mesh extends Node {
   }
 
   set radius(value = defaults.radius) {
-    if (!isNumber(value)) {
+    if (!finiteNumber(value)) {
       throw new Error('[mesh] radius not a number')
     }
     if (this._radius === value) return

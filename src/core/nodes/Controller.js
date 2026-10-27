@@ -13,6 +13,7 @@ import {
 import { isNumber, isBoolean, isString, isFunction } from 'lodash-es'
 
 import { DEG2RAD } from '../extras/general'
+import { finiteNumber, lengthOk, positionOk } from '../extras/physicsValidate.js'
 
 import { Node } from './Node'
 import { Layers } from '../extras/Layers'
@@ -26,6 +27,7 @@ const warnController = createLogOnce()
 const layers = ['environment', 'prop', 'player', 'tool']
 
 const _v1 = new THREE.Vector3()
+const _v2 = new THREE.Vector3()
 
 const defaults = {
   radius: 0.4,
@@ -69,39 +71,48 @@ export class Controller extends Node {
       this.mesh.node = this
       this.ctx.world.stage.scene.add(this.mesh)
     }
-    const desc = new PHYSX.PxCapsuleControllerDesc()
-    desc.height = this._height
-    desc.radius = this._radius
-    desc.climbingMode = PHYSX.PxCapsuleClimbingModeEnum.eCONSTRAINED
-    desc.slopeLimit = Math.cos(60 * DEG2RAD) // 60 degrees
-    // PhysX reports the contact before asking for its behavior. Let the
-    // rounded foot slide off steep edges that are too high to step onto.
-    // Reachable stair risers and walkable ramps retain the default grip.
-    let hitShape = 0
-    let slide = false
-    this.hitReport = new PHYSX.PxUserControllerHitReportImpl()
-    this.hitReport.onShapeHit = ptr => {
-      const hit = PHYSX.wrapPointer(ptr, PHYSX.PxControllerShapeHit)
-      hitShape = hit.shape.ptr
-      slide =
-        hit.worldNormal.y < Math.cos(60 * DEG2RAD) &&
-        hit.worldPos.y > this.controller.getFootPosition().y + this.controller.getStepOffset()
-    }
-    this.hitReport.onControllerHit = () => {}
-    this.hitReport.onObstacleHit = () => {}
-    this.behavior = new PHYSX.PxControllerBehaviorCallbackImpl()
-    this.behavior.getShapeBehaviorFlags = ptr => (ptr === hitShape && slide ? PHYSX.eCCT_SLIDE : 0)
-    this.behavior.getControllerBehaviorFlags = () => 0
-    this.behavior.getObstacleBehaviorFlags = () => 0
-    desc.reportCallback = this.hitReport
-    desc.behaviorCallback = this.behavior
-    desc.material = this.ctx.world.physics.defaultMaterial
-    desc.contactOffset = 0.02 // Keep the skin small relative to the 0.3m player radius.
-    desc.stepOffset = 0.5 // PhysX default = 0.5m
-    this.stepGeometry = new PHYSX.PxCapsuleGeometry(this._radius, Math.max(0, this._height - desc.stepOffset) / 2)
     this.controller = null
+    // a capsule or a foot position outside the physics range corrupts the shared scene (a controller placed at 1e30
+    // turns unrelated bodies NaN without touching them), so it gets no controller; teleport still moves the node
+    if (!lengthOk(this._radius) || !lengthOk(this._height) || !positionOk(this.getWorldPosition())) {
+      warnController(this, 'range', '[controller] radius, height or position outside the physics range; no controller')
+      return
+    }
+    const desc = new PHYSX.PxCapsuleControllerDesc()
     try {
-      if (desc.isValid()) this.controller = this.ctx.world.physics.controllerManager.createController(desc)
+      desc.height = this._height
+      desc.radius = this._radius
+      desc.climbingMode = PHYSX.PxCapsuleClimbingModeEnum.eCONSTRAINED
+      desc.slopeLimit = Math.cos(60 * DEG2RAD) // 60 degrees
+      // PhysX reports the contact before asking for its behavior. Let the
+      // rounded foot slide off steep edges that are too high to step onto.
+      // Reachable stair risers and walkable ramps retain the default grip.
+      let hitShape = 0
+      let slide = false
+      this.hitReport = new PHYSX.PxUserControllerHitReportImpl()
+      this.hitReport.onShapeHit = ptr => {
+        const hit = PHYSX.wrapPointer(ptr, PHYSX.PxControllerShapeHit)
+        hitShape = hit.shape.ptr
+        slide =
+          hit.worldNormal.y < Math.cos(60 * DEG2RAD) &&
+          hit.worldPos.y > this.controller.getFootPosition().y + this.controller.getStepOffset()
+      }
+      this.hitReport.onControllerHit = () => {}
+      this.hitReport.onObstacleHit = () => {}
+      this.behavior = new PHYSX.PxControllerBehaviorCallbackImpl()
+      this.behavior.getShapeBehaviorFlags = ptr => (ptr === hitShape && slide ? PHYSX.eCCT_SLIDE : 0)
+      this.behavior.getControllerBehaviorFlags = () => 0
+      this.behavior.getObstacleBehaviorFlags = () => 0
+      desc.reportCallback = this.hitReport
+      desc.behaviorCallback = this.behavior
+      desc.material = this.ctx.world.physics.defaultMaterial
+      desc.contactOffset = 0.02 // Keep the skin small relative to the 0.3m player radius.
+      desc.stepOffset = 0.5 // PhysX default = 0.5m
+      this.stepGeometry = new PHYSX.PxCapsuleGeometry(this._radius, Math.max(0, this._height - desc.stepOffset) / 2)
+      if (desc.isValid()) {
+        const controller = this.ctx.world.physics.controllerManager.createController(desc)
+        if (controller?.ptr) this.controller = controller
+      }
     } finally {
       PHYSX.destroy(desc)
     }
@@ -117,21 +128,32 @@ export class Controller extends Node {
 
     const actor = this.controller.getActor()
     const nbShapes = actor.getNbShapes()
+    // PhysX copies the shape flags and filter data, so these temporaries are destroyed right after use
     const shapeBuffer = new PHYSX.PxArray_PxShapePtr(nbShapes)
-    const shapesCount = actor.getShapes(shapeBuffer.begin(), nbShapes, 0)
-    for (let i = 0; i < shapesCount; i++) {
-      const shape = shapeBuffer.get(i)
-      const layer = Layers[this._layer]
-      let pairFlags =
-        PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND |
-        PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST |
-        PHYSX.PxPairFlagEnum.eNOTIFY_CONTACT_POINTS
-      const filterData = new PHYSX.PxFilterData(layer.group, layer.mask, pairFlags, 0)
-      const shapeFlags = new PHYSX.PxShapeFlags()
-      shapeFlags.raise(PHYSX.PxShapeFlagEnum.eSCENE_QUERY_SHAPE | PHYSX.PxShapeFlagEnum.eSIMULATION_SHAPE)
-      shape.setFlags(shapeFlags)
-      shape.setQueryFilterData(filterData)
-      shape.setSimulationFilterData(filterData)
+    try {
+      const shapesCount = actor.getShapes(shapeBuffer.begin(), nbShapes, 0)
+      for (let i = 0; i < shapesCount; i++) {
+        const shape = shapeBuffer.get(i)
+        const layer = Layers[this._layer]
+        let pairFlags =
+          PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_FOUND |
+          PHYSX.PxPairFlagEnum.eNOTIFY_TOUCH_LOST |
+          PHYSX.PxPairFlagEnum.eNOTIFY_CONTACT_POINTS
+        let filterData, shapeFlags
+        try {
+          filterData = new PHYSX.PxFilterData(layer.group, layer.mask, pairFlags, 0)
+          shapeFlags = new PHYSX.PxShapeFlags()
+          shapeFlags.raise(PHYSX.PxShapeFlagEnum.eSCENE_QUERY_SHAPE | PHYSX.PxShapeFlagEnum.eSIMULATION_SHAPE)
+          shape.setFlags(shapeFlags)
+          shape.setQueryFilterData(filterData)
+          shape.setSimulationFilterData(filterData)
+        } finally {
+          if (shapeFlags) PHYSX.destroy(shapeFlags)
+          if (filterData) PHYSX.destroy(filterData)
+        }
+      }
+    } finally {
+      PHYSX.destroy(shapeBuffer)
     }
     const self = this
     const playerId = this.ctx.entity?.isPlayer ? this.ctx.entity.data.id : null
@@ -177,6 +199,9 @@ export class Controller extends Node {
     if (this.ctx.world.entities?.player?.controller === this) this.ctx.world.physics.portalCollisions?.clear()
     if (this.mesh) {
       this.ctx.world.stage.scene.remove(this.mesh)
+      this.mesh.geometry.disposeBoundsTree?.()
+      this.mesh.geometry.dispose()
+      this.mesh.material.dispose()
       this.mesh = null
     }
     this.actorHandle?.destroy()
@@ -209,9 +234,10 @@ export class Controller extends Node {
   }
 
   set radius(value = defaults.radius) {
-    if (!isNumber(value)) {
-      throw new Error('[controller] radius not a number')
+    if (!finiteNumber(value)) {
+      throw new Error('[controller] radius not a finite number')
     }
+    if (this._radius === value) return
     this._radius = value
     this.needsRebuild = true
     this.setDirty()
@@ -222,9 +248,10 @@ export class Controller extends Node {
   }
 
   set height(value = defaults.height) {
-    if (!isNumber(value)) {
-      throw new Error('[controller] height not a number')
+    if (!finiteNumber(value)) {
+      throw new Error('[controller] height not a finite number')
     }
+    if (this._height === value) return
     this._height = value
     this.needsRebuild = true
     this.setDirty()
@@ -238,6 +265,7 @@ export class Controller extends Node {
     if (!isBoolean(value)) {
       throw new Error('[controller] visible not a boolean')
     }
+    if (this._visible === value) return
     this._visible = value
     this.needsRebuild = true
     this.setDirty()
@@ -251,6 +279,7 @@ export class Controller extends Node {
     if (!isLayer(value)) {
       throw new Error(`[controller] invalid layer: ${value}`)
     }
+    if (this._layer === value) return
     this._layer = value
     if (this.controller) {
       // TODO: we could just update the PxFilterData tbh
@@ -308,6 +337,10 @@ export class Controller extends Node {
       warnOnce('[controller] teleport ignored a non-finite vector')
       return
     }
+    if (!positionOk(_v1)) {
+      warnOnce('[controller] teleport ignored a position outside the physics range')
+      return
+    }
     writeVec3(this.position, _v1.x, _v1.y, _v1.z)
     if (!this.controller) return
     const px = scratchPxExtVec3()
@@ -324,6 +357,11 @@ export class Controller extends Node {
       return
     }
     if (!this.controller) return
+    const foot = this.controller.getFootPosition()
+    if (!positionOk(_v2.set(foot.x + _v1.x, foot.y + _v1.y, foot.z + _v1.z))) {
+      warnOnce('[controller] move ignored a displacement that leaves the physics range')
+      return
+    }
     if (!this.controller || !Number.isFinite(delta) || delta <= 0) return
     const player = this.ctx.world.entities?.player
     const local = player?.controller === this
@@ -331,14 +369,14 @@ export class Controller extends Node {
     if (local) {
       player.base.position.copy(this.position)
       for (const portal of portals) portal.updateTraversal(player)
-      this.ctx.world.physics.portalCollisions?.update(this, vec3)
+      this.ctx.world.physics.portalCollisions?.update(this, _v1)
     }
     // Check forward clearance above the step band and below the current head.
     // PhysX still handles overhead clearance during its own upward sweep.
     const stepOffset = this.controller.getStepOffset()
-    const horizontal = stepDirection.set(vec3.x, 0, vec3.z).length()
+    const horizontal = stepDirection.set(_v1.x, 0, _v1.z).length()
     let blockedStep = false
-    if (horizontal > 0 && vec3.y <= 0) {
+    if (horizontal > 0 && _v1.y <= 0) {
       stepDirection.multiplyScalar(1 / horizontal)
       stepOrigin.copy(this.position)
       stepOrigin.y +=
@@ -356,7 +394,7 @@ export class Controller extends Node {
     if (blockedStep) this.controller.setStepOffset(0)
     try {
       const px = scratchPxVec3()
-      vec3ToPx(vec3, px)
+      vec3ToPx(_v1, px)
       this.moveFlags = this.controller.move(px, 0, delta, this.ctx.world.physics.controllerFilters)
     } finally {
       if (blockedStep) this.controller.setStepOffset(stepOffset)
