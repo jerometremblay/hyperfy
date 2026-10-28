@@ -31,7 +31,7 @@ Each button object has the following properties:
 *   `down` (Boolean): `true` if the button is currently held down.
 *   `pressed` (Boolean): `true` for the single frame when the button is first pressed.
 *   `released` (Boolean): `true` for the single frame when the button is released.
-*   `capture` (Boolean): If set to `true`, it will consume the event and prevent lower-priority controls from receiving it.
+*   `capture` (Boolean): If set to `true`, it will consume the event and prevent lower-priority controls from receiving it. Captured keyboard keys also suppress browser actions and DOM handlers, including repeated key events while held. Typing in an input or textarea keeps its normal behavior.
 
 Here is a list of available button properties:
 

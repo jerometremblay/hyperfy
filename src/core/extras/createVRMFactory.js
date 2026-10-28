@@ -156,6 +156,13 @@ export function createVRMFactory(glb, setupMaterial) {
   const headHiddenGeometries = skinnedMeshes.map(mesh =>
     createFirstPersonGeometry(mesh.geometry, mesh.skeleton, bodyBoneNames, {})?.geometry || null
   )
+  const armBoneNames = new Set()
+  for (const side of ['left', 'right']) {
+    glb.userData.vrm.humanoid.getRawBoneNode(`${side}UpperArm`)?.traverse(bone => armBoneNames.add(bone.name))
+  }
+  const armsOnlyGeometries = skinnedMeshes.map(mesh =>
+    createFirstPersonGeometry(mesh.geometry, mesh.skeleton, armBoneNames, {})?.geometry || null
+  )
 
   // pose arms down
   const normBones = glb.userData.vrm.humanoid._normalizedHumanBones.humanBones
@@ -245,9 +252,11 @@ export function createVRMFactory(glb, setupMaterial) {
     const bodyMeshGeometries = new Map(bodyMeshes.map(mesh => [mesh, mesh.geometry]))
     const firstPersonMeshGeometries = new Map()
     const headHiddenMeshGeometries = new Map()
+    const armsOnlyMeshGeometries = new Map()
     for (let i = 0; i < skinnedMeshes.length; i++) {
       if (firstPersonGeometries[i]) firstPersonMeshGeometries.set(skinnedMeshes[i], firstPersonGeometries[i])
       if (headHiddenGeometries[i]) headHiddenMeshGeometries.set(skinnedMeshes[i], headHiddenGeometries[i])
+      if (armsOnlyGeometries[i]) armsOnlyMeshGeometries.set(skinnedMeshes[i], armsOnlyGeometries[i])
     }
 
     const getEntity = () => node?.ctx.entity
@@ -1091,12 +1100,17 @@ export function createVRMFactory(glb, setupMaterial) {
 
     let firstPersonActive = false
     let firstPersonHeadOnly = false
+    let firstPersonArmsOnly = false
     let avatarVisible = true
     const hasFirstPersonMeshes = firstPersonMeshGeometries.size > 0
     const updateFirstPersonVisibility = () => {
       for (const mesh of bodyMeshes) {
         const firstPersonGeometry = firstPersonMeshGeometries.get(mesh)
-        if (firstPersonActive && firstPersonHeadOnly) {
+        if (firstPersonActive && firstPersonArmsOnly) {
+          const geometry = armsOnlyMeshGeometries.get(mesh)
+          mesh.geometry = geometry || bodyMeshGeometries.get(mesh)
+          mesh.visible = avatarVisible && !!geometry
+        } else if (firstPersonActive && firstPersonHeadOnly) {
           const geometry = headHiddenMeshGeometries.get(mesh)
           mesh.geometry = geometry || bodyMeshGeometries.get(mesh)
           mesh.visible = avatarVisible && (!mesh.isSkinnedMesh || !!geometry)
@@ -1109,14 +1123,15 @@ export function createVRMFactory(glb, setupMaterial) {
         }
       }
     }
-    const setFirstPerson = (active, headOnly = false) => {
-      if (firstPersonActive === active && firstPersonHeadOnly === headOnly) return
+    const setFirstPerson = (active, headOnly = false, armsOnly = false) => {
+      if (firstPersonActive === active && firstPersonHeadOnly === headOnly && firstPersonArmsOnly === armsOnly) return
       if (!hasFirstPersonMeshes) {
         const head = findBone('neck')
-        head?.scale.setScalar(active && !headOnly ? 0 : 1)
+        head?.scale.setScalar(active && !headOnly && !armsOnly ? 0 : 1)
       }
       firstPersonActive = active
       firstPersonHeadOnly = headOnly
+      firstPersonArmsOnly = armsOnly
       updateFirstPersonVisibility()
       if (!hasFirstPersonMeshes) {
         // The skeleton is detached from the scene and may skip its normal update.
@@ -1279,7 +1294,7 @@ function createFirstPersonGeometry(source, skeleton, boneNames, boneNamesByPart)
         if (partBoneIndices.has(boneIndex)) partWeights[part] += weight
       }
     }
-    // The majority-weight boundary keeps the cut at the wrists and ankles.
+    // Keep only vertices predominantly weighted to the selected body parts.
     appendageVertices[vertex] = appendageWeight > 0 && appendageWeight >= bodyWeight ? 1 : 0
     for (const part of Object.keys(partVertices)) {
       partVertices[part][vertex] = partWeights[part] > 0 && partWeights[part] >= bodyWeight ? 1 : 0

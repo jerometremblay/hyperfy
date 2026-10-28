@@ -212,7 +212,7 @@ Returns a copy of the local native camera settings: `{ quaternion, zoom, firstPe
 Returns null for remote players and servers. Save this object and pass it back to
 `setCamera` to restore the viewing direction, distance and mode later.
 
-### .setCamera({ target, quaternion, firstPerson = false, headOnly = false, zoom = 0.3, duration = 0 })
+### .setCamera({ target, quaternion, firstPerson = false, headOnly = false, zoom = 0.3, duration = 0, armsOnly = false })
 
 Sets the local desktop player's normal camera once, looking at a world-space
 Vector3 target. Zoom is clamped to the native third-person range (minimum 0.3 m).
@@ -233,4 +233,8 @@ world.getPlayer().setCamera({ target: new Vector3(2, 0.8, 1), zoom: 0.3 })
 Set `duration` in seconds (up to 2) for an eased return directly from the currently
 visible camera position to the final view. Normal player input and native camera collision remain active during the
 transition. A head-only eye view keeps the head hidden until the return finishes.
+For an animated third-person return, set `armsOnly: true` to hide the local
+head and body while retaining the complete arms, hands and fingers. The full
+avatar returns when the transition finishes or is cancelled. Other players
+continue to see the full animation.
 Teleporting or crossing a portal cancels the transition.

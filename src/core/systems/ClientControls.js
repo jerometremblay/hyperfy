@@ -417,7 +417,7 @@ export class ClientControls extends System {
     this.viewport = viewport
     this.screen.width = this.viewport.offsetWidth
     this.screen.height = this.viewport.offsetHeight
-    window.addEventListener('keydown', this.onKeyDown)
+    window.addEventListener('keydown', this.onKeyDown, true)
     window.addEventListener('keyup', this.onKeyUp)
     document.addEventListener('pointerlockchange', this.onPointerLockChange)
     this.viewport.addEventListener('pointerdown', this.onPointerDown)
@@ -605,14 +605,19 @@ export class ClientControls extends System {
 
   onKeyDown = e => {
     if (e.defaultPrevented) return
-    if (e.repeat) return
     if (this.isInputFocused()) return
     const code = e.code
+    const prop = codeToProp[code]
+    // Captured keys belong to the game, including native auto-repeat during a hold.
+    if (this.controls.some(control => control.active && control.entries[prop]?.capture)) {
+      e.preventDefault()
+      e.stopImmediatePropagation()
+    }
+    if (e.repeat) return
     if (code === 'Tab') {
       // prevent default focus switching behavior
       e.preventDefault()
     }
-    const prop = codeToProp[code]
     const text = e.key
     this.buttonsDown.add(prop)
     for (const control of this.controls) {
@@ -622,10 +627,18 @@ export class ClientControls extends System {
         button.pressed = true
         button.down = true
         const capture = callControlEntry(control, button, 'onPress')
-        if (capture || button.capture) break
+        if (capture || button.capture) {
+          e.preventDefault()
+          e.stopImmediatePropagation()
+          break
+        }
       }
       const capture = control.active && control.onButtonPress?.(prop, text)
-      if (capture) break
+      if (capture) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        break
+      }
     }
   }
 
@@ -863,7 +876,7 @@ export class ClientControls extends System {
 
   destroy() {
     if (!isBrowser) return
-    window.removeEventListener('keydown', this.onKeyDown)
+    window.removeEventListener('keydown', this.onKeyDown, true)
     window.removeEventListener('keyup', this.onKeyUp)
     document.removeEventListener('pointerlockchange', this.onPointerLockChange)
     this.viewport.removeEventListener('pointerdown', this.onPointerDown)

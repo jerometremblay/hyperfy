@@ -26,6 +26,7 @@ export class Avatar extends Node {
     this._scriptedPose = null
     this._firstPerson = false
     this._firstPersonHeadOnly = false
+    this._firstPersonArmsOnly = false
     this.instance = null
     this.n = 0
   }
@@ -44,7 +45,7 @@ export class Avatar extends Node {
       this.instance = this.factory.create(this.matrixWorld, this.hooks, this)
       this.instance.setEmote(this._emote)
       this.instance.setVisible(this._visible)
-      this.instance.setFirstPerson?.(this._firstPerson, this._firstPersonHeadOnly)
+      this.instance.setFirstPerson?.(this._firstPerson, this._firstPersonHeadOnly, this._firstPersonArmsOnly)
       this.instance.setPoseOverride?.(this._poseOverride)
       this.instance.setHandTrackingPose?.(this._handTrackingPose)
       this.instance.setScriptedPose?.(this._scriptedPose)
@@ -151,14 +152,16 @@ export class Avatar extends Node {
     this.instance?.setPoseOverride?.(this._poseOverride)
   }
 
-  setFirstPerson(active, { headOnly = this._firstPersonHeadOnly } = {}) {
+  setFirstPerson(active, { headOnly = this._firstPersonHeadOnly, armsOnly = false } = {}) {
     if (!isBoolean(active)) {
       throw new Error('[avatar] firstPerson not a boolean')
     }
     if (!isBoolean(headOnly)) throw new Error('[avatar] headOnly not a boolean')
+    if (!isBoolean(armsOnly)) throw new Error('[avatar] armsOnly not a boolean')
     this._firstPerson = active
     this._firstPersonHeadOnly = headOnly
-    this.instance?.setFirstPerson?.(active, headOnly)
+    this._firstPersonArmsOnly = armsOnly
+    this.instance?.setFirstPerson?.(active, headOnly, armsOnly)
   }
 
   setHandTrackingPose(pose) {
@@ -211,6 +214,7 @@ export class Avatar extends Node {
     this._handTrackingPose = source._handTrackingPose
     this._firstPerson = source._firstPerson
     this._firstPersonHeadOnly = source._firstPersonHeadOnly
+    this._firstPersonArmsOnly = source._firstPersonArmsOnly
 
     this.factory = source.factory
     this.hooks = source.hooks

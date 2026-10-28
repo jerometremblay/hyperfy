@@ -30,10 +30,10 @@ const { createVRMFactory, clampBoneRotation } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`
 )
 
-function loadAvatar() {
+function loadAvatar(path = new URL('../../world/assets/avatar.vrm', import.meta.url)) {
   const loader = new GLTFLoader()
   loader.register(parser => new VRMLoaderPlugin(parser))
-  const bytes = fs.readFileSync(new URL('../../world/assets/avatar.vrm', import.meta.url))
+  const bytes = fs.readFileSync(path)
   return new Promise((resolve, reject) => {
     loader.parse(bytes.buffer, '', resolve, reject)
   })
@@ -95,8 +95,8 @@ test('retargets an arm toward a wrist target in front of the avatar', async () =
   assert.ok(fingerDirection.z < -0.8, `vertical flip turned fingers sideways: ${fingerDirection.toArray()}`)
 })
 
-async function createInstance(matrix = new THREE.Matrix4(), changeRestAxes = false) {
-  const glb = await loadAvatar()
+async function createInstance(matrix = new THREE.Matrix4(), changeRestAxes = false, avatarPath) {
+  const glb = await loadAvatar(avatarPath)
   if (changeRestAxes) {
     const humanoid = glb.userData.vrm.humanoid
     for (const [name, { node }] of Object.entries(humanoid.humanBones)) {
@@ -220,6 +220,61 @@ test('head-only first person removes head triangles while retaining arms and eye
   for (const [index, mesh] of meshes.entries()) {
     assert.equal(mesh.geometry, originals[index], 'third person must restore the original mesh')
     assert.equal(mesh.visible, true)
+  }
+})
+
+test('arms-only view retains both full arms and fingers without rendering the head or torso', async () => {
+  const paths = [undefined, ...(process.env.JAY_VRM_PATH ? [process.env.JAY_VRM_PATH] : [])]
+  for (const path of paths) {
+    const instance = await createInstance(new THREE.Matrix4(), false, path)
+    const meshes = []
+    instance.raw.scene.traverse(mesh => { if (mesh.isMesh) meshes.push(mesh) })
+    const originals = meshes.map(mesh => mesh.geometry)
+    const humanoid = instance.raw.userData.vrm.humanoid
+    const armNames = new Set()
+    for (const side of ['left', 'right'])
+      humanoid.getRawBoneNode(`${side}UpperArm`).traverse(bone => armNames.add(bone.name))
+    const parts = ['leftUpperArm', 'rightUpperArm', 'leftLowerArm', 'rightLowerArm', 'leftHand', 'rightHand']
+    const partNames = Object.fromEntries(parts.map(part => {
+      const bone = humanoid.getRawBoneNode(part)
+      const names = new Set([bone.name])
+      if (part.endsWith('Hand')) bone.traverse(child => names.add(child.name))
+      return [part, names]
+    }))
+    const counts = Object.fromEntries(parts.map(part => [part, 0]))
+    const head = bonePosition(instance, 'head')
+    instance.setFirstPerson(true, false, true)
+    for (const mesh of meshes.filter(mesh => mesh.visible)) {
+      assert.ok(mesh.isSkinnedMesh, 'unweighted accessories must not remain visible')
+      const indices = mesh.geometry.getIndex()
+      const skinIndex = mesh.geometry.getAttribute('skinIndex')
+      const weights = mesh.geometry.getAttribute('skinWeight')
+      for (let i = 0; i < indices.count; i++) {
+        const vertex = indices.getX(i)
+        let armWeight = 0, otherWeight = 0
+        for (let slot = 0; slot < weights.itemSize; slot++) {
+          const name = mesh.skeleton.bones[skinIndex.getComponent(vertex, slot)].name
+          const weight = weights.getComponent(vertex, slot)
+          if (armNames.has(name)) armWeight += weight
+          else otherWeight += weight
+          for (const part of parts) {
+            if (partNames[part].has(name) && weight > 0.5) counts[part]++
+          }
+        }
+        assert.ok(armWeight > 0 && armWeight >= otherWeight, 'a torso, head or leg vertex is still rendered')
+      }
+    }
+    for (const part of parts) assert.ok(counts[part] > 30, `${part} was removed by the mask`)
+    assert.ok(bonePosition(instance, 'head').distanceTo(head) < 1e-9, 'the mask must not move bones')
+    instance.setVisible(false)
+    assert.ok(meshes.every(mesh => !mesh.visible))
+    instance.setVisible(true)
+    instance.setFirstPerson(false)
+    for (const [index, mesh] of meshes.entries()) {
+      assert.equal(mesh.geometry, originals[index])
+      assert.equal(mesh.visible, true)
+    }
+    instance.destroy()
   }
 })
 

@@ -17,6 +17,8 @@ export class Client extends System {
     super(world)
     window.world = world
     window.THREE = THREE
+    this.frameTime = null
+    this.frameTasks = null
   }
 
   async init({ loadYoga }) {
@@ -26,10 +28,40 @@ export class Client extends System {
 
   start() {
     if (this.world.fatalError) return
-    this.world.graphics.renderer.setAnimationLoop(this.world.tick)
+    this.frameTasks = new MessageChannel()
+    this.frameTasks.port1.onmessage = this.onFrameTask
+    this.world.graphics.renderer.setAnimationLoop(this.onFrame)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
 
     this.world.settings.on('change', this.onSettingsChange)
+  }
+
+  onFrame = time => {
+    if (this.world.fatalError || !this.frameTasks) return
+    if (this.world.graphics.renderer.xr.isPresenting) {
+      this.frameTime = null
+      return this.world.tick(time)
+    }
+    // Long rAF work can starve Chromium's network/timer tasks during key repeat.
+    // Queue desktop work outside rAF, keeping only the latest requested frame.
+    const pending = this.frameTime !== null
+    this.frameTime = time
+    if (!pending) this.frameTasks.port2.postMessage(null)
+  }
+
+  onFrameTask = () => {
+    const time = this.frameTime
+    this.frameTime = null
+    if (time === null || this.world.fatalError || document.hidden || this.world.graphics.renderer.xr.isPresenting)
+      return
+    this.world.tick(time)
+  }
+
+  closeFrameTasks() {
+    this.frameTime = null
+    this.frameTasks?.port1.close()
+    this.frameTasks?.port2.close()
+    this.frameTasks = null
   }
 
   onSettingsChange = changes => {
@@ -83,12 +115,13 @@ export class Client extends System {
       // tell the worker to stop
       worker.postMessage('stop')
       // resume rAF
-      this.world.graphics.renderer.setAnimationLoop(this.world.tick)
+      this.world.graphics.renderer.setAnimationLoop(this.onFrame)
     }
   }
 
   stopForFatal() {
     this.world.graphics.renderer.setAnimationLoop(null)
+    this.closeFrameTasks()
     if (worker) {
       worker.onmessage = null
       worker.terminate()
@@ -99,6 +132,7 @@ export class Client extends System {
 
   destroy() {
     this.world.graphics.renderer.setAnimationLoop(null)
+    this.closeFrameTasks()
     worker?.postMessage('stop')
     worker = null
     document.removeEventListener('visibilitychange', this.onVisibilityChange)

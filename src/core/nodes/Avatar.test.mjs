@@ -110,3 +110,22 @@ test('retains the head-only view across remounts and temporary visibility change
   avatar.setFirstPerson(false, { headOnly: false })
   assert.deepEqual(applied.at(-1), { active: false, headOnly: false })
 })
+
+test('retains the arms-only mask across remounts and clears it on return to the full avatar', () => {
+  const applied = []
+  const factory = { create: () => ({
+    setEmote() {}, setVisible() {}, destroy() {},
+    setFirstPerson(active, headOnly, armsOnly) { applied.push({ active, headOnly, armsOnly }) },
+  }) }
+  const context = { world: { setHot() {}, avatars: { add() {}, remove() {} } }, entity: {} }
+  const avatar = new Avatar({ factory })
+  avatar.setFirstPerson(true, { armsOnly: true })
+  avatar.activate(context)
+  assert.deepEqual(applied.at(-1), { active: true, headOnly: false, armsOnly: true })
+  avatar.deactivate()
+  avatar.activate(context)
+  assert.deepEqual(applied.at(-1), { active: true, headOnly: false, armsOnly: true })
+  avatar.setFirstPerson(false)
+  assert.deepEqual(applied.at(-1), { active: false, headOnly: false, armsOnly: false })
+  assert.throws(() => avatar.setFirstPerson(true, { armsOnly: 'true' }), /armsOnly/)
+})

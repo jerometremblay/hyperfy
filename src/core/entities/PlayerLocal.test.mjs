@@ -593,6 +593,51 @@ test('rising pool eye view moves directly to the final rendered camera position'
   }
 })
 
+test('arms-only camera return keeps the mask until completion and restores it on teleport or replacement', () => {
+  globalThis.PHYSX = { PxSphereGeometry: class {} }
+  for (const fps of [30, 60, 144]) {
+    const modes = []
+    const player = {
+      isXR: false, firstPerson: true, firstPersonHeadOnly: true,
+      base: { position: new THREE.Vector3(-1.8, 0.12, 0) },
+      camHeight: 1.7, getAnchorMatrix: () => null,
+      cam: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 0 },
+      control: { camera: { position: new THREE.Vector3(-1.1, 0.95, 0.1), quaternion: new THREE.Quaternion(), zoom: 0 } },
+      world: { camera: new THREE.PerspectiveCamera(), physics: { sweep: () => null } },
+      avatar: {
+        visible: true, getBoneTransform: () => null,
+        setFirstPerson(active, { headOnly = false, armsOnly = false } = {}) { modes.push({ active, headOnly, armsOnly }) },
+      },
+    }
+    const target = new THREE.Vector3(0, 0.85, 0)
+    const masked = { active: true, headOnly: false, armsOnly: true }
+    const full = { active: false, headOnly: false, armsOnly: false }
+    const start = player.control.camera.position.clone()
+    PlayerLocal.prototype.setCamera.call(player, { target, duration: 1, armsOnly: true })
+    assert.deepEqual(modes.at(-1), masked)
+    assert.equal(player.firstPerson, false, 'the render mask must not change native camera mode')
+    const end = player.cam.position.clone().add(new THREE.Vector3(0, 0, player.cam.zoom).applyQuaternion(player.cam.quaternion))
+    for (let i = 0; i < fps; i++) {
+      PlayerLocal.prototype.lateUpdate.call(player, 1 / fps)
+      const t = (i + 1) / fps, ease = t * t * (3 - 2 * t)
+      const camera = player.control.camera
+      const view = camera.position.clone().add(new THREE.Vector3(0, 0, camera.zoom).applyQuaternion(camera.quaternion))
+      assert.ok(view.distanceTo(start.clone().lerp(end, ease)) < 1e-7, 'the straight camera path must remain unchanged')
+      assert.deepEqual(modes.at(-1), i === fps - 1 ? full : masked)
+      assert.equal(player.avatar.visible, true, 'the arms must not be hidden with the whole avatar')
+    }
+    assert.equal(player.cameraTransition, null)
+    PlayerLocal.prototype.setCamera.call(player, { target, duration: 1, armsOnly: true })
+    PlayerLocal.prototype.setCamera.call(player, { target })
+    assert.deepEqual(modes.at(-1), full)
+    PlayerLocal.prototype.setCamera.call(player, { target, duration: 1, armsOnly: true })
+    PlayerLocal.prototype.teleport.call(player, { position: [0, 0, 0] })
+    assert.deepEqual(modes.at(-1), full)
+    assert.equal(player.cameraTransition, null)
+    assert.equal(PlayerLocal.prototype.setCamera.call(player, { target, armsOnly: 'true' }), false)
+  }
+})
+
 test('standing pool eye view returns continuously and keeps the head hidden through the blend', () => {
   globalThis.PHYSX = { PxSphereGeometry: class {} }
   for (const fps of [30, 60, 144]) {
