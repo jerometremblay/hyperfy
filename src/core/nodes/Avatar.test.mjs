@@ -44,3 +44,69 @@ test('retains a pose override before activation and across avatar remounts', () 
   avatar.activate(context)
   assert.deepEqual(applied.at(-1), nextPose)
 })
+
+test('retains scripted hands before activation and clears them across remounts', () => {
+  const applied = []
+  const factory = {
+    create: () => ({
+      setEmote() {},
+      setVisible() {},
+      destroy() {},
+      setScriptedPose(value) {
+        applied.push(value)
+      },
+    }),
+  }
+  const context = { world: { setHot() {}, avatars: { add() {}, remove() {} } }, entity: {} }
+  const avatar = new Avatar({ factory })
+  const pose = { bones: {}, hands: { left: { kind: 'hand', p: [0, 1, -0.3], w: [0, 0, 0, 1], f: {} } } }
+  avatar.setScriptedPose(pose)
+  avatar.activate(context)
+  assert.equal(applied.at(-1), pose)
+  avatar.deactivate()
+  avatar.activate(context)
+  assert.equal(applied.at(-1), pose)
+  avatar.setScriptedPose(null)
+  avatar.deactivate()
+  avatar.activate(context)
+  assert.equal(applied.at(-1), null)
+})
+
+test('forwards scripted release duration without replaying it on remount', () => {
+  const applied = []
+  const factory = { create: () => ({
+    setEmote() {}, setVisible() {}, destroy() {},
+    setScriptedPose(pose, duration) { applied.push({ pose, duration }) },
+  }) }
+  const context = { world: { setHot() {}, avatars: { add() {}, remove() {} } }, entity: {} }
+  const avatar = new Avatar({ factory })
+  avatar.activate(context)
+  avatar.setScriptedPose(null, 0.45)
+  assert.deepEqual(applied.at(-1), { pose: null, duration: 0.45 })
+  avatar.deactivate()
+  avatar.activate(context)
+  assert.equal(applied.at(-1).pose, null)
+  assert.equal(applied.at(-1).duration, undefined)
+})
+
+test('retains the head-only view across remounts and temporary visibility changes', () => {
+  const applied = []
+  const factory = { create: () => ({
+    setEmote() {}, setVisible() {}, destroy() {},
+    setFirstPerson(active, headOnly) { applied.push({ active, headOnly }) },
+  }) }
+  const context = { world: { setHot() {}, avatars: { add() {}, remove() {} } }, entity: {} }
+  const avatar = new Avatar({ factory })
+  avatar.setFirstPerson(true, { headOnly: true })
+  avatar.activate(context)
+  assert.deepEqual(applied.at(-1), { active: true, headOnly: true })
+  avatar.setFirstPerson(false)
+  avatar.setFirstPerson(true)
+  assert.deepEqual(applied.at(-1), { active: true, headOnly: true })
+  avatar.deactivate()
+  avatar.activate(context)
+  assert.deepEqual(applied.at(-1), { active: true, headOnly: true })
+  assert.throws(() => avatar.setFirstPerson(true, { headOnly: 1 }), /headOnly/)
+  avatar.setFirstPerson(false, { headOnly: false })
+  assert.deepEqual(applied.at(-1), { active: false, headOnly: false })
+})

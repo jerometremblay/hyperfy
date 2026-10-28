@@ -283,7 +283,7 @@ export class Audio extends Node {
     if (!audio) {
       return 0
     }
-    if (this.source) {
+    if (this.source && this.startTime !== null) {
       return audio.ctx.currentTime - this.startTime
     }
     return this.offset
@@ -368,10 +368,14 @@ export class Audio extends Node {
     if (!audio) return
     if (this.source) {
       this.n++
-      this.offset = audio.ctx.currentTime - this.startTime
+      if (this.startTime !== null) {
+        this.offset = audio.ctx.currentTime - this.startTime
+      }
       this.source.onended = null
-      this.source.stop()
+      // Playback may still be waiting for the observer's first interaction.
+      if (this.startTime !== null) this.source.stop()
       this.source = null
+      this.startTime = null
       this.gainNode?.disconnect()
       this.gainNode = null
       this.pannerNode?.disconnect()
@@ -386,8 +390,9 @@ export class Audio extends Node {
     this.offset = 0
     if (this.source) {
       this.source.onended = null
-      this.source?.stop()
+      if (this.startTime !== null) this.source.stop()
       this.source = null
+      this.startTime = null
       this.gainNode?.disconnect()
       this.gainNode = null
       this.pannerNode?.disconnect()

@@ -118,6 +118,7 @@ export class PlayerRemote extends Entity {
       this.data.h = cloneHandTrackingPose(this.data.h)
       this.avatar.setHandTrackingPose(this.data.h)
       this.base.add(this.avatar)
+      this.avatar.setScriptedPose(this.scriptedPose || null)
       this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
       this.updateBubble()
       if (!this.bubble.active) {

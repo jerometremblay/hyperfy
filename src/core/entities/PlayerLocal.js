@@ -139,6 +139,7 @@ export class PlayerLocal extends Entity {
     this.moving = false
 
     this.firstPerson = false
+    this.firstPersonHeadOnly = false
     this.lastZoomAt = -Infinity
 
     this.lastJumpAt = 0
@@ -268,8 +269,9 @@ export class PlayerLocal extends Entity {
         this.avatar = src.toNodes().get('avatar')
         this.avatar.disableRateCheck() // max fps for local player
         this.applySeatPose()
-        this.avatar.setFirstPerson(this.firstPerson)
+        this.avatar.setFirstPerson(this.firstPerson, { headOnly: !!this.firstPersonHeadOnly })
         this.avatar.setHandTrackingPose(this.xrHandPose)
+        this.avatar.setScriptedPose(this.scriptedPose || null)
         this.base.add(this.avatar)
         this.nametag.position.y = this.avatar.getHeadToHeight() + 0.2
         this.updateBubble()
@@ -1042,7 +1044,8 @@ export class PlayerLocal extends Entity {
     if (isometric && !this.isometricCameraState) {
       this.isometricCameraState = this.getCamera()
       this.firstPerson = false
-      this.avatar?.setFirstPerson(false)
+      this.firstPersonHeadOnly = false
+      this.avatar?.setFirstPerson(false, { headOnly: false })
       if (this.avatar) this.avatar.visible = true
     } else if (!isometric && this.isometricCameraState) {
       this.setCamera(this.isometricCameraState)
@@ -1333,6 +1336,7 @@ export class PlayerLocal extends Entity {
   }
 
   updateFacing(delta, cameraYaw, orthographic = false) {
+    if (this.scriptedPose?.root) return
     if (!this.moving && !this.firstPerson && this.data.effect?.turn !== true) return
     const faceMovement = orthographic && this.moving && this.data.effect?.turn !== true
     const yaw = faceMovement ? Math.atan2(-this.moveDir.x, -this.moveDir.z) : cameraYaw
@@ -1418,15 +1422,26 @@ export class PlayerLocal extends Entity {
         if (transition.duration - transition.elapsed < 1e-8) transition.elapsed = transition.duration
         const t = transition.elapsed / transition.duration
         const ease = t * t * (3 - 2 * t)
+        const quaternion = transition.quaternion.clone().slerp(this.cam.quaternion, ease)
+        const zoom = transition.zoom + (this.cam.zoom - transition.zoom) * ease
+        // Blend the rendered view directly, then recover the native camera pivot.
+        // Blending the pivot alone makes the changing rotation and zoom arc the view.
+        const start = this.base.position.clone().add(transition.offset)
+          .add(new THREE.Vector3(0, 0, transition.zoom).applyQuaternion(transition.quaternion))
+        const end = this.cam.position.clone()
+          .add(new THREE.Vector3(0, 0, this.cam.zoom).applyQuaternion(this.cam.quaternion))
         target = {
-          position: this.base.position.clone().add(transition.offset).lerp(this.cam.position, ease),
-          quaternion: transition.quaternion.clone().slerp(this.cam.quaternion, ease),
-          zoom: transition.zoom + (this.cam.zoom - transition.zoom) * ease,
+          position: start.lerp(end, ease).sub(new THREE.Vector3(0, 0, zoom).applyQuaternion(quaternion)),
+          quaternion,
+          zoom,
         }
         // Apply the eased pose exactly; keep native collision checks on every frame.
         this.control.camera.quaternion.copy(target.quaternion)
         this.control.camera.zoom = target.zoom
-        if (t === 1) this.cameraTransition = null
+        if (t === 1) {
+          this.cameraTransition = null
+          if (transition.headOnly) this.avatar?.setFirstPerson(this.firstPerson, { headOnly: this.firstPersonHeadOnly })
+        }
       }
       if (this.world.camera.isOrthographicCamera) {
         // The isometric camera sits outside the scene; third-person wall sweeps
@@ -1451,6 +1466,7 @@ export class PlayerLocal extends Entity {
   }
 
   crossPortal(transform) {
+    if (this.cameraTransition?.headOnly) this.avatar?.setFirstPerson(this.firstPerson, { headOnly: this.firstPersonHeadOnly })
     this.cameraTransition = null
     const rotation = new THREE.Quaternion().setFromRotationMatrix(transform)
     const position = this.base.position.clone().applyMatrix4(transform)
@@ -1493,7 +1509,8 @@ export class PlayerLocal extends Entity {
             this.cam.zoom = THIRD_PERSON_MIN_ZOOM
             this.zoomExitPending = true
             this.firstPerson = false
-            this.avatar?.setFirstPerson(false)
+            this.firstPersonHeadOnly = false
+            this.avatar?.setFirstPerson(false, { headOnly: false })
             if (this.avatar) this.avatar.visible = true
           }
         } else if (this.zoomExitPending && zoomDelta > 0 && now - this.lastZoomAt < FIRST_PERSON_SCROLL_DELAY) {
@@ -1505,8 +1522,9 @@ export class PlayerLocal extends Entity {
         ) {
           this.cam.zoom = 0
           this.firstPerson = true
+          this.firstPersonHeadOnly = false
           if (this.avatar) this.avatar.visible = true
-          this.avatar?.setFirstPerson(true)
+          this.avatar?.setFirstPerson(true, { headOnly: false })
         } else {
           this.zoomExitPending = false
           this.cam.zoom = clamp(this.cam.zoom + zoomDelta, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
@@ -1517,26 +1535,26 @@ export class PlayerLocal extends Entity {
   }
 
   getCamera() {
-    return { quaternion: this.cam.quaternion.clone(), zoom: this.cam.zoom, firstPerson: this.firstPerson }
+    return {
+      quaternion: this.cam.quaternion.clone(),
+      zoom: this.cam.zoom,
+      firstPerson: this.firstPerson,
+      headOnly: !!this.firstPersonHeadOnly,
+    }
   }
 
   // Set the native view once; ordinary player input and collision remain active.
-  setCamera({ target, quaternion: orientation, firstPerson = false, zoom = THIRD_PERSON_MIN_ZOOM, duration = 0 } = {}) {
+  setCamera({ target, quaternion: orientation, firstPerson = false, headOnly = false, zoom = THIRD_PERSON_MIN_ZOOM, duration = 0 } = {}) {
     const direction = orientation
       ? [orientation.x, orientation.y, orientation.z, orientation.w]
       : target && [target.x, target.y, target.z]
     if (this.isXR || !direction || ![...direction, zoom, duration].every(Number.isFinite) || duration < 0) return false
+    if (typeof headOnly !== 'boolean') return false
     if (orientation && direction.every(value => value === 0)) return false
-    // Leave first person at the nearest shoulder view before animating out.
-    // Restoring the full avatar while the camera is still inside it clips the body.
-    if (this.firstPerson && !firstPerson && duration > 0) {
-      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.cam.quaternion)
-      right.y = 0
-      right.normalize()
-      this.control.camera.position.copy(this.cam.position).addScaledVector(right, 0.3)
-      this.control.camera.quaternion.copy(this.cam.quaternion)
-      this.control.camera.zoom = THIRD_PERSON_MIN_ZOOM
-    }
+    // Start at the rendered eyes, retaining their visibility mask until the
+    // camera has eased outside the head instead of jumping to the shoulder.
+    const keepHeadHidden = duration > 0 && !firstPerson &&
+      ((this.firstPerson && this.firstPersonHeadOnly) || !!this.cameraTransition?.headOnly)
     this.cameraTransition =
       duration > 0
         ? {
@@ -1545,10 +1563,12 @@ export class PlayerLocal extends Entity {
             offset: this.control.camera.position.clone().sub(this.base.position),
             quaternion: this.control.camera.quaternion.clone(),
             zoom: this.control.camera.zoom,
+            headOnly: keepHeadHidden,
           }
         : null
     this.firstPerson = !!firstPerson
-    this.avatar?.setFirstPerson(this.firstPerson)
+    this.firstPersonHeadOnly = this.firstPerson && headOnly
+    this.avatar?.setFirstPerson(this.firstPerson || keepHeadHidden, { headOnly: this.firstPersonHeadOnly || keepHeadHidden })
     if (this.avatar) this.avatar.visible = true
     this.cam.zoom = firstPerson ? 0 : clamp(zoom, THIRD_PERSON_MIN_ZOOM, MAX_ZOOM)
     const eye = this.base.position.clone().add(new THREE.Vector3(0, this.camHeight, 0))
@@ -1587,6 +1607,7 @@ export class PlayerLocal extends Entity {
   }
 
   teleport({ position, rotationY }) {
+    if (this.cameraTransition?.headOnly) this.avatar?.setFirstPerson(this.firstPerson, { headOnly: this.firstPersonHeadOnly })
     this.cameraTransition = null
     this.portalTraversal = null
     if (Array.isArray(position)) position = teleportPosition.fromArray(position)

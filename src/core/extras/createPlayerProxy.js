@@ -5,6 +5,7 @@ import { clamp, uuid } from '../utils'
 import * as THREE from './three'
 import { getStoredSeatPose } from './seatPose'
 import { sanitizePlayerSelfModify } from './entityModifyPolicy'
+import { sanitizeScriptedPose } from './scriptedPose'
 
 import { readVec3, warnOnce } from './physxConvert.js'
 
@@ -104,6 +105,25 @@ export function createPlayerProxy(entity, player) {
     },
     getBoneTransform(boneName) {
       return player.avatar?.getBoneTransform?.(boneName)
+    },
+    setPose(input, options = {}) {
+      if (!world.network.isClient) return false
+      if (input === null) {
+        const duration = options?.duration ?? 0
+        if (!Number.isFinite(duration) || duration < 0 || duration > 2) return false
+        if (player.scriptedPoseOwner !== entity) return false
+        player.scriptedPoseOwner = null
+        player.scriptedPose = null
+        player.avatar?.setScriptedPose(null, duration)
+        return true
+      }
+      const pose = sanitizeScriptedPose(input)
+      if (!pose) return false
+      if (pose.root && player.data.owner !== world.network.id) return false
+      player.scriptedPoseOwner = entity
+      player.scriptedPose = pose
+      player.avatar?.setScriptedPose(pose)
+      return true
     },
     editSittingPose(options = {}) {
       if (!world.network.isClient || player.data.owner !== world.network.id) return false
@@ -246,6 +266,7 @@ export function createPlayerProxy(entity, player) {
       }
     },
     $cleanup() {
+      proxy.setPose(null)
       activeEffectConfig?.onEnd()
       if (voiceMod) {
         voiceMod = world.livekit.removeModifier(voiceMod)

@@ -23,7 +23,9 @@ export class Avatar extends Node {
     this.hooks = data.hooks
     this._poseOverride = data.poseOverride ? JSON.parse(JSON.stringify(data.poseOverride)) : null
     this._handTrackingPose = null
+    this._scriptedPose = null
     this._firstPerson = false
+    this._firstPersonHeadOnly = false
     this.instance = null
     this.n = 0
   }
@@ -42,9 +44,10 @@ export class Avatar extends Node {
       this.instance = this.factory.create(this.matrixWorld, this.hooks, this)
       this.instance.setEmote(this._emote)
       this.instance.setVisible(this._visible)
-      this.instance.setFirstPerson?.(this._firstPerson)
+      this.instance.setFirstPerson?.(this._firstPerson, this._firstPersonHeadOnly)
       this.instance.setPoseOverride?.(this._poseOverride)
       this.instance.setHandTrackingPose?.(this._handTrackingPose)
+      this.instance.setScriptedPose?.(this._scriptedPose)
       if (this._disableRateCheck) {
         this.instance.disableRateCheck()
         // this._disableRateCheck = null
@@ -148,17 +151,24 @@ export class Avatar extends Node {
     this.instance?.setPoseOverride?.(this._poseOverride)
   }
 
-  setFirstPerson(active) {
+  setFirstPerson(active, { headOnly = this._firstPersonHeadOnly } = {}) {
     if (!isBoolean(active)) {
       throw new Error('[avatar] firstPerson not a boolean')
     }
+    if (!isBoolean(headOnly)) throw new Error('[avatar] headOnly not a boolean')
     this._firstPerson = active
-    this.instance?.setFirstPerson?.(active)
+    this._firstPersonHeadOnly = headOnly
+    this.instance?.setFirstPerson?.(active, headOnly)
   }
 
   setHandTrackingPose(pose) {
     this._handTrackingPose = pose
     this.instance?.setHandTrackingPose?.(pose)
+  }
+
+  setScriptedPose(pose, duration = 0) {
+    this._scriptedPose = pose
+    this.instance?.setScriptedPose?.(pose, duration)
   }
 
   disableRateCheck() {
@@ -200,6 +210,7 @@ export class Avatar extends Node {
     this._poseOverride = source._poseOverride ? JSON.parse(JSON.stringify(source._poseOverride)) : null
     this._handTrackingPose = source._handTrackingPose
     this._firstPerson = source._firstPerson
+    this._firstPersonHeadOnly = source._firstPersonHeadOnly
 
     this.factory = source.factory
     this.hooks = source.hooks
@@ -250,8 +261,8 @@ export class Avatar extends Node {
           // DEPRECATED: use .emote
           return self.setEmote(url)
         },
-        setFirstPerson(active) {
-          self.setFirstPerson(active)
+        setFirstPerson(active, options) {
+          self.setFirstPerson(active, options)
         },
         setHandTrackingPose(pose) {
           self.setHandTrackingPose(pose)

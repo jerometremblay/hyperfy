@@ -91,6 +91,35 @@ Returns a matrix of the bone transform in world space.
 
 See [Avatar](/docs/scripting/nodes/types/Avatar.md) for full details.
 
+### `.setPose({ bones, hands, root })`
+
+Overrides the avatar's visible pose on this client. Available for local and remote
+players. It returns `false` on the server or for invalid input. Apps share their
+gameplay state as usual and calculate the same pose on each observing client.
+
+`bones` uses normalized VRM bone names and quaternions relative to the avatar's
+rest pose, as in the sitting editor. Only `hips` accepts a `position` offset.
+`hands` optionally contains `left` and/or `right` targets in avatar-local metres:
+`{ kind, p, w, f, pole }`. `kind: 'hand'` supplies a wrist and absolute anatomical
+finger orientations; `kind: 'controller'` supplies a grip centroid and a closed
+holding pose, using the existing WebXR hand frames. `pole` optionally selects an
+elbow bend direction in avatar-local coordinates. Native arm IK preserves limb
+lengths and clamps targets beyond the avatar's reach. Explicit scripted poses
+are not constrained to the sitting editor's arm-angle limits.
+
+For the local player, optional `root: { position, quaternion }` supplies a
+predicted world-space render transform as arrays of three and four numbers.
+The pose and eye bones update immediately, without moving the player's physical
+transform, collision capsule or network state. Remote players cannot use this
+option. A root-only pose predicts normal animation without overriding bones.
+
+Call `setPose(null)` to return to normal animation immediately, or
+`setPose(null, { duration: 0.45 })` to blend the solved body, arms and fingers back
+to normal animation over 450 ms. Duration is in seconds, from 0 to 2. A new scripted
+pose cancels the transition. The latest app owns the pose;
+another app's cleanup cannot clear it. App destruction also clears its pose.
+Poses persist when a player's avatar reloads.
+
 ### `.damage(amount)`
 
 Removes health from the player. Health cannot go below zero.
@@ -179,16 +208,19 @@ are disabled in build mode, in VR, and while typing in chat or another input.
 
 ### .getCamera()
 
-Returns a copy of the local native camera settings: `{ quaternion, zoom, firstPerson }`.
+Returns a copy of the local native camera settings: `{ quaternion, zoom, firstPerson, headOnly }`.
 Returns null for remote players and servers. Save this object and pass it back to
 `setCamera` to restore the viewing direction, distance and mode later.
 
-### .setCamera({ target, quaternion, firstPerson = false, zoom = 0.3, duration = 0 })
+### .setCamera({ target, quaternion, firstPerson = false, headOnly = false, zoom = 0.3, duration = 0 })
 
 Sets the local desktop player's normal camera once, looking at a world-space
 Vector3 target. Zoom is clamped to the native third-person range (minimum 0.3 m).
 Set `firstPerson: true` to use the native eye view with zero zoom. Alternatively,
 pass a saved `quaternion` instead of a target to restore a previous direction.
+With `firstPerson: true`, set `headOnly: true` to hide only the local avatar's
+head while keeping its body and arms visible. Other players still see the full
+avatar. The default first-person mask keeps the usual hands and feet.
 By default this exits first-person mode and updates the native shoulder view without moving
 the player or capturing input. Normal mouse look, zoom and collision continue;
 the target is not tracked afterward. Returns false for remote players, servers,
@@ -198,6 +230,7 @@ XR or invalid target/zoom values.
 world.getPlayer().setCamera({ target: new Vector3(2, 0.8, 1), zoom: 0.3 })
 ```
 
-Set `duration` in seconds (up to 2) for an eased return from the currently visible
-view. Normal player input and native camera collision remain active during the
-transition. Teleporting or crossing a portal cancels the transition.
+Set `duration` in seconds (up to 2) for an eased return directly from the currently
+visible camera position to the final view. Normal player input and native camera collision remain active during the
+transition. A head-only eye view keeps the head hidden until the return finishes.
+Teleporting or crossing a portal cancels the transition.

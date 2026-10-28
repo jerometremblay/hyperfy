@@ -158,6 +158,71 @@ function bonePosition(instance, name) {
   return new THREE.Vector3().setFromMatrixPosition(instance.getBoneTransform(name))
 }
 
+test('predicted pose roots update rendered eyes immediately without moving the physical transform', async () => {
+  const physical = new THREE.Matrix4()
+  const instance = await createInstance(physical)
+  const eyes = bonePosition(instance, 'leftEye')
+  const position = new THREE.Vector3(4, 0, -1)
+  const quaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.5)
+  instance.setScriptedPose({
+    bones: { hips: { rotation: [0, 0, 0, 1] } },
+    root: { position: position.toArray(), quaternion: quaternion.toArray() },
+  })
+  const expected = eyes.clone().applyQuaternion(quaternion).add(position)
+  assert.ok(bonePosition(instance, 'leftEye').distanceTo(expected) < 1e-7, 'render prediction must not wait for an animation or network tick')
+  assert.ok(physical.equals(new THREE.Matrix4()), 'prediction must leave the physical matrix untouched')
+  const corrected = new THREE.Matrix4().makeTranslation(-2, 0, 3)
+  instance.move(corrected)
+  assert.ok(bonePosition(instance, 'leftEye').distanceTo(expected) < 1e-7, 'an old authoritative transform must not pull back the predicted view')
+  assert.ok(physical.equals(corrected))
+  instance.setScriptedPose(null, 0.45)
+  assert.ok(bonePosition(instance, 'leftEye').distanceTo(expected) < 1e-7, 'release starts at the rendered eyes')
+  for (let i = 0; i < 28; i++) instance.update(1 / 60)
+  assert.equal(instance.raw.scene.matrixWorld, physical, 'release restores the physical root')
+})
+
+test('head-only first person removes head triangles while retaining arms and eye transforms', async () => {
+  const instance = await createInstance()
+  const meshes = []
+  instance.raw.scene.traverse(mesh => { if (mesh.isSkinnedMesh) meshes.push(mesh) })
+  const originals = meshes.map(mesh => mesh.geometry)
+  const eyes = ['leftEye', 'rightEye'].map(name => bonePosition(instance, name))
+  const headNames = new Set()
+  instance.raw.userData.vrm.humanoid.getRawBoneNode('head').traverse(bone => headNames.add(bone.name))
+  instance.setFirstPerson(true, true)
+  let bodyTriangles = 0, armVertices = 0
+  for (const mesh of meshes.filter(mesh => mesh.visible)) {
+    const indices = mesh.geometry.getIndex()
+    const skinIndex = mesh.geometry.getAttribute('skinIndex')
+    const weights = mesh.geometry.getAttribute('skinWeight')
+    bodyTriangles += indices.count / 3
+    for (let i = 0; i < indices.count; i++) {
+      const vertex = indices.getX(i)
+      let headWeight = 0, armWeight = 0
+      for (let slot = 0; slot < weights.itemSize; slot++) {
+        const bone = mesh.skeleton.bones[skinIndex.getComponent(vertex, slot)]
+        const weight = weights.getComponent(vertex, slot)
+        if (headNames.has(bone.name)) headWeight += weight
+        if (/UpperArm|LowerArm/.test(bone.name)) armWeight += weight
+      }
+      assert.ok(headWeight <= 0.5, 'a head-dominated vertex is still rendered')
+      if (armWeight > 0.5) armVertices++
+    }
+  }
+  assert.ok(armVertices > 100, 'the arms must remain attached and visible')
+  for (const [index, name] of ['leftEye', 'rightEye'].entries())
+    assert.ok(bonePosition(instance, name).distanceTo(eyes[index]) < 1e-9, 'hiding the head moved the camera bones')
+  instance.setFirstPerson(true)
+  const appendageTriangles = meshes.filter(mesh => mesh.visible)
+    .reduce((count, mesh) => count + mesh.geometry.getIndex().count / 3, 0)
+  assert.ok(bodyTriangles > appendageTriangles * 2, 'head-only mode must retain the body')
+  instance.setFirstPerson(false)
+  for (const [index, mesh] of meshes.entries()) {
+    assert.equal(mesh.geometry, originals[index], 'third person must restore the original mesh')
+    assert.equal(mesh.visible, true)
+  }
+})
+
 test('VR arms respect posture-editor limits for close, crossed, overhead and distant reaches', async () => {
   const avatarMatrix = new THREE.Matrix4().makeRotationY(0.7).setPosition(3, 0.2, -2)
   const instance = await createInstance(avatarMatrix)
@@ -454,4 +519,104 @@ test('loaded VRM factory isolates expressions across player instances', async ()
   assert.notEqual(bind.primitives[0], other.binds.find(bind => bind.primitives?.length).primitives[0])
   a.destroy()
   b.destroy()
+})
+
+test('scripted body and grip targets follow the native skeleton and restore it after cleanup', async () => {
+  for (const changedAxes of [false, true]) {
+    const matrix = new THREE.Matrix4().makeRotationY(0.7).setPosition(3, 0.2, -2)
+    const instance = await createInstance(matrix, changedAxes)
+    const rest = instance.getNormalizedPose()
+    const beforeHead = bonePosition(instance, 'head')
+    const lengths = side => [
+      bonePosition(instance, side + 'UpperArm').distanceTo(bonePosition(instance, side + 'LowerArm')),
+      bonePosition(instance, side + 'LowerArm').distanceTo(bonePosition(instance, side + 'Hand')),
+    ]
+    const originalLengths = lengths('right')
+    const target = new THREE.Vector3(0.3, 1.15, -0.35)
+    const pose = {
+      bones: { hips: { rotation: [-0.24740396, 0, 0, 0.96891242], position: [0, -0.05, 0] } },
+      hands: { right: { ...trackedHand('right', 0.5), p: target.toArray(), pole: [0.3, 1, 0] } },
+    }
+    instance.setScriptedPose(pose)
+    instance.update(1 / 60)
+    const expected = target.applyMatrix4(matrix)
+    assert.ok(bonePosition(instance, 'rightHand').distanceTo(expected) < 0.01)
+    assert.ok(bonePosition(instance, 'head').distanceTo(beforeHead) > 0.1)
+    for (let i = 0; i < originalLengths.length; i++)
+      assert.ok(Math.abs(lengths('right')[i] - originalLengths[i]) < 1e-6)
+    const raisedElbow = bonePosition(instance, 'rightLowerArm')
+    instance.setScriptedPose({ ...pose, hands: { right: { ...pose.hands.right, pole: [0.3, -1, 0] } } })
+    instance.update(1 / 60)
+    assert.ok(bonePosition(instance, 'rightLowerArm').y < raisedElbow.y - 0.1, 'explicit pole change retained the old bend side')
+    instance.setScriptedPose(null)
+    instance.update(1 / 60)
+    assert.ok(bonePosition(instance, 'head').distanceTo(beforeHead) < 1e-6)
+    const restored = instance.getNormalizedPose()
+    for (const bone of ['hips', 'rightUpperArm', 'rightLowerArm', 'rightHand', 'rightIndexProximal']) {
+      const a = new THREE.Quaternion().fromArray(rest[bone].rotation)
+      const b = new THREE.Quaternion().fromArray(restored[bone].rotation)
+      assert.ok(a.angleTo(b) < 1e-6, `${bone} retained its scripted pose`)
+    }
+    instance.destroy()
+  }
+})
+
+test('scripted release eases the solved body, arms and fingers into normal animation without snapping', async () => {
+  for (const changedAxes of [false, true]) {
+    const instance = await createInstance(new THREE.Matrix4().makeTranslation(30, 0, 0), changedAxes)
+    const rest = instance.getNormalizedPose()
+    const pose = {
+      bones: { hips: { rotation: [-0.24740396, 0, 0, 0.96891242], position: [0, -0.1, 0] } },
+      hands: { right: { ...trackedHand('right', 0.8), p: [0.3, 1.15, -0.35], pole: [0, 1, 0] } },
+    }
+    instance.setScriptedPose(pose)
+    instance.update(1 / 60)
+    const from = instance.getNormalizedPose()
+    instance.setScriptedPose(null, 0.45)
+    assert.deepEqual(instance.getNormalizedPose(), from, 'starting release must retain the current rendered pose')
+    let previous = from
+    for (let frame = 1; frame <= 27; frame++) {
+      instance.update(1 / 60)
+      const current = instance.getNormalizedPose()
+      for (const name of ['hips', 'rightUpperArm', 'rightLowerArm', 'rightHand', 'rightIndexProximal']) {
+        const a = new THREE.Quaternion().fromArray(previous[name].rotation)
+        const b = new THREE.Quaternion().fromArray(current[name].rotation)
+        assert.ok(a.angleTo(b) < 0.2, `${name} jumped during release at frame ${frame}`)
+      }
+      if (frame === 1) {
+        assert.ok(Math.abs(current.hips.position[1] - from.hips.position[1]) < 0.002)
+      }
+      if (frame === 13) {
+        assert.ok(current.hips.position[1] > from.hips.position[1] + 0.03)
+        assert.ok(current.hips.position[1] < rest.hips.position[1] - 0.03)
+      }
+      previous = current
+    }
+    instance.update(0.01)
+    const standing = instance.getNormalizedPose()
+    for (const name of ['hips', 'rightUpperArm', 'rightLowerArm', 'rightHand', 'rightIndexProximal']) {
+      assert.ok(new THREE.Quaternion().fromArray(rest[name].rotation)
+        .angleTo(new THREE.Quaternion().fromArray(standing[name].rotation)) < 1e-6)
+    }
+    assert.ok(Math.abs(standing.hips.position[1] - rest.hips.position[1]) < 1e-8)
+    instance.destroy()
+  }
+})
+
+test('a new shooting pose cancels release, and release targets the current normal pose', async () => {
+  const instance = await createInstance()
+  const pose = { bones: { hips: { position: [0, -0.1, 0] } } }
+  instance.setScriptedPose(pose)
+  instance.update(1 / 60)
+  instance.setScriptedPose(null, 0.45)
+  instance.update(0.2)
+  instance.setScriptedPose(pose)
+  instance.update(1 / 60)
+  assert.ok(Math.abs(instance.getNormalizedPose().hips.position[1] + 0.1) < 1e-8)
+  instance.setScriptedPose(null, 0.45)
+  instance.setPoseOverride({ hips: { position: [0, 0.05, 0] } })
+  instance.update(0.5)
+  assert.ok(Math.abs(instance.getNormalizedPose().hips.position[1] - 0.05) < 1e-8,
+    'release must target the current animation/override rather than stale standing bones')
+  instance.destroy()
 })

@@ -9,16 +9,23 @@ const bundle = await build({
 })
 const { Audio } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`)
 
-function setup({ legacy = false, spatial = true } = {}) {
-  const calls = [], panners = []
+function setup({ legacy = false, spatial = true, locked = false } = {}) {
+  const calls = [], panners = [], pending = []
   const param = name => ({ value: 0,
     setValueAtTime(value, at) { this.value = value; calls.push({ kind: 'set', name, value, at }) },
     linearRampToValueAtTime(value, at) { calls.push({ kind: 'ramp', name, value, at }) },
   })
   const audio = { ctx: { currentTime: 10,
-    createBufferSource() { return { connect() {}, stop() {},
-      start() { calls.push({ kind: 'start', position: panners.at(-1)?.positionX?.value }) },
-    } },
+    createBufferSource() {
+      let started = false
+      return { connect() {},
+        stop() {
+          if (!started) throw new DOMException('cannot call stop without calling start first', 'InvalidStateError')
+          calls.push({ kind: 'stop' })
+        },
+        start() { started = true; calls.push({ kind: 'start', position: panners.at(-1)?.positionX?.value }) },
+      }
+    },
     createGain() { return { gain: {}, connect() {}, disconnect() {} } },
     createPanner() {
       const panner = { connect() {}, disconnect() {} }
@@ -30,10 +37,13 @@ function setup({ legacy = false, spatial = true } = {}) {
       panners.push(panner)
       return panner
     },
-  }, lastDelta: 1 / 60, groupGains: { sfx: {} }, ready: fn => fn() }
+  }, lastDelta: 1 / 60, groupGains: { sfx: {} }, ready: fn => locked ? pending.push(fn) : fn() }
   const node = new Audio({ src: 'asset://impact.ogg', group: 'sfx', spatial, position: [120, 1, -30] })
   node.activate({ world: { audio, loader: { get: () => ({}) }, stage: { dirtyNodes: new Set() } } })
-  return { node, calls, panners, audio }
+  return { node, calls, panners, audio, unlock() {
+    locked = false
+    while (pending.length) pending.pop()()
+  } }
 }
 
 test('a spatial impact sets its complete position and orientation before starting, without ramps', async () => {
@@ -74,4 +84,49 @@ test('non-spatial playback bypasses the panner and legacy spatial playback sets 
   await old.node.play()
   assert.deepEqual(old.calls[0], { kind: 'position', value: [120, 1, -30] })
   assert.equal(old.calls.at(-1).kind, 'start')
+})
+
+test('a locked observer can expire and recycle impacts before interacting', async () => {
+  const { node, calls, unlock } = setup({ locked: true })
+  for (let i = 0; i < 30; i++) {
+    await node.play()
+    assert.doesNotThrow(() => node.stop(), 'expiry must cancel the pending source without stopping an unstarted Web Audio node')
+    assert.equal(node.source, null)
+    assert.equal(node.gainNode, null)
+    assert.equal(node.pannerNode, null)
+  }
+  unlock()
+  assert.equal(calls.filter(c => c.kind === 'start').length, 0, 'expired sounds must not replay on interaction')
+  await node.play()
+  assert.equal(calls.filter(c => c.kind === 'start').length, 1)
+  node.stop()
+  assert.equal(calls.filter(c => c.kind === 'stop').length, 1)
+})
+
+test('unmount and rebuild cancel locked playback; only the current source starts on unlock', async () => {
+  const { node, calls, unlock } = setup({ locked: true })
+  await node.play()
+  assert.doesNotThrow(() => node.unmount())
+  await node.play()
+  node.commit(false)
+  unlock()
+  assert.equal(calls.filter(c => c.kind === 'start').length, 1)
+  node.stop()
+})
+
+test('pausing before unlock preserves the requested offset and playback clock', async () => {
+  const { node, calls, audio, unlock } = setup({ locked: true })
+  node.currentTime = 0.2
+  await node.play()
+  audio.ctx.currentTime = 20
+  assert.equal(node.currentTime, 0.2)
+  assert.doesNotThrow(() => node.pause())
+  assert.equal(node.currentTime, 0.2)
+  await node.play()
+  unlock()
+  assert.equal(calls.filter(c => c.kind === 'start').length, 1)
+  audio.ctx.currentTime = 20.1
+  assert.ok(Math.abs(node.currentTime - 0.3) < 1e-8)
+  node.pause()
+  assert.ok(Math.abs(node.currentTime - 0.3) < 1e-8)
 })

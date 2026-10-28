@@ -91,12 +91,17 @@ test('teleports received during preload are copied and applied after the player 
     fallDistance: 1000,
     world: { network: { send: (...args) => sent.push(args) } },
     data: { id: 'falling-player' },
+    firstPerson: false, firstPersonHeadOnly: false,
+    cameraTransition: { headOnly: true },
+    avatar: { setFirstPerson(active) { this.headHidden = active } },
   })
   player.teleport(player.pendingTeleport)
   assert.deepEqual(player.base.position.toArray(), [0.3, 0.6, 4.8])
   assert.deepEqual(player.velocity.toArray(), [0, 0, 0])
   assert.equal(player.falling, false)
   assert.equal(player.fallTimer, 0)
+  assert.equal(player.avatar.headHidden, false, 'teleport cancellation restores the head')
+  assert.equal(player.cameraTransition, null)
   assert.equal(sent[0][1].t, true)
 })
 
@@ -425,6 +430,9 @@ test('continuous portal travel preserves momentum, body facing, camera pitch and
     hmdLast: new THREE.Vector3(0.2, 0, 0),
     world: { network: { send: (...args) => messages.push(args) } },
     data: { id: 'player' },
+    firstPerson: false, firstPersonHeadOnly: false,
+    cameraTransition: { headOnly: true },
+    avatar: { setFirstPerson(active) { this.headHidden = active } },
   }
   PlayerLocal.prototype.crossPortal.call(player, transform)
   assert.ok(teleported.distanceTo(new THREE.Vector3(10, 2.2, 0)) < 1e-10)
@@ -434,6 +442,8 @@ test('continuous portal travel preserves momentum, body facing, camera pitch and
   assert.ok(player.hmdLast.distanceTo(new THREE.Vector3(0, 0, -0.2)) < 1e-10)
   assert.equal(player.platform.actor, null)
   assert.equal(player.grounded, false)
+  assert.equal(player.avatar.headHidden, false, 'portal cancellation restores the head')
+  assert.equal(player.cameraTransition, null)
   assert.equal(messages[0][0], 'entityModified')
   assert.equal(messages[0][1].t, true)
 })
@@ -468,9 +478,42 @@ test('camera handoff replaces distant zoom and aims the native shoulder view at 
 test('camera handoff rejects XR and invalid targets without changing the view', () => {
   const cam = { zoom: 4 }
   assert.equal(PlayerLocal.prototype.setCamera.call({ isXR: true, cam }, { target: new THREE.Vector3(), zoom: 0.3 }), false)
-  for (const options of [undefined, { target: { x: NaN, y: 1, z: 2 } }, { target: new THREE.Vector3(), zoom: Infinity }])
+  for (const options of [undefined, { target: { x: NaN, y: 1, z: 2 } }, { target: new THREE.Vector3(), zoom: Infinity },
+    { target: new THREE.Vector3(), firstPerson: true, headOnly: 'true' }])
     assert.equal(PlayerLocal.prototype.setCamera.call({ cam }, options), false)
   assert.equal(cam.zoom, 4)
+})
+
+test('head-only eye view restores the previous native mask when leaving', () => {
+  const modes = []
+  const player = {
+    isXR: false, firstPerson: false, base: { position: new THREE.Vector3() }, camHeight: 1.7,
+    cam: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 2 },
+    control: { camera: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 2 } },
+    avatar: { setFirstPerson(active, options) { modes.push({ active, ...options }) } },
+  }
+  const saved = PlayerLocal.prototype.getCamera.call(player)
+  const target = new THREE.Vector3(0, 1, -2)
+  PlayerLocal.prototype.setCamera.call(player, { target, firstPerson: true, headOnly: true })
+  assert.deepEqual(modes.at(-1), { active: true, headOnly: true })
+  assert.equal(PlayerLocal.prototype.getCamera.call(player).headOnly, true)
+  assert.equal(player.control.camera.zoom, 0)
+  PlayerLocal.prototype.setCamera.call(player, saved)
+  assert.deepEqual(modes.at(-1), { active: false, headOnly: false })
+  assert.equal(PlayerLocal.prototype.getCamera.call(player).headOnly, false)
+  PlayerLocal.prototype.setCamera.call(player, { target, firstPerson: true })
+  assert.deepEqual(modes.at(-1), { active: true, headOnly: false })
+})
+
+test('predicted visual aiming cannot turn the physical body with the camera', () => {
+  const base = new THREE.Object3D()
+  const player = { firstPerson: true, moving: false, data: {},
+    base, scriptedPose: { root: { position: [1, 0, 2], quaternion: [0, 0, 0, 1] } } }
+  PlayerLocal.prototype.updateFacing.call(player, 1 / 60, 1)
+  assert.ok(base.quaternion.equals(new THREE.Quaternion()))
+  player.scriptedPose = null
+  PlayerLocal.prototype.updateFacing.call(player, 1 / 60, 1)
+  assert.ok(base.quaternion.angleTo(new THREE.Quaternion()) > 0)
 })
 
 test('animated camera handoff eases from the aiming pose, follows walking and retains collision', () => {
@@ -500,8 +543,11 @@ test('animated camera handoff eases from the aiming pose, follows walking and re
       PlayerLocal.prototype.lateUpdate.call(player, 1 / fps)
       const elapsed = Math.min(0.45, (i + 1) / fps)
       const t = elapsed / 0.45, ease = t * t * (3 - 2 * t)
-      const expected = start.clone().add(new THREE.Vector3((i + 1) * 0.01, 0, 0)).lerp(player.cam.position, ease)
-      assert.ok(player.control.camera.position.distanceTo(expected) < 1e-7)
+      const endView = player.cam.position.clone().add(new THREE.Vector3(0, 0, player.cam.zoom).applyQuaternion(player.cam.quaternion))
+      const expected = start.clone().add(new THREE.Vector3((i + 1) * 0.01, 0, 0)).lerp(endView, ease)
+      const view = player.control.camera.position.clone().add(new THREE.Vector3(0, 0, player.control.camera.zoom)
+        .applyQuaternion(player.control.camera.quaternion))
+      assert.ok(view.distanceTo(expected) < 1e-7)
       assert.ok(Math.abs(player.control.camera.zoom - 0.3 * ease) < 1e-7)
       if (t > 0.3 && t < 0.7) middle = true
     }
@@ -514,6 +560,82 @@ test('animated camera handoff eases from the aiming pose, follows walking and re
     hit = { distance: 0.05 }
     PlayerLocal.prototype.lateUpdate.call(player, 0.3)
     assert.equal(player.control.camera.zoom, 0.05)
+  }
+})
+
+test('rising pool eye view moves directly to the final rendered camera position', () => {
+  globalThis.PHYSX = { PxSphereGeometry: class {} }
+  for (const fps of [30, 60, 144]) {
+    const player = {
+      isXR: false, firstPerson: true, firstPersonHeadOnly: true,
+      base: { position: new THREE.Vector3(-1.8, 0.12, 0) },
+      camHeight: 1.7, getAnchorMatrix: () => null,
+      cam: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: 0 },
+      control: { camera: {
+        position: new THREE.Vector3(-1.1, 0.95, 0.1),
+        quaternion: new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.1, 0.3, 0, 'YXZ')),
+        zoom: 0,
+      } },
+      world: { rig: new THREE.Object3D(), camera: new THREE.PerspectiveCamera(), physics: { sweep: () => null } },
+    }
+    const start = player.control.camera.position.clone()
+    PlayerLocal.prototype.setCamera.call(player, { target: new THREE.Vector3(0, 0.85, 0), zoom: 0.3, duration: 1 })
+    const end = player.cam.position.clone().add(new THREE.Vector3(0, 0, player.cam.zoom).applyQuaternion(player.cam.quaternion))
+    for (let i = 0; i < fps; i++) {
+      PlayerLocal.prototype.lateUpdate.call(player, 1 / fps)
+      const t = (i + 1) / fps, ease = t * t * (3 - 2 * t)
+      const camera = player.control.camera
+      const actual = camera.position.clone().add(new THREE.Vector3(0, 0, camera.zoom).applyQuaternion(camera.quaternion))
+      assert.ok(actual.distanceTo(start.clone().lerp(end, ease)) < 1e-7,
+        `${fps} FPS: the rendered camera must follow one direct path even while orientation and zoom change`)
+    }
+    assert.equal(player.cameraTransition, null)
+  }
+})
+
+test('standing pool eye view returns continuously and keeps the head hidden through the blend', () => {
+  globalThis.PHYSX = { PxSphereGeometry: class {} }
+  for (const fps of [30, 60, 144]) {
+    const rig = new THREE.Object3D()
+    rig.position.set(-1.65, 1.73, 0.09)
+    rig.rotation.set(-0.55, -Math.PI / 2, 0, 'YXZ')
+    const camera = new THREE.PerspectiveCamera()
+    const modes = []
+    const player = {
+      isXR: false, firstPerson: true, firstPersonHeadOnly: true,
+      base: { position: new THREE.Vector3(-1.8, 0.12, 0) },
+      camHeight: 1.7, getAnchorMatrix: () => null,
+      cam: { position: new THREE.Vector3(-1.8, 1.82, 0), quaternion: new THREE.Quaternion(), zoom: 0 },
+      control: { camera: { position: rig.position.clone(), quaternion: rig.quaternion.clone(), zoom: 0 } },
+      world: { rig, camera, physics: { sweep: () => null } },
+      avatar: {
+        setFirstPerson(active, options) { modes.push({ active, ...options }) },
+        getBoneTransform: () => null,
+      },
+    }
+    const start = rig.position.clone(), rotation = rig.quaternion.clone()
+    PlayerLocal.prototype.setCamera.call(player, { target: new THREE.Vector3(0, 0.85, 0), zoom: 0.3, duration: 0.45 })
+    assert.ok(player.control.camera.position.equals(start), 'handoff must start at the last rendered eyes')
+    assert.ok(player.control.camera.quaternion.equals(rotation), 'handoff must retain the rendered view direction')
+    assert.equal(player.control.camera.zoom, 0, 'zoom must ease out from the eyes without an initial step')
+    assert.deepEqual(modes.at(-1), { active: true, headOnly: true }, 'restoring the head at the eyes clips the avatar')
+    for (let i = 0; i < Math.ceil(fps * 0.45); i++) {
+      PlayerLocal.prototype.lateUpdate.call(player, 1 / fps)
+      const t = Math.min(1, (i + 1) / fps / 0.45), ease = t * t * (3 - 2 * t)
+      const endView = player.cam.position.clone().add(new THREE.Vector3(0, 0, player.cam.zoom).applyQuaternion(player.cam.quaternion))
+      const expected = start.clone().lerp(endView, ease)
+      const view = player.control.camera.position.clone().add(new THREE.Vector3(0, 0, player.control.camera.zoom)
+        .applyQuaternion(player.control.camera.quaternion))
+      assert.ok(view.distanceTo(expected) < 1e-7)
+      assert.ok(player.control.camera.quaternion.angleTo(rotation.clone().slerp(player.cam.quaternion, ease)) < 1e-7)
+      assert.ok(Math.abs(player.control.camera.zoom - 0.3 * ease) < 1e-7)
+      if (t < 1 - 1e-8) assert.deepEqual(modes.at(-1), { active: true, headOnly: true })
+    }
+    assert.deepEqual(modes.at(-1), { active: false, headOnly: false })
+    assert.equal(player.cameraTransition, null)
+    const end = player.control.camera.position.clone()
+    PlayerLocal.prototype.lateUpdate.call(player, 1 / fps)
+    assert.ok(player.control.camera.position.distanceTo(end) < 1e-7, 'completing the blend must not introduce a second step')
   }
 })
 
@@ -554,8 +676,8 @@ test('journal first-person transition restores the saved native orientation, zoo
     cam.rotateY(0.5)
     PlayerLocal.prototype.setCamera.call(player, { ...saved, duration: 0.65 })
     assert.equal(modes.at(-1), firstPerson)
-    assert.equal(player.control.camera.zoom, firstPerson ? 0 : 0.3)
-    assert.equal(player.cameraTransition.zoom, firstPerson ? 0 : 0.3)
+    assert.equal(player.control.camera.zoom, 0)
+    assert.equal(player.cameraTransition.zoom, 0)
     assert.ok(player.cameraTransition.quaternion.angleTo(cam.quaternion) > 0 || firstPerson)
     PlayerLocal.prototype.lateUpdate.call(player, 0.65)
     assert.equal(player.firstPerson, firstPerson)
