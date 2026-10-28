@@ -1,4 +1,4 @@
-/* global app, world */
+/* global app, world, fetch, props */
 // Coordinate convention: Y up, +X right, -Z forward.
 // The closed back surface is local Y=0, centered on the placement origin.
 // The left cover opens around the spine; printed surfaces have explicit depth gaps.
@@ -10,6 +10,194 @@ const LEFT_HINGE_HEIGHT = 0.04
 const TURN_HINGE_HEIGHT = PAGE_HEIGHT + 0.002
 const NEWS_ORIGIN = 'https://hyperfy-news.jerometremblay.chatgpt.site'
 const JOURNAL_BRIDGE_EVENTS = new Set(['click', 'keydown'])
+// Embedded from the existing reusable bridge by download-content.mjs.
+const JOURNAL_BRIDGE_SOURCE = "(() => {\n  const script = document.currentScript\n  if (!script || window.parent === window) return\n  if (window.HyperfyWebViewBridge?.version === 1) return\n\n  const targetOrigin = script.dataset.hyperfyTargetOrigin || '*'\n  const eventGroups = {\n    click: ['click', 'dblclick', 'auxclick', 'contextmenu'],\n    keyboard: ['keydown', 'keypress', 'keyup'],\n    pointer: ['pointerdown', 'pointerup', 'pointercancel', 'pointerenter', 'pointerleave'],\n    pointermove: ['pointermove'],\n    wheel: ['wheel'],\n    scroll: ['scroll', 'scrollend'],\n    focus: ['focusin', 'focusout'],\n    form: ['input', 'change', 'submit', 'reset'],\n    dragdrop: ['dragstart', 'dragend', 'dragenter', 'dragleave', 'dragover', 'drop'],\n    media: ['play', 'pause', 'ended', 'seeking', 'seeked'],\n  }\n  const configuredEvents = script.dataset.hyperfyEvents\n  const categories = new Set((configuredEvents === undefined ? 'click,keyboard' : configuredEvents)\n    .split(/[\\s,]+/)\n    .map(value => value.trim().toLowerCase())\n    .filter(Boolean))\n  const eventNames = new Set([...categories].flatMap(category => eventGroups[category] || []))\n  const frameCoalescedEvents = new Set(['pointermove', 'scroll'])\n  const pendingFrames = new Map()\n\n  function send(name, detail = {}) {\n    window.parent.postMessage({\n      channel: 'hyperfy-webview',\n      version: 1,\n      type: 'event',\n      name,\n      detail,\n    }, targetOrigin)\n  }\n\n  function elementFor(target) {\n    if (target === document || target === window) return document.documentElement\n    return target instanceof Element ? target : target?.parentElement\n  }\n\n  function describeTarget(target) {\n    const element = elementFor(target)\n    if (!element) return null\n    const link = element.closest('a[href], area[href]')\n    const interactive = element.closest(\n      'a[href], area[href], button, input, select, textarea, summary, [role=\"link\"], [role=\"button\"], [contenteditable]:not([contenteditable=\"false\"]), [data-hyperfy-interactive]'\n    )\n    const tagName = element.tagName.toLowerCase()\n    return {\n      tagName,\n      id: element.id || null,\n      name: element.getAttribute('name'),\n      role: element.getAttribute('role'),\n      inputType: element instanceof HTMLInputElement ? element.type : null,\n      href: link?.href || null,\n      linkTarget: link?.target || null,\n      isInteractive: Boolean(interactive),\n      isEditable: Boolean(element.isContentEditable || element.closest('input, textarea, select')),\n    }\n  }\n\n  function eventDetail(event) {\n    const detail = {\n      isTrusted: event.isTrusted,\n      defaultPrevented: event.defaultPrevented,\n      target: describeTarget(event.target),\n    }\n\n    if (event instanceof MouseEvent) {\n      Object.assign(detail, {\n        button: event.button,\n        buttons: event.buttons,\n        clientX: event.clientX,\n        clientY: event.clientY,\n        screenX: event.screenX,\n        screenY: event.screenY,\n        clickCount: event.detail,\n        altKey: event.altKey,\n        ctrlKey: event.ctrlKey,\n        metaKey: event.metaKey,\n        shiftKey: event.shiftKey,\n      })\n    }\n\n    if (event instanceof KeyboardEvent) {\n      Object.assign(detail, {\n        key: event.key,\n        code: event.code,\n        location: event.location,\n        repeat: event.repeat,\n        isComposing: event.isComposing,\n        charCode: event.charCode,\n        keyCode: event.keyCode,\n        altKey: event.altKey,\n        ctrlKey: event.ctrlKey,\n        metaKey: event.metaKey,\n        shiftKey: event.shiftKey,\n      })\n    }\n\n    if (event instanceof PointerEvent) {\n      Object.assign(detail, {\n        pointerId: event.pointerId,\n        pointerType: event.pointerType,\n        isPrimary: event.isPrimary,\n        pressure: event.pressure,\n        width: event.width,\n        height: event.height,\n        tiltX: event.tiltX,\n        tiltY: event.tiltY,\n        twist: event.twist,\n      })\n    }\n\n    if (event instanceof WheelEvent) {\n      Object.assign(detail, {\n        deltaX: event.deltaX,\n        deltaY: event.deltaY,\n        deltaZ: event.deltaZ,\n        deltaMode: event.deltaMode,\n      })\n    }\n\n    if (event instanceof InputEvent) {\n      Object.assign(detail, {\n        inputType: event.inputType,\n        isComposing: event.isComposing,\n      })\n    }\n\n    if (event instanceof FocusEvent) {\n      detail.relatedTarget = describeTarget(event.relatedTarget)\n    }\n\n    if (event.type === 'scroll' || event.type === 'scrollend') {\n      const target = event.target === document ? document.scrollingElement : event.target\n      if (target instanceof Element) {\n        detail.scroll = {\n          left: target.scrollLeft,\n          top: target.scrollTop,\n          width: target.scrollWidth,\n          height: target.scrollHeight,\n          clientWidth: target.clientWidth,\n          clientHeight: target.clientHeight,\n        }\n      }\n    }\n\n    if (event.target instanceof HTMLMediaElement) {\n      Object.assign(detail, {\n        currentTime: event.target.currentTime,\n        duration: Number.isFinite(event.target.duration) ? event.target.duration : null,\n        paused: event.target.paused,\n        muted: event.target.muted,\n      })\n    }\n\n    return detail\n  }\n\n  function forward(name, event) {\n    if (!frameCoalescedEvents.has(name)) {\n      send(name, eventDetail(event))\n      return\n    }\n\n    const target = event.target || document\n    let eventsForTarget = pendingFrames.get(target)\n    if (!eventsForTarget) {\n      eventsForTarget = new Map()\n      pendingFrames.set(target, eventsForTarget)\n    }\n\n    const pending = eventsForTarget.get(name)\n    if (pending) {\n      pending.event = event\n      return\n    }\n\n    const next = { event }\n    eventsForTarget.set(name, next)\n    requestAnimationFrame(() => {\n      eventsForTarget.delete(name)\n      if (eventsForTarget.size === 0) pendingFrames.delete(target)\n      send(name, eventDetail(next.event))\n    })\n  }\n\n  for (const name of eventNames) {\n    document.addEventListener(name, event => forward(name, event), true)\n  }\n\n  window.HyperfyWebViewBridge = Object.freeze({\n    version: 1,\n    emit(name, detail = {}) {\n      if (typeof name !== 'string' || !/^[a-z][a-z0-9._:-]{0,63}$/i.test(name)) return false\n      let safeDetail\n      try {\n        const serialized = JSON.stringify(detail)\n        if (serialized === undefined || serialized.length > 8192) return false\n        safeDetail = JSON.parse(serialized)\n      } catch {\n        return false\n      }\n      send('custom', { name, detail: safeDetail })\n      return true\n    },\n  })\n})()\n"
+const CACHE_KEY = 'hyperfy-journal-pages-v1'
+const MAX_CACHE_BYTES = 4 * 1024 * 1024
+let cachedIssues = {}
+let issueQueue = []
+let renderingIssue = null
+let refreshingIssues = null
+let cachedPageSources = new Map()
+let seedLoaded = false
+let acceptedIssues = null
+
+// Data documents have an opaque origin. WebView also checks event.source against
+// its own iframe before forwarding any message to the app.
+function localDocument(html) {
+  return 'data:text/html;charset=utf-8,' + encodeURIComponent(html)
+}
+
+function selectIssues(issues) {
+  const dates = new Set()
+  return issues.filter(issue => {
+    const date = issue.id.slice(0, 10)
+    if (issue.layout !== 'dated-issue-v1' || dates.has(date)) return false
+    dates.add(date)
+    return true
+  })
+}
+
+function createPageDocument(style, page) {
+  return '<!doctype html><html><head><meta charset="utf-8">' +
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; ' +
+    'style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data: https:">' +
+    '<base href="' + NEWS_URL + '"><style>' + style +
+    '.viewport{inset:0}.book{width:800px;grid-template-columns:1fr;box-shadow:none}' +
+    '</style></head><body class="texture"><div class="viewport"><div class="book-window">' +
+    '<main class="book">' + page + '</main></div></div><script>' +
+    'function fit(){const scale=Math.min(innerWidth/800,innerHeight/1100);' +
+    'const book=document.querySelector(".book"),win=document.querySelector(".book-window");' +
+    'win.style.width=800*scale+"px";win.style.height=1100*scale+"px";book.style.transform="scale("+scale+")"}' +
+    'addEventListener("resize",fit);fit();</script>' +
+    '<script data-hyperfy-events="click,keyboard">' + JOURNAL_BRIDGE_SOURCE + '</script></body></html>'
+}
+
+function prepareIssueDocument(html, issue) {
+  const style = html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/i)?.[1]
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
+  const main = scripts.find(match => match[1].includes('function paginate(reports)'))?.[1]
+  if (!style || !main || !main.includes('Promise.resolve(')) throw new Error('Unsupported journal issue layout')
+  // Retain only the edition's own paginator. Remote navigation, CDN helpers and
+  // Cloudflare instrumentation are unnecessary when rendering downloaded bytes.
+  const code = main
+    .replace('new URLSearchParams(location.search)', 'new URLSearchParams("texture=1&page=1")')
+    .replace(/history\.replaceState\([^;]*\);/g, '')
+    .replace('.then(paginate)', '.then(reports=>{paginate(reports);' +
+      'parent.postMessage({type:"journal-cached-issue",version:1,issue:' + JSON.stringify(issue) +
+      ',style:document.querySelector("style").textContent,pages:allPages.map(page=>page.outerHTML)},"*")})')
+  return '<!doctype html><html><head><meta charset="utf-8">' +
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; ' +
+    'style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data: https:">' +
+    '<base href="' + NEWS_URL + '"><style>' + style + '</style></head><body>' +
+    '<div class="viewport"><div class="book-window"><main class="book"></main></div></div>' +
+    '<nav><button id="prev"></button><span id="position"></span><button id="next"></button><a id="texture"></a></nav>' +
+    '<div id="status"></div><script>' + code + '</script></body></html>'
+}
+
+function validCachedIssue(issue) {
+  return issue && typeof issue.updatedAt === 'string' && typeof issue.style === 'string' &&
+    Array.isArray(issue.pages) && validPageCount(issue.pages.length) &&
+    issue.pages.every(page => typeof page === 'string' && page.startsWith('<section'))
+}
+
+function saveIssueCache() {
+  try {
+    if (JSON.stringify(cachedIssues).length <= MAX_CACHE_BYTES) {
+      world.set?.(CACHE_KEY, cachedIssues)
+      if (acceptedIssues) world.set?.(CACHE_KEY + ':index', acceptedIssues)
+    }
+  } catch {
+    // Private browsing or exhausted storage still permits a session memory cache.
+  }
+}
+
+function useCachedIssues(issues) {
+  const pages = []
+  const sources = new Map()
+  for (const issue of issues) {
+    const cached = cachedIssues[issue.id]
+    if (!validCachedIssue(cached) || cached.updatedAt !== issue.updated_at) return false
+    for (let index = 0; index < cached.pages.length; index++) {
+      const url = '/?issue=' + encodeURIComponent(issue.id) + '&texture=1&page=' + (index + 1)
+      pages.push({ page: pages.length + 1, issuePage: index + 1, url })
+      const key = NEWS_ORIGIN + url + '&embed=1&hyperfy=1'
+      sources.set(key, localDocument(createPageDocument(cached.style, cached.pages[index])))
+    }
+  }
+  if (!validPageCount(pages.length)) return false
+  acceptedIssues = issues
+  cachedPageSources = sources
+  receiveHtmlPageCount({ origin: NEWS_ORIGIN, data: {
+    type: 'journal-page-count', version: 1, count: pages.length, pageCount: pages.length, pages,
+  } })
+  return true
+}
+
+async function fetchNews(path) {
+  // The existing world proxy supplies same-origin responses; the publisher does
+  // not expose CORS headers for direct browser fetches.
+  const response = await fetch('/api/webview/proxy?url=' + encodeURIComponent(NEWS_ORIGIN + path))
+  if (!response?.ok) throw new Error('Journal download failed')
+  return response
+}
+
+async function renderNextIssue(request) {
+  if (manifestRequest !== request || !app.state.open) return
+  const issue = issueQueue.shift()
+  if (!issue) {
+    renderingIssue = null
+    useCachedIssues(refreshingIssues)
+    saveIssueCache()
+    return
+  }
+  renderingIssue = issue
+  const html = await (await fetchNews('/?issue=' + encodeURIComponent(issue.id) + '&texture=1&page=1&embed=1')).text()
+  if (manifestRequest !== request || !app.state.open) return
+  manifestPivot.active = false
+  manifest.src = localDocument(prepareIssueDocument(html, issue.id))
+  manifestPivot.active = true
+}
+
+function receiveCachedIssue(event) {
+  const message = event?.data
+  if (event?.origin !== 'null' || !app.state.open || !renderingIssue ||
+    message?.type !== 'journal-cached-issue' || message.version !== 1 ||
+    message.issue !== renderingIssue.id) return
+  const cached = { updatedAt: renderingIssue.updated_at, style: message.style, pages: message.pages }
+  if (!validCachedIssue(cached) || JSON.stringify(cached).length > MAX_CACHE_BYTES) return
+  cachedIssues[renderingIssue.id] = cached
+  manifestPivot.active = false
+  renderNextIssue(manifestRequest).catch(error => console.warn(error.message))
+}
+
+async function refreshIssueCache(request) {
+  if (!seedLoaded) {
+    try {
+      const stored = world.get?.(CACHE_KEY)
+      if (stored && typeof stored === 'object') cachedIssues = stored
+      const index = world.get?.(CACHE_KEY + ':index')
+      if (Array.isArray(index)) acceptedIssues = index
+    } catch {
+      // Storage can be unavailable; the downloaded world archive still works.
+    }
+    try {
+      if (props?.content?.url && !Object.keys(cachedIssues).length) {
+        const url = props.content.url.replace(/^asset:\/\//, '/assets/')
+        const response = await fetch(url)
+        if (!response?.ok) throw new Error('Journal archive unavailable')
+        const seed = await response.json()
+        for (const [id, issue] of Object.entries(seed.issues || {})) {
+          if (!validCachedIssue(cachedIssues[id]) && validCachedIssue(issue)) cachedIssues[id] = issue
+        }
+        if (Array.isArray(seed.index)) {
+          acceptedIssues = seed.index
+          if (manifestRequest === request && app.state.open) useCachedIssues(seed.index)
+        }
+      }
+      seedLoaded = true
+      saveIssueCache()
+    } catch (error) {
+      console.warn(error.message)
+    }
+  }
+  if (manifestRequest !== request || !app.state.open) return
+  // Cached spreads can appear immediately while checking for today's edition.
+  if (acceptedIssues) useCachedIssues(acceptedIssues)
+  const issues = await (await fetchNews('/api/issues')).json()
+  if (manifestRequest !== request || !app.state.open) return
+  if (!Array.isArray(issues) || !issues.length || issues.length > 1000 ||
+    !issues.every(issue => typeof issue.id === 'string' && /^\d{4}-\d{2}-\d{2}(?:--[a-zA-Z0-9_-]+)?$/.test(issue.id) &&
+      typeof issue.updated_at === 'string')) throw new Error('Invalid journal issue list')
+  refreshingIssues = selectIssues(issues)
+  if (useCachedIssues(refreshingIssues)) {
+    saveIssueCache()
+    return
+  }
+  issueQueue = refreshingIssues.filter(issue => !validCachedIssue(cachedIssues[issue.id]) ||
+    cachedIssues[issue.id].updatedAt !== issue.updated_at)
+  await renderNextIssue(request)
+}
 
 function group(parent, position = [0, 0, 0]) {
   const node = app.create('group', { position })
@@ -265,7 +453,10 @@ function receiveHtmlPageCount(event) {
 
   manifestPending = false
   manifestPivot.active = false
-  const pageUrls = message.pages.map(entry => NEWS_ORIGIN + entry.url + '&embed=1&hyperfy=1')
+  const pageUrls = message.pages.map(entry => {
+    const url = NEWS_ORIGIN + entry.url + '&embed=1&hyperfy=1'
+    return cachedPageSources.get(url) || url
+  })
   const sameManifest = latestHtmlPageUrls?.length === pageUrls.length &&
     latestHtmlPageUrls.every((url, index) => url === pageUrls[index])
   latestHtmlPageCount = message.count
@@ -289,7 +480,8 @@ function receiveHtmlPageCount(event) {
 }
 
 function receiveHtmlBridgeEvent(number, event) {
-  if (event?.origin !== NEWS_ORIGIN) return
+  if (event?.origin !== NEWS_ORIGIN &&
+    !(event?.origin === 'null' && pageSurfaces[number - 1]?.src.startsWith('data:text/html;'))) return
   const message = event.data
   const generic = message?.channel === 'hyperfy-webview' &&
     message.version === 1 &&
@@ -365,14 +557,13 @@ function ensurePageSurfaces(count = pageCount) {
   while (pageSurfaces.length < activePageSurfaceCount) createPageSurface(pageSurfaces.length + 1)
 }
 
-// One hidden wrapper reports the current all-editions page manifest. Individual
-// reading surfaces then load only their own issue page instead of nesting the
-// all-editions iframe set once per surface.
+// A single hidden surface paginates a downloaded new edition once. Ordinary
+// reading surfaces use static cached pages and never nest edition iframes.
 const manifestPivot = group(journalBody, [0, -10000, 0])
 manifestPivot.active = false
 const manifest = app.create('webview', {
   space: 'world',
-  src: NEWS_URL + '?texture=1&page=1',
+  src: '',
   proxy: false,
   width: 0.611 * 1200,
   height: 0.828 * 1200,
@@ -382,7 +573,7 @@ const manifest = app.create('webview', {
   doubleside: true,
   renderOrder: 1,
   rotation: [-PI / 2, 0, 0],
-  onMessage: world.isClient ? receiveHtmlPageCount : null,
+  onMessage: world.isClient ? receiveCachedIssue : null,
 })
 manifestPivot.add(manifest)
 
@@ -393,12 +584,13 @@ function refreshManifest(attempt = 0) {
   app.state.pageCountReady = false
   reportedPageCount = null
   const request = ++manifestRequest
-  // Mount the metadata wrapper only for this request, then release it on success.
+  // Metadata is fetched without an iframe; only uncached editions need a renderer.
   manifestPivot.active = false
-  manifest.src = NEWS_URL + '?texture=1&page=1&journalRefresh=' + Date.now() + '-' + request
-  manifestPivot.active = true
-  // An edition iframe can fail before the wrapper reports its manifest. Retry
-  // that load instead of leaving this instance permanently unable to turn.
+  renderingIssue = null
+  issueQueue = []
+  refreshIssueCache(request).catch(error => console.warn(error.message))
+  // Retry a failed initial download while open. An accepted cached edition
+  // remains readable if its background freshness check fails.
   if (attempt < 2) setTimeout(() => {
     if (app.state.open && manifestPending && manifestRequest === request) refreshManifest(attempt + 1)
   }, 30000)

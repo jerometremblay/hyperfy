@@ -1,5 +1,6 @@
 {
   "blueprintId": "EBE4MSm8zh",
-  "version": 47,
-  "script": "asset://6289487223346b45a31c03bff1b9461dad759f333d2f9b48b3be0569ba918819.js"
+  "version": 48,
+  "script": "asset://87ab5892031971d68f6edf98a65d07d0650c74eb1cb84ebbd29e6a925c49e035.js",
+  "content": "asset://14421e15138aa17c087b644b9faf9db913a4deeb484f7862dbf38a1000859d0f.json"
 }

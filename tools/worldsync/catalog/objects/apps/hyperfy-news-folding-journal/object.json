@@ -9,7 +9,12 @@
     "model": "script-only",
     "name": "Hyperfy News — Folding Journal",
     "preload": false,
-    "props": {},
+    "props": {
+      "content": {
+        "type": "other",
+        "url": "file:./content.json"
+      }
+    },
     "public": false,
     "script": "file:./script.js",
     "unique": false,

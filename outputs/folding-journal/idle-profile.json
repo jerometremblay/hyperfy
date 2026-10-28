@@ -1,0 +1,21 @@
+{
+  "instances": [
+    "6aabcda7-da54-4c6f-8058-74bd12603363"
+  ],
+  "server": {
+    "active": true,
+    "stale": false,
+    "sampledAt": 1793189644291,
+    "rows": [
+      {
+        "id": "6aabcda7-da54-4c6f-8058-74bd12603363",
+        "blueprintId": "EBE4MSm8zh",
+        "blueprintVersion": 48,
+        "name": "Hyperfy News — Folding Journal",
+        "cpuMsPerSecond": 0,
+        "peakCallbackMs": 0,
+        "callbackMsPerSecond": {}
+      }
+    ]
+  }
+}

@@ -24,16 +24,17 @@ const { ClientPointer } = await import(
 const webviewBundle = await build({
   stdin: { contents: `
     export { WebView } from './src/core/nodes/WebView.js'
+    export { Prim } from './src/core/nodes/Prim.js'
     export { Node, getRef } from './src/core/nodes/Node.js'
     export { LooseOctree } from './src/core/extras/LooseOctree.js'
   `, resolveDir: fileURLToPath(new URL('../../', import.meta.url)) },
   bundle: true, format: 'esm', platform: 'node', write: false,
 })
-const { WebView, Node, getRef, LooseOctree } = await import(
+const { WebView, Prim, Node, getRef, LooseOctree } = await import(
   `data:text/javascript;base64,${Buffer.from(webviewBundle.outputFiles[0].contents).toString('base64')}`
 )
 
-function fixture() {
+function fixture({ fetchImpl, storage = new Map(), props = {} } = {}) {
   let now = 0
   const runtimes = []
   const players = {
@@ -52,7 +53,8 @@ function fixture() {
       updates = new Set(),
       timers = [],
       sent = [],
-      webviews = []
+      webviews = [],
+      downloads = []
     const stage = {
       dirtyNodes: new Set(), scene: { add() {}, remove() {} },
       octree: new LooseOctree({ center: new Vector3(), size: 10 }),
@@ -68,6 +70,7 @@ function fixture() {
       quaternion: realWebViews ? root.quaternion : new Quaternion(),
       scale: realWebViews ? root.scale : new Vector3(1, 1, 1),
       create(type, data = {}) {
+        if (type === 'prim') new Prim(data)
         if (realWebViews) {
           const node = type === 'webview' ? new WebView(data) : new Node(data)
           if (type === 'webview') {
@@ -138,6 +141,8 @@ function fixture() {
       getPlayer: id => players[id ?? localId],
       getTime: () => now,
       on: (event, fn) => worldEvents.set(event, fn),
+      get: key => structuredClone(storage.get(key)),
+      set: (key, value) => storage.set(key, structuredClone(value)),
     }
     const context = vm.createContext({
       app,
@@ -146,6 +151,12 @@ function fixture() {
       Quaternion,
       Matrix4,
       Date,
+      props,
+      console,
+      fetch: (...args) => {
+        downloads.push(args[0])
+        return fetchImpl ? fetchImpl(...args) : new Promise(() => {})
+      },
       setTimeout: (fn, milliseconds) => timers.push({ fn, at: now + milliseconds / 1000 }),
     })
     vm.runInContext(source, context)
@@ -159,6 +170,7 @@ function fixture() {
       events,
       timers,
       updates,
+      downloads,
       get: expression => vm.runInContext(expression, context),
     }
     runtimes.push(result)
@@ -545,17 +557,18 @@ test('current posed head is used when eye bones are absent, and invalid eye requ
 })
 
 
-test('every opening actively reloads the manifest and waits for fresh pages before acknowledging', () => {
+test('every opening checks edition metadata and waits for an uncached manifest before acknowledging', () => {
   const f = fixture(), server = f.runtime(true), client = f.runtime(false)
   f.open(server, client)
-  const oldSource = client.get('manifest.src')
+  const oldRequests = client.downloads.length
   server.events.get('journal:toggle')(undefined, 'alice')
   f.deliver(client, server.sent.at(-1))
   f.advance(1.4)
   client.sent.length = 0
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   f.deliver(client, server.sent.at(-1))
-  assert.notEqual(client.get('manifest.src'), oldSource, 'reopen must make a new HTTP request')
+  assert.equal(client.downloads.length, oldRequests + 1, 'reopen checks the issue index')
+  assert.ok(client.downloads.at(-1).includes(encodeURIComponent('/api/issues')))
   assert.equal(client.sent.some(([name]) => name === 'journal:page-count'), false, 'cached manifest must not enable turns')
   f.acknowledgePageCount(server, client)
   f.advance(2.1)
@@ -569,7 +582,7 @@ test('a new instance whose manifest failed can recover on reopening without dele
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   f.deliver(client, server.sent.at(-1))
   f.advance(0.7)
-  const failedSource = client.get('manifest.src')
+  const failedRequest = client.get('manifestRequest')
   client.get('turnPage(1)')
   assert.equal(client.sent.length, 0, 'no valid manifest has arrived')
   server.events.get('journal:toggle')(undefined, 'alice')
@@ -577,7 +590,7 @@ test('a new instance whose manifest failed can recover on reopening without dele
   f.advance(1.4)
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   f.deliver(client, server.sent.at(-1))
-  assert.notEqual(client.get('manifest.src'), failedSource)
+  assert.ok(client.get('manifestRequest') > failedRequest)
   f.acknowledgePageCount(server, client)
   f.advance(2.1)
   client.get('readingControl.pointer.locked = true')
@@ -635,22 +648,22 @@ test('manifest loads retry while open, stop after success, and are bounded on fa
   const f = fixture(), server = f.runtime(true), client = f.runtime(false)
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   f.deliver(client, server.sent.at(-1))
-  const firstSource = client.get('manifest.src')
+  const firstRequest = client.get('manifestRequest')
   f.advance(30)
-  const retrySource = client.get('manifest.src')
-  assert.notEqual(retrySource, firstSource)
+  const retryRequest = client.get('manifestRequest')
+  assert.ok(retryRequest > firstRequest)
   f.acknowledgePageCount(server, client)
   f.advance(60)
-  assert.equal(client.get('manifest.src'), retrySource)
+  assert.equal(client.get('manifestRequest'), retryRequest)
 
   const failed = fixture(), failedServer = failed.runtime(true), failedClient = failed.runtime(false)
   failedServer.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   failed.deliver(failedClient, failedServer.sent.at(-1))
   failed.advance(30)
   failed.advance(60)
-  const lastSource = failedClient.get('manifest.src')
+  const lastRequest = failedClient.get('manifestRequest')
   failed.advance(90)
-  assert.equal(failedClient.get('manifest.src'), lastSource)
+  assert.equal(failedClient.get('manifestRequest'), lastRequest)
   assert.equal(failedClient.get('manifestRequest'), 3)
 })
 
@@ -685,7 +698,7 @@ test('reading mounts only the spread, turns retain at most four pages, and closi
   const mounted = () => client.webviews.filter(node => node.mounted)
   server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
   f.deliver(client, server.sent.at(-1))
-  assert.equal(mounted().length, 1, 'only the manifest loads before issue URLs arrive')
+  assert.equal(mounted().length, 0, 'metadata uses fetch and mounts no remote wrapper')
   f.deliverManifest(client, 50)
   assert.equal(getRef(client.get('manifest')).mounted, false, 'release the manifest after reading its metadata')
   server.events.get('journal:page-count')(client.sent.at(-1)[1], 'alice')
@@ -756,6 +769,168 @@ test('the default journal package and worldsync catalog contain the reviewed scr
   assert.equal(catalog, source)
   const { blueprint, assets } = parseHyp(fs.readFileSync(new URL('../../src/world/collections/default/HyperfyJournal.hyp', import.meta.url)))
   assert.equal(Buffer.from(assets.find(asset => asset.url === blueprint.script).bytes).toString(), source)
+})
+
+const archive = JSON.parse(fs.readFileSync(new URL('./content.json', import.meta.url), 'utf8'))
+const cachedIndex = archive.index.slice(0, 1)
+const cachedEdition = archive.issues[cachedIndex[0].id]
+const seed = { index: cachedIndex, issues: { [cachedIndex[0].id]: cachedEdition } }
+const contentProps = { content: { type: 'other', url: 'asset://archive.json' } }
+const jsonResponse = data => ({ ok: true, json: async () => structuredClone(data) })
+const settle = () => new Promise(resolve => setImmediate(resolve))
+
+test('downloaded world content mounts local pages and reopening downloads only the small edition index', async () => {
+  const f = fixture({ props: contentProps, fetchImpl: url =>
+    url === '/assets/archive.json' ? jsonResponse(seed) : jsonResponse(cachedIndex) })
+  const server = f.runtime(true), client = f.runtime(false, 'alice', { open: false }, true)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  f.advance(0.7)
+  assert.equal(client.downloads.length, 2)
+  assert.ok(client.get('pageSurfaces[0].page.src').startsWith('data:text/html;'))
+  assert.equal(client.get('manifest.src'), '', 'cached editions need no pagination iframe')
+  assert.equal(client.webviews.filter(node => node.mounted).length, 2)
+  const pageSource = client.get('pageSurfaces[0].page.src')
+  server.events.get('journal:page-count')(client.sent.at(-1)[1], 'alice')
+  f.deliver(client, server.sent.at(-1))
+  server.events.get('journal:turn-request')({ direction: 1 }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(1.4)
+  assert.equal(client.downloads.length, 2, 'turns never request HTML')
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(2.1)
+  assert.equal(client.webviews.filter(node => node.mounted).length, 0)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  assert.equal(client.downloads.length, 3)
+  assert.equal(client.get('pageSurfaces[0].page.src'), pageSource)
+})
+
+test('persistent pages survive a new client runtime and remain readable when the publisher is unavailable', async () => {
+  const storage = new Map()
+  const first = fixture({ storage, props: contentProps, fetchImpl: url =>
+    url === '/assets/archive.json' ? jsonResponse(seed) : jsonResponse(cachedIndex) })
+  const server = first.runtime(true), client = first.runtime(false)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  first.deliver(client, server.sent.at(-1))
+  await settle()
+  const next = fixture({ storage, props: contentProps, fetchImpl: () => new Promise(() => {}) })
+  const joined = next.runtime(false, 'alice', server.app.state)
+  assert.ok(joined.get('pageSurfaces[0].page.src').startsWith('data:text/html;'))
+  assert.equal(joined.downloads.length, 1)
+  assert.ok(joined.downloads[0].includes(encodeURIComponent('/api/issues')))
+  assert.equal(joined.get('manifestPending'), false)
+  assert.equal(joined.sent.at(-1)[0], 'journal:page-count')
+})
+
+test('a revised edition is downloaded once and replaces static pages even with the same page count', async () => {
+  let index = cachedIndex
+  const html = '<style>.page{}</style><script>function paginate(reports){};' +
+    'const allPages=[];Promise.resolve([]).then(paginate);</script>'
+  const f = fixture({ props: contentProps, fetchImpl: url => {
+    if (url === '/assets/archive.json') return jsonResponse(seed)
+    if (decodeURIComponent(url).includes('/api/issues')) return jsonResponse(index)
+    return { ok: true, text: async () => html }
+  } })
+  const server = f.runtime(true), client = f.runtime(false)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  const originalSource = client.get('pageSurfaces[0].page.src')
+  index = [{ ...cachedIndex[0], updated_at: '2026-10-28T10:00:00Z' }]
+  client.get('refreshManifest()')
+  await settle()
+  assert.ok(client.get('manifest.src').startsWith('data:text/html;'))
+  assert.equal(client.downloads.length, 4)
+  client.get(`receiveCachedIssue({origin:"null",data:{type:"journal-cached-issue",version:1,
+    issue:${JSON.stringify(index[0].id)},style:".page{}",pages:
+    Array.from({length:${cachedEdition.pages.length}},()=>'<section class="page">Revised copy</section>')}})`)
+  await settle()
+  assert.notEqual(client.get('pageSurfaces[0].page.src'), originalSource)
+  assert.ok(decodeURIComponent(client.get('pageSurfaces[0].page.src')).includes('Revised copy'))
+  client.get('refreshManifest()')
+  await settle()
+  assert.equal(client.downloads.length, 5, 'only metadata is rechecked after storing the revision')
+})
+
+test('closing during a download prevents a late result from mounting the pagination frame', async () => {
+  let finishDownload
+  const f = fixture({ fetchImpl: url => decodeURIComponent(url).includes('/api/issues')
+    ? jsonResponse(cachedIndex)
+    : new Promise(resolve => { finishDownload = resolve }) })
+  const server = f.runtime(true), client = f.runtime(false, 'alice', { open: false }, true)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  assert.equal(typeof finishDownload, 'function')
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(0.7)
+  finishDownload({ ok: true, text: async () => '<html>late</html>' })
+  await settle()
+  assert.equal(client.webviews.filter(node => node.mounted).length, 0)
+  assert.equal(client.get('manifest.src'), '')
+})
+
+test('unavailable browser storage still permits local archive pages and memory-cached reopening', async () => {
+  const f = fixture({ props: contentProps, fetchImpl: url =>
+    url === '/assets/archive.json' ? jsonResponse(seed) : new Promise(() => {}) })
+  const server = f.runtime(true), client = f.runtime(false)
+  client.world.get = client.world.set = () => { throw new Error('Storage unavailable') }
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  assert.ok(client.get('pageSurfaces[0].page.src').startsWith('data:text/html;'))
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(0.7)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  assert.equal(client.downloads.length, 3)
+  assert.equal(client.get('manifestPending'), false)
+})
+
+test('local page bridge messages require a cached data document and metadata keeps only the newest dated revision', async () => {
+  const f = fixture({ props: contentProps, fetchImpl: url =>
+    url === '/assets/archive.json' ? jsonResponse(seed) : jsonResponse(cachedIndex) })
+  const server = f.runtime(true), client = f.runtime(false)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  await settle()
+  server.events.get('journal:page-count')(client.sent.at(-1)[1], 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(0.7)
+  const before = client.sent.length
+  client.get('pageSurfaces[1].page.onMessage({origin:"null",data:{channel:"hyperfy-webview",version:1,type:"event",name:"click",detail:{isTrusted:true,button:0,target:{isInteractive:false}}}})')
+  assert.equal(client.sent.length, before + 1)
+  assert.equal(client.sent.at(-1)[0], 'journal:turn-request')
+  const index = client.get(`selectIssues([
+    {id:"2026-10-17--revision",layout:"dated-issue-v1"},
+    {id:"2026-10-17",layout:"dated-issue-v1"},
+    {id:"2026-10-14",layout:"legacy-publication"}])`)
+  assert.deepEqual(Array.from(index, item => item.id), ['2026-10-17--revision'])
+})
+
+test('the packaged archive has every local page and embeds portraits without remote scripts or nested frames', () => {
+  const { blueprint, assets } = parseHyp(fs.readFileSync(new URL('../../src/world/collections/default/HyperfyJournal.hyp', import.meta.url)))
+  const content = assets.find(asset => asset.url === blueprint.props.content.url)
+  assert.equal(Buffer.from(content.bytes).toString(), JSON.stringify(archive))
+  assert.equal(archive.index.length, Object.keys(archive.issues).length)
+  for (const issue of Object.values(archive.issues)) {
+    assert.ok(issue.pages.length > 0)
+    for (const page of issue.pages) {
+      assert.ok(page.startsWith('<section'))
+      assert.doesNotMatch(page, /<script|<iframe|<img\b[^>]*src="https?:/i)
+    }
+  }
+  const f = fixture()
+  const client = f.runtime(false)
+  assert.equal(client.get('JOURNAL_BRIDGE_SOURCE'),
+    fs.readFileSync(new URL('../../hyperfy-webview-bridge.js', import.meta.url), 'utf8'))
 })
 
 test('only the reader transitions to first person and restores the first opening snapshot on close', () => {
