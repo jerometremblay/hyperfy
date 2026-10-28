@@ -227,6 +227,56 @@ test('actual App event/world/timer paths are measured and subscriptions can be r
   profiler.destroy()
 })
 
+test('iframe ranking counts mounted off-screen and detached WebViews once and clears counts on unload', () => {
+  const { world, profiler, app } = fixture()
+  const entity = app('journal')
+  app('idle-cabinet')
+  world.css = { orderedLayers: new Map() }
+  const webview = (mounted, iframe, ordered = false) => {
+    const node = {
+      name: 'webview',
+      mounted,
+      iframe: iframe ? {} : null,
+      objectCSS: ordered ? {} : null,
+      position: new THREE.Vector3(0, -10000, 0),
+      traverse(fn) {
+        fn(this)
+      },
+    }
+    if (ordered) world.css.orderedLayers.set(node.objectCSS, {})
+    return node
+  }
+  const ordered = webview(true, true, true)
+  const shared = webview(true, true)
+  const blank = webview(true, false)
+  const inactive = webview(false, false)
+  entity.root.traverse = fn => {
+    fn(entity.root)
+    for (const node of [ordered, shared, blank, inactive]) node.traverse(fn)
+  }
+  // Detached nodes belong to the same app; a node seen through both paths counts once.
+  entity.worldNodes.add(ordered)
+  const detached = webview(true, true, true)
+  entity.worldNodes.add(detached)
+  profiler.toggle(true)
+  profiler.setMetric('iframes')
+  profiler.sample(0.5)
+  const row = profiler.rows.find(row => row.id === 'journal')
+  assert.equal(profiler.metric, 'iframes')
+  assert.deepEqual([row.webviews, row.iframes, row.cssLayers], [4, 3, 2])
+  const idle = profiler.rows.find(row => row.id === 'idle-cabinet')
+  assert.deepEqual([idle.webviews, idle.iframes, idle.cssLayers], [0, 0, 0])
+  for (const node of [ordered, shared, blank, detached]) {
+    node.mounted = false
+    node.iframe = null
+    world.css.orderedLayers.delete(node.objectCSS)
+  }
+  profiler.sample(0.5)
+  const closed = profiler.rows.find(row => row.id === 'journal')
+  assert.deepEqual([closed.webviews, closed.iframes, closed.cssLayers], [0, 0, 0])
+  profiler.destroy()
+})
+
 test('network hooks count encoded app packets in both directions and exclude shared/player traffic', () => {
   const { world, profiler, app } = fixture()
   app('a')

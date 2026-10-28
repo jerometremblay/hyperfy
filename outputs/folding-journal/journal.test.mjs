@@ -74,6 +74,7 @@ function fixture() {
             // Exercise real mounting, movement and raycasting without browser DOM.
             const buildWorld = node.buildWorld
             node.buildWorld = function () {
+              this.buildCount = (this.buildCount || 0) + 1
               const src = this._src
               this._src = ''
               buildWorld.call(this)
@@ -665,6 +666,62 @@ test('closed instances cancel pending manifest retries and late joiners refresh 
   const source = client.get('manifest.src')
   f.advance(30)
   assert.equal(client.get('manifest.src'), source)
+})
+
+test('closed journals mount no WebViews and have no idle frame callbacks on clients or servers', () => {
+  const f = fixture()
+  for (const server of [false, true]) {
+    const runtime = f.runtime(server, 'alice', { open: false, pageCount: 50 }, true)
+    assert.equal(runtime.webviews.filter(node => node.mounted).length, 0)
+    assert.equal(runtime.webviews.reduce((sum, node) => sum + (node.buildCount || 0), 0), 0)
+    assert.equal(runtime.updates.size, 0)
+    assert.equal(runtime.timers.length, 0)
+  }
+  f.advance(60)
+})
+
+test('reading mounts only the spread, turns retain at most four pages, and closing unmounts everything', () => {
+  const f = fixture(), server = f.runtime(true), client = f.runtime(false, 'alice', { open: false }, true)
+  const mounted = () => client.webviews.filter(node => node.mounted)
+  server.events.get('journal:toggle')({ eye: [0, 1.6, 1] }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.equal(mounted().length, 1, 'only the manifest loads before issue URLs arrive')
+  f.deliverManifest(client, 50)
+  assert.equal(getRef(client.get('manifest')).mounted, false, 'release the manifest after reading its metadata')
+  server.events.get('journal:page-count')(client.sent.at(-1)[1], 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(0.7)
+  assert.equal(mounted().length, 2)
+  assert.equal(client.updates.size, 0, 'an open stationary journal does not poll')
+  server.events.get('journal:turn-request')({ direction: 1 }, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  assert.equal(mounted().length, 4)
+  f.advance(0.7)
+  const before = new Map(mounted().map(node => [node, node.buildCount]))
+  for (let frame = 1; frame <= 8; frame++) {
+    f.advance(0.7 + frame / 60)
+    assert.equal(mounted().length, 4)
+    for (const node of mounted()) {
+      assert.equal(node.buildCount, before.get(node), 'turning must not rebuild an iframe each frame')
+    }
+  }
+  f.advance(1.4)
+  f.deliver(client, server.sent.at(-1))
+  assert.equal(mounted().length, 2)
+  assert.equal(client.get('firstPage'), 3)
+  server.events.get('journal:toggle')(undefined, 'alice')
+  f.deliver(client, server.sent.at(-1))
+  f.advance(2.1)
+  assert.equal(mounted().length, 0)
+  assert.equal(client.updates.size, 0)
+  f.deliverManifest(client, 50)
+  assert.equal(mounted().length, 0, 'late iframe messages cannot reactivate a closed journal')
+  f.advance(60)
+  assert.equal(mounted().length, 0)
+  assert.equal(client.updates.size, 0)
+  f.open(server, client)
+  assert.equal(mounted().length, 2, 'reopening restores the accepted spread')
+  assert.equal(client.get('firstPage'), 3)
 })
 
 

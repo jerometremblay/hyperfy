@@ -112,7 +112,7 @@ export class ClientProfiler extends System {
   }
 
   setMetric(metric) {
-    if (!['cpu', 'serverCpu', 'triangles', 'bodies', 'network', 'lights'].includes(metric)) return
+    if (!['cpu', 'serverCpu', 'triangles', 'bodies', 'network', 'lights', 'iframes'].includes(metric)) return
     this.metric = metric
     this.publish()
   }
@@ -223,6 +223,9 @@ export class ClientProfiler extends System {
         contacts: 0,
         lights: 0,
         shadows: 0,
+        webviews: 0,
+        iframes: 0,
+        cssLayers: 0,
         bounds: new THREE.Box3(),
         position: entity.root.matrixWorld
           ? new THREE.Vector3().setFromMatrixPosition(entity.root.matrixWorld)
@@ -236,6 +239,11 @@ export class ClientProfiler extends System {
         if (node.mounted && node.light) {
           row.lights++
           if (node.light.castShadow) row.shadows++
+        }
+        if (node.mounted && node.name === 'webview') {
+          row.webviews++
+          if (node.iframe) row.iframes++
+          if (this.world.css?.orderedLayers.has(node.objectCSS)) row.cssLayers++
         }
       }
       entity.root.traverse(visit)

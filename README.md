@@ -193,10 +193,10 @@ with the existing sidebar, with Recenter and scrolling controls on the panel.
 
 As an administrator, enable **View Stats**, then click **Show details** in the
 Object profiler bar below the performance graphs. Rank apps by client or server
-script CPU, triangles, physics bodies, network traffic, or lights. Colored orbs
-identify the same objects in the world: green marks lower readings and red marks
+script CPU, triangles, physics bodies, network traffic, lights, or mounted iframes.
+Colored orbs identify the same objects in the world: green marks lower readings and red marks
 the highest reading for the selected metric. Click a row or an orb to inspect
-that app's callbacks, geometry, physics, lights, and network activity.
+that app's callbacks, geometry, physics, lights, iframe counts, and network activity.
 
 ![Object profiler ranking apps by client script CPU inside the cabin](profiler.png)
 

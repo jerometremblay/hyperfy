@@ -5,10 +5,13 @@ WASD (or arrow keys) steers, Space pauses, Escape leaves. E offers a close
 view before clicking. Click again to resume; click or Enter restarts after
 Game Over. Each player has an independent local game.
 
-The existing cabinet's transform, appearance, metadata, and props are preserved.
-Its static maze decorations are replaced by a native interactive WebView in the
-same inclined CRT plane. A local camera view and captured movement controls
-prevent the avatar from walking while playing. Leaving releases those controls.
+The idle CRT uses `idle-screen.png`, a fixed capture of the existing game's title
+artwork with its controls and attribution, through the native Image node. Clicking
+it or pressing E mounts the game WebView in the same inclined CRT plane. The local
+camera and captured movement controls prevent the avatar from walking while playing.
+Escape unloads the game, restores the fixed texture and releases those controls.
+Each visit starts a fresh local game; Space still pauses during a visit.
+An idle cabinet has no game iframe, CSS layer or app update callback.
 
 ## Source and licenses
 

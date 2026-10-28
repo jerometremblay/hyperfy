@@ -1,6 +1,6 @@
 // Vintage 1980s PAC-MAN upright arcade cabinet — primitive-only Hyperfy app.
 // Coordinates are centered on the prompt box: X right, Y up, -Z forward.
-// Bounds: 1.0 m wide, 1.875109 m tall, 1.0 m deep. Cabinet geometry preserved; interactive native WebView CRT.
+// Bounds: 1.0 m wide, 1.875109 m tall, 1.0 m deep. Static CRT until a local player enters.
 
 const COL = {
   yellow: '#ffcf21', edge: '#e7a910', sun: '#ffeb52', darkYellow: '#c78e12',
@@ -179,22 +179,44 @@ monitor(.553,.502,.007,COL.midnight,-.028,{roughness:.18,metalness:.05})
 for(const x of [-.275,.275]) pixelOnScreen(x,0,.011,.52,COL.gray,-.034)
 for(const y of [-.25,.25]) pixelOnScreen(0,y,.56,.010,COL.gray,-.034)
 
-// The original decorative maze is replaced by a native interactive browser surface.
-// WebViews face +Z; rotate into the CRT's -Z viewing normal, preserving screen-up.
+// One native image displays the idle screen without a browser or frame callbacks.
+// Images and WebViews face +Z; preserve the CRT's viewing normal and screen-up.
 if (world.isClient) {
   const offset = -.035
   const gameUrl = props.pacmanUrl || 'https://monstre.duckdns.org:3333/games/pacman/index.html'
+  const position = [0, centerY-offset*Math.sin(screenAngle), centerZ+offset*Math.cos(screenAngle)]
+  const rotation = [-screenAngle, PI, 0]
+  const idleScreen = app.create('image', {
+    id: 'pacman-idle-screen',
+    src: props.idleScreen?.url || 'asset://225ff84e513a43fd68c8fb7274c74458ec6599fe25763bd2a83b9317d0575278.png',
+    width: .538,
+    height: .486,
+    position,
+    rotation,
+    fit: 'contain',
+    color: 'black',
+    lit: false,
+    cursor: 'pointer',
+    onPointerDown: event => {
+      if (event.button !== 'left') return
+      event.stopPropagation()
+      enterArcade()
+    },
+  })
+  app.add(idleScreen)
   const screen = app.create('webview', {
+    id: 'pacman-game-screen',
+    active: false,
     src: gameUrl,
     width: .538,
     height: .486,
     factor: 1800,
-    position: [0, centerY-offset*Math.sin(screenAngle), centerZ+offset*Math.cos(screenAngle)],
-    rotation: [-screenAngle, PI, 0],
+    position,
+    rotation,
     interactive: true,
     onMessage: ({ data, origin, releaseFocus }) => {
       // WebView restricts messages to its own iframe; validate its configured origin too.
-      if (origin !== gameUrl.split('/').slice(0,3).join('/')) return
+      if (!control || origin !== gameUrl.split('/').slice(0,3).join('/')) return
       if (data?.type !== 'pacman-focus' && data?.type !== 'pacman-exit') return
       if (data.type === 'pacman-focus') enterArcade()
       else {
@@ -205,7 +227,7 @@ if (world.isClient) {
   })
   app.add(screen)
 
-  // E offers a stable close view of the real CRT. Click it to focus the game.
+  // E or the printed screen loads a fresh local game; click the CRT to focus it.
   const playAction = app.create('action', {
     label: 'Play Pac-Man',
     distance: 3,
@@ -236,6 +258,9 @@ if (world.isClient) {
     // The CRT footer already explains Escape; keep world HUD off the maze.
     control.setActions(null)
     playAction.active = false
+    idleScreen.active = false
+    screen.active = true
+    app.on('update', updateCamera)
     updateCamera()
   }
   function updateCamera() {
@@ -244,13 +269,19 @@ if (world.isClient) {
   }
   function leaveArcade() {
     if (!control) return
+    app.off('update', updateCamera)
+    screen.active = false
+    idleScreen.active = true
     control.setActions(null)
     control.release()
     control = null
     playAction.active = true
   }
-  app.on('update', updateCamera)
-  app.on('destroy', leaveArcade)
+  app.on('destroy', () => {
+    app.off('update', updateCamera)
+    control?.release()
+    control = null
+  })
 }
 
 // Slanted sturdy control shelf, black 1980s control overlay and front kick rail.

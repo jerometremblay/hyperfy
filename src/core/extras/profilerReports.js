@@ -18,6 +18,9 @@ const fields = {
   contacts: 'contactLinks',
   lights: 'lights',
   shadows: 'shadowCasters',
+  webviews: 'webviews',
+  iframes: 'iframes',
+  cssLayers: 'cssLayers',
 }
 const counts = new Set([
   'triangles',
@@ -29,7 +32,12 @@ const counts = new Set([
   'contactLinks',
   'lights',
   'shadowCasters',
+  'webviews',
+  'iframes',
+  'cssLayers',
 ])
+// Older browser clients do not report these counts; preserve "unknown" rather than zero.
+const optionalCounts = new Set(['webviews', 'iframes', 'cssLayers'])
 const validNumber = value => Number.isFinite(value) && value >= 0 && value <= 1e12
 
 export function createProfilerReport(rows, sampleSeconds) {
@@ -75,6 +83,10 @@ export function sanitizeProfilerReport(data) {
     ids.add(row.id)
     const clean = { id: row.id, blueprintVersion: row.blueprintVersion }
     for (const name of Object.values(fields)) {
+      if (optionalCounts.has(name) && row[name] === undefined) {
+        clean[name] = null
+        continue
+      }
       if (!validNumber(row[name]) || (counts.has(name) && !Number.isInteger(row[name]))) return null
       clean[name] = row[name]
     }
@@ -140,6 +152,6 @@ export function getProfilerReports(world, { entityId, now = Date.now() } = {}) {
     clients,
     server: world.profiler?.getReport({ entityId, now }) ?? null,
     limitations:
-      'Client-reported synchronous script CPU, mounted resource counts and app packet rates. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling.',
+      'Client-reported synchronous script CPU, mounted resource counts and app packet rates. Iframe counts cover native WebView frames, including off-screen pages, but exclude nested frames and iframe page CPU. Server report measures exclusive synchronous server script callbacks separately. Excludes GPU timings, per-body physics time, async continuations and native node callbacks. No client reports means no compatible connected admin client is profiling.',
   }
 }

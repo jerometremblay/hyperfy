@@ -10,6 +10,7 @@ const metrics = {
   bodies: 'Physics bodies',
   network: 'Network (B/s)',
   lights: 'Lights',
+  iframes: 'Iframes (mounted)',
 }
 // SES deliberately tames locale formatting; round before string conversion.
 const number = value => (value == null ? '—' : String(Math.round(value * 100) / 100))
@@ -187,6 +188,12 @@ export function ProfilerPanel({ world }) {
                 <dd>
                   {selected.lights} / {selected.shadows}
                 </dd>
+                <dt>Mounted WebViews / iframes</dt>
+                <dd>
+                  {selected.webviews} / {selected.iframes}
+                </dd>
+                <dt>Dedicated CSS layers</dt>
+                <dd>{selected.cssLayers}</dd>
                 <dt>Sent / received</dt>
                 <dd>
                   {number(selected.sent)} / {number(selected.received)} B/s
@@ -194,6 +201,7 @@ export function ProfilerPanel({ world }) {
                 <dt>App messages</dt>
                 <dd>{number(selected.messages)}/s</dd>
               </dl>
+              <small>Iframe counts include off-screen pages. Their page CPU is not included in script CPU.</small>
               <h4>GPU rendering estimate</h4>
               {profiler.gpuMeasurement ? (
                 <>

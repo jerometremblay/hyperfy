@@ -150,7 +150,7 @@ text(closedBackPrint, 'HYPERFY NEWS', 40, '#a22a2e', 'bold')
 text(closedBackPrint, 'WORLD EDITION', 20, '#1f2730', 'bold')
 text(closedBackPrint, 'Technology • Culture • Worlds', 18, '#52514e')
 
-// The source sends no-store, so keep its iframes mounted while the journal is closed.
+// Reading surfaces mount only while in use; a closed journal has no WebViews.
 const content = group(opened)
 content.active = false
 const pageSurfaces = []
@@ -250,6 +250,7 @@ function requestClose() {
 }
 
 function receiveHtmlPageCount(event) {
+  if (!app.state.open) return
   if (event?.origin !== NEWS_ORIGIN) return
   const message = event.data
   if (
@@ -263,6 +264,7 @@ function receiveHtmlPageCount(event) {
   ) return
 
   manifestPending = false
+  manifestPivot.active = false
   const pageUrls = message.pages.map(entry => NEWS_ORIGIN + entry.url + '&embed=1&hyperfy=1')
   const sameManifest = latestHtmlPageUrls?.length === pageUrls.length &&
     latestHtmlPageUrls.every((url, index) => url === pageUrls[index])
@@ -282,6 +284,7 @@ function receiveHtmlPageCount(event) {
     surface.src = src
     surface.page.src = src
   }
+  applyPaper(progress)
   maybeSendHtmlPageCount()
 }
 
@@ -328,6 +331,7 @@ function receiveHtmlBridgeEvent(number, event) {
 
 function createPageSurface(number) {
   const pivot = group(journalBody, [0, -10000, 0])
+  pivot.active = false
   const page = app.create('webview', {
     space: 'world',
     src: '',
@@ -365,6 +369,7 @@ function ensurePageSurfaces(count = pageCount) {
 // reading surfaces then load only their own issue page instead of nesting the
 // all-editions iframe set once per surface.
 const manifestPivot = group(journalBody, [0, -10000, 0])
+manifestPivot.active = false
 const manifest = app.create('webview', {
   space: 'world',
   src: NEWS_URL + '?texture=1&page=1',
@@ -382,14 +387,16 @@ const manifest = app.create('webview', {
 manifestPivot.add(manifest)
 
 function refreshManifest(attempt = 0) {
-  if (!world.isClient) return
+  if (!world.isClient || !app.state.open) return
   manifestPending = true
   pageCountReady = false
   app.state.pageCountReady = false
   reportedPageCount = null
   const request = ++manifestRequest
-  // Changing src rebuilds just the manifest iframe; reading pages stay mounted.
+  // Mount the metadata wrapper only for this request, then release it on success.
+  manifestPivot.active = false
   manifest.src = NEWS_URL + '?texture=1&page=1&journalRefresh=' + Date.now() + '-' + request
+  manifestPivot.active = true
   // An edition iframe can fail before the wrapper reports its manifest. Retry
   // that load instead of leaving this instance permanently unable to turn.
   if (attempt < 2) setTimeout(() => {
@@ -398,21 +405,24 @@ function refreshManifest(attempt = 0) {
 }
 ensurePageSurfaces()
 
-function parkPages() {
-  for (const surface of pageSurfaces) {
-    surface.page.renderOrder = 1
-    surface.pivot.position.set(0, -10000, 0)
+function parkPages(visible = []) {
+  for (let index = 0; index < pageSurfaces.length; index++) {
+    const surface = pageSurfaces[index]
+    const active = world.isClient && !!surface.src && visible.includes(index + 1)
+    if (active) surface.pivot.position.set(0, -10000, 0)
+    surface.pivot.active = active
   }
 }
 function stationaryPage(number, leftSide) {
   const { pivot, page } = pageSurfaces[number - 1]
+  page.renderOrder = 1
   pivot.position.set(leftSide ? -0.31 : 0.31, PAGE_HEIGHT, 0)
   pivot.rotation.set(0, 0, 0)
   page.rotation.set(-PI / 2, 0, 0)
 }
 
 function showSpread() {
-  parkPages()
+  parkPages(app.state.open ? [firstPage, firstPage + 1] : [])
   stationaryPage(firstPage, true)
   stationaryPage(firstPage + 1, false)
 }
@@ -442,7 +452,8 @@ function movingPage(number, angle, back) {
   page.rotation.set(back ? PI / 2 : -PI / 2, 0, back ? PI : 0)
 }
 function renderTurn(t) {
-  parkPages()
+  // Keep both faces loaded for the turn without mounting the rest of the archive.
+  parkPages([turn.origin, turn.origin + 1, turn.destination, turn.destination + 1])
   const eased = t * t * (3 - 2 * t)
   const angle = PI * (turn.forward ? eased : 1 - eased)
   stationaryPage(turn.forward ? turn.origin : turn.destination, true)
@@ -614,7 +625,7 @@ function applyPaper(t) {
   right.rotation.z = 0
   content.active = t >= 0.9999
   if (!turn) {
-    parkPages()
+    parkPages(fullyClosed ? [] : [firstPage, firstPage + 1])
     if (!fullyClosed && pageSurfaces[firstPage - 1]) {
       stationaryPage(firstPage + 1, false)
       const { pivot, page } = pageSurfaces[firstPage - 1]
@@ -677,11 +688,16 @@ function setOpen(isOpen, pose) {
     captureHome()
     readingPose = pose
   }
-  if (!isOpen) pendingTurn = null
+  if (!isOpen) {
+    pendingTurn = null
+    manifestPending = false
+    manifestRequest++
+    manifestPivot.active = false
+  }
   if (!isOpen && turn) finishTurn()
   target = isOpen ? 1 : 0
   if (target !== progress) {
-    // Page WebViews stay mounted off-page while the journal is closed.
+    // The closing animation releases the last reading surfaces when it finishes.
     content.active = false
     app.off('update', animate)
     app.on('update', animate)

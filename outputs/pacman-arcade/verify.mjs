@@ -7,12 +7,12 @@ import { build } from 'esbuild'
 // Run the cabinet through the actual target node constructors (the generic
 // skill harness does not include Matrix4, which this camera uses).
 const bundle = await build({
-  stdin: { contents: "export { Prim } from './src/core/nodes/Prim.js'; export { WebView } from './src/core/nodes/WebView.js'; export { Group } from './src/core/nodes/Group.js'; export { Action } from './src/core/nodes/Action.js'", resolveDir: process.cwd() },
+  stdin: { contents: "export { Prim } from './src/core/nodes/Prim.js'; export { WebView } from './src/core/nodes/WebView.js'; export { Image } from './src/core/nodes/Image.js'; export { Group } from './src/core/nodes/Group.js'; export { Action } from './src/core/nodes/Action.js'", resolveDir: process.cwd() },
   bundle: true, format: 'esm', platform: 'node', outfile: '/tmp/hyperfy-arcade-nodes.mjs',
 })
 const nodes = await import('/tmp/hyperfy-arcade-nodes.mjs')
 const created = []
-const constructors = { prim: nodes.Prim, webview: nodes.WebView, group: nodes.Group, action: nodes.Action }
+const constructors = { prim: nodes.Prim, webview: nodes.WebView, image: nodes.Image, group: nodes.Group, action: nodes.Action }
 const handlers = {}
 let released = 0
 let control
@@ -26,6 +26,7 @@ const app = {
   },
   add() {},
   on(event, fn) { handlers[event] = fn },
+  off(event, fn) { if (handlers[event] === fn) delete handlers[event] },
   control() {
     control = new Proxy({ camera: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() }, pointer: { unlock() {} }, setActions() {}, release() { released++ } }, {
       get(target, key) { return target[key] ?? (target[key] = {}) },
@@ -35,18 +36,47 @@ const app = {
 }
 vm.runInNewContext(fs.readFileSync('outputs/pacman-arcade/cabinet.js', 'utf8'), { app, world: { isClient: true }, props: {}, Matrix4: THREE.Matrix4, Vector3: THREE.Vector3 })
 const screen = created.find(n => n instanceof nodes.WebView)
+const idleScreen = created.find(n => n instanceof nodes.Image)
+const action = created.find(n => n instanceof nodes.Action)
 assert.equal(created.filter(n => n instanceof nodes.WebView).length, 1)
+assert.equal(idleScreen.active, true)
+assert.equal(screen.active, false)
+assert.equal(handlers.update, undefined)
 const angle = Math.atan2(-.182,.593)
 const normal = new THREE.Vector3(0,0,1).applyQuaternion(screen.quaternion)
 assert.ok(normal.distanceTo(new THREE.Vector3(0,Math.sin(angle),-Math.cos(angle))) < 1e-8)
 screen.onMessage({ origin: 'https://wrong.example', data: { type: 'pacman-focus' } })
 assert.equal(control, undefined)
 screen.onMessage({ origin: 'https://monstre.duckdns.org:3333', data: { type: 'pacman-focus' } })
+assert.equal(control, undefined, 'an unloaded game cannot activate the cabinet')
+let stopped = false
+idleScreen.onPointerDown({ button: 'right', stopPropagation() { stopped = true } })
+assert.equal(control, undefined)
+idleScreen.onPointerDown({ button: 'left', stopPropagation() { stopped = true } })
+assert.equal(stopped, true)
+assert.equal(idleScreen.active, false)
+assert.equal(screen.active, true)
+assert.equal(typeof handlers.update, 'function')
+screen.onMessage({ origin: 'https://monstre.duckdns.org:3333', data: { type: 'pacman-focus' } })
 assert.equal(control.keyW.capture, true)
 assert.equal(control.camera.write, true)
 screen.onMessage({ origin: 'https://monstre.duckdns.org:3333', data: { type: 'pacman-exit' }, releaseFocus() {} })
 assert.equal(released, 1)
-console.log(`Cabinet: ${created.length} real nodes constructed; CRT normal, input capture, origin check and exit passed`)
+assert.equal(idleScreen.active, true)
+assert.equal(screen.active, false)
+assert.equal(action.active, true)
+assert.equal(handlers.update, undefined)
+action.onTrigger()
+assert.equal(screen.active, true)
+control.escape.onPress()
+assert.equal(released, 2)
+assert.equal(screen.active, false)
+assert.equal(handlers.update, undefined)
+action.onTrigger()
+handlers.destroy()
+assert.equal(released, 3)
+assert.equal(handlers.update, undefined)
+console.log(`Cabinet: ${created.length} real nodes constructed; static idle texture, click/E entry, unloaded game on exit, no idle callbacks, CRT normal, input capture and origin checks passed`)
 
 // Exercise the reused game, its real event bindings and animation loop.
 const window = new EventTarget()

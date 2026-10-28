@@ -27,6 +27,9 @@ function row(id = 'app') {
     contacts: 0,
     lights: 0,
     shadows: 0,
+    webviews: 3,
+    iframes: 2,
+    cssLayers: 1,
     callbacks: { update: 2.3 },
     position: { x: 42, y: 0, z: 0 },
   }
@@ -58,6 +61,9 @@ test('round-trips real MessagePack reports with explicit units and no location o
   const clean = sanitizeProfilerReport(decoded)
   assert.equal(clean.rows[0].cpuMsPerSecond, 2.5)
   assert.equal(clean.rows[0].sentBytesPerSecond, 20)
+  assert.equal(clean.rows[0].webviews, 3)
+  assert.equal(clean.rows[0].iframes, 2)
+  assert.equal(clean.rows[0].cssLayers, 1)
   assert.deepEqual(clean.rows[0].callbackMsPerSecond, { update: 2.3 })
   assert.equal(clean.rows[0].position, undefined)
   assert.equal(clean.rows[0].name, undefined)
@@ -81,6 +87,9 @@ test('rejects malformed, oversized, duplicate and non-finite reports before cach
     { cpuMsPerSecond: Infinity },
     { sentBytesPerSecond: -1 },
     { triangles: 1.2 },
+    { webviews: -1 },
+    { iframes: 1.2 },
+    { cssLayers: Infinity },
     { blueprintVersion: -1 },
     { id: 'x'.repeat(257) },
     { callbackMsPerSecond: { update: -3 } },
@@ -88,6 +97,16 @@ test('rejects malformed, oversized, duplicate and non-finite reports before cach
   ]) {
     assert.equal(sanitizeProfilerReport({ ...report, rows: [{ ...report.rows[0], ...patch }] }), null)
   }
+})
+
+test('reports from older clients leave iframe resource counts unknown', () => {
+  const report = createProfilerReport([row()], 0.5)
+  for (const field of ['webviews', 'iframes', 'cssLayers']) delete report.rows[0][field]
+  const clean = sanitizeProfilerReport(report)
+  assert.equal(clean.rows[0].webviews, null)
+  assert.equal(clean.rows[0].iframes, null)
+  assert.equal(clean.rows[0].cssLayers, null)
+  assert.equal(clean.rows[0].cpuMsPerSecond, 2.5)
 })
 
 test('only connected admins can report, throttling preserves last valid sample and disable clears immediately', () => {

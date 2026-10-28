@@ -30,6 +30,8 @@ colors depend on the selected metric, scene, and reporting client.
 | Bodies, colliders | Mounted client PhysX actors and their shapes. |
 | Active bodies, contact links | Snapshot of the last physics step and body contact links. A pair within one app contributes a link at each body; no per-body physics time is claimed. |
 | Lights, shadow casters | Mounted light and shadow-casting light counts. These do not measure lighting GPU impact. |
+| WebViews, iframes | Mounted WebView nodes and their actual iframe elements. Empty WebViews can have no iframe. Counts include off-screen pages and detached nodes owned by the app, but exclude nested frames inside a page. Unloaded pages disappear from the next sample. |
+| Dedicated CSS layers | Independent CSS3D renderer layers owned by the app's mounted WebViews. Ordinary world WebViews share a renderer; screen-space WebViews do not use CSS3D layers. |
 | Network | Encoded MessagePack entity-event/add/modify/remove packets attributed to existing app IDs, sent and received by this client. Includes MessagePack headers, excludes WebSocket/TLS overhead, asset transfers, shared snapshots, blueprints, voice, player traffic and server traffic unseen by this client. An add arriving before its app exists is unattributed. |
 
 CPU and network rates use a time-based exponentially weighted moving average with
@@ -45,6 +47,12 @@ physics. Geometry counts do not include Gaussian splat rendering or quantify
 portal render passes. Server script timing and an on-demand GPU comparison are
 available separately, as described below. Removing an object does not necessarily
 recover a displayed amount of frame time.
+
+Choose **Iframes (mounted)** to find apps retaining browser pages even when their
+script CPU is zero. The selected app shows WebView, iframe and dedicated CSS layer
+counts. These counts are resource snapshots; scripts, layout and rendering inside
+iframe pages are not attributed to the app's script CPU. Older browser reports
+without these resource fields expose unknown counts through the Agent API.
 
 ## Estimate GPU rendering cost
 
