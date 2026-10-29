@@ -29,9 +29,11 @@ Whether the avatar is visible or not.
 
 Returns the height of the avatar in meters. This might be `null` if the avatar hasn't loaded yet. Read-only. 
 
-### `.getBoneTransform(boneName)`: Matrix4
+### `.getBoneTransform(boneName, { targetPose })`: Matrix4
 
 Returns a matrix of the bone transform in world space.
+
+During a scripted pose entry, `{ targetPose: true }` reads the fully solved destination instead of the currently blended bone. Outside an entry, both return the current transform.
 
 ```jsx
 const matrix = avatar.getBoneTransform('rightHand')

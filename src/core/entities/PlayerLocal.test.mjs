@@ -638,6 +638,39 @@ test('arms-only camera return keeps the mask until completion and restores it on
   }
 })
 
+test('entering first person keeps its timed arms mask through server corrections and low FPS', () => {
+  const modes = [], sent = []
+  const player = {
+    isXR: false, firstPerson: false,
+    base: new THREE.Object3D(), camHeight: 1.7, getAnchorMatrix: () => null,
+    cam: { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), zoom: .3 },
+    control: { camera: { position: new THREE.Vector3(0, 1.7, 0), quaternion: new THREE.Quaternion(), zoom: .3 } },
+    controller: { position: new THREE.Vector3(), teleport(position) { this.position.copy(position) } },
+    velocity: new THREE.Vector3(), platform: {}, data: { id: 'aiming-player' },
+    world: { time: 0, camera: new THREE.PerspectiveCamera(), physics: { sweep: () => null },
+      network: { send: (...args) => sent.push(args) } },
+    avatar: { visible: true, _scriptedPose: { root: { position: [0, 0, 0] } }, getBoneTransform: () => null,
+      setFirstPerson(active, options) { modes.push({ active, ...options }) } },
+  }
+  PlayerLocal.prototype.setCamera.call(player, { target: new THREE.Vector3(0, .8, -1),
+    firstPerson: true, headOnly: true, armsOnly: true, duration: 1 })
+  assert.deepEqual(modes.at(-1), { active: true, headOnly: false, armsOnly: true })
+  for (let i = 1; i <= 12; i++) {
+    player.world.time = i / 12
+    if (i === 3 || i === 6) {
+      const transition = player.cameraTransition
+      PlayerLocal.prototype.teleport.call(player, { position: [i / 10, 0, 0] })
+      assert.equal(player.cameraTransition, transition, 'authority packets must retain the visibility timer')
+      assert.deepEqual(player.base.position.toArray(), [i / 10, 0, 0], 'the server still owns actual position')
+    }
+    PlayerLocal.prototype.lateUpdate.call(player, 1 / 30)
+    if (i < 12) assert.deepEqual(modes.at(-1), { active: true, headOnly: false, armsOnly: true })
+  }
+  assert.equal(sent.length, 2)
+  assert.equal(player.cameraTransition, null)
+  assert.deepEqual(modes.at(-1), { active: true, headOnly: true })
+})
+
 test('standing pool eye view returns continuously and keeps the head hidden through the blend', () => {
   globalThis.PHYSX = { PxSphereGeometry: class {} }
   for (const fps of [30, 60, 144]) {

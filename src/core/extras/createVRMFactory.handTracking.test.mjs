@@ -95,7 +95,7 @@ test('retargets an arm toward a wrist target in front of the avatar', async () =
   assert.ok(fingerDirection.z < -0.8, `vertical flip turned fingers sideways: ${fingerDirection.toArray()}`)
 })
 
-async function createInstance(matrix = new THREE.Matrix4(), changeRestAxes = false, avatarPath) {
+async function createInstance(matrix = new THREE.Matrix4(), changeRestAxes = false, avatarPath, world) {
   const glb = await loadAvatar(avatarPath)
   if (changeRestAxes) {
     const humanoid = glb.userData.vrm.humanoid
@@ -126,7 +126,7 @@ async function createInstance(matrix = new THREE.Matrix4(), changeRestAxes = fal
   const instance = factory.create(
     matrix,
     { camera, loader: { load: () => Promise.resolve(clip) }, scene },
-    { ctx: { entity: null } }
+    { ctx: { entity: null, world } }
   )
   instance.updateRate()
   return instance
@@ -656,6 +656,87 @@ test('scripted release eases the solved body, arms and fingers into normal anima
     assert.ok(Math.abs(standing.hips.position[1] - rest.hips.position[1]) < 1e-8)
     instance.destroy()
   }
+})
+
+test('scripted entry blends the solved body, arms, fingers and predicted root without restarting on updates', async () => {
+  for (const changedAxes of [false, true]) {
+    const physical = new THREE.Matrix4()
+    const instance = await createInstance(physical, changedAxes)
+    const target = await createInstance(new THREE.Matrix4(), changedAxes)
+    const from = instance.getNormalizedPose()
+    const pose = {
+      bones: { hips: { rotation: [-0.24740396, 0, 0, 0.96891242], position: [0, -0.1, 0] } },
+      hands: { right: { ...trackedHand('right', 0.8), p: [0.3, 1.15, -0.35], pole: [0, 1, 0] } },
+      root: { position: [2, 0, -1], quaternion: [0, Math.sin(.25), 0, Math.cos(.25)] },
+    }
+    target.setScriptedPose(pose)
+    const to = target.getNormalizedPose()
+    instance.setScriptedPose(pose, 1)
+    const initial = instance.getNormalizedPose()
+    for (const [name, bone] of Object.entries(from)) {
+      assert.ok(new THREE.Quaternion().fromArray(bone.rotation)
+        .angleTo(new THREE.Quaternion().fromArray(initial[name].rotation)) < 1e-6,
+        'entry starts at the rendered standing pose')
+      if (bone.position) assert.ok(new THREE.Vector3(...bone.position)
+        .distanceTo(new THREE.Vector3(...initial[name].position)) < 1e-8)
+    }
+    assert.ok(bonePosition(instance, 'leftEye').distanceTo(bonePosition(target, 'leftEye')) > .5)
+    const eyeTarget = target.getBoneTransform('leftEye').clone()
+    for (let frame = 1; frame <= 60; frame++) {
+      instance.setScriptedPose(pose)
+      instance.update(1 / 60)
+      const t = Math.min(1, frame / 60), blend = t * t * (3 - 2 * t)
+      const current = instance.getNormalizedPose()
+      const renderedRoot = instance.raw.scene.matrixWorld.clone()
+      const destination = instance.getBoneTransform('leftEye', { targetPose: true }).clone()
+      assert.ok(destination.elements.every((value, i) => Math.abs(value - eyeTarget.elements[i]) < 1e-6),
+        'the camera destination stays at the fully solved eye while the body lowers')
+      assert.ok(instance.raw.scene.matrixWorld.equals(renderedRoot), 'target reads never move the rendered root')
+      assert.deepEqual(instance.getNormalizedPose(), current, 'target reads never change the rendered body')
+      for (const name of ['hips', 'rightUpperArm', 'rightLowerArm', 'rightHand', 'rightIndexProximal']) {
+        const expected = new THREE.Quaternion().fromArray(from[name].rotation)
+          .slerp(new THREE.Quaternion().fromArray(to[name].rotation), blend)
+        assert.ok(expected.angleTo(new THREE.Quaternion().fromArray(current[name].rotation)) < 1e-6,
+          `${name} must blend from standing to the solved aiming pose`)
+      }
+      const root = new THREE.Vector3().setFromMatrixPosition(instance.raw.scene.matrixWorld)
+      assert.ok(root.distanceTo(new THREE.Vector3(2, 0, -1).multiplyScalar(blend)) < 1e-8)
+      const orientation = new THREE.Quaternion().setFromRotationMatrix(instance.raw.scene.matrixWorld)
+      assert.ok(orientation.angleTo(new THREE.Quaternion()
+        .slerp(new THREE.Quaternion().fromArray(pose.root.quaternion), blend)) < 1e-6,
+        'predicted root rotation must also ease without a final snap')
+      assert.ok(physical.equals(new THREE.Matrix4()), 'entry never moves the physical player')
+    }
+    assert.ok(bonePosition(instance, 'rightHand').distanceTo(bonePosition(target, 'rightHand')) < 1e-6,
+      'entry finishes at the exact IK target')
+    instance.destroy()
+    target.destroy()
+  }
+})
+
+test('scripted entry uses visual time at low FPS and an interrupted entry releases from its rendered root', async () => {
+  const world = { time: 0 }
+  const physical = new THREE.Matrix4()
+  const instance = await createInstance(physical, false, undefined, world)
+  const pose = { bones: { hips: { position: [0, -.1, 0] } },
+    root: { position: [2, 0, -1], quaternion: [0, 0, 0, 1] } }
+  instance.setScriptedPose(pose, 1)
+  for (let frame = 1; frame <= 6; frame++) {
+    world.time = frame / 12
+    instance.setScriptedPose(pose)
+    instance.update(1 / 30)
+  }
+  assert.ok(Math.abs(instance.getNormalizedPose().hips.position[1] + .05) < 1e-8,
+    'the physics delta cap must not slow the entry animation')
+  const rendered = instance.raw.scene.matrixWorld.clone()
+  instance.setScriptedPose(null, .5)
+  assert.ok(instance.raw.scene.matrixWorld.equals(rendered), 'cancelling entry retains its current root')
+  for (let frame = 1; frame <= 6; frame++) {
+    world.time = .5 + frame / 12
+    instance.update(1 / 30)
+  }
+  assert.equal(instance.raw.scene.matrixWorld, physical)
+  instance.destroy()
 })
 
 test('a new shooting pose cancels release, and release targets the current normal pose', async () => {

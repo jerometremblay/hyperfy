@@ -1421,7 +1421,9 @@ export class PlayerLocal extends Entity {
       let target = this.cam
       const transition = this.cameraTransition
       if (transition) {
-        transition.elapsed = Math.min(transition.duration, transition.elapsed + delta)
+        const elapsed = Number.isFinite(transition.startedAt) && Number.isFinite(this.world.time)
+          ? Math.max(0, this.world.time - transition.startedAt) : transition.elapsed + delta
+        transition.elapsed = Math.min(transition.duration, elapsed)
         if (transition.duration - transition.elapsed < 1e-8) transition.elapsed = transition.duration
         const t = transition.elapsed / transition.duration
         const ease = t * t * (3 - 2 * t)
@@ -1558,11 +1560,12 @@ export class PlayerLocal extends Entity {
     // camera has eased outside the head instead of jumping to the shoulder.
     const keepHeadHidden = duration > 0 && !firstPerson &&
       ((this.firstPerson && this.firstPersonHeadOnly) || !!this.cameraTransition?.headOnly)
-    const keepArmsOnly = duration > 0 && !firstPerson && armsOnly
+    const keepArmsOnly = duration > 0 && armsOnly
     this.cameraTransition =
       duration > 0
         ? {
             elapsed: 0,
+            startedAt: this.world.time,
             duration: Math.min(duration, 2),
             offset: this.control.camera.position.clone().sub(this.base.position),
             quaternion: this.control.camera.quaternion.clone(),
@@ -1616,8 +1619,12 @@ export class PlayerLocal extends Entity {
   }
 
   teleport({ position, rotationY }) {
-    if (this.cameraTransition?.headOnly || this.cameraTransition?.armsOnly) this.avatar?.setFirstPerson(this.firstPerson, { headOnly: this.firstPersonHeadOnly })
-    this.cameraTransition = null
+    // Server corrections do not interrupt a first-person view of a predicted visual root.
+    const predictedView = this.firstPerson && this.avatar?._scriptedPose?.root && this.cameraTransition?.armsOnly
+    if (!predictedView) {
+      if (this.cameraTransition?.headOnly || this.cameraTransition?.armsOnly) this.avatar?.setFirstPerson(this.firstPerson, { headOnly: this.firstPersonHeadOnly })
+      this.cameraTransition = null
+    }
     this.portalTraversal = null
     if (Array.isArray(position)) position = teleportPosition.fromArray(position)
     if (!readVec3(position, teleportPosition, '[player] teleport position must be Vector3')) return

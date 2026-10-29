@@ -139,8 +139,8 @@ export class Avatar extends Node {
     return this.instance?.headToHeight || null
   }
 
-  getBoneTransform(boneName) {
-    return this.instance?.getBoneTransform(boneName)
+  getBoneTransform(boneName, options) {
+    return this.instance?.getBoneTransform(boneName, options)
   }
 
   getNormalizedPose() {
@@ -255,8 +255,8 @@ export class Avatar extends Node {
         getHeadToHeight() {
           return self.getHeadToHeight()
         },
-        getBoneTransform(boneName) {
-          return self.getBoneTransform(boneName)
+        getBoneTransform(boneName, options) {
+          return self.getBoneTransform(boneName, options)
         },
         setLocomotion(mode, axis, gazeDir) {
           self.setLocomotion(mode, axis, gazeDir)

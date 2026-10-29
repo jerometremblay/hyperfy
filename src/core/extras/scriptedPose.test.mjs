@@ -116,3 +116,34 @@ test('pose release forwards a bounded duration only for the current owner', () =
   owner.setPose(null)
   assert.deepEqual(applied.at(-1), { value: null, duration: 0 })
 })
+
+test('pose entry forwards its bounded duration without accepting invalid updates', () => {
+  const applied = []
+  const world = { network: { isClient: true, id: 'local' }, livekit: {} }
+  const player = { world, data: { owner: 'local' }, avatar: {
+    setScriptedPose(value, duration) { applied.push({ value, duration }) },
+  } }
+  const proxy = createPlayerProxy({ world }, player)
+  for (const duration of [-1, NaN, Infinity, 3])
+    assert.equal(proxy.setPose(pose(), { duration }), false)
+  assert.equal(applied.length, 0)
+  assert.equal(proxy.setPose(pose(), { duration: 1 }), true)
+  assert.equal(applied.at(-1).duration, 1)
+  assert.equal(proxy.setPose(pose()), true)
+  assert.equal(applied.at(-1).duration, 0, 'ordinary pose updates keep the active transition')
+})
+
+test('bone transform reads forward only an explicit target-pose option', () => {
+  const calls = []
+  const world = { network: { isClient: true }, livekit: {} }
+  const matrix = {}
+  const proxy = createPlayerProxy({ world }, { world, data: {}, avatar: {
+    getBoneTransform(name, options) { calls.push({ name, options }); return matrix },
+  } })
+  assert.equal(proxy.getBoneTransform('rightEye', { targetPose: true }), matrix)
+  assert.deepEqual(calls.at(-1), { name: 'rightEye', options: { targetPose: true } })
+  proxy.getBoneTransform('head')
+  assert.deepEqual(calls.at(-1).options, { targetPose: false })
+  proxy.getBoneTransform('head', { targetPose: 'true' })
+  assert.deepEqual(calls.at(-1).options, { targetPose: false })
+})

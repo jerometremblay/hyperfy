@@ -103,14 +103,14 @@ export function createPlayerProxy(entity, player) {
         world.network.sendTo(player.data.owner, 'playerTeleport', payload)
       }
     },
-    getBoneTransform(boneName) {
-      return player.avatar?.getBoneTransform?.(boneName)
+    getBoneTransform(boneName, options = {}) {
+      return player.avatar?.getBoneTransform?.(boneName, { targetPose: options?.targetPose === true })
     },
     setPose(input, options = {}) {
       if (!world.network.isClient) return false
+      const duration = options?.duration ?? 0
+      if (!Number.isFinite(duration) || duration < 0 || duration > 2) return false
       if (input === null) {
-        const duration = options?.duration ?? 0
-        if (!Number.isFinite(duration) || duration < 0 || duration > 2) return false
         if (player.scriptedPoseOwner !== entity) return false
         player.scriptedPoseOwner = null
         player.scriptedPose = null
@@ -122,7 +122,7 @@ export function createPlayerProxy(entity, player) {
       if (pose.root && player.data.owner !== world.network.id) return false
       player.scriptedPoseOwner = entity
       player.scriptedPose = pose
-      player.avatar?.setScriptedPose(pose)
+      player.avatar?.setScriptedPose(pose, duration)
       return true
     },
     editSittingPose(options = {}) {

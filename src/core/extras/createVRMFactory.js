@@ -300,9 +300,11 @@ export function createVRMFactory(glb, setupMaterial) {
     }
 
     const mt = new THREE.Matrix4()
-    const getBoneTransform = boneName => {
+    const getBoneTransform = (boneName, options = {}) => {
       const bone = findBone(boneName)
       if (!bone) return null
+      const target = options?.targetPose === true && scriptedEntry && scriptedTargetTransforms.get(bone.name)
+      if (target) return mt.copy(target)
       // combine the scene's world matrix with the bone's world matrix
       return mt.multiplyMatrices(vrm.scene.matrixWorld, bone.matrixWorld)
     }
@@ -414,6 +416,8 @@ export function createVRMFactory(glb, setupMaterial) {
     let scriptedRest = null
     let scriptedHands = {}
     let scriptedRelease = null
+    let scriptedEntry = null
+    const scriptedTargetTransforms = new Map()
     const releaseRotation = new THREE.Quaternion()
 
     const updateRate = () => {
@@ -478,25 +482,28 @@ export function createVRMFactory(glb, setupMaterial) {
         applyNormalizedPose(vrm.scene, normalizedPoseMapping, poseOverride)
       }
       applyHandTrackingPose(delta)
+      if (scriptedEntry) {
+        const now = node.ctx.world?.time
+        scriptedEntry.elapsed = Number.isFinite(now) && Number.isFinite(scriptedEntry.startedAt)
+          ? Math.max(0, now - scriptedEntry.startedAt)
+          : scriptedEntry.elapsed + delta
+      }
       applyScriptedPose()
+      if (scriptedEntry && scriptedEntry.elapsed >= scriptedEntry.duration) {
+        scriptedEntry = null
+        scriptedTargetTransforms.clear()
+      }
       if (scriptedRelease) {
-        scriptedRelease.elapsed += delta
+        const now = node.ctx.world?.time
+        scriptedRelease.elapsed = Number.isFinite(now) && Number.isFinite(scriptedRelease.startedAt)
+          ? Math.max(0, now - scriptedRelease.startedAt)
+          : scriptedRelease.elapsed + delta
         const t = Math.min(1, scriptedRelease.elapsed / scriptedRelease.duration)
         if (t === 1) {
           scriptedRelease = null
         } else {
           const blend = t * t * (3 - 2 * t)
-          const pose = getNormalizedPose(vrm.scene, normalizedPoseMapping)
-          for (const [name, from] of Object.entries(scriptedRelease.from)) {
-            const to = pose[name]
-            if (!to) continue
-            to.rotation = releaseRotation.fromArray(from.rotation)
-              .slerp(q1.fromArray(to.rotation), blend).toArray()
-            if (from.position && to.position) {
-              to.position = from.position.map((value, i) => value + (to.position[i] - value) * blend)
-            }
-          }
-          applyNormalizedPose(vrm.scene, normalizedPoseMapping, pose)
+          blendScriptedPose(scriptedRelease.from, blend)
         }
         skeleton.update = THREE.Skeleton.prototype.update
         skeleton.update()
@@ -907,7 +914,7 @@ export function createVRMFactory(glb, setupMaterial) {
       }
     }
 
-    function updateScriptedRoot() {
+    function updateScriptedRoot(blendEntry = true) {
       const root = scriptedPose?.root || scriptedRelease?.root
       if (!root) {
         vrm.scene.matrix = matrix
@@ -918,12 +925,19 @@ export function createVRMFactory(glb, setupMaterial) {
       if (scriptedPose?.root) {
         predictedPosition.fromArray(root.position)
         predictedQuaternion.fromArray(root.quaternion)
+        if (scriptedEntry && blendEntry) {
+          const t = Math.min(1, scriptedEntry.elapsed / scriptedEntry.duration)
+          const blend = t * t * (3 - 2 * t)
+          predictedPosition.lerpVectors(predictedFromPosition.fromArray(scriptedEntry.root.position), predictedPosition, blend)
+          predictedQuaternion.slerpQuaternions(
+            predictedFromQuaternion.fromArray(scriptedEntry.root.quaternion), q1.copy(predictedQuaternion), blend)
+        }
       } else {
         const t = Math.min(1, scriptedRelease.elapsed / scriptedRelease.duration)
         const blend = t * t * (3 - 2 * t)
         predictedPosition.lerpVectors(predictedFromPosition.fromArray(root.position), predictedPosition, blend)
         predictedQuaternion.slerpQuaternions(
-          predictedFromQuaternion.fromArray(root.quaternion), predictedQuaternion, blend)
+          predictedFromQuaternion.fromArray(root.quaternion), q1.copy(predictedQuaternion), blend)
       }
       predictedMatrix.compose(predictedPosition, predictedQuaternion, predictedScale)
       // Render prediction never changes the node matrix, capsule or network state.
@@ -933,8 +947,10 @@ export function createVRMFactory(glb, setupMaterial) {
 
     function applyScriptedPose() {
       if (!scriptedPose) return
-      updateScriptedRoot()
+      // Solve the destination at its final root before blending the rendered pose.
+      updateScriptedRoot(false)
       skeleton.update = THREE.Skeleton.prototype.update
+      if (scriptedEntry) applyNormalizedPose(vrm.scene, normalizedPoseMapping, scriptedRest)
       applyNormalizedPose(vrm.scene, normalizedPoseMapping, scriptedPose.bones)
       vrm.scene.updateMatrixWorld(true)
       for (const side of ['left', 'right']) {
@@ -951,7 +967,39 @@ export function createVRMFactory(glb, setupMaterial) {
         // The IK reach clamp still preserves the avatar's limb lengths.
         applyHandPose(side, target, current, false)
       }
+      if (scriptedEntry) {
+        for (const bone of skeleton.bones) {
+          let target = scriptedTargetTransforms.get(bone.name)
+          if (!target) scriptedTargetTransforms.set(bone.name, target = new THREE.Matrix4())
+          target.multiplyMatrices(vrm.scene.matrixWorld, bone.matrixWorld)
+        }
+        const t = Math.min(1, scriptedEntry.elapsed / scriptedEntry.duration)
+        blendScriptedPose(scriptedEntry.from, t * t * (3 - 2 * t))
+        updateScriptedRoot()
+      }
       skeleton.update()
+    }
+
+    function blendScriptedPose(from, blend) {
+      const pose = getNormalizedPose(vrm.scene, normalizedPoseMapping)
+      for (const [name, source] of Object.entries(from)) {
+        const target = pose[name]
+        if (!target) continue
+        target.rotation = releaseRotation.fromArray(source.rotation)
+          .slerp(q1.fromArray(target.rotation), blend).toArray()
+        if (source.position && target.position) {
+          target.position = source.position.map((value, i) => value + (target.position[i] - value) * blend)
+        }
+      }
+      applyNormalizedPose(vrm.scene, normalizedPoseMapping, pose)
+    }
+
+    function captureScriptedRoot() {
+      const position = new THREE.Vector3(), quaternion = new THREE.Quaternion()
+      vrm.scene.matrixWorld.decompose(position, quaternion, new THREE.Vector3())
+      return {
+        position: position.toArray(), quaternion: quaternion.toArray(),
+      }
     }
 
     // hooks.loader.load('emote', 'asset://rifle-aim.glb').then(emo => {
@@ -1168,11 +1216,17 @@ export function createVRMFactory(glb, setupMaterial) {
       setScriptedPose(pose, duration = 0) {
         if (pose) {
           if (!scriptedPose) scriptedRest = scriptedRelease?.rest || getNormalizedPose(vrm.scene, normalizedPoseMapping)
+          if (duration > 0) {
+            scriptedTargetTransforms.clear()
+            scriptedEntry = { from: getNormalizedPose(vrm.scene, normalizedPoseMapping),
+              root: captureScriptedRoot(), duration, elapsed: 0, startedAt: node.ctx.world?.time }
+          }
           scriptedRelease = null
         } else if (scriptedPose && scriptedRest && duration > 0) {
           // Capture the solved arms and fingers as well as the body override.
           scriptedRelease = { from: getNormalizedPose(vrm.scene, normalizedPoseMapping),
-            rest: scriptedRest, root: scriptedPose.root, duration, elapsed: 0 }
+            rest: scriptedRest, root: scriptedPose.root ? captureScriptedRoot() : undefined,
+            duration, elapsed: 0, startedAt: node.ctx.world?.time }
         } else {
           const rest = scriptedRest || scriptedRelease?.rest
           if (rest) applyNormalizedPose(vrm.scene, normalizedPoseMapping, rest)
@@ -1180,6 +1234,8 @@ export function createVRMFactory(glb, setupMaterial) {
         }
         scriptedPose = pose
         if (!pose) {
+          scriptedEntry = null
+          scriptedTargetTransforms.clear()
           scriptedRest = null
           scriptedHands = {}
         }

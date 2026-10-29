@@ -85,13 +85,18 @@ The editor preview is local until Apply. Applying saves a pose for the current p
 
 Import the GLB into Blender using **File → Import → glTF 2.0**, then include the posed avatar in your model or reuse the `SittingPose` action on a matching armature. A different skeleton needs retargeting. Export the combined model as GLB to include its animation. The download is a regular model, not a VRM avatar or a Hyperfy emote: VRM metadata is omitted and toon materials are approximated with standard materials.
 
-### `.getBoneTransform(boneName)`: Matrix4
+### `.getBoneTransform(boneName, { targetPose })`: Matrix4
 
 Returns a matrix of the bone transform in world space.
+During a scripted pose entry, pass `{ targetPose: true }` to read the fully solved
+destination instead of the currently blended bone. This lets a camera move
+directly to the final eye position while the avatar lowers. It does not change
+the rendered pose or physical transform. Outside an entry blend, both reads
+return the current bone.
 
 See [Avatar](/docs/scripting/nodes/types/Avatar.md) for full details.
 
-### `.setPose({ bones, hands, root })`
+### `.setPose({ bones, hands, root }, { duration })`
 
 Overrides the avatar's visible pose on this client. Available for local and remote
 players. It returns `false` on the server or for invalid input. Apps share their
@@ -109,9 +114,15 @@ are not constrained to the sitting editor's arm-angle limits.
 
 For the local player, optional `root: { position, quaternion }` supplies a
 predicted world-space render transform as arrays of three and four numbers.
-The pose and eye bones update immediately, without moving the player's physical
-transform, collision capsule or network state. Remote players cannot use this
-option. A root-only pose predicts normal animation without overriding bones.
+By default, the pose and eye bones update immediately, without moving the player's
+physical transform, collision capsule or network state. Remote players cannot use
+this option. A root-only pose predicts normal animation without overriding bones.
+
+Pass `setPose(pose, { duration: 1 })` to blend from the currently rendered pose
+into the solved body, arms, fingers and optional predicted root over one second.
+Ordinary pose updates during the blend keep its original start time. Another
+positive duration starts a fresh blend from the current rendered pose. Entry and
+release use real frame time, independent of the physics delta cap.
 
 Call `setPose(null)` to return to normal animation immediately, or
 `setPose(null, { duration: 0.45 })` to blend the solved body, arms and fingers back
