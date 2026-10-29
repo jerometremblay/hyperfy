@@ -434,10 +434,10 @@ export function createVRMFactory(glb, setupMaterial) {
     const update = delta => {
       emoteClock += delta
       elapsed += delta
-      if (scriptedRelease) {
-        applyNormalizedPose(vrm.scene, normalizedPoseMapping, scriptedRelease.rest)
+      if (scriptedRelease || scriptedEntry) {
+        applyNormalizedPose(vrm.scene, normalizedPoseMapping, scriptedRelease?.rest || scriptedRest)
       }
-      const should = !rateCheck || elapsed >= rate || !!scriptedRelease
+      const should = !rateCheck || elapsed >= rate || !!scriptedRelease || !!scriptedEntry
       if (should) {
         if (avatarVisible) facial.update(elapsed, speaking)
         armEmote?.restore()
@@ -915,7 +915,8 @@ export function createVRMFactory(glb, setupMaterial) {
     }
 
     function updateScriptedRoot(blendEntry = true) {
-      const root = scriptedPose?.root || scriptedRelease?.root
+      const transition = scriptedPose ? scriptedEntry : scriptedRelease
+      const root = scriptedPose?.root || transition?.root
       if (!root) {
         vrm.scene.matrix = matrix
         vrm.scene.matrixWorld = matrix
@@ -925,19 +926,13 @@ export function createVRMFactory(glb, setupMaterial) {
       if (scriptedPose?.root) {
         predictedPosition.fromArray(root.position)
         predictedQuaternion.fromArray(root.quaternion)
-        if (scriptedEntry && blendEntry) {
-          const t = Math.min(1, scriptedEntry.elapsed / scriptedEntry.duration)
-          const blend = t * t * (3 - 2 * t)
-          predictedPosition.lerpVectors(predictedFromPosition.fromArray(scriptedEntry.root.position), predictedPosition, blend)
-          predictedQuaternion.slerpQuaternions(
-            predictedFromQuaternion.fromArray(scriptedEntry.root.quaternion), q1.copy(predictedQuaternion), blend)
-        }
-      } else {
-        const t = Math.min(1, scriptedRelease.elapsed / scriptedRelease.duration)
+      }
+      if (transition && (blendEntry || !scriptedPose)) {
+        const t = Math.min(1, transition.elapsed / transition.duration)
         const blend = t * t * (3 - 2 * t)
-        predictedPosition.lerpVectors(predictedFromPosition.fromArray(root.position), predictedPosition, blend)
+        predictedPosition.lerpVectors(predictedFromPosition.fromArray(transition.root.position), predictedPosition, blend)
         predictedQuaternion.slerpQuaternions(
-          predictedFromQuaternion.fromArray(root.quaternion), q1.copy(predictedQuaternion), blend)
+          predictedFromQuaternion.fromArray(transition.root.quaternion), q1.copy(predictedQuaternion), blend)
       }
       predictedMatrix.compose(predictedPosition, predictedQuaternion, predictedScale)
       // Render prediction never changes the node matrix, capsule or network state.
@@ -950,7 +945,6 @@ export function createVRMFactory(glb, setupMaterial) {
       // Solve the destination at its final root before blending the rendered pose.
       updateScriptedRoot(false)
       skeleton.update = THREE.Skeleton.prototype.update
-      if (scriptedEntry) applyNormalizedPose(vrm.scene, normalizedPoseMapping, scriptedRest)
       applyNormalizedPose(vrm.scene, normalizedPoseMapping, scriptedPose.bones)
       vrm.scene.updateMatrixWorld(true)
       for (const side of ['left', 'right']) {
