@@ -3,6 +3,7 @@
 // Scripts may not emit or send them, and the server never dispatches them from the network.
 export const internalEvents = [
   'transform',
+  'props',
   'location',
   'fixedUpdate',
   'update',

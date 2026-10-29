@@ -1,5 +1,5 @@
 import * as THREE from '../extras/three'
-import { isArray, isFunction, isNumber, isString } from 'lodash-es'
+import { isArray, isEqual, isFunction, isNumber, isString } from 'lodash-es'
 import moment from 'moment'
 
 import { assertScriptActive, handlePhysicsFailure } from '../extras/physicsFailure.js'
@@ -347,6 +347,22 @@ export class App extends Entity {
   onUploaded() {
     this.data.uploader = null
     this.world.network.send('entityModified', { id: this.data.id, uploader: null })
+  }
+
+  applyLiveProps(blueprint) {
+    if (this.building || this.crashed || this.mode !== Modes.ACTIVE || !this.blueprint) return false
+    const previous = this.blueprint
+    const fields = new Set([...Object.keys(previous), ...Object.keys(blueprint)])
+    for (const key of fields) {
+      if (key !== 'props' && key !== 'version' && !isEqual(previous[key], blueprint[key])) return false
+    }
+    const keys = new Set([...Object.keys(previous.props), ...Object.keys(blueprint.props)])
+    const changed = [...keys].filter(key => !isEqual(previous.props[key], blueprint.props[key]))
+    if (!changed.length || changed.some(key => !this.fields.some(field => field.key === key && field.live === true)))
+      return false
+    this.blueprint = blueprint
+    this.emit('props', blueprint.props)
+    return true
   }
 
   modify(data) {

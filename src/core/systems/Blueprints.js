@@ -71,6 +71,7 @@ export class Blueprints extends System {
     }
     for (const [_, entity] of this.world.entities.items) {
       if (entity.data.blueprint === blueprint.id) {
+        if (entity.applyLiveProps?.(modified)) continue
         entity.data.state = {}
         entity.build()
       }

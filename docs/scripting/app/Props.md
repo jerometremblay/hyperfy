@@ -26,6 +26,26 @@ Apps have a global `props` variable for you to read back the values entered in c
 props.name
 ```
 
+By default, changing a field rebuilds the app and clears its runtime state.
+Set `live: true` on a field to update it without rebuilding. Listen for the
+`props` event to apply the new values on the server or client:
+
+```js
+app.configure([
+  { key: 'resistance', type: 'range', initial: 1, min: 0.25, max: 4, live: true },
+])
+app.on('props', next => {
+  simulation.setResistance(next.resistance)
+})
+```
+
+The event receives the full current props object. The original `props` variable
+remains the object supplied when the script started; use the event's `next`
+argument for live changes. All changed fields must opt in. Editing a normal
+field together with a live field, or changing the script, model or other blueprint
+metadata, still rebuilds the app. Live edits retain nodes, controls, timers and
+runtime state and add no frame callback.
+
 ## Fields
 
 ### Text

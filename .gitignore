@@ -8,6 +8,8 @@ node_modules
 build/
 tools/worldsync/dist/
 outputs/**/.engine-*/
+/outputs/pool-*/
+/outputs/pool-*.log
 /world*
 .claude/
 .obsidian
