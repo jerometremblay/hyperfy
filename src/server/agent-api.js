@@ -249,6 +249,17 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
   route('GET', '/entities/:id', 'getEntity', { params }, async request => entity(request.params.id).serialize())
   route(
     'POST',
+    '/entities/:id/speaker-session',
+    'createSpeakerSession',
+    { params, body: body({}) },
+    async request => {
+      entity(request.params.id)
+      if (!world.livekit?.enabled) fail(503, 'LiveKit is not configured')
+      return world.livekit.createSpeakerSession(request.params.id)
+    }
+  )
+  route(
+    'POST',
     '/apps',
     'createApp',
     { body: body({ id: uuid, ...blueprintFields }, ['name', 'model']) },

@@ -46,6 +46,27 @@ export class ServerLiveKit extends System {
     return data
   }
 
+  async createSpeakerSession(entityId) {
+    if (!this.enabled) throw Object.assign(new Error('LiveKit is not configured'), { statusCode: 503 })
+    const entity = this.world.entities.get(entityId)
+    const blueprint = entity?.isApp && this.world.blueprints.get(entity.data.blueprint)
+    if (!blueprint || blueprint.scene || blueprint.disabled) {
+      throw Object.assign(new Error('Active speaker app not found'), { statusCode: 404 })
+    }
+    const identity = `speaker:${entityId}`
+    const token = new AccessToken(this.apiKey, this.apiSecret, { identity, ttl: '15m' })
+    token.addGrant({
+      room: this.roomId,
+      roomJoin: true,
+      canSubscribe: false,
+      canPublish: true,
+      canPublishSources: [TrackSource.MICROPHONE],
+      canUpdateOwnMetadata: false,
+      canPublishData: false,
+    })
+    return { wsUrl: this.wsUrl, token: await token.toJwt(), identity, entityId }
+  }
+
   setMuted(playerId, muted) {
     if (muted && !this.muted.has(playerId)) {
       this.muted.add(playerId)

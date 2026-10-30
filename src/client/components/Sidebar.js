@@ -69,6 +69,7 @@ import { useRank } from './useRank'
 import { Ranks } from '../../core/extras/ranks'
 import { PromptBoxPanel, UndoPromptBox } from './PromptBoxPanel'
 import { isPromptBox } from '../../core/extras/promptBoxTools'
+import { AudioOutputField } from './AudioOutputField'
 
 const mainSectionPanes = ['prefs']
 const worldSectionPanes = ['world', 'docs', 'apps', 'add']
@@ -695,6 +696,7 @@ function Prefs({ world, hidden }) {
           />
         )}
         <Group label='Audio' />
+        <AudioOutputField world={world} />
         <FieldRange
           label='Music'
           hint='Adjust general music volume'

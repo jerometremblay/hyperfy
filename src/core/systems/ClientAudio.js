@@ -1,6 +1,7 @@
 import * as THREE from '../extras/three'
 
 import { System } from './System'
+import { storage } from '../storage'
 
 const up = new THREE.Vector3(0, 1, 0)
 const v1 = new THREE.Vector3()
@@ -40,6 +41,7 @@ export class ClientAudio extends System {
       this.listener.setOrientation(0, 0, -1, 0, 1, 0)
     }
     this.lastDelta = 0
+    this.outputDevice = ''
 
     this.queue = []
     this.unlocked = this.ctx.state !== 'suspended'
@@ -97,6 +99,41 @@ export class ClientAudio extends System {
 
   async init() {
     this.world.prefs.on('change', this.onPrefsChange)
+    const outputDevice = storage.get('audioOutputDevice', '')
+    if (outputDevice && this.ctx.setSinkId) {
+      try {
+        await this.setOutputDevice(outputDevice)
+      } catch {
+        console.warn('[audio] saved output device is unavailable')
+      }
+    }
+  }
+
+  async getOutputDevices() {
+    if (!this.ctx.setSinkId || !navigator.mediaDevices?.enumerateDevices) {
+      throw new Error('This browser does not support choosing an audio output.')
+    }
+    let devices = await navigator.mediaDevices.enumerateDevices()
+    if (!devices.some(device => device.kind === 'audiooutput' && device.label)) {
+      // Browsers require permission before revealing output device names.
+      const access = await navigator.mediaDevices.getUserMedia({ audio: true })
+      access.getTracks().forEach(track => track.stop())
+      devices = await navigator.mediaDevices.enumerateDevices()
+    }
+    return devices.filter(
+      device =>
+        device.kind === 'audiooutput' &&
+        device.deviceId !== 'default' &&
+        device.deviceId !== 'communications' &&
+        !/Hyperfy Speaker|BlackHole/i.test(device.label)
+    )
+  }
+
+  async setOutputDevice(deviceId) {
+    if (!this.ctx.setSinkId) throw new Error('This browser does not support choosing an audio output.')
+    await this.ctx.setSinkId(deviceId)
+    this.outputDevice = deviceId
+    storage.set('audioOutputDevice', deviceId)
   }
 
   start() {

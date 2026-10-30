@@ -66,6 +66,22 @@ test('disabled by default; tokens separate read and write access', async t => {
   assert.equal(sent.length, 0)
 })
 
+test('speaker sessions require write access, an app instance and configured LiveKit', async t => {
+  const { call, world } = await setup(t)
+  const created = (await call('POST', '/entities', { blueprint: 'box' })).json()
+  const endpoint = `/entities/${created.id}/speaker-session`
+  assert.equal((await call('POST', endpoint, {}, 'reader')).statusCode, 403)
+  assert.equal((await call('POST', endpoint, {}, 'wrong')).statusCode, 401)
+  assert.equal((await call('POST', '/entities/missing/speaker-session', {})).statusCode, 404)
+  assert.equal((await call('POST', endpoint, {})).statusCode, 503)
+  world.livekit = { enabled: true, createSpeakerSession: async id => ({ entityId: id, token: 'audio-token' }) }
+  const session = await call('POST', endpoint, {})
+  assert.equal(session.statusCode, 200)
+  assert.deepEqual(session.json(), { entityId: created.id, token: 'audio-token' })
+  assert.equal(session.headers['cache-control'], 'no-store')
+  assert.equal((await call('POST', endpoint, { unexpected: true })).statusCode, 400)
+})
+
 test('create, move, and remove use broadcasts and persistence tracking', async t => {
   const { call, world, sent } = await setup(t)
   const created = await call('POST', '/entities', { blueprint: 'box' })

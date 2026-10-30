@@ -4,6 +4,7 @@ import * as THREE from '../extras/three'
 import { System } from './System'
 import { isBoolean } from 'lodash-es'
 import { TrackSource } from 'livekit-server-sdk'
+import { SPEAKER_PREFIX, SpeakerAudio } from '../extras/SpeakerAudio'
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -24,6 +25,7 @@ export class ClientLiveKit extends System {
     this.levels = {}
     this.muted = new Set()
     this.voices = new Map() // playerId -> PlayerVoice
+    this.speakers = new Map() // publisher identity -> SpeakerAudio
     this.screens = []
     this.screenNodes = new Set() // Video
   }
@@ -121,6 +123,7 @@ export class ClientLiveKit extends System {
     this.voices.forEach(voice => {
       voice.lateUpdate(delta)
     })
+    this.speakers.forEach(speaker => speaker.lateUpdate())
   }
 
   setMicrophoneEnabled(value) {
@@ -196,6 +199,12 @@ export class ClientLiveKit extends System {
   onTrackSubscribed = (track, publication, participant) => {
     // console.log('onTrackSubscribed', track, publication, participant)
     const playerId = participant.identity
+    if (playerId.startsWith(SPEAKER_PREFIX)) {
+      if (track.kind !== 'audio' || track.source !== 'microphone') return
+      this.speakers.get(playerId)?.destroy()
+      this.speakers.set(playerId, new SpeakerAudio(this.world, playerId.slice(SPEAKER_PREFIX.length), track))
+      return
+    }
     const player = this.world.entities.getPlayer(playerId)
     if (!player) return console.error('onTrackSubscribed failed: no player')
     const world = this.world
@@ -216,6 +225,14 @@ export class ClientLiveKit extends System {
   onTrackUnsubscribed = (track, publication, participant) => {
     // console.log('onTrackUnsubscribed todo')
     const playerId = participant.identity
+    if (playerId.startsWith(SPEAKER_PREFIX)) {
+      const speaker = this.speakers.get(playerId)
+      if (speaker?.track === track) {
+        speaker.destroy()
+        this.speakers.delete(playerId)
+      }
+      return
+    }
     if (track.source === 'microphone') {
       const voice = this.voices.get(playerId)
       voice?.destroy()
@@ -264,6 +281,8 @@ export class ClientLiveKit extends System {
   }
 
   destroy() {
+    this.speakers.forEach(speaker => speaker.destroy())
+    this.speakers.clear()
     this.voices.forEach(voice => {
       voice.destroy()
     })
