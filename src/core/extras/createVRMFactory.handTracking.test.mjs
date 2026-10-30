@@ -149,6 +149,56 @@ function trackedHand(side, curl, wrist = new THREE.Quaternion()) {
   return { kind: 'hand', p: [side === 'left' ? -0.3 : 0.3, 1.35, -0.35], w: wrist.toArray(), f }
 }
 
+test('render culling bounds follow scripted descent, bridge morphs and release', async () => {
+  const instance = await createInstance()
+  instance.disableRateCheck()
+  const meshes = []
+  instance.raw.scene.traverse(mesh => { if (mesh.isSkinnedMesh) meshes.push(mesh) })
+  const camera = new THREE.PerspectiveCamera(60, 16 / 9, .01, 100)
+  const frustum = new THREE.Frustum().setFromProjectionMatrix(camera.projectionMatrix)
+  const checkBounds = label => {
+    for (const mesh of meshes) {
+      // Use the same lazy bounds calculation as the renderer.
+      frustum.intersectsObject(mesh)
+      const rendered = mesh.boundingSphere.clone()
+      mesh.computeBoundingSphere()
+      assert.ok(rendered.center.distanceTo(mesh.boundingSphere.center) < 1e-6 &&
+        Math.abs(rendered.radius - mesh.boundingSphere.radius) < 1e-6,
+      `${label}: culling must use the current skinned pose`)
+    }
+  }
+  try {
+    instance.update(0)
+    checkBounds('standing')
+    const pose = { bones: { hips: {
+      rotation: [-Math.sin(.6), 0, 0, Math.cos(.6)], position: [0, -.3, 0],
+    } }, root: { position: [0, 0, 0], quaternion: [0, 0, 0, 1] } }
+    instance.setScriptedPose(pose, .5)
+    for (let i = 0; i < 30; i++) {
+      instance.update(1 / 60)
+      checkBounds('descent')
+    }
+    instance.setScriptedPose({ ...pose, bones: { hips: {
+      ...pose.bones.hips, rotation: [-Math.sin(.4), 0, 0, Math.cos(.4)],
+    } } }, .5)
+    for (let i = 0; i < 30; i++) {
+      instance.update(1 / 60)
+      checkBounds('bridge morph')
+    }
+    instance.setScriptedPose(null, .5)
+    for (let i = 0; i < 31; i++) {
+      instance.update(1 / 60)
+      checkBounds('release')
+    }
+    instance.setScriptedPose(pose)
+    checkBounds('immediate local pose')
+    instance.setScriptedPose(null)
+    checkBounds('immediate clear')
+  } finally {
+    instance.destroy()
+  }
+})
+
 function settle(instance, pose) {
   instance.setHandTrackingPose(pose)
   for (let i = 0; i < 40; i++) instance.update(1 / 60)

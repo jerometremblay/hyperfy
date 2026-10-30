@@ -258,6 +258,13 @@ export function createVRMFactory(glb, setupMaterial) {
       if (headHiddenGeometries[i]) headHiddenMeshGeometries.set(skinnedMeshes[i], headHiddenGeometries[i])
       if (armsOnlyGeometries[i]) armsOnlyMeshGeometries.set(skinnedMeshes[i], armsOnlyGeometries[i])
     }
+    const invalidatePoseBounds = () => {
+      // Three recalculates these lazily from the current skin when rendering.
+      for (const mesh of skinnedMeshes) {
+        mesh.boundingSphere = null
+        mesh.boundingBox = null
+      }
+    }
 
     const getEntity = () => node?.ctx.entity
 
@@ -507,6 +514,7 @@ export function createVRMFactory(glb, setupMaterial) {
         }
         skeleton.update = THREE.Skeleton.prototype.update
         skeleton.update()
+        invalidatePoseBounds()
       }
       updateScriptedRoot()
     }
@@ -972,6 +980,7 @@ export function createVRMFactory(glb, setupMaterial) {
         updateScriptedRoot()
       }
       skeleton.update()
+      invalidatePoseBounds()
     }
 
     function blendScriptedPose(from, blend) {
@@ -1236,6 +1245,7 @@ export function createVRMFactory(glb, setupMaterial) {
         // Local prediction is solved before the app's eye camera reads it.
         if (pose?.root) applyScriptedPose()
         else updateScriptedRoot()
+        invalidatePoseBounds()
       },
       getNormalizedPose() {
         return getNormalizedPose(vrm.scene, normalizedPoseMapping)
