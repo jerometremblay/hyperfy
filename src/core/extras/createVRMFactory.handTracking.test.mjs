@@ -204,6 +204,60 @@ function settle(instance, pose) {
   for (let i = 0; i < 40; i++) instance.update(1 / 60)
 }
 
+test('seated pose overrides keep glasses inside the camera frustum across zoom levels', async () => {
+  const paths = [undefined, ...(process.env.JAY_VRM_PATH ? [process.env.JAY_VRM_PATH] : [])]
+  for (const path of paths) {
+    const instance = await createInstance(new THREE.Matrix4(), false, path)
+    instance.disableRateCheck()
+    const meshes = []
+    instance.raw.scene.traverse(mesh => { if (mesh.isSkinnedMesh) meshes.push(mesh) })
+    const glasses = meshes.filter(mesh => mesh.name.includes('glasses'))
+    const camera = new THREE.PerspectiveCamera(60, 16 / 9, .01, 100)
+    const frustum = new THREE.Frustum()
+    const checkBounds = label => {
+      for (const mesh of meshes) {
+        frustum.intersectsObject(mesh)
+        const rendered = mesh.boundingSphere.clone()
+        mesh.computeBoundingSphere()
+        assert.ok(rendered.center.distanceTo(mesh.boundingSphere.center) < 1e-6 &&
+          Math.abs(rendered.radius - mesh.boundingSphere.radius) < 1e-6,
+        `${label}: ${mesh.name} must use the current seated pose`)
+      }
+    }
+    try {
+      instance.update(0)
+      checkBounds('standing')
+      instance.setPoseOverride({ hips: { rotation: [0, 0, 0, 1], position: [0, -.8, 0] } })
+      checkBounds('immediate sit')
+      for (const zoom of [.3, .5, 1, 2, 5]) {
+        instance.update(1 / 60)
+        camera.position.copy(bonePosition(instance, 'head')).add(new THREE.Vector3(0, 0, -zoom))
+        camera.lookAt(bonePosition(instance, 'head'))
+        camera.updateMatrixWorld(true)
+        frustum.setFromProjectionMatrix(
+          new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+        )
+        for (const mesh of glasses) {
+          assert.equal(mesh.visible, true)
+          assert.equal(frustum.intersectsObject(mesh), true, `${mesh.name} disappeared at zoom ${zoom}`)
+        }
+        checkBounds(`zoom ${zoom}`)
+      }
+      instance.setPoseOverride({ hips: { rotation: [0, 0, 0, 1], position: [0, -.5, 0] } })
+      checkBounds('adjust seat')
+      instance.setFirstPerson(true)
+      checkBounds('first person')
+      instance.setFirstPerson(false)
+      checkBounds('return to third person')
+      instance.setPoseOverride(null)
+      instance.update(1 / 60)
+      checkBounds('stand up')
+    } finally {
+      instance.destroy()
+    }
+  }
+})
+
 function bonePosition(instance, name) {
   return new THREE.Vector3().setFromMatrixPosition(instance.getBoneTransform(name))
 }

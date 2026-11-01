@@ -1190,6 +1190,7 @@ export function createVRMFactory(glb, setupMaterial) {
         rootBone.updateMatrixWorld(true)
         THREE.Skeleton.prototype.update.call(skeleton)
       }
+      invalidatePoseBounds()
     }
 
     const setHandTrackingPose = pose => {
@@ -1256,6 +1257,9 @@ export function createVRMFactory(glb, setupMaterial) {
           skeleton.update = THREE.Skeleton.prototype.update
           applyNormalizedPose(vrm.scene, normalizedPoseMapping, poseOverride)
         }
+        // Sitting moves small meshes such as glasses outside their cached
+        // standing bounds. Refresh on pose changes, including standing up.
+        invalidatePoseBounds()
       },
       update,
       updateRate,
