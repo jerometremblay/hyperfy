@@ -4,6 +4,7 @@ import { System } from './System'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { isTouch } from '../../client/utils'
 import { clamp } from '../utils'
+import { resolvePortalHit } from '../extras/portalInteraction'
 
 const BATCH_SIZE = 500
 const ACTION_TARGET_RADIUS = 1
@@ -75,11 +76,23 @@ export class ClientActions extends System {
       } else {
         hit = this.world.stage.raycastPointer(this.control.pointer.position)[0]
       }
+      if (!this.world.builder?.enabled) hit = resolvePortalHit(this.world, hit)
+    } else if (canTarget && isXR && this.world.stage.viewport && !this.world.builder?.enabled) {
+      const left = this.control.xrLeftRayPose
+      const right = this.control.xrRightRayPose
+      const ray = this.control.xrLeftTrigger.value || !right?.valid ? left : right
+      if (ray?.valid) {
+        const direction = v4.set(0, 0, -1).applyQuaternion(ray.quaternion)
+        const candidate = resolvePortalHit(this.world, this.world.stage.raycast(ray.position, direction)[0])
+        if (candidate?.portalTransform) hit = candidate
+      }
     }
     const targetEntity = hit?.getEntity?.() || hit?.node?.ctx?.entity
+    const targetPosition = hit?.portalTransform ? v5.copy(cameraPos).applyMatrix4(hit.portalTransform) : cameraPos
+    const useProximity = isXR && !hit?.portalTransform
 
-    // Find the closest action when using XR. On desktop and touch, the active
-    // pointer or reticle must hit the action's app near its target.
+    // XR keeps proximity targeting unless aiming through a portal. Otherwise,
+    // the pointer or reticle must hit the action's app near its target.
     let target = null
     let targetDistance = Infinity
     let targetOffset = Infinity
@@ -88,9 +101,9 @@ export class ClientActions extends System {
     // there are more actions than the per-frame search batch.
     if (canTarget && this.current.node && !this.current.node.finished) {
       const node = this.current.node
-      const distance = node.worldPos.distanceTo(cameraPos)
+      const distance = node.worldPos.distanceTo(targetPosition)
       if (distance <= node._distance) {
-        if (isXR) {
+        if (useProximity) {
           target = node
           targetDistance = distance
         } else if (targetEntity && node.ctx?.entity === targetEntity && hit?.point) {
@@ -109,10 +122,10 @@ export class ClientActions extends System {
       const idx = (this.cursor + i) % this.nodes.length
       const node = this.nodes[idx]
       if (node.finished) continue
-      const distance = node.worldPos.distanceTo(cameraPos)
+      const distance = node.worldPos.distanceTo(targetPosition)
       if (distance > node._distance) continue
 
-      if (isXR) {
+      if (useProximity) {
         if (distance < targetDistance) {
           target = node
           targetDistance = distance

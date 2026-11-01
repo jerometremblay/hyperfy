@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "source": "asset://d0c58151a649c4c8555fe0d80bdbb04f48396a7e104bdc0dcc75733ea2e52688.js",
+  "exactPackagePreview": true,
+  "views": [
+    "brace-detail",
+    "wall-front",
+    "wall-back",
+    "wall-left",
+    "wall-right",
+    "wall-top",
+    "wall-isometric"
+  ],
+  "braceWidthMatchesPostsAndBeams": true,
+  "bracesVisibleThroughLogs": true,
+  "joinsWithoutFlicker": true
+}

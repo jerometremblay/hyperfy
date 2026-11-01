@@ -83,3 +83,66 @@ test('world-2d inherits the default admin code and signing secret unless explici
   assert.equal(overridden.ADMIN_CODE, 'world-test-code')
   assert.equal(overridden.JWT_SECRET, 'shared-test-secret')
 })
+
+test('HTTP switch overrides HTTPS settings while preserving the selected world and dotenv cascade', t => {
+  const root = fixture(t, {
+    '.env':
+      'WORLD=world\nPORT=3333\nJWT_SECRET=shared-test-secret\nTLS_KEY_FILE=missing.key\nTLS_CERT_FILE=missing.crt\nPUBLIC_WS_URL=wss://old/ws\nPUBLIC_API_URL=https://old/api\nASSETS_BASE_URL=https://old/assets',
+    '.env.local': 'PORT=3334',
+  })
+  const actual = resolveWorldProfile(undefined, {
+    root,
+    env: { HOST: 'remote.example', CORS_ORIGIN: 'https://old', PUBLIC_API_URL: 'https://exported/api' },
+    httpHost: '127.0.0.1',
+  })
+  assert.equal(actual.WORLD, 'world')
+  assert.equal(actual.JWT_SECRET, 'shared-test-secret')
+  assert.equal(actual.TLS_KEY_FILE, '')
+  assert.equal(actual.TLS_CERT_FILE, '')
+  assert.equal(actual.HOST, '0.0.0.0')
+  assert.equal(actual.CORS_ORIGIN, 'http://127.0.0.1:3334')
+  assert.equal(actual.PUBLIC_ORIGIN, 'http://127.0.0.1:3334')
+  assert.equal(actual.PUBLIC_WS_URL, 'ws://127.0.0.1:3334/ws')
+  assert.equal(actual.PUBLIC_API_URL, 'http://127.0.0.1:3334/api')
+  assert.equal(actual.ASSETS_BASE_URL, 'http://127.0.0.1:3334/assets')
+})
+
+test('HTTP switch uses the named world and exported port, overriding profile and exported HTTPS URLs', t => {
+  const root = fixture(t, {
+    '.env': 'WORLD=world\nPORT=3333',
+    '.env.world2':
+      'WORLD=worlds/world2\nPORT=3334\nPUBLIC_ORIGIN=https://world.example\nPUBLIC_WS_URL=wss://world.example/ws\nASSETS_BASE_URL=https://cdn.example/assets',
+    '.env.world2.local': 'PORT=3335\nTLS_KEY_FILE=missing.key\nTLS_CERT_FILE=missing.crt',
+  })
+  const actual = resolveWorldProfile('world2', {
+    root,
+    env: { PORT: '4444', PUBLIC_ORIGIN: 'https://exported', TLS_KEY_FILE: 'exported.key' },
+    httpHost: '192.168.1.50',
+  })
+  assert.equal(actual.WORLD, 'worlds/world2')
+  assert.equal(actual.PORT, '4444')
+  assert.equal(actual.TLS_KEY_FILE, '')
+  assert.equal(actual.TLS_CERT_FILE, '')
+  assert.equal(actual.PUBLIC_ORIGIN, 'http://192.168.1.50:4444')
+  assert.equal(actual.PUBLIC_WS_URL, 'ws://192.168.1.50:4444/ws')
+  assert.equal(actual.ASSETS_BASE_URL, 'http://192.168.1.50:4444/assets')
+})
+
+test('HTTP switch supports IPv6 loopback with valid URLs and an IPv6 listener', t => {
+  const root = fixture(t, { '.env': 'PORT=3333' })
+  const actual = resolveWorldProfile(undefined, { root, env: {}, httpHost: '::1' })
+  assert.equal(actual.HOST, '::')
+  assert.equal(actual.PUBLIC_ORIGIN, 'http://[::1]:3333')
+  assert.equal(new URL(actual.PUBLIC_WS_URL).hostname, '[::1]')
+})
+
+test('HTTP switch rejects invalid IPs, ports and missing worlds before startup', t => {
+  const root = fixture(t, { '.env': 'PORT=3333' })
+  for (const httpHost of ['', 'localhost', '192.168.1.50/path', '999.1.1.1']) {
+    assert.throws(() => resolveWorldProfile(undefined, { root, env: {}, httpHost }), /--ip/)
+  }
+  for (const PORT of ['', '0', '-1', '65536', '3333.5', 'invalid']) {
+    assert.throws(() => resolveWorldProfile(undefined, { root, env: { PORT }, httpHost: '127.0.0.1' }), /PORT/)
+  }
+  assert.throws(() => resolveWorldProfile('missing', { root, env: {}, httpHost: '127.0.0.1' }), /Unknown world/)
+})

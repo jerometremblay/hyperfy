@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "reports": [
+    {
+      "distance": 9,
+      "leftRms": 0.14142135667111316,
+      "mix": {
+        "spatial": 0,
+        "stereo": 1
+      },
+      "nearError": 0,
+      "rightRms": 0.0707106782642985,
+      "volume": 1
+    },
+    {
+      "distance": 29.5,
+      "leftRms": 0.03535533916777829,
+      "mix": {
+        "spatial": 0.25,
+        "stereo": 0.25
+      },
+      "nearError": null,
+      "rightRms": 0.031868871982912335,
+      "volume": 1
+    },
+    {
+      "distance": 50,
+      "leftRms": 0,
+      "mix": {
+        "spatial": 0,
+        "stereo": 0
+      },
+      "nearError": null,
+      "rightRms": 0,
+      "volume": 1
+    },
+    {
+      "distance": 9,
+      "leftRms": 0.05656854384032825,
+      "mix": {
+        "spatial": 0,
+        "stereo": 0.4
+      },
+      "nearError": 4.470348535789981e-9,
+      "rightRms": 0.028284271864332147,
+      "volume": 0.4
+    },
+    {
+      "distance": 29.5,
+      "leftRms": 0.014142135960082064,
+      "mix": {
+        "spatial": 0.1,
+        "stereo": 0.1
+      },
+      "nearError": null,
+      "rightRms": 0.012747549049567203,
+      "volume": 0.4
+    },
+    {
+      "distance": 9,
+      "leftRms": 0,
+      "mix": {
+        "spatial": 0,
+        "stereo": 0
+      },
+      "nearError": 0,
+      "rightRms": 0,
+      "volume": 0
+    }
+  ],
+  "syntheticAudioOnly": true
+}

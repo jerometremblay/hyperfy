@@ -1,0 +1,80 @@
+{
+  "checkedAt": "2026-10-30T22:16:36.232407+00:00",
+  "network": {
+    "browserPacketsLost": 0,
+    "browserJitterSeconds": 0.002
+  },
+  "before": {
+    "captureLatencyMs": 85.333,
+    "captureBufferMs": 60,
+    "sdkBufferMs": 60,
+    "durationSeconds": 15.235,
+    "capturedBlocks": 1484,
+    "droppedBlocks": 281
+  },
+  "lowLatencyOnly": {
+    "captureLatencyMs": 10,
+    "durationSeconds": 15.145,
+    "capturedBlocks": 1483,
+    "droppedBlocks": 0
+  },
+  "isolatedPublisherWith60msBuffers": {
+    "durationSeconds": 30.156,
+    "capturedBlocks": 2854,
+    "publishedBlocks": 2808,
+    "droppedBlocks": 46,
+    "maxCallbackGapMs": 113.743,
+    "maxCaptureAwaitMs": 76.618
+  },
+  "isolatedPublisherWith200msBuffers": {
+    "durationSeconds": 30.139,
+    "capturedBlocks": 2817,
+    "publishedBlocks": 2817,
+    "droppedBlocks": 0,
+    "maxCallbackGapMs": 78.528,
+    "maxCaptureAwaitMs": 97.872
+  },
+  "fix": {
+    "captureLatency": "low",
+    "captureBufferMs": 200,
+    "sdkBufferMs": 200
+  },
+  "captureContent": "Only counters retained; no audio recordings or credentials saved.",
+  "oneMinuteBuildLoadCheck": {
+    "durationSeconds": 60.149,
+    "capturedBlocks": 5888,
+    "publishedBlocks": 5883,
+    "droppedBlocks": 5,
+    "captureLatencyMs": 10,
+    "maxCallbackGapMs": 59.911,
+    "maxCaptureAwaitMs": 100.422,
+    "context": "Concurrent app/installer build; 0.085 percent of captured blocks discarded."
+  },
+  "repositoryTestsPassed": 16,
+  "installedHelper": "/Applications/Hyperfy Speaker.app",
+  "helperStatus": "Streaming to Hyperfy after restart",
+  "installer": "/Users/jerome/metaverse/hyperfy-speaker/dist/HyperfySpeaker-0.1.0-arm64.pkg",
+  "installedWorkerCheck": {
+    "durationSeconds": 30,
+    "streaming": true,
+    "reconnections": 0,
+    "droppedFrameCounters": [
+      13,
+      13,
+      13,
+      13,
+      13
+    ],
+    "interpretation": "13 blocks discarded in the first reporting interval; counter stayed unchanged for the remaining intervals."
+  },
+  "browserAfterRestart": {
+    "packetsReceived": 3048,
+    "packetsLost": 0,
+    "jitterSeconds": 0.002,
+    "concealedSamples": 0,
+    "concealmentEvents": 0,
+    "decodedDurationSeconds": 58.97
+  },
+  "audibleConfirmedByUser": "Yes, quality is good now",
+  "completedAt": "2026-10-30T22:19:40.198175+00:00"
+}

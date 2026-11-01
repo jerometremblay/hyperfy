@@ -1,0 +1,34 @@
+{
+  "valid": true,
+  "source": "asset://95bd3ebd6d67e6ed46c8ca3ff596547df284fcf7df1978be7a62d9c38bf306e5.js",
+  "exactPackagePreview": true,
+  "states": [
+    "closed",
+    "left-open",
+    "right-open",
+    "both-open"
+  ],
+  "views": [
+    "wall-front",
+    "wall-back",
+    "wall-left",
+    "wall-right",
+    "wall-top",
+    "wall-isometric",
+    "timber-back"
+  ],
+  "exactUpstairsDoorSize": [
+    0.96,
+    2.12
+  ],
+  "visibleTimberBetweenFrames": 0.5,
+  "oneContinuousLogWall": true,
+  "noSeparateVisibleBacking": true,
+  "noRearFrameProtrusions": true,
+  "resizedPortalIllustrations": [
+    0.96,
+    2.12
+  ],
+  "openLeavesClearStructure": true,
+  "offlinePortalImagesOnly": true
+}

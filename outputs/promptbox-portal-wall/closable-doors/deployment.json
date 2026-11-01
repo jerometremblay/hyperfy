@@ -1,0 +1,283 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333",
+  "version": 22,
+  "source": "asset://9d13f60956b2f56276a2da871005dac698cb59322a7d06f78331c82eac78e26a.js",
+  "uploadedSourceReadback": true,
+  "existingDoorAndLightingStatePreserved": true,
+  "twoNewDoorsInitiallyClosed": true,
+  "liveDoorInteractionObserved": true,
+  "portalBlueprintsAndTransformsPreserved": true,
+  "otherBlueprintsAndPlacementsPreserved": true,
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 22,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  },
+  "state": {
+    "doors": {
+      "bedroom-1": true,
+      "bedroom-2": true,
+      "bedroom-3": true,
+      "billiards-portal-left": false,
+      "billiards-portal-right": true,
+      "entrance-left": true,
+      "entrance-right": true,
+      "patio-left": true
+    },
+    "lighting": {
+      "house-exterior": true,
+      "house-interior-lower": true,
+      "house-interior-upper": true
+    }
+  },
+  "validation": {
+    "valid": true,
+    "source": "asset://9d13f60956b2f56276a2da871005dac698cb59322a7d06f78331c82eac78e26a.js",
+    "exactPackageSource": true,
+    "assetHashesVerified": true,
+    "actualNativeConstructors": true,
+    "existingInteriorDoorPattern": true,
+    "checks": [
+      {
+        "server": false,
+        "existingGeometryAndStatePreserved": true,
+        "independentDoorStates": 4,
+        "clearSweepDegreesPerDoor": 91,
+        "idleCallbacks": 0
+      },
+      {
+        "server": true,
+        "existingGeometryAndStatePreserved": true,
+        "independentDoorStates": 4,
+        "clearSweepDegreesPerDoor": 91,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "physics": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "actualFullHouseScript": true,
+    "checks": [
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "actions": {
+    "valid": true,
+    "actualNativeClientActions": true,
+    "actualNativeActionNodes": true,
+    "actualGeometryRaycast": true,
+    "cases": [
+      {
+        "id": "billiards-portal-left",
+        "open": false,
+        "actionOffsetToPointerHit": 0.8743461843000169,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": false,
+        "actionOffsetToPointerHit": 0.8743461843000156,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-left",
+        "open": true,
+        "actionOffsetToPointerHit": 0.8743461843000173,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": true,
+        "actionOffsetToPointerHit": 0.8743461843000173,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      }
+    ]
+  },
+  "visual": {
+    "valid": true,
+    "source": "asset://9d13f60956b2f56276a2da871005dac698cb59322a7d06f78331c82eac78e26a.js",
+    "exactPackagePreview": true,
+    "states": [
+      "closed",
+      "left-open",
+      "right-open",
+      "both-open"
+    ],
+    "views": [
+      "wall-front",
+      "wall-back",
+      "wall-left",
+      "wall-right",
+      "wall-top",
+      "wall-isometric"
+    ],
+    "matchingInteriorTimberPanelAndHardware": true,
+    "individualDoorFrames": true,
+    "closedLeavesCoverPortals": true,
+    "openLeavesClearStructure": true,
+    "offlinePortalImagesOnly": true
+  }
+}

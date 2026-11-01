@@ -1,0 +1,48 @@
+{
+  "browserGraph": {
+    "passed": true,
+    "reports": [
+      {
+        "distance": 9,
+        "leftRms": 0.14142135667111316,
+        "mix": {
+          "spatial": 0,
+          "stereo": 1
+        },
+        "nearError": 0,
+        "rightRms": 0.0707106782642985
+      },
+      {
+        "distance": 29.5,
+        "leftRms": 0.03535533916777829,
+        "mix": {
+          "spatial": 0.25,
+          "stereo": 0.25
+        },
+        "nearError": null,
+        "rightRms": 0.031868871982912335
+      },
+      {
+        "distance": 50,
+        "leftRms": 0,
+        "mix": {
+          "spatial": 0,
+          "stereo": 0
+        },
+        "nearError": null,
+        "rightRms": 0
+      }
+    ],
+    "syntheticAudioOnly": true
+  },
+  "livePlayback": {
+    "audioContext": "running",
+    "mix": {
+      "spatial": 0,
+      "stereo": 1
+    },
+    "muted": false,
+    "nonzeroAudio": true,
+    "speakerCount": 1
+  }
+}

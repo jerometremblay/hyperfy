@@ -1,0 +1,20 @@
+{
+  "valid": true,
+  "source": "asset://d6a594c160ccbd249db559a3451e69fda3f3d1fd4bb421c5fbf5d2b06ef083b4.js",
+  "exactPackagePreview": true,
+  "views": [
+    "closed-recess",
+    "wall-front",
+    "wall-back",
+    "wall-left",
+    "wall-right",
+    "wall-top",
+    "wall-isometric",
+    "left-open",
+    "right-open",
+    "both-open"
+  ],
+  "closedLeafInsideCasing": true,
+  "independentDoorsOpenClearOfFrames": true,
+  "oneContinuousTimberBack": true
+}

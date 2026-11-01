@@ -1,0 +1,14 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "script": "asset://9ab711475bca1ab618132b6e8c25c36b9e14b0fb17a5e5c7ecff919b4d3a8c60.js",
+  "props": {
+    "volume": 1,
+    "spatial": true,
+    "refDistance": 3,
+    "maxDistance": 15
+  },
+  "version": 5,
+  "entityId": "3460b708-9c49-557d-ba1d-7fa78b6cd182",
+  "otherObjectsUnchanged": true
+}

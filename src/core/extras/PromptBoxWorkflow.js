@@ -26,15 +26,17 @@ export class PromptBoxWorkflow {
   async create() {
     this.requireBuilder()
     const { world } = this
-    const transform = await world.builder.placePromptBox()
-    if (!transform) return null
-    this.requireBuilder()
+    world.builder.select(null)
     const file = new File([promptBoxScript], 'prompt-box.js', { type: 'text/javascript' })
     const url = `asset://${await hashFile(file)}.js`
     await world.network.upload(file)
     world.loader.insert('script', url, file)
     await world.loader.load('script', url)
     this.requireBuilder()
+    const player = world.entities.player
+    const heading = new THREE.Euler().setFromQuaternion(player.base.quaternion, 'YXZ').y
+    const quaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), heading)
+    const position = new THREE.Vector3(0, 0.5, -2).applyQuaternion(quaternion).add(player.base.position)
     const blueprint = {
       id: uuid(),
       version: 0,
@@ -54,8 +56,8 @@ export class PromptBoxWorkflow {
         id: uuid(),
         type: 'app',
         blueprint: blueprint.id,
-        position: transform.position,
-        quaternion: transform.quaternion,
+        position: position.toArray(),
+        quaternion: quaternion.toArray(),
         scale: [1, 1, 1],
         mover: null,
         uploader: null,

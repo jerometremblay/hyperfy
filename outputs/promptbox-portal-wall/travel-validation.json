@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "nativeSameWorldCrossing": true,
+  "sourcePortal": "f7dada59-f925-4fcd-9fb9-4a6253d86890",
+  "targetPortal": "4b73c1c1-98ab-40b2-92db-cae91208c7cc",
+  "verificationPlayer": {
+    "id": "AFTCheg5ha",
+    "name": "Anonymous",
+    "position": [
+      0.12736851212404193,
+      0.00030557254609808737,
+      -3.9281279031534666
+    ]
+  },
+  "remoteLinkPreserved": true,
+  "remoteTravelNotExercised": true
+}

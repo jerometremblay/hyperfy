@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "inputMode": "airplay",
+  "receiver": "Shairport Sync 5.6.1",
+  "installedApp": "/Applications/Hyperfy Speaker.app",
+  "installer": "/Users/jerome/metaverse/hyperfy-speaker/dist/HyperfySpeaker-0.2.0-arm64.pkg",
+  "music": {
+    "airplayDestination": "Hyperfy Speaker",
+    "localPlaybackDeselected": true,
+    "track": "100%",
+    "artist": "Sonic Youth",
+    "playbackStarted": true
+  },
+  "hyperfy": {
+    "physicalPlaybackDevice": "Haut-parleurs MacBook Pro",
+    "audioContext": "running",
+    "spatialSourceHasAudio": true,
+    "maxRms": 0.34842765870793785,
+    "packetsReceived": 4378,
+    "packetsLost": 0,
+    "jitterSeconds": 0.007
+  },
+  "userPlaybackConfirmation": "Yes, smooth audio",
+  "checks": {
+    "pythonTestsPassed": 21,
+    "ruff": "passed",
+    "swiftTypecheck": "passed",
+    "nativeCodecs": "ALAC and PCM_S16BE present; 352 synthetic stereo PCM frames decoded correctly",
+    "isolatedTransport": "5 received synthetic audio frames; peak 3337",
+    "installedAppCodeSignature": "verified"
+  },
+  "senderPolicy": "One sender at a time; a new sender can replace the current stream",
+  "notes": [
+    "User confirmed smooth playback before the final receiver update.",
+    "Final installed build was retested with Music and a nonzero in-world spatial signal.",
+    "No audio samples or credentials were recorded."
+  ]
+}

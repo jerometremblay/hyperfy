@@ -1,0 +1,344 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "version": 25,
+  "source": "asset://d0c58151a649c4c8555fe0d80bdbb04f48396a7e104bdc0dcc75733ea2e52688.js",
+  "uploadedSourceReadback": true,
+  "existingStatePreserved": true,
+  "portalBlueprintsAndTransformsPreserved": true,
+  "otherBlueprintsAndPlacementsPreserved": true,
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 25,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  },
+  "validation": {
+    "valid": true,
+    "source": "asset://d0c58151a649c4c8555fe0d80bdbb04f48396a7e104bdc0dcc75733ea2e52688.js",
+    "exactPackageSource": true,
+    "assetHashesVerified": true,
+    "actualNativeConstructors": true,
+    "checks": [
+      {
+        "server": false,
+        "braces": 6,
+        "crossSectionMetres": [
+          0.38,
+          0.38
+        ],
+        "matchesAttachedPostsAndBeams": true,
+        "endpointOrientationPreserved": true,
+        "projectsBeyondLogFacesMetres": {
+          "front": 0.077,
+          "back": 0.073
+        },
+        "coplanarPostFacesAvoided": true,
+        "actualNativeGeometryVisible": true,
+        "allOtherGeometryPhysicsAndStatePreserved": true,
+        "idleCallbacks": 0
+      },
+      {
+        "server": true,
+        "braces": 6,
+        "crossSectionMetres": [
+          0.38,
+          0.38
+        ],
+        "matchesAttachedPostsAndBeams": true,
+        "endpointOrientationPreserved": true,
+        "projectsBeyondLogFacesMetres": {
+          "front": 0.077,
+          "back": 0.073
+        },
+        "coplanarPostFacesAvoided": true,
+        "actualNativeGeometryVisible": true,
+        "allOtherGeometryPhysicsAndStatePreserved": true,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "physics": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "actualFullHouseScript": true,
+    "checks": [
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "actions": {
+    "valid": true,
+    "actualNativeClientActions": true,
+    "actualNativeActionNodes": true,
+    "actualGeometryRaycast": true,
+    "cases": [
+      {
+        "id": "billiards-portal-left",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962552002,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962551998,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-left",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962552001,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962552001,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      }
+    ]
+  },
+  "entry": {
+    "valid": true,
+    "actualStandingPhysXController": true,
+    "radius": 0.3,
+    "totalHeight": 1.6,
+    "nativePortalActivationDistance": 0.3,
+    "checks": [
+      {
+        "id": "billiards-portal-left",
+        "open": false,
+        "feet": [
+          5.8,
+          0.11999989941716205,
+          0.9774999529123306
+        ],
+        "distanceToPortal": 0.3625000470876695
+      },
+      {
+        "id": "billiards-portal-left",
+        "open": true,
+        "feet": [
+          5.8,
+          0.11999989941716205,
+          1.1849999357014895
+        ],
+        "distanceToPortal": 0.15500006429851054
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": false,
+        "feet": [
+          7.6,
+          0.11999989941716205,
+          0.9774999529123306
+        ],
+        "distanceToPortal": 0.3625000470876695
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": true,
+        "feet": [
+          7.6,
+          0.11999989941716205,
+          1.1849999338388444
+        ],
+        "distanceToPortal": 0.1550000661611557
+      }
+    ]
+  },
+  "visual": {
+    "valid": true,
+    "source": "asset://d0c58151a649c4c8555fe0d80bdbb04f48396a7e104bdc0dcc75733ea2e52688.js",
+    "exactPackagePreview": true,
+    "views": [
+      "brace-detail",
+      "wall-front",
+      "wall-back",
+      "wall-left",
+      "wall-right",
+      "wall-top",
+      "wall-isometric"
+    ],
+    "braceWidthMatchesPostsAndBeams": true,
+    "bracesVisibleThroughLogs": true,
+    "joinsWithoutFlicker": true
+  },
+  "state": {
+    "doors": {
+      "bedroom-1": true,
+      "bedroom-2": true,
+      "bedroom-3": true,
+      "billiards-portal-left": false,
+      "billiards-portal-right": false,
+      "entrance-left": true,
+      "entrance-right": true,
+      "patio-left": true
+    },
+    "lighting": {
+      "house-exterior": true,
+      "house-interior-lower": true,
+      "house-interior-upper": true
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "valid": true,
+  "source": "asset://9d13f60956b2f56276a2da871005dac698cb59322a7d06f78331c82eac78e26a.js",
+  "exactPackagePreview": true,
+  "states": [
+    "closed",
+    "left-open",
+    "right-open",
+    "both-open"
+  ],
+  "views": [
+    "wall-front",
+    "wall-back",
+    "wall-left",
+    "wall-right",
+    "wall-top",
+    "wall-isometric"
+  ],
+  "matchingInteriorTimberPanelAndHardware": true,
+  "individualDoorFrames": true,
+  "closedLeavesCoverPortals": true,
+  "openLeavesClearStructure": true,
+  "offlinePortalImagesOnly": true
+}

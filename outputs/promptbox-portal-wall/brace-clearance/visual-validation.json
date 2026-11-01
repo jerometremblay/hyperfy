@@ -1,0 +1,18 @@
+{
+  "valid": true,
+  "source": "asset://e6b2182cdc22304d2431dfc429162bb8f1a279715c4b5b0ab1713c88a598b3b1.js",
+  "exactPackagePreview": true,
+  "views": [
+    "brace-detail",
+    "wall-front",
+    "wall-back",
+    "wall-left",
+    "wall-right",
+    "wall-top",
+    "wall-isometric"
+  ],
+  "braceFacesInset": true,
+  "noOverlapAtPostOrBeamJoins": true,
+  "noCoplanarFlicker": true,
+  "bracesRemainVisibleThroughLogs": true
+}

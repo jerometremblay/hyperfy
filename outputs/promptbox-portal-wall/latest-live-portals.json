@@ -1,0 +1,126 @@
+[
+  {
+    "entity": {
+      "id": "PBETNgBqKt",
+      "type": "app",
+      "blueprint": "OwyXJYHnk3",
+      "position": [
+        35.37020775602062,
+        0.12096717663691126,
+        11.113960789346741
+      ],
+      "quaternion": [
+        0,
+        -0.7933533402912352,
+        0,
+        0.6087614290087207
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "mover": null,
+      "uploader": null,
+      "pinned": false,
+      "state": {}
+    },
+    "houseLocal": [
+      3.45133963586977,
+      0.12000000000000022,
+      2.2696644967977164
+    ],
+    "blueprint": {
+      "id": "OwyXJYHnk3",
+      "version": 54,
+      "name": "World Portal",
+      "image": null,
+      "author": "Custom",
+      "url": null,
+      "desc": "Cross a linked portal; preview same-world destinations in live 3D.",
+      "model": "asset://b88ed0e18ef010eef199fdaa5d8b22db77d0f54857fe1661b8df72a2d32a3422.glb",
+      "script": null,
+      "props": {
+        "destination": "",
+        "destinationPortalId": "4b73c1c1-98ab-40b2-92db-cae91208c7cc",
+        "doubleside": "false",
+        "resolution": "1024",
+        "updateRate": "15",
+        "portalId": "f7dada59-f925-4fcd-9fb9-4a6253d86890",
+        "arrivalImage_f7dada59-f925-4fcd-9fb9-4a6253d86890": {
+          "name": "arrival-preview.jpg",
+          "type": "image",
+          "url": "asset://8678b31fbc1e0dc8b011f74977a0f1d39be1e9a23c59229a6f6585b731ef6434.jpg"
+        }
+      },
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "disabled": false,
+      "frozen": false
+    }
+  },
+  {
+    "entity": {
+      "id": "OL3wuJiVCk",
+      "type": "app",
+      "blueprint": "Z3syTV9FRg",
+      "position": [
+        35.54597312267854,
+        0.12096717663691103,
+        6.8660477218046445
+      ],
+      "quaternion": [
+        0,
+        0.7933533402912352,
+        0,
+        -0.6087614290087207
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "mover": null,
+      "uploader": null,
+      "pinned": false,
+      "state": {}
+    },
+    "houseLocal": [
+      7.599999999999997,
+      0.12,
+      1.3399999999999963
+    ],
+    "blueprint": {
+      "id": "Z3syTV9FRg",
+      "version": 47,
+      "name": "World Portal",
+      "image": null,
+      "author": "Custom",
+      "url": null,
+      "desc": "Cross a linked portal; preview same-world destinations in live 3D.",
+      "model": "asset://b88ed0e18ef010eef199fdaa5d8b22db77d0f54857fe1661b8df72a2d32a3422.glb",
+      "script": null,
+      "props": {
+        "destination": "https://rouynhyperfy.duckdns.org",
+        "destinationPortalId": "b3wzvTWCYN",
+        "doubleside": "false",
+        "resolution": "1024",
+        "updateRate": "30",
+        "portalId": "7b846fcc-2366-4782-8259-4390855b234e",
+        "arrivalImage_7b846fcc-2366-4782-8259-4390855b234e": {
+          "type": "image",
+          "name": "arrival-preview.jpg",
+          "url": "asset://b493c7737fbb4e8888b91eb92e6afaaf0da529561d1114009ac1a6b42b1e7a65.jpg"
+        }
+      },
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "disabled": false,
+      "frozen": false
+    }
+  }
+]

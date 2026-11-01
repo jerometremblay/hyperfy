@@ -1,0 +1,24 @@
+{
+  "valid": true,
+  "source": "asset://9d13f60956b2f56276a2da871005dac698cb59322a7d06f78331c82eac78e26a.js",
+  "exactPackageSource": true,
+  "assetHashesVerified": true,
+  "actualNativeConstructors": true,
+  "existingInteriorDoorPattern": true,
+  "checks": [
+    {
+      "server": false,
+      "existingGeometryAndStatePreserved": true,
+      "independentDoorStates": 4,
+      "clearSweepDegreesPerDoor": 91,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "existingGeometryAndStatePreserved": true,
+      "independentDoorStates": 4,
+      "clearSweepDegreesPerDoor": 91,
+      "idleCallbacks": 0
+    }
+  ]
+}

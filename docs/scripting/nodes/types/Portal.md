@@ -7,6 +7,10 @@ For same-world destinations it supplies a live view through the other portal. It
 scene using a camera transformed through the source and destination doorways.
 The view follows the viewer, with parallax, destination plane clipping, and
 separate views for each XR eye.
+Cursor, reticle and XR ray interactions also reach the visible same-world
+destination using existing pointer callbacks and action nodes. Action range is
+measured with the player mapped through the doorway. Remote previews and nested
+portal surfaces do not forward interactions; editor selection stays local.
 Updated remote worlds provide a separate live preview scene with procedural
 geometry, avatars and destination lighting. See the
 [portal setup guide](../../../remote-portals.md#set-up-a-portal-link) for builder

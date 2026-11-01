@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "reviewedViews": [
+    "Pool side",
+    "Wall front",
+    "Wall back",
+    "Wall left",
+    "Wall right",
+    "Wall top",
+    "Wall isometric"
+  ],
+  "solidBack": true,
+  "noOccludedApertures": true,
+  "source": "asset://bfb0fda12398a3ddfc572be07a76f06221a2bd4bf80947c9b1adbd40496c29e9.js",
+  "offlinePortalImages": true
+}

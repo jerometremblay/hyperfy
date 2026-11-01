@@ -1,0 +1,281 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "houseId": "HCzjtaVZFI",
+  "expectedVersion": 20,
+  "newVersion": 21,
+  "wall": "Two blind timber portal doorways facing the pool table",
+  "portals": [
+    {
+      "id": "PBETNgBqKt",
+      "transform": {
+        "position": [
+          35.08009884149401,
+          0.12096717663691103,
+          8.604714209124968
+        ],
+        "quaternion": [
+          0,
+          0.7933533402912352,
+          0,
+          -0.6087614290087207
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "portalId": "f7dada59-f925-4fcd-9fb9-4a6253d86890",
+      "destination": "",
+      "destinationPortalId": "4b73c1c1-98ab-40b2-92db-cae91208c7cc",
+      "oneSided": true
+    },
+    {
+      "id": "OL3wuJiVCk",
+      "transform": {
+        "position": [
+          35.54597312267854,
+          0.12096717663691103,
+          6.8660477218046445
+        ],
+        "quaternion": [
+          0,
+          0.7933533402912352,
+          0,
+          -0.6087614290087207
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "portalId": "7b846fcc-2366-4782-8259-4390855b234e",
+      "destination": "https://rouynhyperfy.duckdns.org",
+      "destinationPortalId": "b3wzvTWCYN",
+      "oneSided": true
+    }
+  ],
+  "verified": true,
+  "statePreserved": true,
+  "destinationsAndPortalIdsPreserved": true,
+  "housePlacementPreserved": true,
+  "otherBlueprintsAndPlacementsPreserved": true,
+  "completedPromptRemoved": true,
+  "uploadedSourceReadback": true,
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 21,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  },
+  "validation": {
+    "valid": true,
+    "source": "asset://bfb0fda12398a3ddfc572be07a76f06221a2bd4bf80947c9b1adbd40496c29e9.js",
+    "exactPackageSource": true,
+    "assetHashesVerified": true,
+    "actualNativeConstructors": true,
+    "originalGeometryAndStatePreserved": true,
+    "idleServerCallbacks": 0,
+    "idleClientCallbacks": 0,
+    "solidBack": true,
+    "portalFacesTowardPool": true,
+    "portals": [
+      {
+        "id": "PBETNgBqKt",
+        "houseLocal": [
+          5.8,
+          0.12,
+          1.34
+        ],
+        "aperture": {
+          "width": 1.6,
+          "height": 2.4
+        }
+      },
+      {
+        "id": "OL3wuJiVCk",
+        "houseLocal": [
+          7.6,
+          0.12,
+          1.34
+        ],
+        "aperture": {
+          "width": 1.6,
+          "height": 2.4
+        }
+      }
+    ]
+  },
+  "physics": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "actualFullHouseScript": true,
+    "checks": [
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "twoClearApproaches": true,
+        "solidFrontAndBack": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "twoClearApproaches": true,
+        "solidFrontAndBack": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "twoClearApproaches": true,
+        "solidFrontAndBack": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "twoClearApproaches": true,
+        "solidFrontAndBack": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "twoClearApproaches": true,
+        "solidFrontAndBack": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "twoClearApproaches": true,
+        "solidFrontAndBack": true,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "visual": {
+    "valid": true,
+    "exactPackageRendered": true,
+    "reviewedViews": [
+      "Pool side",
+      "Wall front",
+      "Wall back",
+      "Wall left",
+      "Wall right",
+      "Wall top",
+      "Wall isometric"
+    ],
+    "solidBack": true,
+    "noOccludedApertures": true,
+    "source": "asset://bfb0fda12398a3ddfc572be07a76f06221a2bd4bf80947c9b1adbd40496c29e9.js",
+    "offlinePortalImages": true
+  }
+}

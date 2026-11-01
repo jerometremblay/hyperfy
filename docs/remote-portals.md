@@ -26,6 +26,14 @@ needs a destination ID. The native node handles crossing and arrival without
 custom scripts, trigger colliders, or teleport handlers. For scripted or GLB
 endpoints, see the [Portal node reference](scripting/nodes/types/Portal.md).
 
+Same-world portals also pass cursor clicks, reticle interactions and XR rays
+through their active side. Point at a door or another interactive object visible
+through the opening to use its existing action or pointer handler. Action distance
+is measured through the doorway, so you still need to stand within its normal
+range. Objects in front of the source and destination block clicks normally.
+Remote previews and nested portals do not forward interactions. Editor selection
+continues to select the portal itself.
+
 Crossing between updated portal endpoints preserves lateral offset and viewing
 direction through the doorway half-turn, as internal portals do. A one-sided
 destination places arrivals from the back on its front. The source passes
@@ -66,8 +74,8 @@ arrival. Remote links retain their existing URL navigation and arrival behavior.
 Run `node scripts/test-portal-traversal.mjs` and open its printed URL for a real
 WebGL/VRM and PhysX fixture checking destination tread support with the head above
 the opening, climbing back through a solid ceiling, and collision outside the
-aperture. Physical headset walking and interactions across the opening still
-need in-world verification.
+aperture. Physical headset walking and controller interactions across the opening
+still need headset verification.
 
 ## Saved loading images
 

@@ -1,0 +1,21 @@
+{
+  "browser": "Chrome",
+  "before": {
+    "audioContext": "running",
+    "speakerDistanceMeters": 2.948,
+    "sourceGain": 1,
+    "receivedPackets": true,
+    "decodedDurationSeconds": 0
+  },
+  "after": {
+    "sdkPlaybackAttached": true,
+    "sdkExtraOutputMuted": true,
+    "spatialOutputPeak": 0.03984812647104263,
+    "audibleConfirmedByUser": true
+  },
+  "permanentFix": "src/core/extras/SpeakerAudio.js",
+  "regression": "speaker starts browser playout through a muted SDK attachment and detaches its own element",
+  "reloadConfirmation": "User refreshed Hyperfy and confirmed music still plays",
+  "checkedAt": "2026-10-30T22:06:36.342Z",
+  "focusedTestsPassed": 7
+}

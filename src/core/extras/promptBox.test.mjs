@@ -11,7 +11,7 @@ import { unzipSync, zipSync, strToU8, strFromU8 } from 'fflate'
 const bundle = await build({
   stdin: {
     contents: `export * from './promptBoxTools.js'; export * from './PromptBoxWorkflow.js';
-      export * from './PromptBoxPlacement.js'; export * from './PromptBoxResizeControls.js'; export * from './appTools.js';
+      export * from './PromptBoxResizeControls.js'; export * from './appTools.js';
       export * from './promptBoxIntersections.js'; export * from './LooseOctree.js';`,
     resolveDir: fileURLToPath(new URL('.', import.meta.url)),
   },
@@ -22,7 +22,6 @@ const bundle = await build({
   write: false,
 })
 const {
-  PromptBoxPlacement,
   PromptBoxWorkflow,
   PromptBoxResizeControls,
   resizePromptBoxFace,
@@ -351,10 +350,10 @@ test('blank prompt and invalid dimensions cannot be exported', async () => {
   await assert.rejects(() => f.workflow.export(f.app), /dimensions/)
 })
 
-test('confirmed prompt-boxes use independent blueprints and the preview transform', async () => {
+test('created prompt-boxes use independent blueprints in front of the avatar', async () => {
   const f = fixture()
   const spawned = []
-  f.world.builder.placePromptBox = async () => ({ position: [2, 0.5, -3], quaternion: [0, 0, 0, 1] })
+  f.world.entities.player = { base: { position: new Vector3(2, 0, -1), quaternion: new Quaternion() } }
   f.world.entities.add = data => {
     spawned.push(data)
     return { data }
@@ -975,37 +974,80 @@ test('each included prompt-box needs a prompt before export', async () => {
   assert.equal(f.app.blueprint.props.promptBoxRequest, undefined)
 })
 
+test('creation uses the live avatar position and facing instead of a surface near spawn', async () => {
+  for (const heading of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    const f = fixture()
+    const base = {
+      position: new Vector3(50, 7, -80),
+      quaternion: new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), heading),
+    }
+    f.world.entities.player = { base, data: { position: [0, 0, 0], quaternion: [0, 0, 0, 1] } }
+    f.world.rig = { position: new Vector3(), quaternion: new Quaternion() }
+    f.world.stage.raycastPointer = () => {
+      throw new Error('must not use cursor placement')
+    }
+    f.world.stage.raycastReticle = () => {
+      throw new Error('must not use camera placement')
+    }
+    f.world.builder.control = { pointer: { locked: false, position: {} } }
+    let inspected
+    f.world.ui.setApp = app => {
+      inspected = app
+    }
 
-test('placement follows rotated floors and walls, and cancellation disposes the local preview', () => {
-  const scene = new Scene()
-  const heading = 0.37
-  const root = { quaternion: new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), heading) }
-  let hit = { point: new Vector3(2, 0, 3), face: { normal: new Vector3(0, 1, 0) },
-    node: { matrixWorld: new Matrix4().makeRotationY(heading) }, getEntity: () => ({ root }) }
-  const world = { stage: { scene, raycastPointer: () => hit ? [hit] : [] },
-    builder: { control: { pointer: { locked: false, position: {} } } }, rig: root }
-  let result = 'pending'
-  const placement = new PromptBoxPlacement(world, value => { result = value })
-  assert.deepEqual(placement.transform.position, [2, 0.5, 3])
-  assert.ok(new Quaternion().fromArray(placement.transform.quaternion).angleTo(root.quaternion) < 1e-7)
-  hit.face.normal.set(0, 0, 1)
-  placement.update()
-  assert.deepEqual(placement.transform.position, [2, 0, 3])
-  assert.ok(new Quaternion().fromArray(placement.transform.quaternion).angleTo(root.quaternion) < 1e-7)
-  hit = null
-  placement.update()
-  assert.equal(placement.mesh.visible, false)
-  placement.finish(true)
-  assert.equal(result, 'pending')
-  placement.finish(false)
-  assert.equal(result, null)
-  assert.equal(scene.children.length, 0)
+    const position = base.position.clone()
+    const quaternion = base.quaternion.clone()
+    const app = await f.workflow.create()
+    const expected = new Vector3(0, 0.5, -2).applyQuaternion(quaternion).add(position)
+    assert.ok(app.root.position.distanceTo(expected) < 1e-10, `heading ${heading}: ${app.data.position}`)
+    assert.ok(app.root.quaternion.angleTo(quaternion) < 1e-7)
+    assert.deepEqual(app.data.scale, [1, 1, 1])
+    assert.equal(inspected, app)
+    assert.deepEqual(base.position, position)
+    assert.deepEqual(base.quaternion, quaternion)
+    assert.equal(f.sent.filter(([event]) => event === 'entityAdded').length, 1)
+  }
 })
 
-test('cancelled placement creates no blueprint or entity', async () => {
+test('creation uses the current avatar transform after uploading the script', async () => {
   const f = fixture()
-  f.world.builder.placePromptBox = async () => null
-  f.world.entities.add = () => { throw new Error('must not publish') }
-  assert.equal(await f.workflow.create(), null)
+  const base = { position: new Vector3(1, 0, 1), quaternion: new Quaternion() }
+  f.world.entities.player = { base }
+  f.world.network.upload = async () => {
+    base.position.set(30, 4, -20)
+    base.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)
+  }
+  const app = await f.workflow.create()
+  assert.ok(app.root.position.distanceTo(new Vector3(28, 4.5, -20)) < 1e-10)
+  assert.ok(app.root.quaternion.angleTo(base.quaternion) < 1e-7)
+})
+
+test('creation without builder permission publishes no blueprint or entity', async () => {
+  for (const timing of ['before', 'upload']) {
+    const f = fixture()
+    if (timing === 'before') f.world.builder.canBuild = () => false
+    else
+      f.world.network.upload = async () => {
+        f.world.builder.canBuild = () => false
+      }
+    f.world.entities.add = () => {
+      throw new Error('must not publish')
+    }
+    await assert.rejects(f.workflow.create(), /Builder permission/)
+    assert.equal(f.blueprints.size, 1)
+    assert.equal(f.sent.length, 0)
+  }
+})
+
+test('a failed creation upload publishes no blueprint or entity', async () => {
+  const f = fixture()
+  f.world.network.upload = async () => {
+    throw new Error('upload failed')
+  }
+  f.world.entities.add = () => {
+    throw new Error('must not publish')
+  }
+  await assert.rejects(f.workflow.create(), /upload failed/)
   assert.equal(f.blueprints.size, 1)
+  assert.equal(f.sent.length, 0)
 })

@@ -1,0 +1,38 @@
+{
+  "valid": true,
+  "source": "asset://bfb0fda12398a3ddfc572be07a76f06221a2bd4bf80947c9b1adbd40496c29e9.js",
+  "exactPackageSource": true,
+  "assetHashesVerified": true,
+  "actualNativeConstructors": true,
+  "originalGeometryAndStatePreserved": true,
+  "idleServerCallbacks": 0,
+  "idleClientCallbacks": 0,
+  "solidBack": true,
+  "portalFacesTowardPool": true,
+  "portals": [
+    {
+      "id": "PBETNgBqKt",
+      "houseLocal": [
+        5.8,
+        0.12,
+        1.34
+      ],
+      "aperture": {
+        "width": 1.6,
+        "height": 2.4
+      }
+    },
+    {
+      "id": "OL3wuJiVCk",
+      "houseLocal": [
+        7.6,
+        0.12,
+        1.34
+      ],
+      "aperture": {
+        "width": 1.6,
+        "height": 2.4
+      }
+    }
+  ]
+}

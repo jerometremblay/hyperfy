@@ -1,0 +1,49 @@
+{
+  "valid": true,
+  "source": "asset://e6b2182cdc22304d2431dfc429162bb8f1a279715c4b5b0ab1713c88a598b3b1.js",
+  "exactPackageSource": true,
+  "assetHashesVerified": true,
+  "actualNativeConstructors": true,
+  "checks": [
+    {
+      "server": false,
+      "braces": 6,
+      "crossSectionMetres": [
+        0.378,
+        0.378
+      ],
+      "postFaceInsetMetres": 0.001,
+      "buttJointClearanceMetres": 0.001,
+      "originalSlopePreserved": true,
+      "noPostOrBeamOverlap": true,
+      "projectsBeyondLogFacesMetres": {
+        "front": 0.074,
+        "back": 0.074
+      },
+      "coplanarPostFacesAvoided": true,
+      "actualNativeGeometryVisible": true,
+      "allOtherGeometryPhysicsAndStatePreserved": true,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "braces": 6,
+      "crossSectionMetres": [
+        0.378,
+        0.378
+      ],
+      "postFaceInsetMetres": 0.001,
+      "buttJointClearanceMetres": 0.001,
+      "originalSlopePreserved": true,
+      "noPostOrBeamOverlap": true,
+      "projectsBeyondLogFacesMetres": {
+        "front": 0.074,
+        "back": 0.074
+      },
+      "coplanarPostFacesAvoided": true,
+      "actualNativeGeometryVisible": true,
+      "allOtherGeometryPhysicsAndStatePreserved": true,
+      "idleCallbacks": 0
+    }
+  ]
+}

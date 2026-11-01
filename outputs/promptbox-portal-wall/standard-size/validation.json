@@ -1,0 +1,41 @@
+{
+  "valid": true,
+  "source": "asset://95bd3ebd6d67e6ed46c8ca3ff596547df284fcf7df1978be7a62d9c38bf306e5.js",
+  "exactPackageSource": true,
+  "assetHashesVerified": true,
+  "actualNativeConstructors": true,
+  "checks": [
+    {
+      "server": false,
+      "sameDoorSizeAsUpstairs": [
+        0.96,
+        2.12
+      ],
+      "oneContinuousLogWall": true,
+      "existingGeometryAndStatePreserved": true,
+      "clearSweepDegreesPerDoor": 91,
+      "independentDoorStates": 4,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "sameDoorSizeAsUpstairs": [
+        0.96,
+        2.12
+      ],
+      "oneContinuousLogWall": true,
+      "existingGeometryAndStatePreserved": true,
+      "clearSweepDegreesPerDoor": 91,
+      "independentDoorStates": 4,
+      "idleCallbacks": 0
+    }
+  ],
+  "nativeGLTFLoaderAndPortalNodes": true,
+  "nativeAperture": [
+    0.96,
+    2.12
+  ],
+  "unitPortalScaleAndTraversalPreserved": true,
+  "portalModel": "asset://40a38dbd71437da311af6734247a33532ebee8c7537e11f2c2ebe7a417de3b62.glb",
+  "visibleTimberBetweenFrames": 0.5
+}

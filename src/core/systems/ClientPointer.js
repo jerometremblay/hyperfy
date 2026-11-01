@@ -1,5 +1,6 @@
 import * as THREE from '../extras/three'
 import { ControlPriorities } from '../extras/ControlPriorities'
+import { resolvePortalHit } from '../extras/portalInteraction'
 
 import { System } from './System'
 
@@ -34,9 +35,12 @@ export class ClientPointer extends System {
 
   captureScriptClick = () => {
     if (this.world.builder?.enabled) return false
-    const hit = this.control.pointer.locked
-      ? this.world.stage.raycastReticle()[0]
-      : this.screenHit || this.world.stage.raycastPointer(this.control.pointer.position)[0]
+    const hit = resolvePortalHit(
+      this.world,
+      this.control.pointer.locked
+        ? this.world.stage.raycastReticle()[0]
+        : this.screenHit || this.world.stage.raycastPointer(this.control.pointer.position)[0]
+    )
     let node = hit?.node
     while (node) {
       // Node callbacks live in _onPointerDown; subclasses may expose an own callback.
@@ -79,7 +83,7 @@ export class ClientPointer extends System {
       if (this.control.mouseRight.pressed) pressed.push('right')
       if (this.control.mouseRight.released) released.push('right')
     }
-    this.pointerState.update(hit, pressed, released)
+    this.pointerState.update(resolvePortalHit(this.world, hit), pressed, released)
   }
 
   setScreenHit(screenHit) {

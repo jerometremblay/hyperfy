@@ -1,0 +1,49 @@
+{
+  "valid": true,
+  "actualStandingPhysXController": true,
+  "radius": 0.3,
+  "totalHeight": 1.6,
+  "nativePortalActivationDistance": 0.3,
+  "checks": [
+    {
+      "id": "billiards-portal-left",
+      "open": false,
+      "feet": [
+        5.8,
+        0.11999991059303294,
+        0.8354999594390392
+      ],
+      "distanceToPortal": 0.5045000405609609
+    },
+    {
+      "id": "billiards-portal-left",
+      "open": true,
+      "feet": [
+        5.8,
+        0.11999989941716205,
+        1.1849999357014895
+      ],
+      "distanceToPortal": 0.15500006429851054
+    },
+    {
+      "id": "billiards-portal-right",
+      "open": false,
+      "feet": [
+        7.6,
+        0.11999991059303294,
+        0.8354999519884586
+      ],
+      "distanceToPortal": 0.5045000480115415
+    },
+    {
+      "id": "billiards-portal-right",
+      "open": true,
+      "feet": [
+        7.6,
+        0.11999989941716205,
+        1.1849999338388444
+      ],
+      "distanceToPortal": 0.1550000661611557
+    }
+  ]
+}

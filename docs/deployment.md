@@ -31,6 +31,33 @@ npm start
 
 The server listens on `PORT` (default 3000). Visit `http://localhost:3000` to confirm it's running.
 
+### Temporary local HTTP
+
+Use a switch to run over HTTP with your existing world and configured port:
+
+```bash
+npm run dev -- --http
+```
+
+The launcher prints the local URL, using `127.0.0.1`. To connect from another
+device on your LAN, provide this computer's LAN IP:
+
+```bash
+npm run dev -- --http --ip 192.168.1.50
+```
+
+`--http` clears the TLS certificate paths and replaces the public WebSocket, API,
+asset and CORS URLs for that process, including URLs set in your environment.
+It listens on all interfaces and leaves your environment files unchanged.
+Restart with plain `npm run dev` to use your usual configuration.
+
+The switch also works with named worlds and `npm start`:
+
+```bash
+npm run dev -- world2 --http
+npm start -- --http
+```
+
 ### Named worlds from one checkout
 
 `npm start` and `npm run dev` retain the existing `.env` loading behavior. Select a

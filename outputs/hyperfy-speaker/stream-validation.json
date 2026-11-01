@@ -1,0 +1,18 @@
+{
+  "streaming": true,
+  "receivedFrames": 499,
+  "peak": 8322,
+  "macOutput": "Hyperfy Speaker",
+  "worldSpeaker": {
+    "exists": true,
+    "position": [
+      32.1,
+      0.121,
+      9.7
+    ],
+    "disabled": false
+  },
+  "path": "Mac virtual output → native helper → LiveKit remote audio track",
+  "browserPlayback": "User confirmed hearing music after activating the LiveKit playback attachment",
+  "checkedAt": "2026-10-30T21:55:59.783Z"
+}

@@ -1,0 +1,9 @@
+{
+  "verified": true,
+  "driver": "Hyperfy Speaker",
+  "world": "https://monstre.duckdns.org:3333",
+  "identity": "speaker:3460b708-9c49-557d-ba1d-7fa78b6cd182",
+  "receivedFrames": 5,
+  "peak": 412,
+  "path": "Core Audio virtual output → installed Mac worker → LiveKit → remote audio track"
+}

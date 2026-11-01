@@ -1,0 +1,15 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "name": "Hyperfy Speaker",
+  "blueprintId": "a3efeace-c984-56d8-82fc-5a32d1867718",
+  "entityId": "3460b708-9c49-557d-ba1d-7fa78b6cd182",
+  "position": [
+    32.1,
+    0.121,
+    9.7
+  ],
+  "script": "asset://d4c6732fcf6dae56d46020f0104dee2863cdaef586fbb69adfa359e5e93cbad2.js",
+  "assetsReadBack": true,
+  "otherObjectsUnchanged": true
+}

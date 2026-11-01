@@ -1,0 +1,45 @@
+{
+  "valid": true,
+  "source": "asset://d0c58151a649c4c8555fe0d80bdbb04f48396a7e104bdc0dcc75733ea2e52688.js",
+  "exactPackageSource": true,
+  "assetHashesVerified": true,
+  "actualNativeConstructors": true,
+  "checks": [
+    {
+      "server": false,
+      "braces": 6,
+      "crossSectionMetres": [
+        0.38,
+        0.38
+      ],
+      "matchesAttachedPostsAndBeams": true,
+      "endpointOrientationPreserved": true,
+      "projectsBeyondLogFacesMetres": {
+        "front": 0.077,
+        "back": 0.073
+      },
+      "coplanarPostFacesAvoided": true,
+      "actualNativeGeometryVisible": true,
+      "allOtherGeometryPhysicsAndStatePreserved": true,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "braces": 6,
+      "crossSectionMetres": [
+        0.38,
+        0.38
+      ],
+      "matchesAttachedPostsAndBeams": true,
+      "endpointOrientationPreserved": true,
+      "projectsBeyondLogFacesMetres": {
+        "front": 0.077,
+        "back": 0.073
+      },
+      "coplanarPostFacesAvoided": true,
+      "actualNativeGeometryVisible": true,
+      "allOtherGeometryPhysicsAndStatePreserved": true,
+      "idleCallbacks": 0
+    }
+  ]
+}

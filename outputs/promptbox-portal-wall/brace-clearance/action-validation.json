@@ -1,0 +1,40 @@
+{
+  "valid": true,
+  "actualNativeClientActions": true,
+  "actualNativeActionNodes": true,
+  "actualGeometryRaycast": true,
+  "cases": [
+    {
+      "id": "billiards-portal-left",
+      "open": false,
+      "actionOffsetToPointerHit": 0.6343943962552002,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "billiards-portal-right",
+      "open": false,
+      "actionOffsetToPointerHit": 0.6343943962551998,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "billiards-portal-left",
+      "open": true,
+      "actionOffsetToPointerHit": 0.6343943962552001,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    },
+    {
+      "id": "billiards-portal-right",
+      "open": true,
+      "actionOffsetToPointerHit": 0.6343943962552001,
+      "panelChecks": 18,
+      "firstAndThirdPersonRangeCovered": true,
+      "targetAndTriggerCorrect": true
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "PBETNgBqKt",
+  "type": "app",
+  "blueprint": "OwyXJYHnk3",
+  "position": [
+    35.37020775602062,
+    0.12096717663691126,
+    11.113960789346741
+  ],
+  "quaternion": [
+    0,
+    -0.7933533402912352,
+    0,
+    0.6087614290087207
+  ],
+  "scale": [
+    1,
+    1,
+    1
+  ],
+  "mover": null,
+  "uploader": null,
+  "pinned": false,
+  "state": {}
+}
