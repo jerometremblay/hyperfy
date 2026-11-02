@@ -43,6 +43,8 @@ export function glbToNodes(glb, world) {
           width: props.width,
           height: props.height,
           doubleside: props.doubleside,
+          previewFront: props.previewFront,
+          previewBack: props.previewBack,
           resolution: props.resolution,
           updateRate: props.updateRate,
           appConfig: props.appConfig,

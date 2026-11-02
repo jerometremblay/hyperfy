@@ -625,6 +625,7 @@ export class ClientGraphics extends System {
     portalInverse.copy(portal.matrixWorld).invert()
     const side = v1.setFromMatrixPosition(eye.matrixWorld).applyMatrix4(portalInverse).z >= 0 ? 1 : -1
     if (!portal.doubleside && side < 0) return
+    if ((side > 0 ? portal.previewFront : portal.previewBack) === false) return
     const uniforms = portal.mesh.material.uniforms
     const destination = portal.url
       ? this.world.portalPreviews?.get(portal)

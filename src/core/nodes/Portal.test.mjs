@@ -116,6 +116,62 @@ test('portal defaults to one side, supports proxy edits, copying, and cleans up 
   assert.equal(hot.size, 0)
 })
 
+test('preview sides are independent runtime properties and reopening invalidates cached eye views without rebuilding', () => {
+  const { portal, world, hot } = mounted({ doubleside: true, previewFront: false })
+  const mesh = portal.mesh
+  const eyes = [new THREE.PerspectiveCamera(), new THREE.PerspectiveCamera()]
+  for (const eye of eyes) portal.getView(eye).lastRender = performance.now()
+  const proxy = portal.getProxy()
+  assert.equal(proxy.previewFront, false)
+  assert.equal(proxy.previewBack, true)
+  proxy.previewBack = false
+  assert.equal(mesh.material.uniforms.previewBack.value, false)
+  proxy.previewFront = true
+  assert.equal(mesh.material.uniforms.previewFront.value, true)
+  assert.ok(eyes.every(eye => portal.getView(eye).lastRender === -Infinity))
+  assert.equal(portal.mesh, mesh)
+  assert.ok(world.graphics.portals.has(portal))
+  assert.ok(hot.has(portal), 'travel updates remain active')
+  const copy = portal.clone()
+  assert.equal(copy.previewFront, true)
+  assert.equal(copy.previewBack, false)
+  assert.throws(() => {
+    proxy.previewFront = 0
+  }, /boolean/)
+  assert.throws(() => {
+    proxy.previewBack = 'false'
+  }, /boolean/)
+  portal.width = 2
+  portal.commit(false)
+  assert.equal(portal.mesh.material.uniforms.previewBack.value, false, 'resizing preserves the setting')
+  portal.deactivate()
+})
+
+for (const remote of [false, true]) {
+  test(`${remote ? 'remote' : 'same-world'} travel still works with both previews disabled`, async () => {
+    const ctx = context()
+    const destination = mounted({ portalId: 'exit', position: [30, 1.2, 0] }, ctx).portal
+    const { portal } = mounted(
+      {
+        target: 'exit',
+        url: remote ? 'https://destination.example/' : '',
+        previewFront: false,
+        previewBack: false,
+      },
+      ctx
+    )
+    ctx.player.base.position.set(0, 0, 1)
+    portal.update()
+    ctx.player.base.position.set(0, 0, 0.1)
+    portal.update()
+    await portal.pendingTravel
+    assert.equal(remote ? ctx.opened.length : ctx.teleports.length, 1)
+    assert.equal(destination.previewFront, true, 'the destination keeps its own view enabled')
+    portal.deactivate()
+    destination.deactivate()
+  })
+}
+
 test('arrival screenshot uses a finite perspective view in both render styles and restores state after capture and failure', async t => {
   const ctx = context()
   const { portal } = mounted({ position: [10, 1.2, 20] }, ctx)
@@ -615,6 +671,45 @@ test('one-sided portals skip preview work behind the aperture, including transfo
   eye.position.set(0, 0, 1).applyMatrix4(transform)
   eye.updateMatrixWorld()
   assert.throws(() => graphics.renderPortal(portal, eye), /preview requested/)
+})
+
+test('disabled preview sides skip destination lookup and view work for transformed stereo cameras', () => {
+  const graphics = new ClientGraphics({ stage: { scene: new THREE.Scene() } })
+  const transform = new THREE.Matrix4().compose(
+    new THREE.Vector3(4, 1, 6),
+    new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 3),
+    new THREE.Vector3(2, 1, 0.5)
+  )
+  const portal = {
+    matrixWorld: transform,
+    doubleside: true,
+    previewFront: false,
+    previewBack: true,
+    url: 'https://destination.example',
+    mesh: { material: { uniforms: { linked: { value: false } } } },
+  }
+  graphics.world.portalPreviews = {
+    get() {
+      throw new Error('preview requested')
+    },
+  }
+  for (const x of [-0.032, 0.032]) {
+    const eye = new THREE.PerspectiveCamera()
+    eye.position.set(x, 0, 1).applyMatrix4(transform)
+    eye.updateMatrixWorld()
+    assert.doesNotThrow(() => graphics.renderPortal(portal, eye))
+    eye.position.set(x, 0, -1).applyMatrix4(transform)
+    eye.updateMatrixWorld()
+    assert.throws(() => graphics.renderPortal(portal, eye), /preview requested/)
+    portal.previewBack = false
+    assert.doesNotThrow(() => graphics.renderPortal(portal, eye))
+    portal.previewFront = true
+    eye.position.set(x, 0, 1).applyMatrix4(transform)
+    eye.updateMatrixWorld()
+    assert.throws(() => graphics.renderPortal(portal, eye), /preview requested/)
+    portal.previewFront = false
+    portal.previewBack = true
+  }
 })
 
 for (const destinationDoubleSide of [false, true]) {

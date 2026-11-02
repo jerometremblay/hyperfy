@@ -25,6 +25,7 @@ export class ClientPortalPreviews extends System {
     const wanted = new Map()
     for (const portal of this.world.graphics.portals) {
       if (!portal.url || portal.ctx.entity?.data.mover) continue
+      if (portal.previewFront === false && (!portal.doubleside || portal.previewBack === false)) continue
       position.setFromMatrixPosition(portal.matrixWorld)
       if (position.distanceTo(this.world.rig.position) > 30) continue
       const url = new URL(portal.url)

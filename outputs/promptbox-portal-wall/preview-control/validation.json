@@ -1,0 +1,40 @@
+{
+  "valid": true,
+  "source": "asset://bde354727801a7f05c0bddee0431aecd7acb803c56e057c1322f6b59484a0554.js",
+  "portalScript": "asset://8e40d6487fe89a757b80eb218d22bc6514ce101966455d333fa31c82564af014.js",
+  "exactPackageSource": true,
+  "hashesVerified": true,
+  "actualNativeConstructors": true,
+  "openingAndClosingTransitions": true,
+  "lateJoinAndRebuild": true,
+  "cases": [
+    {
+      "server": false,
+      "portalFirst": false,
+      "preservedGeometry": true,
+      "independentDoors": true,
+      "idleCallbacks": 0
+    },
+    {
+      "server": false,
+      "portalFirst": true,
+      "preservedGeometry": true,
+      "independentDoors": true,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "portalFirst": false,
+      "preservedGeometry": true,
+      "independentDoors": true,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "portalFirst": true,
+      "preservedGeometry": true,
+      "independentDoors": true,
+      "idleCallbacks": 0
+    }
+  ]
+}

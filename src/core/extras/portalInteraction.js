@@ -17,6 +17,7 @@ export function resolvePortalHit(world, hit) {
   const ray = raycaster.ray.clone()
   const localOrigin = ray.origin.clone().applyMatrix4(source.matrixWorld.clone().invert())
   if (!source.doubleside && localOrigin.z < 0) return hit
+  if ((localOrigin.z >= 0 ? source.previewFront : source.previewBack) === false) return hit
 
   const transform = getPortalTransform(source, destination)
   const origin = ray.origin.clone().applyMatrix4(transform)

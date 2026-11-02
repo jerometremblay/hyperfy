@@ -37,6 +37,8 @@ app.add(portal)
 | `target` | `''` | Destination portal ID, in this world or the remote world. |
 | `url` | `''` | Remote HTTP(S) world URL. Empty means same-world travel. |
 | `doubleside` | `false` | Activate the front (+Z) only, with a light-gray inactive back; `true` activates both sides. Can be changed at runtime. |
+| `previewFront` | `true` | Render the destination view on the front (+Z). `false` shows a black surface and skips the extra scene pass; travel stays active. |
+| `previewBack` | `true` | Render the destination view on the back (-Z), when `doubleside` is enabled. Independent of front rendering and travel. |
 | `width` | `1.6` | Positive aperture width in local units. |
 | `height` | `2.4` | Positive aperture height in local units. |
 | `resolution` | `256` | Maximum texture dimension: 256, 512, or 1024 pixels; `'max'` uses the viewer's current render resolution. |
@@ -49,6 +51,21 @@ the aperture. Remote destinations are checked before travel and every 30 seconds
 with a five-second timeout. Network failures and readable HTTP errors appear on
 the active surface and prevent travel. Errors clear when the destination recovers.
 The inactive back of a one-sided portal remains light gray.
+
+Scripts can explicitly suspend a covered side without deactivating the portal:
+
+```js
+portal.previewFront = false // A closed door covers the front.
+portal.previewFront = true  // Enable before the door starts opening.
+```
+
+The other side and the destination endpoint keep their own preview settings.
+These switches do not change `doubleside`, collision, arrival, or traversal.
+Hidden previews do not forward pointer interactions. Re-enabling a side refreshes
+its view immediately. If a remote portal has no preview-enabled active side, it
+stops requesting and ticking its preview replica; unused replicas are released
+after the usual ten-second grace period. Remote travel still checks the destination.
+Door scripts must opt in explicitly; the engine does not detect covering geometry.
 
 Updated remote worlds expose `/api/portal-status` so a missing destination portal
 ID can be reported before leaving the current world. Older worlds fall back to
@@ -71,7 +88,7 @@ and builder scaling resizes the aperture and entry region together.
 
 Portal nodes can also be embedded directly in a GLB using an object's custom
 properties (`extras`): `node: 'portal'`, `portalId`, `target`, `url`, `width`,
-`height`, and `doubleside`. The aperture is centered on that object. Each embedded
+`height`, `doubleside`, `previewFront`, and `previewBack`. The aperture is centered on that object. Each embedded
 endpoint should have its own unique `portalId`. The bundled primitive uses the
 app's instance ID automatically and declares `appConfig: true` to expose its
 native settings in the app inspector. Ordinary embedded endpoints use their

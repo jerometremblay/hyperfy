@@ -1,0 +1,79 @@
+{
+  "valid": true,
+  "actualWebGL": true,
+  "transformedStereo": true,
+  "shaderErrors": [],
+  "cachedEyeResumesImmediately": true,
+  "checks": [
+    {
+      "label": "front enabled",
+      "passes": 1,
+      "pixel": [
+        34,
+        204,
+        102,
+        255
+      ]
+    },
+    {
+      "label": "covered front stereo eye -0.032",
+      "passes": 0,
+      "pixel": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "covered front stereo eye 0.032",
+      "passes": 0,
+      "pixel": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "opposite side remains enabled",
+      "passes": 1,
+      "pixel": [
+        34,
+        204,
+        102,
+        255
+      ]
+    },
+    {
+      "label": "covered back",
+      "passes": 0,
+      "pixel": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "label": "front resumes immediately",
+      "passes": 1,
+      "pixel": [
+        34,
+        204,
+        102,
+        255
+      ]
+    },
+    {
+      "label": "back remains disabled",
+      "passes": 0,
+      "pixel": [
+        0,
+        0,
+        0,
+        255
+      ]
+    }
+  ]
+}

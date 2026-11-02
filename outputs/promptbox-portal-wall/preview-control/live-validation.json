@@ -1,0 +1,67 @@
+{
+  "valid": true,
+  "actualLiveClientAndServer": true,
+  "nativeDoorActions": true,
+  "initial": {
+    "houseVersion": 28,
+    "crashed": [
+      {
+        "id": "HCzjtaVZFI",
+        "crashed": false,
+        "error": null
+      },
+      {
+        "id": "PBETNgBqKt",
+        "crashed": false,
+        "error": null
+      },
+      {
+        "id": "OL3wuJiVCk",
+        "crashed": false,
+        "error": null
+      }
+    ],
+    "previews": [
+      {
+        "front": false,
+        "back": true,
+        "target": "4b73c1c1-98ab-40b2-92db-cae91208c7cc",
+        "url": ""
+      },
+      {
+        "front": false,
+        "back": true,
+        "target": "b3wzvTWCYN",
+        "url": "https://rouynhyperfy.duckdns.org"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "door": "billiards-portal-left",
+      "previewFront": false,
+      "serverStateMatches": true,
+      "otherDoorPreserved": true
+    },
+    {
+      "door": "billiards-portal-left",
+      "previewFront": true,
+      "serverStateMatches": true,
+      "otherDoorPreserved": true
+    },
+    {
+      "door": "billiards-portal-right",
+      "previewFront": false,
+      "serverStateMatches": true,
+      "otherDoorPreserved": true
+    },
+    {
+      "door": "billiards-portal-right",
+      "previewFront": true,
+      "serverStateMatches": true,
+      "otherDoorPreserved": true
+    }
+  ],
+  "pageErrors": [],
+  "originalStateRestored": true
+}

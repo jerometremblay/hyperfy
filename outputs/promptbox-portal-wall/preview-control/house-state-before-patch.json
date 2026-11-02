@@ -1,0 +1,17 @@
+{
+  "doors": {
+    "bedroom-1": true,
+    "bedroom-2": true,
+    "bedroom-3": true,
+    "billiards-portal-left": true,
+    "billiards-portal-right": true,
+    "entrance-left": false,
+    "entrance-right": true,
+    "patio-left": false
+  },
+  "lighting": {
+    "house-exterior": true,
+    "house-interior-lower": true,
+    "house-interior-upper": true
+  }
+}

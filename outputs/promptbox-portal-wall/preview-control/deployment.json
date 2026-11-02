@@ -1,0 +1,241 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "nativePreviewApiServed": true,
+  "updates": [
+    {
+      "id": "OwyXJYHnk3",
+      "version": 61,
+      "script": "asset://8e40d6487fe89a757b80eb218d22bc6514ce101966455d333fa31c82564af014.js"
+    },
+    {
+      "id": "Z3syTV9FRg",
+      "version": 52,
+      "script": "asset://8e40d6487fe89a757b80eb218d22bc6514ce101966455d333fa31c82564af014.js"
+    },
+    {
+      "id": "WI0QjsRZ0R",
+      "version": 28,
+      "script": "asset://bde354727801a7f05c0bddee0431aecd7acb803c56e057c1322f6b59484a0554.js"
+    }
+  ],
+  "uploadedSourcesReadBack": true,
+  "existingDoorAndLightingStatesPreserved": true,
+  "portalLinksAndSettingsPreserved": true,
+  "otherBlueprintsAndAllPlacementsPreserved": true,
+  "serverProfile": [
+    {
+      "id": "PBETNgBqKt",
+      "blueprintId": "OwyXJYHnk3",
+      "blueprintVersion": 61,
+      "name": "World Portal",
+      "cpuMsPerSecond": 0,
+      "peakCallbackMs": 0,
+      "callbackMsPerSecond": {}
+    },
+    {
+      "id": "OL3wuJiVCk",
+      "blueprintId": "Z3syTV9FRg",
+      "blueprintVersion": 52,
+      "name": "World Portal",
+      "cpuMsPerSecond": 0,
+      "peakCallbackMs": 0,
+      "callbackMsPerSecond": {}
+    },
+    {
+      "id": "HCzjtaVZFI",
+      "blueprintId": "WI0QjsRZ0R",
+      "blueprintVersion": 28,
+      "name": "Larch House — Wired Lighting Circuits",
+      "cpuMsPerSecond": 0,
+      "peakCallbackMs": 0,
+      "callbackMsPerSecond": {}
+    }
+  ],
+  "validation": {
+    "valid": true,
+    "source": "asset://bde354727801a7f05c0bddee0431aecd7acb803c56e057c1322f6b59484a0554.js",
+    "portalScript": "asset://8e40d6487fe89a757b80eb218d22bc6514ce101966455d333fa31c82564af014.js",
+    "exactPackageSource": true,
+    "hashesVerified": true,
+    "actualNativeConstructors": true,
+    "openingAndClosingTransitions": true,
+    "lateJoinAndRebuild": true,
+    "cases": [
+      {
+        "server": false,
+        "portalFirst": false,
+        "preservedGeometry": true,
+        "independentDoors": true,
+        "idleCallbacks": 0
+      },
+      {
+        "server": false,
+        "portalFirst": true,
+        "preservedGeometry": true,
+        "independentDoors": true,
+        "idleCallbacks": 0
+      },
+      {
+        "server": true,
+        "portalFirst": false,
+        "preservedGeometry": true,
+        "independentDoors": true,
+        "idleCallbacks": 0
+      },
+      {
+        "server": true,
+        "portalFirst": true,
+        "preservedGeometry": true,
+        "independentDoors": true,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "webgl": {
+    "valid": true,
+    "actualWebGL": true,
+    "transformedStereo": true,
+    "shaderErrors": [],
+    "cachedEyeResumesImmediately": true,
+    "checks": [
+      {
+        "label": "front enabled",
+        "passes": 1,
+        "pixel": [
+          34,
+          204,
+          102,
+          255
+        ]
+      },
+      {
+        "label": "covered front stereo eye -0.032",
+        "passes": 0,
+        "pixel": [
+          0,
+          0,
+          0,
+          255
+        ]
+      },
+      {
+        "label": "covered front stereo eye 0.032",
+        "passes": 0,
+        "pixel": [
+          0,
+          0,
+          0,
+          255
+        ]
+      },
+      {
+        "label": "opposite side remains enabled",
+        "passes": 1,
+        "pixel": [
+          34,
+          204,
+          102,
+          255
+        ]
+      },
+      {
+        "label": "covered back",
+        "passes": 0,
+        "pixel": [
+          0,
+          0,
+          0,
+          255
+        ]
+      },
+      {
+        "label": "front resumes immediately",
+        "passes": 1,
+        "pixel": [
+          34,
+          204,
+          102,
+          255
+        ]
+      },
+      {
+        "label": "back remains disabled",
+        "passes": 0,
+        "pixel": [
+          0,
+          0,
+          0,
+          255
+        ]
+      }
+    ]
+  },
+  "liveValidation": {
+    "valid": true,
+    "actualLiveClientAndServer": true,
+    "nativeDoorActions": true,
+    "initial": {
+      "houseVersion": 28,
+      "crashed": [
+        {
+          "id": "HCzjtaVZFI",
+          "crashed": false,
+          "error": null
+        },
+        {
+          "id": "PBETNgBqKt",
+          "crashed": false,
+          "error": null
+        },
+        {
+          "id": "OL3wuJiVCk",
+          "crashed": false,
+          "error": null
+        }
+      ],
+      "previews": [
+        {
+          "front": false,
+          "back": true,
+          "target": "4b73c1c1-98ab-40b2-92db-cae91208c7cc",
+          "url": ""
+        },
+        {
+          "front": false,
+          "back": true,
+          "target": "b3wzvTWCYN",
+          "url": "https://rouynhyperfy.duckdns.org"
+        }
+      ]
+    },
+    "checks": [
+      {
+        "door": "billiards-portal-left",
+        "previewFront": false,
+        "serverStateMatches": true,
+        "otherDoorPreserved": true
+      },
+      {
+        "door": "billiards-portal-left",
+        "previewFront": true,
+        "serverStateMatches": true,
+        "otherDoorPreserved": true
+      },
+      {
+        "door": "billiards-portal-right",
+        "previewFront": false,
+        "serverStateMatches": true,
+        "otherDoorPreserved": true
+      },
+      {
+        "door": "billiards-portal-right",
+        "previewFront": true,
+        "serverStateMatches": true,
+        "otherDoorPreserved": true
+      }
+    ],
+    "pageErrors": [],
+    "originalStateRestored": true
+  }
+}

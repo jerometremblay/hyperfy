@@ -80,6 +80,44 @@ test('portals share one replica and union of endpoint subscriptions, then releas
   manager.destroy()
 })
 
+test('covered previews stop remote work while enabled backs and other endpoints keep the shared replica', async t => {
+  let now = 0
+  t.mock.method(performance, 'now', () => now)
+  t.mock.method(globalThis, 'fetch', async () => ({
+    ok: true,
+    json: async () => ({ preview: { version: 1, wsUrl: 'ws://remote.example/portal-preview' } }),
+  }))
+  const { world, manager, portal } = fixture()
+  const first = Object.assign(portal('first'), { previewFront: false, previewBack: true, doubleside: false })
+  world.graphics.portals.add(first)
+  manager.update()
+  assert.equal(manager.worlds.size, 0, 'the inactive back does not require a preview')
+  first.doubleside = true
+  manager.update()
+  await new Promise(setImmediate)
+  manager.update()
+  const remote = created.at(-1)
+  const second = portal('second')
+  world.graphics.portals.add(second)
+  first.previewBack = false
+  manager.update()
+  assert.deepEqual(remote.network.ids, ['second'])
+  world.graphics.portals.delete(second)
+  const ticks = remote.ticks
+  now = 5000
+  manager.update()
+  assert.equal(remote.ticks, ticks, 'closed previews do not tick during the grace period')
+  first.previewFront = true
+  manager.update()
+  assert.equal(remote.ticks, ticks + 1, 'reopening reuses the existing replica immediately')
+  first.previewFront = false
+  now = 15001
+  manager.update()
+  assert.equal(remote.disposed, true)
+  assert.equal(manager.worlds.size, 0)
+  manager.destroy()
+})
+
 test('vanilla worlds use a local cached snapshot without a preview socket', async t => {
   const requests = []
   t.mock.method(globalThis, 'fetch', async url => {

@@ -143,6 +143,19 @@ test('source occlusion, editor selection and camera queries keep their ordinary 
   assert.equal(interactionHit(f), undefined, 'the ray must intersect the aperture')
 })
 
+test('a disabled front preview stops pointer forwarding without disabling the destination preview', () => {
+  const f = fixture({ locked: true, script: true })
+  f.source.previewFront = false
+  assert.equal(interactionHit(f)?.node, f.source)
+  f.control.mouseLeft.pressed = true
+  f.pointer.update(0)
+  f.world.actions.update(0)
+  assert.equal(f.events.length, 0)
+  assert.equal(f.destination.previewFront, true)
+  f.source.previewFront = true
+  assert.equal(interactionHit(f)?.node, f.door)
+})
+
 test('destination clipping skips hidden near-side geometry and portal surfaces without following another link', () => {
   const f = fixture()
   const hidden = {

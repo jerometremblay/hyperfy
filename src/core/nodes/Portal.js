@@ -37,6 +37,8 @@ export class Portal extends Node {
     this.resolution = data.resolution ?? 256
     this.updateRate = data.updateRate ?? 15
     this.doubleside = data.doubleside ?? false
+    this.previewFront = data.previewFront ?? true
+    this.previewBack = data.previewBack ?? true
   }
 
   mount() {
@@ -72,6 +74,8 @@ export class Portal extends Node {
         linked: { value: false },
         fallback: { value: new THREE.Color('#000000') },
         doubleside: { value: this.doubleside },
+        previewFront: { value: this.previewFront },
+        previewBack: { value: this.previewBack },
         status: { value: null },
         showStatus: { value: false },
         inactive: { value: new THREE.Color('#d3d3d3') },
@@ -94,6 +98,8 @@ export class Portal extends Node {
         uniform bool linked;
         uniform vec3 fallback;
         uniform bool doubleside;
+        uniform bool previewFront;
+        uniform bool previewBack;
         uniform vec3 inactive;
         uniform sampler2D status;
         uniform bool showStatus;
@@ -104,6 +110,8 @@ export class Portal extends Node {
           #include <clipping_planes_fragment>
           if (!doubleside && !gl_FrontFacing) {
             gl_FragColor = vec4(inactive, 1.0);
+          } else if (gl_FrontFacing ? !previewFront : !previewBack) {
+            gl_FragColor = vec4(fallback, 1.0);
           } else if (showStatus) {
             vec2 statusUV = vec2(gl_FrontFacing ? surfaceUV.x : 1.0 - surfaceUV.x, surfaceUV.y);
             gl_FragColor = texture2D(status, statusUV);
@@ -191,6 +199,8 @@ export class Portal extends Node {
     this.resolution = source.resolution
     this.updateRate = source.updateRate
     this.doubleside = source.doubleside
+    this.previewFront = source.previewFront
+    this.previewBack = source.previewBack
     return this
   }
 
@@ -553,11 +563,47 @@ export class Portal extends Node {
     this._updateRate = value
   }
 
+  get previewFront() {
+    return this._previewFront
+  }
+  set previewFront(value) {
+    this.setPreviewSide('previewFront', value)
+  }
+
+  get previewBack() {
+    return this._previewBack
+  }
+  set previewBack(value) {
+    this.setPreviewSide('previewBack', value)
+  }
+
+  setPreviewSide(key, value) {
+    if (typeof value !== 'boolean') throw new Error(`[portal] ${key} must be a boolean`)
+    if (this[`_${key}`] === value) return
+    this[`_${key}`] = value
+    if (this.mesh) this.mesh.material.uniforms[key].value = value
+    // Reopening must refresh immediately, even at a low preview update rate.
+    for (const view of new Set([this.view, ...(this.views?.values() || [])])) {
+      if (view) view.lastRender = -Infinity
+    }
+  }
+
   getProxy() {
     if (!this.proxy) {
       const self = this
       const proxy = {}
-      for (const key of ['portalId', 'target', 'url', 'width', 'height', 'resolution', 'updateRate', 'doubleside']) {
+      for (const key of [
+        'portalId',
+        'target',
+        'url',
+        'width',
+        'height',
+        'resolution',
+        'updateRate',
+        'doubleside',
+        'previewFront',
+        'previewBack',
+      ]) {
         Object.defineProperty(proxy, key, {
           enumerable: true,
           get: () => self[key],
