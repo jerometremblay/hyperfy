@@ -1,0 +1,43 @@
+{
+  "current": {
+    "id": "0fygaLyowZ",
+    "type": "app",
+    "blueprint": "gKzSLyeopN",
+    "position": [
+      28.80285522800112,
+      0.6209670371892955,
+      4.623530605719165
+    ],
+    "quaternion": [
+      0,
+      -0.08344509548097004,
+      0,
+      0.9965123762604114
+    ],
+    "scale": [
+      0.7209367720386733,
+      1,
+      0.7798459151911727
+    ],
+    "mover": null,
+    "uploader": null,
+    "pinned": false,
+    "state": {}
+  },
+  "blueprint": {
+    "id": "gKzSLyeopN",
+    "version": 1,
+    "name": "Prompt Box",
+    "model": "script-only",
+    "script": "asset://78846b0b8fcf12443a95c59db5bf4476ba9c1ddec8e44a058bcf37db63e87ac6.js",
+    "props": {
+      "promptBox": true,
+      "prompt": "A small high stool to sit while waiting to play pool. make it sittable."
+    },
+    "unique": true,
+    "scene": false,
+    "disabled": false,
+    "locked": false,
+    "frozen": false
+  }
+}

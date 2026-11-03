@@ -1,0 +1,19 @@
+{
+  "valid": true,
+  "exactPackageRendered": true,
+  "source": "asset://e2ed680b2b836139ea4d2afcb32b4706fed96ab092e2056010365a30bb72f30b.js",
+  "views": [
+    "closed",
+    "left",
+    "right",
+    "both",
+    "Wall front",
+    "Wall back",
+    "Wall left",
+    "Wall right",
+    "Wall top",
+    "Wall isometric",
+    "Right recess"
+  ],
+  "errors": []
+}

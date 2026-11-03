@@ -1,0 +1,46 @@
+{
+  "blueprint": {
+    "image": null,
+    "author": null,
+    "url": null,
+    "desc": "A small padded stool for the pool room.",
+    "script": "asset://ce2292051115b04f253d1a3a7a8b899cff4b57ad4a82a69711d4be1bc1ff8929.js",
+    "props": {},
+    "preload": false,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "frozen": false,
+    "scene": false,
+    "disabled": false,
+    "name": "Pool Room Stool",
+    "model": "script-only",
+    "id": "cafb5cdd-9573-431a-977e-03692e99fe75",
+    "version": 0
+  },
+  "entity": {
+    "position": [
+      28.80285522800112,
+      0.12096703718929547,
+      4.623530605719165
+    ],
+    "quaternion": [
+      0,
+      -0.08344509548097004,
+      0,
+      0.9965123762604114
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "pinned": false,
+    "blueprint": "cafb5cdd-9573-431a-977e-03692e99fe75",
+    "id": "d8ff4916-56a1-427c-9f8b-1c1e619595ec",
+    "type": "app",
+    "mover": null,
+    "uploader": null,
+    "state": {}
+  }
+}

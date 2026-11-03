@@ -1,0 +1,40 @@
+[
+  {
+    "id": "billiards-portal-left",
+    "limits": [
+      {
+        "clearanceMetres": 0,
+        "firstIntersection": null
+      },
+      {
+        "clearanceMetres": 0.005,
+        "firstIntersection": {
+          "degrees": 155.58,
+          "moving": "physics:billiards-portal-left-leaf:92",
+          "obstacle": "billiards-portal-wall:portal-door-0-casing:2362"
+        }
+      }
+    ]
+  },
+  {
+    "id": "billiards-portal-right",
+    "limits": [
+      {
+        "clearanceMetres": 0,
+        "firstIntersection": {
+          "degrees": 137.82,
+          "moving": "physics:billiards-portal-right-leaf:93",
+          "obstacle": "windows:window-sill:1845"
+        }
+      },
+      {
+        "clearanceMetres": 0.005,
+        "firstIntersection": {
+          "degrees": 137.38,
+          "moving": "physics:billiards-portal-right-leaf:93",
+          "obstacle": "windows:window-sill:1845"
+        }
+      }
+    ]
+  }
+]

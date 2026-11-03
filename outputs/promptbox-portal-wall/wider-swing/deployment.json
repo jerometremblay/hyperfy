@@ -1,0 +1,368 @@
+{
+  "verified": true,
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "version": 27,
+  "source": "asset://e2ed680b2b836139ea4d2afcb32b4706fed96ab092e2056010365a30bb72f30b.js",
+  "uploadedSourceReadback": true,
+  "existingStatePreserved": true,
+  "portalBlueprintsAndTransformsPreserved": true,
+  "otherBlueprintsAndPlacementsPreserved": true,
+  "serverProfile": {
+    "id": "HCzjtaVZFI",
+    "blueprintId": "WI0QjsRZ0R",
+    "blueprintVersion": 27,
+    "name": "Larch House — Wired Lighting Circuits",
+    "cpuMsPerSecond": 0,
+    "peakCallbackMs": 0,
+    "callbackMsPerSecond": {}
+  },
+  "validation": {
+    "valid": true,
+    "source": "asset://e2ed680b2b836139ea4d2afcb32b4706fed96ab092e2056010365a30bb72f30b.js",
+    "exactPackageSource": true,
+    "assetHashesVerified": true,
+    "actualNativeConstructors": true,
+    "angles": {
+      "billiards-portal-left": 175,
+      "billiards-portal-right": -137.3
+    },
+    "wallSideClearanceMetres": 0.005,
+    "clearanceSweepStepDegrees": 0.01,
+    "measurements": [
+      {
+        "id": "billiards-portal-left",
+        "limits": [
+          {
+            "clearanceMetres": 0,
+            "firstIntersection": null
+          },
+          {
+            "clearanceMetres": 0.005,
+            "firstIntersection": {
+              "degrees": 155.58,
+              "moving": "physics:billiards-portal-left-leaf:92",
+              "obstacle": "billiards-portal-wall:portal-door-0-casing:2362"
+            }
+          }
+        ]
+      },
+      {
+        "id": "billiards-portal-right",
+        "limits": [
+          {
+            "clearanceMetres": 0,
+            "firstIntersection": {
+              "degrees": 137.82,
+              "moving": "physics:billiards-portal-right-leaf:93",
+              "obstacle": "windows:window-sill:1845"
+            }
+          },
+          {
+            "clearanceMetres": 0.005,
+            "firstIntersection": {
+              "degrees": 137.38,
+              "moving": "physics:billiards-portal-right-leaf:93",
+              "obstacle": "windows:window-sill:1845"
+            }
+          }
+        ]
+      }
+    ],
+    "checks": [
+      {
+        "server": false,
+        "existingGeometryAndOtherDoorAnglesPreserved": true,
+        "independentDoorStates": 4,
+        "idleCallbacks": 0
+      },
+      {
+        "server": true,
+        "existingGeometryAndOtherDoorAnglesPreserved": true,
+        "independentDoorStates": 4,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "physics": {
+    "valid": true,
+    "actualPhysXWasm": true,
+    "actualFullHouseScript": true,
+    "checks": [
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": false,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "quaternion": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            30,
+            1,
+            10
+          ],
+          "quaternion": [
+            0,
+            0.6051864057360395,
+            0,
+            0.7960837985490559
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      },
+      {
+        "client": true,
+        "transform": {
+          "position": [
+            -20,
+            1,
+            12
+          ],
+          "quaternion": [
+            0,
+            -0.43496553411123023,
+            0,
+            0.9004471023526769
+          ],
+          "scale": [
+            1.2,
+            0.9,
+            1.4
+          ]
+        },
+        "independentOpenAndClose": true,
+        "closedLeafBeforePortal": true,
+        "openApproachClear": true,
+        "idleCallbacks": 0
+      }
+    ]
+  },
+  "actions": {
+    "valid": true,
+    "actualNativeClientActions": true,
+    "actualNativeActionNodes": true,
+    "actualGeometryRaycast": true,
+    "cases": [
+      {
+        "id": "billiards-portal-left",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962552002,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": false,
+        "actionOffsetToPointerHit": 0.6343943962551998,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-left",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962552009,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": true,
+        "actionOffsetToPointerHit": 0.6343943962552001,
+        "panelChecks": 18,
+        "firstAndThirdPersonRangeCovered": true,
+        "targetAndTriggerCorrect": true
+      }
+    ]
+  },
+  "entry": {
+    "valid": true,
+    "actualStandingPhysXController": true,
+    "radius": 0.3,
+    "totalHeight": 1.6,
+    "nativePortalActivationDistance": 0.3,
+    "checks": [
+      {
+        "id": "billiards-portal-left",
+        "open": false,
+        "feet": [
+          5.8,
+          0.11999989941716205,
+          0.9774999529123306
+        ],
+        "distanceToPortal": 0.3625000470876695
+      },
+      {
+        "id": "billiards-portal-left",
+        "open": true,
+        "feet": [
+          5.8,
+          0.11999989941716205,
+          1.1849999357014895
+        ],
+        "distanceToPortal": 0.15500006429851054
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": false,
+        "feet": [
+          7.6,
+          0.11999989941716205,
+          0.9774999529123306
+        ],
+        "distanceToPortal": 0.3625000470876695
+      },
+      {
+        "id": "billiards-portal-right",
+        "open": true,
+        "feet": [
+          7.6,
+          0.11999989941716205,
+          1.1849999338388444
+        ],
+        "distanceToPortal": 0.1550000661611557
+      }
+    ]
+  },
+  "visual": {
+    "valid": true,
+    "exactPackageRendered": true,
+    "source": "asset://e2ed680b2b836139ea4d2afcb32b4706fed96ab092e2056010365a30bb72f30b.js",
+    "views": [
+      "closed",
+      "left",
+      "right",
+      "both",
+      "Wall front",
+      "Wall back",
+      "Wall left",
+      "Wall right",
+      "Wall top",
+      "Wall isometric",
+      "Right recess"
+    ],
+    "errors": []
+  },
+  "state": {
+    "doors": {
+      "bedroom-1": true,
+      "bedroom-2": true,
+      "bedroom-3": true,
+      "billiards-portal-left": true,
+      "billiards-portal-right": true,
+      "entrance-left": false,
+      "entrance-right": true,
+      "patio-left": false
+    },
+    "lighting": {
+      "house-exterior": true,
+      "house-interior-lower": true,
+      "house-interior-upper": true
+    }
+  }
+}

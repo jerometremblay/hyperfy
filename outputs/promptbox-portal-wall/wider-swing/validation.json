@@ -1,0 +1,67 @@
+{
+  "valid": true,
+  "source": "asset://e2ed680b2b836139ea4d2afcb32b4706fed96ab092e2056010365a30bb72f30b.js",
+  "exactPackageSource": true,
+  "assetHashesVerified": true,
+  "actualNativeConstructors": true,
+  "angles": {
+    "billiards-portal-left": 175,
+    "billiards-portal-right": -137.3
+  },
+  "wallSideClearanceMetres": 0.005,
+  "clearanceSweepStepDegrees": 0.01,
+  "measurements": [
+    {
+      "id": "billiards-portal-left",
+      "limits": [
+        {
+          "clearanceMetres": 0,
+          "firstIntersection": null
+        },
+        {
+          "clearanceMetres": 0.005,
+          "firstIntersection": {
+            "degrees": 155.58,
+            "moving": "physics:billiards-portal-left-leaf:92",
+            "obstacle": "billiards-portal-wall:portal-door-0-casing:2362"
+          }
+        }
+      ]
+    },
+    {
+      "id": "billiards-portal-right",
+      "limits": [
+        {
+          "clearanceMetres": 0,
+          "firstIntersection": {
+            "degrees": 137.82,
+            "moving": "physics:billiards-portal-right-leaf:93",
+            "obstacle": "windows:window-sill:1845"
+          }
+        },
+        {
+          "clearanceMetres": 0.005,
+          "firstIntersection": {
+            "degrees": 137.38,
+            "moving": "physics:billiards-portal-right-leaf:93",
+            "obstacle": "windows:window-sill:1845"
+          }
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "server": false,
+      "existingGeometryAndOtherDoorAnglesPreserved": true,
+      "independentDoorStates": 4,
+      "idleCallbacks": 0
+    },
+    {
+      "server": true,
+      "existingGeometryAndOtherDoorAnglesPreserved": true,
+      "independentDoorStates": 4,
+      "idleCallbacks": 0
+    }
+  ]
+}
