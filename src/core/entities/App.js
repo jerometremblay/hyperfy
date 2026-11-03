@@ -18,6 +18,7 @@ import { createScriptTimers } from '../extras/scriptTimers'
 import { createScriptResponse, toHostFetchOptions } from '../extras/scriptFetch'
 import { createEventQueue } from '../extras/appEventQueue'
 import { briefError, createLogOnce } from '../extras/logOnce'
+import { createPolyspoonModel, runtimePolyspoonHash } from '../extras/polyspoon'
 
 // Exact shipped WorldPortal assets only: custom scripts keep their own behavior.
 function legacyPortalRoot(blueprint) {
@@ -104,6 +105,7 @@ export class App extends Entity {
 
     let root
     let script
+    let polyspoon
     // if someone else is uploading glb, show a loading indicator
     if (this.data.uploader && this.data.uploader !== this.world.network.id) {
       root = createNode('mesh')
@@ -123,7 +125,12 @@ export class App extends Entity {
       else if (blueprint.model && blueprint.model.trim() !== '' && blueprint.model !== 'script-only') {
         try {
           // check if it's a splat file
-          if (blueprint.model.match(/\.(ply|splat|ksplat|spz)$/i)) {
+          if (runtimePolyspoonHash(blueprint.model)) {
+            const source = await this.world.loader.loadPolyspoonRecipe(blueprint.model)
+            const recipe = await this.world.loader.buildPolyspoonRecipe(source, blueprint.props)
+            polyspoon = createPolyspoonModel(this.world, recipe, blueprint.props)
+            root = polyspoon.root
+          } else if (blueprint.model.match(/\.(ply|splat|ksplat|spz)$/i)) {
             // load splat data from cache first, then create node
             let splatData = this.world.loader.get('splat', blueprint.model)
             if (!splatData) splatData = await this.world.loader.load('splat', blueprint.model)
@@ -163,12 +170,17 @@ export class App extends Entity {
     }
     // if script crashed (or failed to load model), show crash-block
     if (crashed) {
+      polyspoon?.dispose()
+      polyspoon = null
       let glb = this.world.loader.get('model', 'asset://crash-block.glb')
       if (!glb) glb = await this.world.loader.load('model', 'asset://crash-block.glb')
       root = glb.toNodes()
     }
     // if a new build happened while we were fetching, stop here
-    if (this.n !== n || this.world.fatalError) return
+    if (this.n !== n || this.world.fatalError) {
+      polyspoon?.dispose()
+      return
+    }
     // unbuild any previous version
     this.unbuild()
     // mode
@@ -178,6 +190,11 @@ export class App extends Entity {
     // setup
     this.blueprint = blueprint
     this.root = root
+    this.polyspoon = polyspoon
+    if (polyspoon) {
+      this.fields = polyspoon.fields
+      this.onFields?.(this.fields)
+    }
     if (!blueprint.scene) {
       this.root.position.fromArray(this.data.position)
       this.root.quaternion.fromArray(this.data.quaternion)
@@ -265,6 +282,8 @@ export class App extends Entity {
     })
     // deactivate local node
     this.root?.deactivate()
+    this.polyspoon?.dispose()
+    this.polyspoon = null
     // deactivate world nodes
     for (const node of this.worldNodes) {
       node.deactivate()
@@ -656,6 +675,7 @@ export class App extends Entity {
     if (!this.blueprint) return
     const legacyPortal = legacyPortalRoot(this.blueprint)
     if (legacyPortal) return legacyPortal
+    if (runtimePolyspoonHash(this.blueprint.model)) return this.root.clone(true)
     const type = this.blueprint.model.endsWith('vrm') ? 'avatar' : 'model'
     let glb = this.world.loader.get(type, this.blueprint.model)
     if (!glb) return

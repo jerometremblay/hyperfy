@@ -69,6 +69,7 @@ import { useRank } from './useRank'
 import { Ranks } from '../../core/extras/ranks'
 import { PromptBoxPanel, UndoPromptBox } from './PromptBoxPanel'
 import { isPromptBox } from '../../core/extras/promptBoxTools'
+import { importPolyspoonRecipe, refreshPolyspoonRecipe } from '../../core/extras/polyspoonImport'
 import { AudioOutputField } from './AudioOutputField'
 
 const mainSectionPanes = ['prefs']
@@ -1103,6 +1104,11 @@ function Add({ world, hidden }) {
   const blueprints = getServerProvidedBlueprints(world)
   const [creatingPromptBox, setCreatingPromptBox] = useState(false)
   const [promptBoxError, setPromptBoxError] = useState('')
+  const { isAdmin } = useRank(world, world.entities.player)
+  const [recipeUrl, setRecipeUrl] = useState('')
+  const [addingRecipe, setAddingRecipe] = useState(false)
+  const [recipeBlueprint, setRecipeBlueprint] = useState(null)
+  const [recipeError, setRecipeError] = useState('')
   const span = 4
   const gap = '0.5rem'
   const add = blueprint => {
@@ -1158,6 +1164,31 @@ function Add({ world, hidden }) {
             overflow-y: auto;
             padding: 1rem;
           }
+          .recipe-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+          }
+          .recipe-input-row { display: flex; gap: 0.5rem; }
+          .recipe-input-row input {
+            min-width: 0;
+            flex: 1;
+            padding: 0.6rem;
+            color: white;
+            background: #1c1d22;
+            border: 1px solid #3a3b44;
+            border-radius: 0.5rem;
+          }
+          .recipe-input-row button {
+            padding: 0.6rem 0.8rem;
+            color: white;
+            background: #3b5965;
+            border: 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+          }
+          .recipe-input-row button:disabled { opacity: 0.5; cursor: default; }
           .add-items {
             display: flex;
             align-items: stretch;
@@ -1188,6 +1219,32 @@ function Add({ world, hidden }) {
         </div>
         <div className='add-content noscrollbar'>
           <UndoPromptBox world={world} />
+          {isAdmin && (
+            <form className='recipe-form' onSubmit={async event => {
+              event.preventDefault()
+              if (addingRecipe) return
+              setAddingRecipe(true)
+              setRecipeBlueprint(null)
+              setRecipeError('')
+              try {
+                setRecipeBlueprint(await importPolyspoonRecipe(world, recipeUrl.trim()))
+              } catch (error) {
+                setRecipeError(error.message || 'Could not add the recipe')
+              } finally {
+                setAddingRecipe(false)
+              }
+            }}>
+              <label htmlFor='polyspoon-recipe-url'>Polyspoon asset or recipe URL</label>
+              <div className='recipe-input-row'>
+                <input id='polyspoon-recipe-url' type='url' placeholder='https://polyspoon.com/asset/…' disabled={addingRecipe} value={recipeUrl} onChange={event => { setRecipeUrl(event.target.value); setRecipeBlueprint(null) }} required />
+                <button type='submit' disabled={addingRecipe}>{addingRecipe ? 'Loading…' : 'Load'}</button>
+              </div>
+              {recipeBlueprint && <div className='recipe-input-row'>
+                <button type='button' onClick={() => { add(recipeBlueprint); setRecipeBlueprint(null); setRecipeUrl('') }}>Place {recipeBlueprint.name}</button>
+              </div>}
+              {recipeError && <div role='alert'>{recipeError}</div>}
+            </form>
+          )}
           {promptBoxError && <p role='alert'>{promptBoxError}</p>}
           <div className='add-items'>
             <div className='add-item' onClick={async () => {
@@ -1236,6 +1293,10 @@ function App({ world, hidden }) {
   const [blueprint, setBlueprint] = useState(app.blueprint)
   const [replacing, setReplacing] = useState(false)
   const [replaceError, setReplaceError] = useState('')
+  const { isAdmin } = useRank(world, world.entities.player)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshMessage, setRefreshMessage] = useState('')
+  const [refreshError, setRefreshError] = useState('')
   useEffect(() => {
     showTransforms = transforms
   }, [transforms])
@@ -1251,6 +1312,25 @@ function App({ world, hidden }) {
   }, [])
   const frozen = blueprint.frozen // TODO: disable code editor, model change, metadata editing, flag editing etc
   const isAvatar = typeof blueprint.model === 'string' && blueprint.model.endsWith('vrm')
+  let recipeSource = null
+  try {
+    const url = new URL(blueprint.url)
+    if (/^polyspoon:\/\/[a-f0-9]{64}$/.test(blueprint.model || '') && url.protocol === 'https:' && !url.username && !url.password) recipeSource = url.href
+  } catch {}
+  const refreshRecipe = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setRefreshError('')
+    setRefreshMessage('')
+    try {
+      const changed = await refreshPolyspoonRecipe(world, app)
+      setRefreshMessage(changed ? 'Refresh requested.' : 'Already up to date.')
+    } catch (error) {
+      setRefreshError(error.message || 'Could not refresh the recipe')
+    } finally {
+      setRefreshing(false)
+    }
+  }
   const download = async () => {
     try {
       const file = await exportApp(app.blueprint, world.loader.loadFile)
@@ -1391,6 +1471,23 @@ function App({ world, hidden }) {
               cursor: pointer;
             }
           }
+          .app-recipe-source {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+          }
+          .app-recipe-source a { color: #a7d8e7; font-size: 0.875rem; }
+          .app-recipe-source button {
+            color: white;
+            background: #3b5965;
+            border: 0;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+          }
+          .app-recipe-source button:disabled { opacity: 0.5; cursor: default; }
           .app-content {
             flex: 1;
             overflow-y: auto;
@@ -1482,6 +1579,14 @@ function App({ world, hidden }) {
           </div>
         )}
         <div className='app-content noscrollbar'>
+          {recipeSource && <div className='app-recipe-source'>
+            <a href={recipeSource} target='_blank' rel='noopener noreferrer'>View source</a>
+            {isAdmin && !frozen && <button type='button' disabled={refreshing} onClick={refreshRecipe} title='Refresh this recipe for all linked objects'>
+              {refreshing ? 'Refreshing…' : 'Refresh from source'}
+            </button>}
+          </div>}
+          {refreshError && <p role='alert' style={{ padding: '0.5rem 1rem' }}>{refreshError}</p>}
+          {refreshMessage && <p role='status' style={{ padding: '0.5rem 1rem' }}>{refreshMessage}</p>}
           {replaceError && (
             <p role='alert' style={{ padding: '0.5rem 1rem' }}>
               {replaceError}
@@ -1644,7 +1749,7 @@ function AppFields({ world, app, blueprint }) {
     world.network.send('blueprintModified', { id, version, props: newProps })
   }
   return fields.map(field => (
-    <AppField key={field.key} world={world} props={props} field={field} value={props[field.key]} modify={modify} />
+    <AppField key={field.key} world={world} props={props} field={field} value={app.polyspoon && props[field.key] === undefined ? field.initial : props[field.key]} modify={modify} />
   ))
 }
 

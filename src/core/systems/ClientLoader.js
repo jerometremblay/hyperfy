@@ -15,6 +15,7 @@ import { emoteUrls } from '../extras/playerEmotes'
 import Hls from 'hls.js/dist/hls.js'
 import { detectSplatFormat } from '../utils/splatFormats'
 import { getSparkModule } from '../utils/sparkCache'
+import { recipeFromSandbox, runtimePolyspoonHash } from '../extras/polyspoon'
 // Streaming loader removed - using Spark.js native handling for all formats
 
 // THREE.Cache.enabled = true
@@ -40,6 +41,47 @@ export class ClientLoader extends System {
     this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))
     this.loading = { pending: 0, completed: 0, failed: 0 }
     this.preloadItems = []
+    this.polyspoonRecipes = new Map()
+  }
+
+  async loadPolyspoonRecipe(model) {
+    const hash = runtimePolyspoonHash(model)
+    if (!hash) throw new Error('Invalid Polyspoon recipe')
+    if (!this.polyspoonRecipes.has(hash)) {
+      const promise = (async () => {
+        const base = this.world.network.apiUrl
+        if (!base) throw new Error('World API is unavailable')
+        const response = await fetch(`${base}/polyspoon/sandboxed-recipes/${hash}`)
+        if (!response.ok) throw new Error(`Polyspoon recipe request failed (${response.status})`)
+        return response.text()
+      })()
+      this.polyspoonRecipes.set(hash, promise)
+      promise.catch(() => this.polyspoonRecipes.delete(hash))
+    }
+    return this.polyspoonRecipes.get(hash)
+  }
+
+  async buildPolyspoonRecipe(source, props) {
+    const parameters = JSON.stringify(props || {})
+    const worker = new Worker('/polyspoon-worker.js', { type: 'module' })
+    try {
+      const output = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Recipe sandbox timed out')), 10000)
+        worker.onmessage = event => {
+          clearTimeout(timer)
+          if (event.data?.error) reject(new Error(event.data.error))
+          else resolve(event.data?.result)
+        }
+        worker.onerror = event => {
+          clearTimeout(timer)
+          reject(new Error(`Recipe sandbox failed: ${event.message || 'worker error'}`))
+        }
+        worker.postMessage({ source, parameters })
+      })
+      return recipeFromSandbox(output)
+    } finally {
+      worker.terminate()
+    }
   }
 
   start() {

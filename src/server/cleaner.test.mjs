@@ -67,6 +67,31 @@ test('cleaner retains nested storage-only assets, deletes orphans, and fails clo
   }
 })
 
+test('cleaner preserves approved recipe assets even before they are placed', async () => {
+  const worldDir = await fs.mkdtemp(path.join(os.tmpdir(), 'recipe-cleaner-'))
+  const oldClean = process.env.CLEAN
+  const hash = 'a'.repeat(64)
+  process.env.CLEAN = 'true'
+  allAssets = [`${hash}.js`, 'orphan.jpg']
+  deleted.length = 0
+  const db = table => {
+    if (table === 'blueprints' || table === 'entities') return Promise.resolve([])
+    if (table === 'users') return { select: async () => [] }
+    return { where: () => ({ first: async () => ({ value: '{}' }) }) }
+  }
+  try {
+    await fs.ensureDir(path.join(worldDir, 'polyspoon-recipes'))
+    await fs.writeFile(path.join(worldDir, 'polyspoon-recipes', hash), '')
+    await cleaner.init({ db, worldDir })
+    assert.deepEqual(deleted, ['orphan.jpg'])
+  } finally {
+    if (oldClean === undefined) delete process.env.CLEAN
+    else process.env.CLEAN = oldClean
+    allAssets = ['saved.jpg', 'orphan.jpg']
+    await fs.remove(worldDir)
+  }
+})
+
 test('spawned strip assets survive parent deletion; removing the strip cleans its blueprint and photos', async () => {
   const worldDir = await fs.mkdtemp(path.join(os.tmpdir(), 'spawn-cleaner-'))
   const oldClean = process.env.CLEAN

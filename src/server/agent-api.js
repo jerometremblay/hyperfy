@@ -7,6 +7,7 @@ const transform = { position: vector(3), quaternion: vector(4), scale: vector(3)
 const asset = { type: 'string', pattern: '^asset://[a-f0-9]{64}\\.[a-z0-9]+$' }
 const externalAsset = { type: 'string', pattern: '^[Hh][Tt][Tt][Pp][Ss]?://' }
 const sourceAsset = { anyOf: [asset, externalAsset] }
+const polyspoonModel = { type: 'string', pattern: '^polyspoon://[a-f0-9]{64}$' }
 const optionalString = { anyOf: [{ type: 'string' }, { type: 'null' }] }
 const descriptor = {
   anyOf: [
@@ -21,7 +22,7 @@ const descriptor = {
 const blueprintFields = {
   name: { type: 'string', maxLength: 256 },
   desc: { anyOf: [{ type: 'string', maxLength: 4096 }, { type: 'null' }] },
-  model: { anyOf: [sourceAsset, { const: 'script-only' }, { type: 'null' }] },
+  model: { anyOf: [sourceAsset, polyspoonModel, { const: 'script-only' }, { type: 'null' }] },
   script: { anyOf: [sourceAsset, { type: 'null' }] },
   image: descriptor,
   author: optionalString,
@@ -59,7 +60,7 @@ const settingsFields = {
 }
 
 // One registration per running world. Tokens are never exposed through public envs.
-export async function agentAPI(fastify, { world, assets, readToken, writeToken }) {
+export async function agentAPI(fastify, { world, assets, polyspoonRegistry, readToken, writeToken }) {
   if (!readToken && !writeToken) return
   const digest = value => createHash('sha256').update(value).digest()
   const matches = (value, token) => Boolean(token) && timingSafeEqual(digest(value), digest(token))
@@ -97,6 +98,10 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
       item => item.isApp && item.data.blueprint === blueprintId && item.data.id !== excludedId
     )
   const checkAssets = async data => {
+    if (typeof data.model === 'string' && data.model.startsWith('polyspoon://')) {
+      const hash = data.model.slice('polyspoon://'.length)
+      if (!(await polyspoonRegistry?.has(hash))) fail(400, 'Polyspoon recipe is not approved')
+    }
     const urls = new Set()
     const visit = value => {
       if (typeof value === 'string' && value.startsWith('asset://')) urls.add(value)
@@ -466,6 +471,38 @@ export async function agentAPI(fastify, { world, assets, readToken, writeToken }
     await assets.upload(new File([bytes], part.filename, { type: part.mimetype || 'application/octet-stream' }))
     return reply.code(201).send({ url: 'asset://' + part.filename })
   })
+  route(
+    'POST',
+    '/polyspoon/recipes',
+    'registerPolyspoonRecipe',
+    {
+      body: body(
+        {
+          source: { type: 'string', minLength: 1, maxLength: 512000 },
+          params: { type: 'object' },
+          validateOnly: { type: 'boolean' },
+        },
+        ['source']
+      ),
+    },
+    async (request, reply) => {
+      if (!polyspoonRegistry) fail(503, 'Recipe approval storage unavailable')
+      const source = request.body.source
+      if (!world.loader?.buildPolyspoonRecipe) fail(503, 'Recipe sandbox unavailable')
+      let recipe
+      try {
+        recipe = await world.loader.buildPolyspoonRecipe(source, request.body.params || {})
+        recipe.disposeAsset(recipe.createAsset())
+      } catch {
+        fail(400, 'Recipe failed sandbox validation')
+      }
+      if (request.body.validateOnly) return { valid: true }
+      const hash = createHash('sha256').update(source).digest('hex')
+      await assets.upload(new File([source], `${hash}.js`, { type: 'text/javascript' }))
+      await polyspoonRegistry.approve(hash)
+      return reply.code(201).send({ model: `polyspoon://${hash}` })
+    }
+  )
   route('GET', '/assets/:filename', 'getAsset', { params: assetParams }, async (request, reply) => {
     const { filename } = request.params
     const bytes = await assets.read(filename)

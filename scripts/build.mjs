@@ -16,6 +16,30 @@ if (!dev) {
   await fs.emptyDir(path.join(buildDir, 'public'))
 }
 
+// Build the recipe sandbox separately: recipes never run in the world thread.
+for (const options of [
+  {
+    entryPoints: ['src/core/extras/polyspoonBrowserWorker.js'],
+    outfile: 'build/public/polyspoon-worker.js',
+    platform: 'browser',
+    format: 'esm',
+  },
+  {
+    entryPoints: ['src/server/polyspoonNodeWorker.js'],
+    outfile: 'build/polyspoon-worker-node.js',
+    platform: 'node',
+    format: 'esm',
+    packages: 'external',
+  },
+]) {
+  const workerCtx = await esbuild.context({ ...options, bundle: true, minify: !dev })
+  if (dev) await workerCtx.watch()
+  else {
+    await workerCtx.rebuild()
+    await workerCtx.dispose()
+  }
+}
+
 /**
  * Build Client
  */

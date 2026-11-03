@@ -19,6 +19,8 @@ import { getDB } from './db'
 import { Storage } from './Storage'
 import { assets } from './assets'
 import { agentAPI } from './agent-api'
+import { polyspoonRoutes } from './polyspoon-routes'
+import { PolyspoonRegistry } from './PolyspoonRegistry'
 import { collections } from './collections'
 import { cleaner } from './cleaner'
 import { assetRoutes, uploadRoutes } from './uploadRoutes'
@@ -129,6 +131,7 @@ await cleaner.init({ db, worldDir })
 
 // init storage
 const storage = new Storage(path.join(worldDir, '/storage.json'))
+const polyspoonRegistry = new PolyspoonRegistry(worldDir)
 
 // create world
 const world = createServerWorld()
@@ -138,6 +141,7 @@ await world.init({
   db,
   assets,
   storage,
+  polyspoonRegistry,
   collections: collections.list,
 })
 world.network.browserCapture = browserCapture
@@ -214,12 +218,22 @@ fastify.register(multipart, {
 fastify.register(ws, { options: { maxPayload: 65536, maxFragments: 8, perMessageDeflate: false, closeTimeout: 2000 } })
 const connectionLimits = createConnectionLimits(readConnectionLimitsEnv(process.env))
 const uploadConfig = readUploadLimitsEnv(process.env)
+const uploadLimits = createUploadLimits(uploadConfig)
 const socketLease = Symbol('wsLease')
 fastify.register(worldNetwork)
+fastify.register(polyspoonRoutes, {
+  polyspoonRegistry, assets, world, readJWT,
+  getSocket: id => world.network.sockets.get(id),
+  limits: uploadLimits,
+  clientIpHeader: uploadConfig.clientIpHeader,
+  slotTimeoutMs: uploadConfig.slotTimeoutMs,
+  minFreeBytes: uploadConfig.minFreeBytes,
+})
 fastify.register(agentAPI, {
   prefix: '/api/agent',
   world,
   assets,
+  polyspoonRegistry,
   readToken: process.env.AGENT_API_READ_TOKEN,
   writeToken: process.env.AGENT_API_WRITE_TOKEN,
 })
@@ -246,7 +260,7 @@ fastify.register(uploadRoutes, {
   assets,
   getSettings: () => world.settings,
   maxUploadSize: maxUploadSize || 256,
-  limits: createUploadLimits(uploadConfig),
+  limits: uploadLimits,
   clientIpHeader: uploadConfig.clientIpHeader,
   slotTimeoutMs: uploadConfig.slotTimeoutMs,
   minFreeBytes: uploadConfig.minFreeBytes,

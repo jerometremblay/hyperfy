@@ -15,7 +15,8 @@ const bundle = await build({
       export { Blueprints } from './src/core/systems/Blueprints.js';
       export { Scripts } from './src/core/systems/Scripts.js';
       export { ServerNetwork } from './src/core/systems/ServerNetwork.js';
-      export { Vector3, Quaternion } from './src/core/extras/three.js';`,
+      export { Vector3, Quaternion } from './src/core/extras/three.js';
+      export * as fruitStallFixture from './test/fixtures/polyspoon/market-stall.recipe.mjs';`,
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -32,8 +33,38 @@ try {
 } finally {
   await fs.unlink(filename)
 }
-const { Apps, Entities, Blueprints, Scripts, ServerNetwork, Vector3, Quaternion } = runtime
+const { Apps, Entities, Blueprints, Scripts, ServerNetwork, Vector3, Quaternion, fruitStallFixture } = runtime
 const stripScript = 'asset://strip.js'
+
+test('asset recipe builds and releases nodes through the app lifecycle', async t => {
+  const { world } = fixture(t)
+  world.isPreview = true
+  let mounted = 0
+  let removed = 0
+  world.stage.insert = () => { mounted++; return { destroy() { removed++ }, move() {} } }
+  world.loader.loadPolyspoonRecipe = async () => 'approved recipe'
+  world.loader.buildPolyspoonRecipe = async () => fruitStallFixture
+  world.blueprints.add({ id: 'fruit-bp', version: 0, model: `polyspoon://${'a'.repeat(64)}`, script: null, props: {} })
+  const app = world.entities.add({ id: 'fruit', type: 'app', blueprint: 'fruit-bp', position: [0, 0, 0], quaternion: [0, 0, 0, 1], scale: [1, 1, 1], state: {} })
+  await app.build()
+  assert.equal(app.root.children.filter(node => node.name === 'mesh').length, 60)
+  assert.equal(mounted, 60)
+  assert.equal(app.fields.length, 13)
+  assert.equal(app.fields.find(field => field.key === 'width').initial, 2.8)
+  const previousGeometry = app.root.children[0]._geometry
+  world.blueprints.modify({ id: 'fruit-bp', version: 1, props: { width: 3.5, goods: 'none' } })
+  await app.build()
+  assert.equal(app.fields.find(field => field.key === 'width').initial, 3.5)
+  assert.notEqual(app.root.children[0]._geometry, previousGeometry)
+  assert.equal(world.blueprints.get('fruit-bp').props.width, 3.5)
+  const count = app.root.children.filter(node => node.name === 'mesh').length
+  assert.ok(count < 60)
+  await app.build()
+  assert.equal(mounted, 60 + 2 * count)
+  assert.equal(removed, 60 + count)
+  app.destroy()
+  assert.equal(removed, 60 + 2 * count)
+})
 
 function fixture(t, { client = false, script = '' } = {}) {
   const broadcasts = []

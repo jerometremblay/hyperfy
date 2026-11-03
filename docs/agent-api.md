@@ -30,12 +30,13 @@ With neither set, the routes do not exist. A read token allows GET requests. A w
 | GET | `/players` | List connected players (write token required) |
 | POST | `/players/:id/teleport` | Teleport a connected player (write token required) |
 | POST | `/scripts` | Upload JavaScript source through existing local/S3 storage |
+| POST | `/polyspoon/recipes` | Approve and store a trusted compiled Polyspoon recipe (write token required) |
 | GET | `/assets/:filename` | Read one content-addressed or built-in asset, up to 256 MiB |
 | GET | `/openapi.json` | Authenticated OpenAPI schema |
 
 Blueprints define apps; entities are placed instances. Creating a blueprint does not place it in the world. Editing a blueprint rebuilds **every instance sharing it**. `props` replaces the entire properties object, so fetch and merge it before updating. Supply the version returned by GET; a stale version returns 409. Successful updates increment the version. Scene blueprints/instances are protected from edits; unique blueprints cannot be instantiated through this API. Instance moves/removals return 409 while a builder is moving or uploading them.
 
-Transforms use world coordinates, a normalized quaternion `[x,y,z,w]`, and positive scale. Omitted creation transforms default to the origin, identity rotation, and unit scale. New app `model` may be `script-only` or an existing hashed `asset://` URL. `script` accepts an existing hashed asset URL or null. Binary model upload continues to use the existing `/api/upload` endpoint; this API adds text script upload only.
+Transforms use world coordinates, a normalized quaternion `[x,y,z,w]`, and positive scale. Omitted creation transforms default to the origin, identity rotation, and unit scale. New app `model` may be `script-only`, an existing hashed `asset://` URL, an HTTP(S) URL, or an approved `polyspoon://` recipe. `script` accepts an asset URL, an HTTP(S) URL, or null. Binary models can be uploaded through the asset endpoint.
 
 Player operations are limited to connected players and require the write token, including `GET /players`. The listing returns only each player's ID, name, and last reported world position. `POST /players/:id/teleport` accepts `position: [x,y,z]` and optional `rotationY` in radians, then sends Hyperfy's normal client teleport event. Seated players are rejected. Verify completion by reading `/players` again after the client reports its new position; this does not change the saved spawn point.
 
@@ -67,6 +68,9 @@ A script-only app must create its own visible nodes. To rotate a visible model, 
 For a REST-capable ChatGPT integration, download `/api/agent/openapi.json`, change its relative `servers[0].url` to your externally reachable HTTPS URL ending in `/api/agent`, and configure bearer authentication in the client. Providing this API does not automatically give an ordinary chat access to it. The schema can also serve as the contract for a later thin MCP adapter.
 
 Mutations broadcast immediately and enter Hyperfy's existing periodic persistence queues. A successful response does not mean the next database save has completed. Script upload returns its content-addressed URL; source is retrieved through the existing asset URL, not included in blueprint inspection. As with UI edits, removal has no API undo operation. Back up valuable worlds before agent editing.
+
+For executable Polyspoon recipes, their worker sandbox and the URL-to-placement
+helper, see [Runtime Polyspoon recipes](polyspoon-runtime.md).
 
 The snapshot route reads the server's in-memory app, blueprint, settings, spawn, and storage state in one request. It excludes players and transient app state. The write token acts as the capture permission. Its optional seat-pose section contains only `seatPose:`, `seatPoseProfile:`, and `seatPoseStyles:` storage entries. Asset reads verify content-addressed hashes, allow simple built-in filenames, and reject assets larger than 256 MiB.
 

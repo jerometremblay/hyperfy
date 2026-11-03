@@ -41,6 +41,17 @@ class Cleaner {
     }
     // track a list of assets to keep
     const assetsToKeep = new Set()
+    // Approved recipes must survive cleanup, including between approval and placement.
+    let recipes
+    try {
+      recipes = await fs.readdir(path.join(worldDir, 'polyspoon-recipes'))
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+      recipes = []
+    }
+    for (const hash of recipes) {
+      if (/^[a-f0-9]{64}$/.test(hash)) assetsToKeep.add(`${hash}.js`)
+    }
     // Read before deleting anything. Corrupt/unreadable storage must abort cleaning.
     let storage
     try {

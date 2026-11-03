@@ -11,6 +11,9 @@ import { createVRMFactory } from '../extras/createVRMFactory'
 import { glbToNodes } from '../extras/glbToNodes'
 import { createNode } from '../extras/createNode'
 import { createEmoteFactory } from '../extras/createEmoteFactory'
+import { recipeFromSandbox, runtimePolyspoonHash } from '../extras/polyspoon'
+import { createHash } from 'node:crypto'
+import { Worker } from 'node:worker_threads'
 
 /**
  * Server Loader System
@@ -33,6 +36,7 @@ export class ServerLoader extends System {
       loadTexture: () => Promise.resolve(null),
     }))
     this.preloadItems = []
+    this.polyspoonRecipes = new Map()
     // this.gltfLoader.register(parser => new VRMLoaderPlugin(parser))
 
     // mock globals to allow gltf loader to work in nodejs
@@ -40,6 +44,56 @@ export class ServerLoader extends System {
     globalThis.window = {}
     globalThis.document = {
       createElementNS: () => ({ style: {} }),
+    }
+  }
+
+  init({ assets, polyspoonRegistry }) {
+    this.assets = assets
+    this.polyspoonRegistry = polyspoonRegistry
+  }
+
+  async loadPolyspoonRecipe(model) {
+    const hash = runtimePolyspoonHash(model)
+    if (!hash || !(await this.polyspoonRegistry?.has(hash))) {
+      throw new Error('Polyspoon recipe is not approved')
+    }
+    if (!this.polyspoonRecipes.has(hash)) {
+      const promise = (async () => {
+        const bytes = await this.assets.read(`${hash}.js`)
+        if (!bytes || createHash('sha256').update(bytes).digest('hex') !== hash) {
+          throw new Error('Polyspoon recipe asset is missing or corrupt')
+        }
+        return bytes.toString('utf8')
+      })()
+      this.polyspoonRecipes.set(hash, promise)
+      promise.catch(() => this.polyspoonRecipes.delete(hash))
+    }
+    return this.polyspoonRecipes.get(hash)
+  }
+
+  async buildPolyspoonRecipe(source, props) {
+    const parameters = JSON.stringify(props || {})
+    const worker = new Worker(path.join(globalThis.__dirname, 'polyspoon-worker-node.js'), {
+      resourceLimits: { maxOldGenerationSizeMb: 128, maxYoungGenerationSizeMb: 32 },
+    })
+    try {
+      const output = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Recipe sandbox timed out')), 10000)
+        const finish = (error, value) => {
+          clearTimeout(timer)
+          if (error) reject(error)
+          else resolve(value)
+        }
+        worker.once('error', error => finish(error))
+        worker.once('exit', code => finish(new Error(`Recipe sandbox exited (${code})`)))
+        worker.once('message', message =>
+          message?.error ? finish(new Error(message.error)) : finish(null, message?.result)
+        )
+        worker.postMessage({ source, parameters })
+      })
+      return recipeFromSandbox(output)
+    } finally {
+      await worker.terminate()
     }
   }
 
