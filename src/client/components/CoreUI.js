@@ -1115,9 +1115,17 @@ function ActionHint({ action, world, index = 0 }) {
       maxWidth: ['pointer', 'bottom-left'].includes(action.position) ? 'calc(100vw - 2rem)' : undefined,
       pointerEvents: 'none',
       opacity: action.opacity ?? 1,
+      flexDirection: action.type === 'hourglass' ? 'column' : undefined,
+      gap: action.type === 'hourglass' ? '0.375rem' : undefined,
     }}>
       <div className='actions-item-icon'>{getActionIcon(action)}</div>
-      {action.label && <div className='actions-item-label'>{action.label}</div>}
+      {action.label && <div className='actions-item-label' style={{
+        marginLeft: action.type === 'hourglass' ? 0 : undefined,
+        display: 'flex', alignItems: 'center', gap: '0.625em',
+      }}>
+        {action.type === 'hourglass' && action.btn && <ActionPill label={action.btn} />}
+        {action.label}
+      </div>}
     </div>
   )
 }
