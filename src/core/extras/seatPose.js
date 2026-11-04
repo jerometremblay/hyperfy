@@ -19,7 +19,8 @@ const HUMAN_BONES = new Set(['hips', 'spine', 'chest', 'upperChest', 'neck', 'he
 const DEFAULT_SITTING_POSE = {
   hips: {
     rotation: [-0.013890632255055371, 0.026158481901196722, -0.002337336235813372, 0.9995585630764714],
-    position: [0, -0.77, 0],
+    // Lower the default pelvis by 15 cm; saved per-seat poses are unchanged.
+    position: [0, -0.92, 0],
   },
   spine: {
     rotation: [0.028213875775333446, -0.006640460336598644, 0.001633149044301738, 0.9995785183388302],

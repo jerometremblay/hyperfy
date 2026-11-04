@@ -47,7 +47,7 @@ test('rejects unknown bones, non-hips translation, and invalid numeric transform
 test('provides the saved default sitting pose for every avatar', () => {
   const sittingPose = getDefaultSittingPose()
 
-  assert.deepEqual(sittingPose.hips.position, [0, -0.77, 0])
+  assert.deepEqual(sittingPose.hips.position, [0, -0.92, 0])
   assert.deepEqual(
     sittingPose.hips.rotation,
     [-0.013890632255055371, 0.026158481901196722, -0.002337336235813372, 0.9995585630764714]
