@@ -1019,3 +1019,106 @@ test('automatically exits when the seat anchor disappears', () => {
     false
   )
 })
+
+test('attachment points move in avatar space, support undo, save, and clean up', () => {
+  const { editor, player, scene, networkMessages } = createFixture()
+  editor.open(player)
+  editor.setMode('attachments')
+  editor.addAttachmentPoint()
+  editor.addAttachmentPoint()
+  editor.setAttachmentPositionAxis('x', 0.35)
+  const session = editor.session
+  assert.equal(session.attachmentPoints[1].position[0], 0.35)
+  const marker = session.attachmentMarkers[1]
+  const expected = new THREE.Vector3(0.35, 1, 0.4).applyMatrix4(session.previewScene.matrixWorld)
+  assert.ok(marker.position.distanceTo(expected) < 1e-6)
+  assert.equal(editor.gizmo.mode, 'translate')
+  editor.removeAttachmentPoint()
+  assert.equal(session.attachmentPoints.length, 1)
+  editor.undo()
+  assert.equal(session.attachmentPoints.length, 2)
+  assert.equal(session.attachmentPoints[1].position[0], 0.35)
+  editor.apply()
+  assert.equal(networkMessages.at(-1)[1].attachmentPoints.length, 2)
+  const markers = session.attachmentMarkers.slice()
+  editor.close()
+  for (const point of markers) assert.equal(scene.children.includes(point), false)
+})
+
+test('editing an attached point previews object movement and closing restores it', () => {
+  const { editor, player, engineWorld } = createFixture()
+  player.isBuilder = () => true
+  player.getAvatarUrl = () => 'asset://test.vrm'
+  const app = {
+    isApp: true,
+    data: { id: 'book', position: [0, 1, 0.4], quaternion: [0, 0, 0, 1], scale: [1, 1, 1] },
+    modify(change) {
+      Object.assign(this.data, change)
+    },
+  }
+  engineWorld.entities.get = id => (id === 'book' ? app : null)
+  player.data.seatPose = {
+    version: 1,
+    anchorId: 'seat-1',
+    avatarUrl: 'asset://test.vrm',
+    offset: [0, 0, 0],
+    rotation: [0, 0, 0, 1],
+    pose: {},
+    attachmentPoints: [
+      {
+        id: 'point-1',
+        position: [0, 1, 0.4],
+        rotation: [0, 0, 0, 1],
+        attachment: {
+          objectId: 'book',
+          originalPosition: [5, 0, 0],
+          originalRotation: [0, 0, 0, 1],
+          placedPosition: [0, 1, 0.4],
+          placedRotation: [0, 0, 0, 1],
+        },
+      },
+    ],
+  }
+  editor.open(player)
+  const before = app.data.position.slice()
+  editor.setMode('attachments')
+  editor.setAttachmentPositionAxis('x', 0.75)
+  assert.notDeepEqual(app.data.position, before)
+  editor.close()
+  assert.deepEqual(app.data.position, [0, 1, 0.4])
+})
+
+test('attachment rotation controls and gizmo update orientation and undo', () => {
+  const { editor, player } = createFixture()
+  editor.open(player)
+  editor.setMode('attachments')
+  editor.addAttachmentPoint()
+  editor.setAttachmentRotationAxis('y', 90)
+  const point = editor.session.attachmentPoints[0]
+  assert.ok(Math.abs(point.rotation[1] - Math.SQRT1_2) < 1e-6)
+  editor.undo()
+  assert.ok(Math.abs(editor.session.attachmentPoints[0].rotation[1]) < 1e-6)
+  editor.setAttachmentTool('rotate')
+  assert.equal(editor.gizmo.mode, 'rotate')
+  const sceneRotation = editor.session.previewScene.getWorldQuaternion(new THREE.Quaternion())
+  const rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3, 0, 0))
+  editor.gizmoTarget.quaternion.copy(sceneRotation.multiply(rotation))
+  editor.onJointGizmoObjectChange()
+  const result = new THREE.Quaternion().fromArray(editor.session.attachmentPoints[0].rotation)
+  assert.ok(result.angleTo(rotation) < 1e-6)
+  editor.close()
+})
+
+test('attachment rotation sliders stay independent past 90 degrees and activate rotation gizmo', () => {
+  const { editor, player } = createFixture()
+  editor.open(player)
+  editor.setMode('attachments')
+  editor.addAttachmentPoint()
+  editor.setAttachmentRotationAxis('y', 120)
+  const angles = editor.makeViewState().attachmentRotation
+  assert.ok(Math.abs(angles.x) < 1e-6)
+  assert.ok(Math.abs(angles.y - 120) < 1e-6)
+  assert.ok(Math.abs(angles.z) < 1e-6)
+  assert.equal(editor.gizmo.mode, 'rotate')
+  editor.close()
+})

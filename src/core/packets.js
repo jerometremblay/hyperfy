@@ -40,6 +40,8 @@ const names = [
   'profilerReport',
   'profilerControl',
   'playerSession',
+  'playerSeatAttachment',
+  'playerSeatAttachmentResult',
 ]
 
 const byName = {}

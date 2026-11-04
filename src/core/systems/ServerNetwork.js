@@ -38,6 +38,7 @@ import { getPortalArrival, parsePortalPose } from '../extras/portalArrival'
 import {
   getStoredSeatPose,
   sanitizeNormalizedPose,
+  sanitizeAttachmentPoints,
   sanitizePoseStyleName,
   sanitizePoseStyles,
   sanitizeSeatProfileId,
@@ -742,6 +743,30 @@ export class ServerNetwork extends System {
       if (changes?.uploader === null && entity.data.uploader && !uploader) delete changes.uploader
     }
     if (!changes || Object.keys(changes).length <= 1) return
+    if (entity.isPlayer && Object.hasOwn(changes, 'ef')) {
+      const anchorId = entity.data.effect?.anchorId
+      if (anchorId && changes.ef?.anchorId !== anchorId) {
+        const points = entity.data.seatPose?.attachmentPoints || []
+        for (let index = 0; index < points.length; index++) {
+          if (points[index].attachment) this.onPlayerSeatAttachment(socket, { action: 'return', anchorId, index }, true)
+        }
+        const record = entity.data.seatPose
+        if (
+          record?.anchorId === anchorId &&
+          record.attachmentPoints?.some(point => point.attachment) &&
+          this.world.storage?.set
+        ) {
+          const attachmentPoints = record.attachmentPoints.map(({ attachment, ...point }) => point)
+          const updated = { ...record, attachmentPoints }
+          this.world.storage.set(
+            seatPoseStorageKey(entity.data.userId || entity.data.id, record.avatarUrl, anchorId),
+            updated
+          )
+          entity.modify({ seatPose: updated })
+          this.send('entityModified', { id: entity.data.id, seatPose: updated })
+        }
+      }
+    }
     entity.modify(changes)
     const seatContextChanged =
       entity.isPlayer &&
@@ -841,6 +866,8 @@ export class ServerNetwork extends System {
 
     const seatKey = seatPoseStorageKey(userId, avatarUrl, anchorId)
     if (reset) {
+      if (player.data.seatPose?.attachmentPoints?.some(point => point.attachment))
+        return reject('Return attached objects before resetting the pose')
       this.world.storage.delete(seatKey)
       if (profileId) this.world.storage.delete(seatPoseProfileStorageKey(userId, avatarUrl, profileId))
       player.modify({ seatPose: null })
@@ -851,6 +878,19 @@ export class ServerNetwork extends System {
 
     const pose = sanitizeSeatPoseInput(data)
     if (!pose) return reject('The sitting pose data is invalid')
+    const pointIds = (pose.attachmentPoints || []).map(point => point.id).filter(Boolean)
+    if (new Set(pointIds).size !== pointIds.length) return reject('Attachment point IDs must be unique')
+    const previousPoints = player.data.seatPose?.attachmentPoints || []
+    for (const oldPoint of previousPoints) {
+      if (!oldPoint.attachment) continue
+      const nextPoint = pose.attachmentPoints?.find(point => point.id && point.id === oldPoint.id)
+      if (!nextPoint) return reject('Return attached objects before removing their points')
+      nextPoint.attachment = oldPoint.attachment
+    }
+    for (const point of pose.attachmentPoints || []) {
+      if (!previousPoints.some(oldPoint => oldPoint.id && oldPoint.id === point.id && oldPoint.attachment))
+        delete point.attachment
+    }
     const record = { version: SEAT_POSE_VERSION, anchorId, ...(profileId ? { profileId } : {}), ...pose }
     this.world.storage.set(seatKey, record)
     if (saveToProfile) {
@@ -858,11 +898,115 @@ export class ServerNetwork extends System {
         version: SEAT_POSE_VERSION,
         profileId,
         ...pose,
+        ...(pose.attachmentPoints
+          ? { attachmentPoints: pose.attachmentPoints.map(({ position, rotation }) => ({ position, rotation })) }
+          : {}),
       })
     }
     player.modify({ seatPose: record })
     this.send('entityModified', { id: player.data.id, seatPose: record })
     socket.send('playerSeatPoseResult', { ok: true })
+  }
+
+  onPlayerSeatAttachment = (socket, data, automatic = false) => {
+    if (this.stopping || this.world.fatalError) return
+    const player = socket.player
+    const reply = (ok, message) => {
+      if (!automatic || !ok) socket.send('playerSeatAttachmentResult', { ok, message })
+    }
+    if (
+      !player?.isPlayer ||
+      player.data.owner !== socket.id ||
+      player.data.id !== socket.id ||
+      (!automatic && !player.isBuilder())
+    )
+      return reply(false, 'Builder permission is required')
+    const record = player.data.seatPose
+    const anchorId = player.data.effect?.anchorId
+    if (!anchorId || record?.anchorId !== anchorId || !this.world.anchors.get(anchorId) || data?.anchorId !== anchorId)
+      return reply(false, 'Your seat changed')
+    if (!Number.isInteger(data.index) || data.index < 0) return reply(false, 'Invalid attachment point')
+    const points = record.attachmentPoints?.map(point => ({ ...point }))
+    const point = points?.[data.index]
+    if (!point || !this.world.storage?.set) return reply(false, 'Attachment point is unavailable')
+    let entity
+    let change
+    if (data.action === 'attach') {
+      if (point.attachment) return reply(false, 'Return the attached object first')
+      entity = this.world.entities.get(data.objectId)
+      if (!entity?.isApp || entity.destroyed || entity.data.pinned || entity.data.mover || entity.data.uploader)
+        return reply(false, 'Object is unavailable')
+      if (points.some(item => item.attachment?.objectId === entity.data.id))
+        return reply(false, 'Object is already attached')
+      change = sanitizeAppModify(
+        { id: entity.data.id, position: data.position, quaternion: data.quaternion },
+        socket.id
+      )
+      if (!change?.position || !change?.quaternion) return reply(false, 'Invalid object transform')
+      point.id ||= uuid()
+      point.attachment = {
+        objectId: entity.data.id,
+        originalPosition: entity.data.position.slice(),
+        originalRotation: entity.data.quaternion.slice(),
+        placedPosition: change.position.slice(),
+        placedRotation: change.quaternion.slice(),
+      }
+    } else if (data.action === 'return' || data.action === 'move') {
+      if (!point.attachment) return reply(false, 'No object is attached')
+      entity = this.world.entities.get(point.attachment.objectId)
+      if (!entity?.isApp || entity.destroyed) return reply(false, 'Attached object no longer exists')
+      if (entity.data.pinned || entity.data.mover || entity.data.uploader)
+        return reply(false, 'Attached object is pinned or being edited')
+      const near = (a, b) => a?.length === b?.length && a.every((value, index) => Math.abs(value - b[index]) < 1e-5)
+      if (
+        !near(entity.data.position, point.attachment.placedPosition) ||
+        !near(entity.data.quaternion, point.attachment.placedRotation)
+      ) {
+        socket.send('entityModified', {
+          id: entity.data.id,
+          position: entity.data.position,
+          quaternion: entity.data.quaternion,
+        })
+        return reply(false, 'The attached object moved elsewhere; return cancelled')
+      }
+      if (data.action === 'return') {
+        change = {
+          id: entity.data.id,
+          position: point.attachment.originalPosition,
+          quaternion: point.attachment.originalRotation,
+        }
+        delete point.attachment
+      } else {
+        change = sanitizeAppModify(
+          { id: entity.data.id, position: data.position, quaternion: data.quaternion },
+          socket.id
+        )
+        if (!change?.position || !change?.quaternion) return reply(false, 'Invalid object transform')
+        point.attachment = {
+          ...point.attachment,
+          placedPosition: change.position.slice(),
+          placedRotation: change.quaternion.slice(),
+        }
+      }
+    } else return reply(false, 'Unknown attachment action')
+    const updated = { ...record, attachmentPoints: points }
+    this.world.storage.set(
+      seatPoseStorageKey(player.data.userId || player.data.id, record.avatarUrl, anchorId),
+      updated
+    )
+    entity.modify(change)
+    this.dirtyApps.add(entity.data.id)
+    player.modify({ seatPose: updated })
+    this.send('entityModified', change)
+    this.send('entityModified', { id: player.data.id, seatPose: updated })
+    reply(
+      true,
+      data.action === 'return'
+        ? 'Object returned.'
+        : data.action === 'move'
+          ? 'Attachment updated.'
+          : 'Object attached.'
+    )
   }
 
   onPlayerSeatPoseStyles = (socket, data = {}) => {
@@ -881,11 +1025,19 @@ export class ServerNetwork extends System {
     if (data.action === 'save') {
       const name = sanitizePoseStyleName(data.name)
       const pose = sanitizeNormalizedPose(data.pose)
-      if (!name || !pose) return reply(styles, 'Pose style name or pose is invalid')
+      const attachmentPoints = sanitizeAttachmentPoints(data.attachmentPoints)
+      if (!name || !pose || !attachmentPoints) return reply(styles, 'Pose style name or pose is invalid')
+      const style = {
+        name,
+        pose,
+        ...(attachmentPoints.length
+          ? { attachmentPoints: attachmentPoints.map(({ position, rotation }) => ({ position, rotation })) }
+          : {}),
+      }
       const index = styles.findIndex(style => style.name.toLocaleLowerCase('en') === name.toLocaleLowerCase('en'))
       if (index === -1 && styles.length >= 20) return reply(styles, 'You can save at most 20 pose styles')
-      if (index === -1) styles.push({ name, pose })
-      else styles[index] = { name, pose }
+      if (index === -1) styles.push(style)
+      else styles[index] = style
     } else if (data.action === 'delete') {
       const name = sanitizePoseStyleName(data.name)
       if (!name) return reply(styles, 'Pose style name is invalid')

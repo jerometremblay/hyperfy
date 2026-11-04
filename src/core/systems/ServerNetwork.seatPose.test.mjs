@@ -247,3 +247,192 @@ test('stores private reusable styles by user and upserts names case-insensitivel
   network.onPlayerSeatPoseStyles(socket, { action: 'delete', name: 'RELAXED' })
   assert.deepEqual(stored.get(styleKey), [])
 })
+
+test('attaches an object, persists its original transform, and returns it', () => {
+  const { network, player, socket, stored } = createFixture()
+  player.isBuilder = () => true
+  const app = {
+    isApp: true,
+    data: { id: 'book', position: [5, 2, 1], quaternion: [0, 0, 0, 1] },
+    modify(change) {
+      Object.assign(this.data, change)
+    },
+  }
+  network.world.entities.get = id => (id === 'book' ? app : player)
+  network.onPlayerSeatPose(socket, {
+    anchorId: 'chair:seat',
+    avatarUrl,
+    offset: [0, 0, 0],
+    rotation: [0, 0, 0, 1],
+    pose,
+    attachmentPoints: [{ position: [0, 1, 0], rotation: [0, 0, 0, 1] }],
+  })
+  network.onPlayerSeatAttachment(socket, {
+    action: 'attach',
+    anchorId: 'chair:seat',
+    index: 0,
+    objectId: 'book',
+    position: [0, 1, 0],
+    quaternion: [0, 0, 0, 1],
+  })
+  const attachment = player.data.seatPose.attachmentPoints[0].attachment
+  assert.deepEqual(attachment.originalPosition, [5, 2, 1])
+  assert.equal(
+    stored.get(seatPoseStorageKey('user-1', avatarUrl, 'chair:seat')).attachmentPoints[0].attachment.objectId,
+    'book'
+  )
+  assert.deepEqual(app.data.position, [0, 1, 0])
+  network.onPlayerSeatAttachment(socket, { action: 'return', anchorId: 'chair:seat', index: 0 })
+  assert.deepEqual(app.data.position, [5, 2, 1])
+  assert.equal(player.data.seatPose.attachmentPoints[0].attachment, undefined)
+})
+
+test('does not return an attached object moved by another user', () => {
+  const { network, player, socket, replies } = createFixture()
+  player.isBuilder = () => true
+  const app = {
+    isApp: true,
+    data: { id: 'book', position: [5, 2, 1], quaternion: [0, 0, 0, 1] },
+    modify(change) {
+      Object.assign(this.data, change)
+    },
+  }
+  network.world.entities.get = id => (id === 'book' ? app : player)
+  network.onPlayerSeatPose(socket, {
+    anchorId: 'chair:seat',
+    avatarUrl,
+    offset: [0, 0, 0],
+    rotation: [0, 0, 0, 1],
+    pose,
+    attachmentPoints: [{ position: [0, 1, 0], rotation: [0, 0, 0, 1] }],
+  })
+  network.onPlayerSeatAttachment(socket, {
+    action: 'attach',
+    anchorId: 'chair:seat',
+    index: 0,
+    objectId: 'book',
+    position: [0, 1, 0],
+    quaternion: [0, 0, 0, 1],
+  })
+  app.data.position = [10, 0, 0]
+  network.onPlayerSeatAttachment(socket, { action: 'return', anchorId: 'chair:seat', index: 0 })
+  assert.deepEqual(app.data.position, [10, 0, 0])
+  assert.equal(replies.at(-1)[1].ok, false)
+  assert.ok(player.data.seatPose.attachmentPoints[0].attachment)
+})
+
+test('moving an attached object preserves its original return position', () => {
+  const { network, player, socket } = createFixture()
+  player.isBuilder = () => true
+  const app = {
+    isApp: true,
+    data: { id: 'book', position: [5, 2, 1], quaternion: [0, 0, 0, 1] },
+    modify(change) {
+      Object.assign(this.data, change)
+    },
+  }
+  network.world.entities.get = id => (id === 'book' ? app : player)
+  network.onPlayerSeatPose(socket, {
+    anchorId: 'chair:seat',
+    avatarUrl,
+    offset: [0, 0, 0],
+    rotation: [0, 0, 0, 1],
+    pose,
+    attachmentPoints: [{ position: [0, 1, 0], rotation: [0, 0, 0, 1] }],
+  })
+  network.onPlayerSeatAttachment(socket, {
+    action: 'attach',
+    anchorId: 'chair:seat',
+    index: 0,
+    objectId: 'book',
+    position: [0, 1, 0],
+    quaternion: [0, 0, 0, 1],
+  })
+  network.onPlayerSeatAttachment(socket, {
+    action: 'move',
+    anchorId: 'chair:seat',
+    index: 0,
+    position: [1, 1, 0],
+    quaternion: [0, 0, 0, 1],
+  })
+  assert.deepEqual(app.data.position, [1, 1, 0])
+  network.onPlayerSeatAttachment(socket, { action: 'return', anchorId: 'chair:seat', index: 0 })
+  assert.deepEqual(app.data.position, [5, 2, 1])
+})
+
+test('standing returns all attached objects and clears their saved associations', async () => {
+  const { network, player, socket, stored } = createFixture()
+  player.isBuilder = () => true
+  const makeApp = (id, position) => ({
+    isApp: true,
+    data: { id, position, quaternion: [0, 0, 0, 1] },
+    modify(change) {
+      Object.assign(this.data, change)
+    },
+  })
+  const a = makeApp('book', [5, 2, 1])
+  const b = makeApp('cup', [6, 2, 1])
+  network.world.entities.get = id => ({ book: a, cup: b, [player.data.id]: player })[id]
+  network.onPlayerSeatPose(socket, {
+    anchorId: 'chair:seat',
+    avatarUrl,
+    offset: [0, 0, 0],
+    rotation: [0, 0, 0, 1],
+    pose,
+    attachmentPoints: [0, 1].map(() => ({ position: [0, 1, 0], rotation: [0, 0, 0, 1] })),
+  })
+  for (const [index, objectId] of ['book', 'cup'].entries())
+    network.onPlayerSeatAttachment(socket, {
+      action: 'attach',
+      anchorId: 'chair:seat',
+      index,
+      objectId,
+      position: [index, 1, 0],
+      quaternion: [0, 0, 0, 1],
+    })
+  await network.onEntityModified(socket, { id: player.data.id, ef: null })
+  assert.deepEqual(a.data.position, [5, 2, 1])
+  assert.deepEqual(b.data.position, [6, 2, 1])
+  const record = stored.get(seatPoseStorageKey('user-1', avatarUrl, 'chair:seat'))
+  assert.ok(record.attachmentPoints.every(point => !point.attachment))
+})
+
+test('standing leaves externally moved objects in place while returning the others', async () => {
+  const { network, player, socket, stored, replies } = createFixture()
+  player.isBuilder = () => true
+  const makeApp = (id, position) => ({
+    isApp: true,
+    data: { id, position, quaternion: [0, 0, 0, 1] },
+    modify(change) {
+      Object.assign(this.data, change)
+    },
+  })
+  const a = makeApp('book', [5, 2, 1])
+  const b = makeApp('cup', [6, 2, 1])
+  network.world.entities.get = id => ({ book: a, cup: b, [player.data.id]: player })[id]
+  network.onPlayerSeatPose(socket, {
+    anchorId: 'chair:seat',
+    avatarUrl,
+    offset: [0, 0, 0],
+    rotation: [0, 0, 0, 1],
+    pose,
+    attachmentPoints: [0, 1].map(() => ({ position: [0, 1, 0], rotation: [0, 0, 0, 1] })),
+  })
+  for (const [index, objectId] of ['book', 'cup'].entries())
+    network.onPlayerSeatAttachment(socket, {
+      action: 'attach',
+      anchorId: 'chair:seat',
+      index,
+      objectId,
+      position: [index, 1, 0],
+      quaternion: [0, 0, 0, 1],
+    })
+  a.data.position = [20, 0, 0]
+  await network.onEntityModified(socket, { id: player.data.id, ef: null })
+  assert.deepEqual(a.data.position, [20, 0, 0])
+  assert.deepEqual(b.data.position, [6, 2, 1])
+  const points = stored.get(seatPoseStorageKey('user-1', avatarUrl, 'chair:seat')).attachmentPoints
+  assert.equal(points[0].attachment, undefined)
+  assert.equal(points[1].attachment, undefined)
+  assert.ok(replies.some(([type, result]) => type === 'playerSeatAttachmentResult' && result.ok === false))
+})

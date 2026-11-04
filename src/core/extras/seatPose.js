@@ -253,6 +253,37 @@ export function getDefaultSittingPose() {
   )
 }
 
+export function sanitizeAttachmentPoints(input = []) {
+  if (!Array.isArray(input)) return null
+  const points = []
+  for (const point of input) {
+    const position = sanitizeVector(point?.position, 5)
+    const rotation = sanitizeQuaternion(point?.rotation)
+    if (!position || !rotation) return null
+    const id = typeof point.id === 'string' && point.id.length <= 128 ? point.id : undefined
+    let attachment
+    if (point.attachment !== undefined) {
+      const item = point.attachment
+      const originalPosition = sanitizeVector(item?.originalPosition, 100000)
+      const originalRotation = sanitizeQuaternion(item?.originalRotation)
+      if (
+        typeof item?.objectId !== 'string' ||
+        !item.objectId ||
+        item.objectId.length > 128 ||
+        !originalPosition ||
+        !originalRotation
+      )
+        return null
+      const placedPosition = sanitizeVector(item.placedPosition, 100000)
+      const placedRotation = sanitizeQuaternion(item.placedRotation)
+      if (!placedPosition || !placedRotation) return null
+      attachment = { objectId: item.objectId, originalPosition, originalRotation, placedPosition, placedRotation }
+    }
+    points.push({ position, rotation, ...(id ? { id } : {}), ...(attachment ? { attachment } : {}) })
+  }
+  return points
+}
+
 export function sanitizeSeatPoseInput(input) {
   if (!isRecord(input)) return null
   if (typeof input.avatarUrl !== 'string' || input.avatarUrl.length < 1 || input.avatarUrl.length > 2048) return null
@@ -260,7 +291,15 @@ export function sanitizeSeatPoseInput(input) {
   const rotation = sanitizeQuaternion(input.rotation)
   const pose = sanitizeNormalizedPose(input.pose)
   if (!offset || !rotation || !pose) return null
-  return { avatarUrl: input.avatarUrl, offset, rotation, pose }
+  const attachmentPoints = sanitizeAttachmentPoints(input.attachmentPoints)
+  if (!attachmentPoints) return null
+  return {
+    avatarUrl: input.avatarUrl,
+    offset,
+    rotation,
+    pose,
+    ...(attachmentPoints.length ? { attachmentPoints } : {}),
+  }
 }
 
 export function sanitizeSeatPoseRecord(input) {
@@ -320,7 +359,15 @@ export function sanitizePoseStyles(input) {
     const key = name?.toLocaleLowerCase('en')
     if (!name || !pose || names.has(key)) return null
     names.add(key)
-    styles.push({ name, pose })
+    const attachmentPoints = sanitizeAttachmentPoints(item.attachmentPoints)
+    if (!attachmentPoints) return null
+    styles.push({
+      name,
+      pose,
+      ...(attachmentPoints.length
+        ? { attachmentPoints: attachmentPoints.map(({ position, rotation }) => ({ position, rotation })) }
+        : {}),
+    })
   }
   return styles
 }

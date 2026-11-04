@@ -167,3 +167,18 @@ test('limits reusable style names and rejects duplicate style names', () => {
     { name: 'Relaxed', pose: sanitizeNormalizedPose(pose) },
   ])
 })
+
+test('persists attachment transforms and rejects malformed points', () => {
+  const config = { avatarUrl: 'asset://avatar.vrm', offset: [0, 0, 0], rotation: [0, 0, 0, 1], pose }
+  const attachmentPoints = [{ position: [0.3, 1, 0.4], rotation: [0, 0, 0, 1] }]
+  assert.deepEqual(sanitizeSeatPoseInput({ ...config, attachmentPoints }).attachmentPoints, attachmentPoints)
+  assert.equal(sanitizeSeatPoseInput({ ...config, attachmentPoints: [null] }), null)
+  assert.equal(
+    sanitizeSeatPoseInput({ ...config, attachmentPoints: [{ ...attachmentPoints[0], position: [Infinity, 0, 0] }] }),
+    null
+  )
+  assert.deepEqual(
+    sanitizePoseStyles([{ name: 'Holding', pose, attachmentPoints }])[0].attachmentPoints,
+    attachmentPoints
+  )
+})

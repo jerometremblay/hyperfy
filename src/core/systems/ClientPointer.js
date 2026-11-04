@@ -1,5 +1,6 @@
 import * as THREE from '../extras/three'
 import { ControlPriorities } from '../extras/ControlPriorities'
+import { SeatAttachments } from '../extras/SeatAttachments'
 import { resolvePortalHit } from '../extras/portalInteraction'
 
 import { System } from './System'
@@ -18,6 +19,8 @@ export class ClientPointer extends System {
   constructor(world) {
     super(world)
     this.pointerState = new PointerState()
+    this.attachments = new SeatAttachments(world)
+    this.attachmentClick = false
   }
 
   init({ ui }) {
@@ -29,8 +32,21 @@ export class ClientPointer extends System {
       priority: ControlPriorities.POINTER,
     })
     // Consume the DOM press before the lower-priority builder requests pointer lock.
-    this.control.mouseLeft.onPress = this.captureScriptClick
-    this.control.mouseRight.onPress = this.captureScriptClick
+    this.control.mouseLeft.onPress = () => {
+      if (this.attachments.press(this.control, this.screenHit)) {
+        this.attachmentClick = true
+        return true
+      }
+      return this.captureScriptClick()
+    }
+    this.control.mouseRight.onPress = () => {
+      if (this.attachments.cancel()) {
+        this.attachmentClick = true
+        return true
+      }
+      return this.captureScriptClick()
+    }
+    if (this.control.escape) this.control.escape.onPress = () => this.attachments.cancel()
   }
 
   captureScriptClick = () => {
@@ -52,6 +68,12 @@ export class ClientPointer extends System {
   }
 
   update(delta) {
+    this.attachments.refresh(this.control, this.screenHit)
+    if (this.attachmentClick) {
+      this.attachmentClick = false
+      this.pointerState.update(null, [], ['left', 'right'])
+      return
+    }
     if (this.world.builder?.enabled) {
       this.pointerState.update(null, [], ['left', 'right'])
       return
@@ -99,6 +121,7 @@ export class ClientPointer extends System {
   }
 
   destroy() {
+    this.attachments.clear()
     this.control?.release()
     this.control = null
   }

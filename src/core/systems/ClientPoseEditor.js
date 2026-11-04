@@ -2,6 +2,7 @@ import * as THREE from '../extras/three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { getAvatarFocus } from '../extras/avatarFocus'
+import { getMatchingSeatPose } from '../extras/seatPose'
 import { exportPose } from '../extras/exportPose'
 import { downloadFile } from '../extras/downloadFile'
 import {
@@ -337,6 +338,13 @@ export class ClientPoseEditor extends System {
         anchorMarker: this.createMarker(0xff625e, 0.08),
         hipsMarker: this.createMarker(0x51e2a3, 0.06),
         guideMarkers: new Map(),
+        attachmentPoints: copyJSON(getMatchingSeatPose(player.data, avatarUrl)?.attachmentPoints || []),
+        attachmentMarkers: [],
+        attachmentPreviews: new Map(),
+        attachmentsApplied: false,
+        selectedAttachment: 0,
+        attachmentTool: 'translate',
+        attachmentAngles: new WeakMap(),
         floorGuide: null,
         boneNames: factoryBoneNames,
         selectedBone: factoryBoneNames.includes('hips') ? 'hips' : factoryBoneNames[0],
@@ -470,6 +478,7 @@ export class ClientPoseEditor extends System {
 
     if (!session.applying && !this.gizmoActive && this.control.mouseLeft.pressed) {
       if (session.mode === 'placement') this.beginPlacementDrag()
+      if (session.mode === 'attachments') this.selectAttachmentAtPointer()
       if (session.mode === 'posture' && session.postureTool === 'rotate') this.selectJointAtPointer()
     }
     if (!session.applying && !this.gizmoActive && session.drag && this.control.mouseLeft.down) {
@@ -589,7 +598,7 @@ export class ClientPoseEditor extends System {
   }
 
   setMode(mode) {
-    if (!this.session || !['placement', 'posture', 'ik'].includes(mode)) return
+    if (!this.session || !['placement', 'posture', 'ik', 'attachments'].includes(mode)) return
     this.endHistoryGroup()
     this.session.mode = mode
     this.session.drag = null
@@ -927,6 +936,7 @@ export class ClientPoseEditor extends System {
     if (!session) return null
     return {
       pose: copyJSON(session.pose),
+      attachmentPoints: copyJSON(session.attachmentPoints || []),
       position: session.placementPosition.toArray(),
       rotation: session.placementRotation.toArray(),
     }
@@ -994,6 +1004,8 @@ export class ClientPoseEditor extends System {
     session.restoringHistory = true
     session.historyIndex = index
     session.pose = copyJSON(snapshot.pose)
+    session.attachmentPoints = copyJSON(snapshot.attachmentPoints || [])
+    session.selectedAttachment = Math.min(session.selectedAttachment, Math.max(0, session.attachmentPoints.length - 1))
     session.placementPosition.fromArray(snapshot.position)
     session.placementRotation.fromArray(snapshot.rotation)
     session.ikTargets = {}
@@ -1203,6 +1215,142 @@ export class ClientPoseEditor extends System {
     this.updateReferenceMarkers()
   }
 
+  selectAttachmentAtPointer() {
+    const session = this.session
+    if (!session || session.applying || !this.getPointerRay()) return false
+    const hit = this.raycaster.intersectObjects(session.attachmentMarkers, false)[0]
+    if (!hit) return false
+    this.selectAttachmentPoint(session.attachmentMarkers.indexOf(hit.object))
+    return true
+  }
+
+  addAttachmentPoint() {
+    const session = this.session
+    if (!session || session.applying) return
+    session.attachmentPoints.push({ position: [0, 1, 0.4], rotation: [0, 0, 0, 1] })
+    session.selectedAttachment = session.attachmentPoints.length - 1
+    this.updateJointMarkers()
+    this.commitHistory()
+    this.emitState()
+  }
+
+  removeAttachmentPoint() {
+    const session = this.session
+    if (!session || session.applying || !session.attachmentPoints.length) return
+    if (session.attachmentPoints[session.selectedAttachment]?.attachment) {
+      session.error = 'Return the attached object before removing this point'
+      this.emitState()
+      return
+    }
+    session.attachmentPoints.splice(session.selectedAttachment, 1)
+    session.selectedAttachment = Math.max(0, session.selectedAttachment - 1)
+    this.updateJointMarkers()
+    this.commitHistory()
+    this.emitState()
+  }
+
+  selectAttachmentPoint(index) {
+    const session = this.session
+    if (!session || session.applying || !session.attachmentPoints[index]) return
+    session.selectedAttachment = index
+    this.updateJointMarkers()
+    this.emitState()
+  }
+
+  setAttachmentTool(tool) {
+    if (!this.session || this.session.applying || !['translate', 'rotate'].includes(tool)) return
+    this.endHistoryGroup()
+    this.session.attachmentTool = tool
+    this.syncJointGizmo()
+    this.emitState()
+  }
+
+  setAttachmentRotationAxis(axis, degrees) {
+    const session = this.session
+    const point = session?.attachmentPoints[session.selectedAttachment]
+    if (!point || session.applying || !['x', 'y', 'z'].includes(axis) || !Number.isFinite(degrees)) return
+    const angles = { ...(session.attachmentAngles.get(point) || getBoneRotationEuler(point.rotation)) }
+    angles[axis] = THREE.MathUtils.clamp(degrees, -180, 180)
+    session.attachmentAngles.set(point, angles)
+    session.attachmentTool = 'rotate'
+    point.rotation = new THREE.Quaternion()
+      .setFromEuler(
+        new THREE.Euler(
+          angles.x * THREE.MathUtils.DEG2RAD,
+          angles.y * THREE.MathUtils.DEG2RAD,
+          angles.z * THREE.MathUtils.DEG2RAD,
+          'XYZ'
+        )
+      )
+      .toArray()
+    this.updateJointMarkers()
+    this.commitHistory()
+    this.emitState()
+  }
+
+  setAttachmentPositionAxis(axis, value) {
+    const session = this.session
+    const point = session?.attachmentPoints[session.selectedAttachment]
+    if (!point || session.applying || !['x', 'y', 'z'].includes(axis) || !Number.isFinite(value)) return
+    point.position['xyz'.indexOf(axis)] = THREE.MathUtils.clamp(value, -5, 5)
+    this.updateJointMarkers()
+    this.commitHistory()
+    this.emitState()
+  }
+
+  updateAttachmentMarkers() {
+    const session = this.session
+    if (!session) return
+    session.attachmentMarkers ||= []
+    const points = session.attachmentPoints || []
+    while (session.attachmentMarkers.length > points.length) {
+      const marker = session.attachmentMarkers.pop()
+      marker.removeFromParent()
+      marker.geometry.dispose()
+      marker.material.dispose()
+    }
+    session.previewScene.updateWorldMatrix(true, false)
+    points.forEach((point, index) => {
+      let marker = session.attachmentMarkers[index]
+      if (!marker) {
+        marker = this.createMarker(0xfff4bf, 0.025)
+        session.attachmentMarkers.push(marker)
+        this.world.stage.scene.add(marker)
+      }
+      marker.visible = session.mode === 'attachments'
+      marker.scale.setScalar(index === session.selectedAttachment ? 1.5 : 1)
+      marker.position.fromArray(point.position).applyMatrix4(session.previewScene.matrixWorld)
+      marker.updateMatrixWorld(true)
+      const attachment = point.attachment
+      const entity = attachment && this.world.entities.get?.(attachment.objectId)
+      if (
+        !entity?.isApp ||
+        entity.destroyed ||
+        entity.data.pinned ||
+        entity.data.mover ||
+        entity.data.uploader ||
+        !session.player.isBuilder?.()
+      )
+        return
+      let preview = session.attachmentPreviews.get(attachment.objectId)
+      if (!preview) {
+        preview = { entity, position: entity.data.position.slice(), quaternion: entity.data.quaternion.slice() }
+        session.attachmentPreviews.set(attachment.objectId, preview)
+      }
+      const position = marker.position.toArray()
+      const quaternion = session.previewScene
+        .getWorldQuaternion(new THREE.Quaternion())
+        .multiply(new THREE.Quaternion().fromArray(point.rotation))
+        .toArray()
+      if (
+        JSON.stringify(entity.data.position) !== JSON.stringify(position) ||
+        JSON.stringify(entity.data.quaternion) !== JSON.stringify(quaternion)
+      ) {
+        entity.modify({ id: entity.data.id, position, quaternion })
+      }
+    })
+  }
+
   createMarker(color, radius) {
     const marker = new THREE.Mesh(
       new THREE.SphereGeometry(radius, 12, 8),
@@ -1265,6 +1413,7 @@ export class ClientPoseEditor extends System {
       marker.updateMatrixWorld(true)
     }
     this.updateSelectedMarker()
+    this.updateAttachmentMarkers()
     this.syncJointGizmo()
   }
 
@@ -1278,7 +1427,7 @@ export class ClientPoseEditor extends System {
     gizmo.space = 'local'
     gizmo.setSize(0.7)
     gizmo.addEventListener('mouseDown', () => {
-      if (this.selectJointAtPointer()) {
+      if (this.session?.mode !== 'attachments' && this.selectJointAtPointer()) {
         gizmo.pointerUp(null)
         return
       }
@@ -1308,6 +1457,28 @@ export class ClientPoseEditor extends System {
     const session = this.session
     if (!session || session.applying || !this.gizmoTarget) return
 
+    if (session.mode === 'attachments') {
+      const point = session.attachmentPoints[session.selectedAttachment]
+      if (!point) return
+      if (session.attachmentTool === 'rotate') {
+        session.attachmentAngles.delete(point)
+        point.rotation = session.previewScene
+          .getWorldQuaternion(new THREE.Quaternion())
+          .invert()
+          .multiply(this.gizmoTarget.quaternion)
+          .normalize()
+          .toArray()
+      } else {
+        point.position = session.previewScene
+          .worldToLocal(this.gizmoTarget.position.clone())
+          .clampScalar(-5, 5)
+          .toArray()
+      }
+      this.updateAttachmentMarkers()
+      this.commitHistory()
+      this.emitState()
+      return
+    }
     const inverseSceneRotation = session.previewScene.getWorldQuaternion(new THREE.Quaternion()).invert()
     const normalizedRotation = inverseSceneRotation
       .multiply(this.gizmoTarget.getWorldQuaternion(new THREE.Quaternion()))
@@ -1320,6 +1491,22 @@ export class ClientPoseEditor extends System {
     const session = this.session
     if (!session || !this.gizmo || !this.gizmoTarget || !this.gizmoHelper) return
 
+    if (session.mode === 'attachments' && !session.applying && session.attachmentMarkers[session.selectedAttachment]) {
+      this.gizmo.mode = session.attachmentTool
+      this.gizmo.space = session.attachmentTool === 'rotate' ? 'local' : 'world'
+      this.gizmoTarget.position.copy(session.attachmentMarkers[session.selectedAttachment].position)
+      const point = session.attachmentPoints[session.selectedAttachment]
+      this.gizmoTarget.quaternion
+        .copy(session.previewScene.getWorldQuaternion(new THREE.Quaternion()))
+        .multiply(new THREE.Quaternion().fromArray(point.rotation))
+      this.gizmoTarget.updateMatrixWorld(true)
+      this.gizmo.enabled = true
+      this.gizmoHelper.visible = true
+      if (this.gizmo.object !== this.gizmoTarget) this.gizmo.attach(this.gizmoTarget)
+      return
+    }
+    this.gizmo.mode = 'rotate'
+    this.gizmo.space = 'local'
     const bone =
       session.mode === 'posture' && session.postureTool === 'rotate' && !session.applying
         ? this.getBone(session.selectedBone)
@@ -1453,6 +1640,11 @@ export class ClientPoseEditor extends System {
       active: true,
       mode: session.mode,
       postureTool: session.postureTool,
+      selectedAttachment: session.selectedAttachment,
+      attachmentTool: session.attachmentTool,
+      attachmentRotation:
+        session.attachmentAngles.get(session.attachmentPoints[session.selectedAttachment]) ||
+        getBoneRotationEuler(session.attachmentPoints[session.selectedAttachment]?.rotation || [0, 0, 0, 1]),
       anchorId: session.anchorId,
       profileId: session.profileId,
       avatarUrl: session.avatarUrl,
@@ -1471,6 +1663,7 @@ export class ClientPoseEditor extends System {
         yaw,
       },
       pose: copyJSON(session.pose),
+      attachmentPoints: copyJSON(session.attachmentPoints || []),
       mirror: session.mirror,
       jointLimits: session.jointLimits,
       ikLimb: session.ikLimb,
@@ -1528,6 +1721,7 @@ export class ClientPoseEditor extends System {
         request.offset = session.placementPosition.toArray()
         request.rotation = session.placementRotation.toArray()
         request.pose = session.pose
+        request.attachmentPoints = session.attachmentPoints
       }
       this.world.network.send('playerSeatPose', request)
     } catch (error) {
@@ -1565,6 +1759,31 @@ export class ClientPoseEditor extends System {
     const session = this.session
     if (!session?.applying) return
     if (result?.ok) {
+      session.attachmentsApplied = true
+      for (const { entity, position, quaternion } of session.attachmentPreviews.values()) {
+        if (
+          !entity.destroyed &&
+          !entity.data.pinned &&
+          !entity.data.mover &&
+          !entity.data.uploader &&
+          session.player.isBuilder?.()
+        ) {
+          this.world.builder?.addUndo({
+            name: 'move-entity',
+            entityId: entity.data.id,
+            position,
+            quaternion,
+            scale: entity.data.scale.slice(),
+          })
+          this.world.network.send('playerSeatAttachment', {
+            action: 'move',
+            anchorId: session.anchorId,
+            index: session.attachmentPoints.findIndex(point => point.attachment?.objectId === entity.data.id),
+            position: entity.data.position,
+            quaternion: entity.data.quaternion,
+          })
+        }
+      }
       this.close()
     } else {
       session.applying = false
@@ -1580,7 +1799,11 @@ export class ClientPoseEditor extends System {
 
   setStyles(styles, error = null) {
     if (!Array.isArray(styles)) return
-    this.styles = styles.map(style => ({ name: style.name, pose: copyJSON(style.pose) }))
+    this.styles = styles.map(style => ({
+      name: style.name,
+      pose: copyJSON(style.pose),
+      attachmentPoints: copyJSON(style.attachmentPoints || []),
+    }))
     if (this.session) this.session.styleError = error
     if (this.session) {
       this.session.styles = this.styles
@@ -1592,7 +1815,12 @@ export class ClientPoseEditor extends System {
     const session = this.session
     if (!session || session.applying || !name?.trim()) return false
     session.styleError = null
-    this.world.network.send('playerSeatPoseStyles', { action: 'save', name: name.trim(), pose: session.pose })
+    this.world.network.send('playerSeatPoseStyles', {
+      action: 'save',
+      name: name.trim(),
+      pose: session.pose,
+      attachmentPoints: session.attachmentPoints,
+    })
     this.emitState()
     return true
   }
@@ -1609,6 +1837,13 @@ export class ClientPoseEditor extends System {
     const session = this.session
     const style = session?.styles.find(item => item.name === name)
     if (!style || session.applying) return false
+    if (session.attachmentPoints.some(point => point.attachment)) {
+      session.styleError = 'Return attached objects before applying another style'
+      this.emitState()
+      return false
+    }
+    session.attachmentPoints = copyJSON(style.attachmentPoints || [])
+    session.selectedAttachment = 0
     session.pose = copyJSON(session.initialPose)
     for (const [bone, transform] of Object.entries(style.pose)) {
       session.pose[bone] = { ...session.pose[bone], ...copyJSON(transform) }
@@ -1640,6 +1875,17 @@ export class ClientPoseEditor extends System {
     if (!session) {
       this.clearOpenError()
       return false
+    }
+    if (!session.attachmentsApplied) {
+      for (const { entity, position, quaternion } of session.attachmentPreviews.values()) {
+        if (!entity.destroyed && !entity.data.pinned && !entity.data.mover && !entity.data.uploader)
+          entity.modify({ id: entity.data.id, position, quaternion })
+      }
+    }
+    for (const marker of session.attachmentMarkers || []) {
+      marker.removeFromParent()
+      marker.geometry.dispose()
+      marker.material.dispose()
     }
     this.session = null
     this.openError = null

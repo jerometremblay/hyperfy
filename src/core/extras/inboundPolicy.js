@@ -36,6 +36,7 @@ const CLIENT_PACKET_NAMES = new Set([
   'ping',
   'browserInput',
   'playerSeatPose',
+  'playerSeatAttachment',
   'playerSeatPoseStyles',
   'playerExpression',
   'profilerReport',

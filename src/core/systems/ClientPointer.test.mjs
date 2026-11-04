@@ -148,7 +148,14 @@ test('an open XR sidebar blocks clicks on objects behind it and releases existin
 })
 
 test('script interaction consumes a press before lower-priority pointer lock, but leaves editor and ordinary clicks alone', () => {
-  let hit = { node: { _onPointerDown() {}, get onPointerDown() { return this._onPointerDown } } }
+  let hit = {
+    node: {
+      _onPointerDown() {},
+      get onPointerDown() {
+        return this._onPointerDown
+      },
+    },
+  }
   const world = {
     builder: { enabled: false },
     stage: { raycastPointer: () => [hit], raycastReticle: () => [hit] },
@@ -169,9 +176,34 @@ test('edit mode does not dispatch gameplay pointer callbacks', () => {
   let calls = 0
   const pointer = new ClientPointer({
     builder: { enabled: true },
-    stage: { raycastPointer() { calls++; return [] } },
+    stage: {
+      raycastPointer() {
+        calls++
+        return []
+      },
+    },
   })
   pointer.update(0)
   assert.equal(calls, 0)
   assert.equal(pointer.pointerState.activePath.size, 0)
+})
+
+test('attachment clicks consume input before scripts and lower-priority controls', () => {
+  const control = { mouseLeft: {}, mouseRight: {}, escape: {} }
+  const pointer = new ClientPointer({ controls: { bind: () => control } })
+  pointer.start()
+  let scriptClicks = 0
+  pointer.captureScriptClick = () => {
+    scriptClicks++
+    return false
+  }
+  pointer.attachments = { press: () => true, refresh() {}, cancel: () => true }
+  assert.equal(control.mouseLeft.onPress(), true)
+  assert.equal(scriptClicks, 0)
+  assert.equal(pointer.attachmentClick, true)
+  pointer.update(0)
+  assert.equal(pointer.attachmentClick, false)
+  assert.equal(control.mouseRight.onPress(), true)
+  assert.equal(control.escape.onPress(), true)
+  assert.equal(scriptClicks, 0)
 })

@@ -280,7 +280,7 @@ export function PoseEditorPanel({ world }) {
       </div>
 
       <div className='pose-tabs'>
-        {['placement', 'posture', 'ik'].map(mode => (
+        {['placement', 'posture', 'ik', 'attachments'].map(mode => (
           <button
             key={mode}
             className='pose-editor-button'
@@ -355,6 +355,96 @@ export function PoseEditorPanel({ world }) {
         <p className='pose-help' title={state.profileId}>
           Compatible furniture profile: {state.profileId}
         </p>
+      )}
+
+      {state.mode === 'attachments' && (
+        <>
+          <h3>Attachment points</h3>
+          <p className='pose-help'>
+            Select a point, then use the move or rotation gizmo or edit its coordinates. Close the editor and click an
+            occupied orb to return its object.
+          </p>
+          <div className='pose-row'>
+            <button
+              className='pose-editor-button'
+              disabled={state.applying}
+              onClick={() => editor.addAttachmentPoint()}
+            >
+              Add point
+            </button>
+            <button
+              className='pose-editor-button'
+              disabled={state.applying || !state.attachmentPoints.length}
+              onClick={() => editor.removeAttachmentPoint()}
+            >
+              Remove selected
+            </button>
+          </div>
+          <div className='pose-row'>
+            {state.attachmentPoints.map((point, index) => (
+              <button
+                key={index}
+                className='pose-editor-button'
+                aria-pressed={state.selectedAttachment === index}
+                disabled={state.applying}
+                onClick={() => editor.selectAttachmentPoint(index)}
+              >
+                Point {index + 1}
+                {point.attachment ? ' (attached)' : ''}
+              </button>
+            ))}
+          </div>
+          {state.attachmentPoints[state.selectedAttachment] && (
+            <div className='pose-row' aria-label='Attachment editing tool'>
+              <button
+                className='pose-editor-button'
+                type='button'
+                aria-pressed={state.attachmentTool === 'translate'}
+                disabled={state.applying}
+                onClick={() => editor.setAttachmentTool('translate')}
+              >
+                Move
+              </button>
+              <button
+                className='pose-editor-button'
+                type='button'
+                aria-pressed={state.attachmentTool === 'rotate'}
+                disabled={state.applying}
+                onClick={() => editor.setAttachmentTool('rotate')}
+              >
+                Rotate
+              </button>
+            </div>
+          )}
+          {state.attachmentPoints[state.selectedAttachment] &&
+            AXES.map(axis => (
+              <RangeControl
+                key={`rotation-${axis}`}
+                {...historyInteraction}
+                label={`Rotation ${axis.toUpperCase()}`}
+                value={state.attachmentRotation[axis]}
+                min={-180}
+                max={180}
+                step={1}
+                disabled={state.applying}
+                onChange={value => editor.setAttachmentRotationAxis(axis, value)}
+              />
+            ))}
+          {state.attachmentPoints[state.selectedAttachment] &&
+            AXES.map((axis, index) => (
+              <RangeControl
+                key={axis}
+                {...historyInteraction}
+                label={`Position ${axis.toUpperCase()}`}
+                value={state.attachmentPoints[state.selectedAttachment].position[index]}
+                min={-5}
+                max={5}
+                step={0.01}
+                disabled={state.applying}
+                onChange={value => editor.setAttachmentPositionAxis(axis, value)}
+              />
+            ))}
+        </>
       )}
 
       {state.mode === 'placement' && (

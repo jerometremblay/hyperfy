@@ -326,6 +326,10 @@ export class ClientNetwork extends System {
     this.world.poseEditor?.onApplyResult(data)
   }
 
+  onPlayerSeatAttachmentResult = data => {
+    this.world.emit('toast', data.message || (data.ok ? 'Attachment updated.' : 'Attachment failed.'))
+  }
+
   onPlayerSeatPoseStylesResult = data => {
     this.world.poseEditor?.setStyles(data.styles, data.error)
   }
