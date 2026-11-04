@@ -1,5 +1,9 @@
 # Changes from official Hyperfy main
 
+> This is the pinned October 10, 2026 comparison and screenshot record.
+> For features added afterward and current behavior, see [Recent features](recent-features.md).
+> Its revision counts and capture limitations describe that snapshot.
+
 This guide describes the complete **net change** from official
 [Hyperfy main](https://github.com/hyperfy-xyz/hyperfy/tree/5d20037435a1d86cda088382bb12737e9f18d5f6)
 to this checkout. It includes inherited splatting/development work as well as this
@@ -198,7 +202,10 @@ low defaults limit their cost.
 Nested portals are omitted to prevent recursion; destination passes reuse lighting
 and existing shadows without rerunning the main AO/bloom composer. Spark buffers
 are separate per portal view. CSS3D WebViews cannot appear in the WebGL preview.
-Remote-world **travel** is supported by URL, but remote-world **previews** are not.
+At this pinned revision, remote-world **travel** is supported by URL, but
+remote-world **previews** are not. Current releases add remote previews and
+same-world pointer interactions; see the [current portal guide](remote-portals.md)
+and [Portal reference](scripting/nodes/types/Portal.md).
 Headset rendering and representative streamed-splat LOD need their own checks.
 
 The earlier iframe-based portal preview was reverted and superseded by native 3D

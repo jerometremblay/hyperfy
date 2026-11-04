@@ -14,7 +14,10 @@ automatically and shows **Streaming to Hyperfy** in its window and menu bar.
 If stopped, choose **Start Streaming** in that window. Select **Hyperfy Speaker**
 as the Mac sound output, then play music. Keep Hyperfy's playback device on
 **Haut-parleurs MacBook Pro** or physical headphones.
-Sound follows the app when moved and fades out over 40 meters.
+Sound follows the app when moved. With the current defaults, it stays full-volume
+and stereo within 2 meters, gradually becomes directional, and fades to silence
+at 30 meters. The inspector exposes Volume, Localized sound, Near and Far; see
+[the speaker controls guide](../../docs/speakers.md).
 
 Keep the helper running while sending music to the world. Opening it again
 brings its status window forward. No Mac system output is changed automatically.

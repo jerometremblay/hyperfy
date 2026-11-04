@@ -109,6 +109,18 @@ engine can support rather than appearing automatically in every world.
 
 ## More ways to build
 
+### Polyspoon assets
+
+Administrators can load procedural [Polyspoon](https://polyspoon.com) assets
+without rebuilding or restarting the world. In **Add**, paste a Polyspoon asset
+page URL or direct HTTPS recipe URL into **Polyspoon asset or recipe URL**, then
+choose **Load** and **Place**. Adjust the generated object's parameters in its
+inspector and use **Refresh from source** to fetch recipe updates while keeping
+its placement and parameters. Recipes run in sandboxed workers.
+
+See [runtime Polyspoon recipes](docs/polyspoon-runtime.md) for supported recipes,
+permissions, and backup requirements.
+
 ### Gaussian splats
 
 Gaussian splats can be loaded, rendered, selected, and transformed in-world.

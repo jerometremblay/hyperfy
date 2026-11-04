@@ -85,6 +85,10 @@ The editor preview is local until Apply. Applying saves a pose for the current p
 
 Import the GLB into Blender using **File → Import → glTF 2.0**, then include the posed avatar in your model or reuse the `SittingPose` action on a matching armature. A different skeleton needs retargeting. Export the combined model as GLB to include its animation. The download is a regular model, not a VRM avatar or a Hyperfy emote: VRM metadata is omitted and toon materials are approximated with standard materials.
 
+The editor also supports saved [attachment points](../../sitting-pose-attachments.md)
+for placing and returning world objects while seated on desktop. Object movement
+requires builder permission.
+
 ### `.getBoneTransform(boneName, { targetPose })`: Matrix4
 
 Returns a matrix of the bone transform in world space.
@@ -101,6 +105,8 @@ See [Avatar](/docs/scripting/nodes/types/Avatar.md) for full details.
 Overrides the avatar's visible pose on this client. Available for local and remote
 players. It returns `false` on the server or for invalid input. Apps share their
 gameplay state as usual and calculate the same pose on each observing client.
+
+Partial poses retain native animation on bones they do not override.
 
 `bones` uses normalized VRM bone names and quaternions relative to the avatar's
 rest pose, as in the sitting editor. Only `hips` accepts a `position` offset.
