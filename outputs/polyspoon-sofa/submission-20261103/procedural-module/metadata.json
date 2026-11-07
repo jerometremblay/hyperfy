@@ -1,0 +1,1292 @@
+{
+  "formatVersion": 1,
+  "semantics": {
+    "version": 1,
+    "identity": {
+      "family": "cognac-leather-sofa",
+      "recipeVersion": "1.1.0"
+    },
+    "coordinates": {
+      "lengthUnit": "m",
+      "up": "+Y",
+      "front": "+Z",
+      "origin": "ground-center",
+      "anchorSpace": "root"
+    },
+    "controls": [
+      {
+        "key": "seatCount",
+        "label": "Seats",
+        "kind": "integer",
+        "group": "construction",
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "default": 3,
+        "hint": "Number of cushions and seats.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "seat",
+          "back"
+        ],
+        "unit": "count",
+        "inputUnit": "integer",
+        "displayUnit": "count"
+      },
+      {
+        "key": "seatWidth",
+        "label": "Seat width",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.55,
+        "max": 0.95,
+        "step": 0.01,
+        "default": 0.7,
+        "hint": "Width of each cushion in metres.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat",
+          "back"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "seatDepth",
+        "label": "Seat cushion depth",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.55,
+        "max": 0.75,
+        "step": 0.01,
+        "default": 0.66,
+        "hint": "Depth of the seat cushion extrusion.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "backDepth",
+        "label": "Back cushion depth",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.16,
+        "max": 0.28,
+        "step": 0.01,
+        "default": 0.22,
+        "hint": "Depth of the back cushion extrusion.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "back"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "armDepth",
+        "label": "Arm depth",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.75,
+        "max": 0.95,
+        "step": 0.01,
+        "default": 0.84,
+        "hint": "Depth of the arm extrusion.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "arms"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "seatRadius",
+        "label": "Seat corner radius",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.05,
+        "max": 0.1,
+        "step": 0.01,
+        "default": 0.08,
+        "hint": "Roundness of the seat cushion profile.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "backRadius",
+        "label": "Back corner radius",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.05,
+        "max": 0.12,
+        "step": 0.01,
+        "default": 0.09,
+        "hint": "Roundness of the back cushion profile.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "back"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "armRadius",
+        "label": "Arm corner radius",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.05,
+        "max": 0.11,
+        "step": 0.01,
+        "default": 0.09,
+        "hint": "Roundness of the arm profile.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "arms"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "bevelSize",
+        "label": "Bevel size (mm)",
+        "kind": "integer",
+        "group": "shape",
+        "min": 2,
+        "max": 22,
+        "step": 1,
+        "default": 20,
+        "hint": "Seat cushion bevel size; other panels scale proportionally.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat",
+          "back",
+          "arms"
+        ],
+        "unit": "none",
+        "inputUnit": "dimensionless",
+        "displayUnit": "none"
+      },
+      {
+        "key": "bevelThickness",
+        "label": "Bevel depth (mm)",
+        "kind": "integer",
+        "group": "shape",
+        "min": 2,
+        "max": 25,
+        "step": 1,
+        "default": 18,
+        "hint": "Seat cushion bevel depth; other panels scale proportionally.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat",
+          "back",
+          "arms"
+        ],
+        "unit": "none",
+        "inputUnit": "dimensionless",
+        "displayUnit": "none"
+      },
+      {
+        "key": "color.leather",
+        "label": "Leather",
+        "kind": "color",
+        "group": "colors",
+        "default": "#8a4f2b",
+        "role": "leather",
+        "hint": "Arms and all cushions.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "arms",
+          "seat",
+          "back"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.leatherDark",
+        "label": "Dark leather",
+        "kind": "color",
+        "group": "colors",
+        "default": "#6d3b22",
+        "role": "leatherDark",
+        "hint": "Base and seams.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "base"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.piping",
+        "label": "Piping",
+        "kind": "color",
+        "group": "colors",
+        "default": "#b8774b",
+        "role": "piping",
+        "hint": "Piping and stitching.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "piping"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.wood",
+        "label": "Feet",
+        "kind": "color",
+        "group": "colors",
+        "default": "#2b1b13",
+        "role": "wood",
+        "hint": "Wooden feet.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "feet"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      }
+    ],
+    "anchors": {
+      "ground": [
+        0,
+        0,
+        0
+      ],
+      "seat": [
+        0,
+        0.6700012665987015,
+        0.085
+      ]
+    },
+    "materials": [
+      {
+        "id": "leather"
+      },
+      {
+        "id": "leatherDark"
+      },
+      {
+        "id": "piping"
+      },
+      {
+        "id": "wood"
+      }
+    ],
+    "parts": [
+      {
+        "id": "sofa-part-0",
+        "node": "sofa-part-0",
+        "materialId": "wood",
+        "material": "wood-sofa-part-0",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-1",
+        "node": "sofa-part-1",
+        "materialId": "wood",
+        "material": "wood-sofa-part-1",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-2",
+        "node": "sofa-part-2",
+        "materialId": "wood",
+        "material": "wood-sofa-part-2",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-3",
+        "node": "sofa-part-3",
+        "materialId": "wood",
+        "material": "wood-sofa-part-3",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-4",
+        "node": "sofa-part-4",
+        "materialId": "leatherDark",
+        "material": "leatherDark-sofa-part-4",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-5",
+        "node": "sofa-part-5",
+        "materialId": "leather",
+        "material": "leather-sofa-part-5",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-6",
+        "node": "sofa-part-6",
+        "materialId": "leatherDark",
+        "material": "leatherDark-sofa-part-6",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-7",
+        "node": "sofa-part-7",
+        "materialId": "leather",
+        "material": "leather-sofa-part-7",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-8",
+        "node": "sofa-part-8",
+        "materialId": "piping",
+        "material": "piping-sofa-part-8",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-9",
+        "node": "sofa-part-9",
+        "materialId": "piping",
+        "material": "piping-sofa-part-9",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-10",
+        "node": "sofa-part-10",
+        "materialId": "piping",
+        "material": "piping-sofa-part-10",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-11",
+        "node": "sofa-part-11",
+        "materialId": "piping",
+        "material": "piping-sofa-part-11",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-12",
+        "node": "sofa-part-12",
+        "materialId": "piping",
+        "material": "piping-sofa-part-12",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-13",
+        "node": "sofa-part-13",
+        "materialId": "piping",
+        "material": "piping-sofa-part-13",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-14",
+        "node": "sofa-part-14",
+        "materialId": "piping",
+        "material": "piping-sofa-part-14",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-15",
+        "node": "sofa-part-15",
+        "materialId": "piping",
+        "material": "piping-sofa-part-15",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-16",
+        "node": "sofa-part-16",
+        "materialId": "piping",
+        "material": "piping-sofa-part-16",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-17",
+        "node": "sofa-part-17",
+        "materialId": "piping",
+        "material": "piping-sofa-part-17",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-18",
+        "node": "sofa-part-18",
+        "materialId": "piping",
+        "material": "piping-sofa-part-18",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-19",
+        "node": "sofa-part-19",
+        "materialId": "piping",
+        "material": "piping-sofa-part-19",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-20",
+        "node": "sofa-part-20",
+        "materialId": "piping",
+        "material": "piping-sofa-part-20",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-21",
+        "node": "sofa-part-21",
+        "materialId": "piping",
+        "material": "piping-sofa-part-21",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-22",
+        "node": "sofa-part-22",
+        "materialId": "piping",
+        "material": "piping-sofa-part-22",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-23",
+        "node": "sofa-part-23",
+        "materialId": "piping",
+        "material": "piping-sofa-part-23",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-24",
+        "node": "sofa-part-24",
+        "materialId": "piping",
+        "material": "piping-sofa-part-24",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-25",
+        "node": "sofa-part-25",
+        "materialId": "piping",
+        "material": "piping-sofa-part-25",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-26",
+        "node": "sofa-part-26",
+        "materialId": "piping",
+        "material": "piping-sofa-part-26",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-27",
+        "node": "sofa-part-27",
+        "materialId": "piping",
+        "material": "piping-sofa-part-27",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-28",
+        "node": "sofa-part-28",
+        "materialId": "leather",
+        "material": "leather-sofa-part-28",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-29",
+        "node": "sofa-part-29",
+        "materialId": "piping",
+        "material": "piping-sofa-part-29",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-30",
+        "node": "sofa-part-30",
+        "materialId": "piping",
+        "material": "piping-sofa-part-30",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-31",
+        "node": "sofa-part-31",
+        "materialId": "piping",
+        "material": "piping-sofa-part-31",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-32",
+        "node": "sofa-part-32",
+        "materialId": "piping",
+        "material": "piping-sofa-part-32",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-33",
+        "node": "sofa-part-33",
+        "materialId": "piping",
+        "material": "piping-sofa-part-33",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-34",
+        "node": "sofa-part-34",
+        "materialId": "piping",
+        "material": "piping-sofa-part-34",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-35",
+        "node": "sofa-part-35",
+        "materialId": "piping",
+        "material": "piping-sofa-part-35",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-36",
+        "node": "sofa-part-36",
+        "materialId": "piping",
+        "material": "piping-sofa-part-36",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-37",
+        "node": "sofa-part-37",
+        "materialId": "piping",
+        "material": "piping-sofa-part-37",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-38",
+        "node": "sofa-part-38",
+        "materialId": "piping",
+        "material": "piping-sofa-part-38",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-39",
+        "node": "sofa-part-39",
+        "materialId": "piping",
+        "material": "piping-sofa-part-39",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-40",
+        "node": "sofa-part-40",
+        "materialId": "piping",
+        "material": "piping-sofa-part-40",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-41",
+        "node": "sofa-part-41",
+        "materialId": "piping",
+        "material": "piping-sofa-part-41",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-42",
+        "node": "sofa-part-42",
+        "materialId": "piping",
+        "material": "piping-sofa-part-42",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-43",
+        "node": "sofa-part-43",
+        "materialId": "piping",
+        "material": "piping-sofa-part-43",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-44",
+        "node": "sofa-part-44",
+        "materialId": "piping",
+        "material": "piping-sofa-part-44",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-45",
+        "node": "sofa-part-45",
+        "materialId": "piping",
+        "material": "piping-sofa-part-45",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-46",
+        "node": "sofa-part-46",
+        "materialId": "piping",
+        "material": "piping-sofa-part-46",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-47",
+        "node": "sofa-part-47",
+        "materialId": "piping",
+        "material": "piping-sofa-part-47",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-48",
+        "node": "sofa-part-48",
+        "materialId": "piping",
+        "material": "piping-sofa-part-48",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-1-part-0",
+        "node": "seat-cushion-1-part-0",
+        "materialId": "leather",
+        "material": "leather-seat-cushion-1-part-0",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-1-part-1",
+        "node": "seat-cushion-1-part-1",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-1-part-1",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-1-part-2",
+        "node": "seat-cushion-1-part-2",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-1-part-2",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-1-part-3",
+        "node": "seat-cushion-1-part-3",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-1-part-3",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-1-part-4",
+        "node": "seat-cushion-1-part-4",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-1-part-4",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-1-part-0",
+        "node": "back-cushion-1-part-0",
+        "materialId": "leather",
+        "material": "leather-back-cushion-1-part-0",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-1-part-1",
+        "node": "back-cushion-1-part-1",
+        "materialId": "piping",
+        "material": "piping-back-cushion-1-part-1",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-1-part-2",
+        "node": "back-cushion-1-part-2",
+        "materialId": "piping",
+        "material": "piping-back-cushion-1-part-2",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-1-part-3",
+        "node": "back-cushion-1-part-3",
+        "materialId": "piping",
+        "material": "piping-back-cushion-1-part-3",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-1-part-4",
+        "node": "back-cushion-1-part-4",
+        "materialId": "piping",
+        "material": "piping-back-cushion-1-part-4",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-1-part-5",
+        "node": "back-cushion-1-part-5",
+        "materialId": "leatherDark",
+        "material": "leatherDark-back-cushion-1-part-5",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-2-part-0",
+        "node": "seat-cushion-2-part-0",
+        "materialId": "leather",
+        "material": "leather-seat-cushion-2-part-0",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-2-part-1",
+        "node": "seat-cushion-2-part-1",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-2-part-1",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-2-part-2",
+        "node": "seat-cushion-2-part-2",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-2-part-2",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-2-part-3",
+        "node": "seat-cushion-2-part-3",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-2-part-3",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-2-part-4",
+        "node": "seat-cushion-2-part-4",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-2-part-4",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-2-part-0",
+        "node": "back-cushion-2-part-0",
+        "materialId": "leather",
+        "material": "leather-back-cushion-2-part-0",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-2-part-1",
+        "node": "back-cushion-2-part-1",
+        "materialId": "piping",
+        "material": "piping-back-cushion-2-part-1",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-2-part-2",
+        "node": "back-cushion-2-part-2",
+        "materialId": "piping",
+        "material": "piping-back-cushion-2-part-2",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-2-part-3",
+        "node": "back-cushion-2-part-3",
+        "materialId": "piping",
+        "material": "piping-back-cushion-2-part-3",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-2-part-4",
+        "node": "back-cushion-2-part-4",
+        "materialId": "piping",
+        "material": "piping-back-cushion-2-part-4",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-2-part-5",
+        "node": "back-cushion-2-part-5",
+        "materialId": "leatherDark",
+        "material": "leatherDark-back-cushion-2-part-5",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-3-part-0",
+        "node": "seat-cushion-3-part-0",
+        "materialId": "leather",
+        "material": "leather-seat-cushion-3-part-0",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-3-part-1",
+        "node": "seat-cushion-3-part-1",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-3-part-1",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-3-part-2",
+        "node": "seat-cushion-3-part-2",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-3-part-2",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-3-part-3",
+        "node": "seat-cushion-3-part-3",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-3-part-3",
+        "group": "static"
+      },
+      {
+        "id": "seat-cushion-3-part-4",
+        "node": "seat-cushion-3-part-4",
+        "materialId": "piping",
+        "material": "piping-seat-cushion-3-part-4",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-3-part-0",
+        "node": "back-cushion-3-part-0",
+        "materialId": "leather",
+        "material": "leather-back-cushion-3-part-0",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-3-part-1",
+        "node": "back-cushion-3-part-1",
+        "materialId": "piping",
+        "material": "piping-back-cushion-3-part-1",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-3-part-2",
+        "node": "back-cushion-3-part-2",
+        "materialId": "piping",
+        "material": "piping-back-cushion-3-part-2",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-3-part-3",
+        "node": "back-cushion-3-part-3",
+        "materialId": "piping",
+        "material": "piping-back-cushion-3-part-3",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-3-part-4",
+        "node": "back-cushion-3-part-4",
+        "materialId": "piping",
+        "material": "piping-back-cushion-3-part-4",
+        "group": "static"
+      },
+      {
+        "id": "back-cushion-3-part-5",
+        "node": "back-cushion-3-part-5",
+        "materialId": "leatherDark",
+        "material": "leatherDark-back-cushion-3-part-5",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-49",
+        "node": "sofa-part-49",
+        "materialId": "piping",
+        "material": "piping-sofa-part-49",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-50",
+        "node": "sofa-part-50",
+        "materialId": "piping",
+        "material": "piping-sofa-part-50",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-51",
+        "node": "sofa-part-51",
+        "materialId": "piping",
+        "material": "piping-sofa-part-51",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-52",
+        "node": "sofa-part-52",
+        "materialId": "leatherDark",
+        "material": "leatherDark-sofa-part-52",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-53",
+        "node": "sofa-part-53",
+        "materialId": "leatherDark",
+        "material": "leatherDark-sofa-part-53",
+        "group": "static"
+      },
+      {
+        "id": "sofa-part-54",
+        "node": "sofa-part-54",
+        "materialId": "leatherDark",
+        "material": "leatherDark-sofa-part-54",
+        "group": "static"
+      }
+    ],
+    "joints": [],
+    "delivery": {
+      "version": 1,
+      "mode": "editable",
+      "identity": "node-per-part",
+      "movingGroups": "separate"
+    }
+  },
+  "id": "cognac-leather-sofa",
+  "version": "1.1.0",
+  "title": "Cognac leather sofa",
+  "description": "Beveled leather sofa adapted from the Hyperfy three-seat app.",
+  "controls": [
+    {
+      "key": "seatCount",
+      "label": "Seats",
+      "kind": "integer",
+      "group": "construction",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 3,
+      "hint": "Number of cushions and seats.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "seat",
+        "back"
+      ],
+      "unit": "count",
+      "inputUnit": "integer",
+      "displayUnit": "count"
+    },
+    {
+      "key": "seatWidth",
+      "label": "Seat width",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.55,
+      "max": 0.95,
+      "step": 0.01,
+      "default": 0.7,
+      "hint": "Width of each cushion in metres.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat",
+        "back"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "seatDepth",
+      "label": "Seat cushion depth",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.55,
+      "max": 0.75,
+      "step": 0.01,
+      "default": 0.66,
+      "hint": "Depth of the seat cushion extrusion.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "backDepth",
+      "label": "Back cushion depth",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.16,
+      "max": 0.28,
+      "step": 0.01,
+      "default": 0.22,
+      "hint": "Depth of the back cushion extrusion.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "back"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "armDepth",
+      "label": "Arm depth",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.75,
+      "max": 0.95,
+      "step": 0.01,
+      "default": 0.84,
+      "hint": "Depth of the arm extrusion.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "arms"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "seatRadius",
+      "label": "Seat corner radius",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.05,
+      "max": 0.1,
+      "step": 0.01,
+      "default": 0.08,
+      "hint": "Roundness of the seat cushion profile.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "backRadius",
+      "label": "Back corner radius",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.05,
+      "max": 0.12,
+      "step": 0.01,
+      "default": 0.09,
+      "hint": "Roundness of the back cushion profile.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "back"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "armRadius",
+      "label": "Arm corner radius",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.05,
+      "max": 0.11,
+      "step": 0.01,
+      "default": 0.09,
+      "hint": "Roundness of the arm profile.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "arms"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "bevelSize",
+      "label": "Bevel size (mm)",
+      "kind": "integer",
+      "group": "shape",
+      "min": 2,
+      "max": 22,
+      "step": 1,
+      "default": 20,
+      "hint": "Seat cushion bevel size; other panels scale proportionally.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat",
+        "back",
+        "arms"
+      ],
+      "unit": "none",
+      "inputUnit": "dimensionless",
+      "displayUnit": "none"
+    },
+    {
+      "key": "bevelThickness",
+      "label": "Bevel depth (mm)",
+      "kind": "integer",
+      "group": "shape",
+      "min": 2,
+      "max": 25,
+      "step": 1,
+      "default": 18,
+      "hint": "Seat cushion bevel depth; other panels scale proportionally.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat",
+        "back",
+        "arms"
+      ],
+      "unit": "none",
+      "inputUnit": "dimensionless",
+      "displayUnit": "none"
+    },
+    {
+      "key": "color.leather",
+      "label": "Leather",
+      "kind": "color",
+      "group": "colors",
+      "default": "#8a4f2b",
+      "role": "leather",
+      "hint": "Arms and all cushions.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "arms",
+        "seat",
+        "back"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.leatherDark",
+      "label": "Dark leather",
+      "kind": "color",
+      "group": "colors",
+      "default": "#6d3b22",
+      "role": "leatherDark",
+      "hint": "Base and seams.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "base"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.piping",
+      "label": "Piping",
+      "kind": "color",
+      "group": "colors",
+      "default": "#b8774b",
+      "role": "piping",
+      "hint": "Piping and stitching.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "piping"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.wood",
+      "label": "Feet",
+      "kind": "color",
+      "group": "colors",
+      "default": "#2b1b13",
+      "role": "wood",
+      "hint": "Wooden feet.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "feet"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    }
+  ],
+  "defaults": {
+    "seatCount": 3,
+    "seatWidth": 0.7,
+    "seatDepth": 0.66,
+    "backDepth": 0.22,
+    "armDepth": 0.84,
+    "seatRadius": 0.08,
+    "backRadius": 0.09,
+    "armRadius": 0.09,
+    "bevelSize": 20,
+    "bevelThickness": 18,
+    "color.leather": "#8a4f2b",
+    "color.leatherDark": "#6d3b22",
+    "color.piping": "#b8774b",
+    "color.wood": "#2b1b13"
+  },
+  "presets": [
+    {
+      "id": "three-seat",
+      "name": "Three-seat sofa",
+      "description": "Original cognac leather sofa.",
+      "parameters": {}
+    }
+  ],
+  "palettes": [],
+  "constraints": [
+    "Rounded extrusion profiles and bevels are parameterized; sitting interactions are not exported.",
+    "Bevel dimensions are integer millimetres. The other dimensions are in metres."
+  ],
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "configuration": {
+    "kind": "default"
+  },
+  "source": {
+    "entry": "examples/recipes/cognac-leather-sofa/index.ts",
+    "exportName": "cognacLeatherSofaRecipe",
+    "sha256": "63f37110ad9ce01ab29d228afc0ea2f86b08b4d63b3927ea2ccac3c516b76379",
+    "files": {
+      "examples/recipes/cognac-leather-sofa/index.ts": "ae14e655ea6eedc9638517fe9d4d7b3cf58b2ab3b08d276a5e98a6c34b5a8586",
+      "examples/recipes/cognac-leather-sofa/sofa.ts": "c48dc33f6b462f91f73d983e5976ab67e1e69036e11e3945323fbfb37065b40a",
+      "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "src/catalog/build.ts": "14aadccd4bfd1739a95276360c45e78afbe1e68ff840b6b748f0909628851f5f",
+      "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "src/recipes/types.ts": "cf3704bb5d069ad820890a5304ff41d1eba59d9793ce57551a9e617ccc89781e"
+    }
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "thirdParty": "Three ConvexGeometry/ConvexHull and BufferGeometryUtils MIT; see THIRD-PARTY.txt"
+  }
+}

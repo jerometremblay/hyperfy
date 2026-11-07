@@ -1,0 +1,22 @@
+{
+  "formatVersion": 1,
+  "family": "cognac-leather-sofa",
+  "familyVersion": "1.1.0",
+  "requested": {},
+  "applied": {
+    "seatCount": 3,
+    "seatWidth": 0.7,
+    "seatDepth": 0.66,
+    "backDepth": 0.22,
+    "armDepth": 0.84,
+    "seatRadius": 0.08,
+    "backRadius": 0.09,
+    "armRadius": 0.09,
+    "bevelSize": 20,
+    "bevelThickness": 18,
+    "color.leather": "#8a4f2b",
+    "color.leatherDark": "#6d3b22",
+    "color.piping": "#b8774b",
+    "color.wood": "#2b1b13"
+  }
+}

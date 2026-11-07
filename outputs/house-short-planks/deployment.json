@@ -1,0 +1,18 @@
+{
+  "target": "https://monstre.duckdns.org:3333/api/agent",
+  "entityId": "HCzjtaVZFI",
+  "blueprintId": "WI0QjsRZ0R",
+  "previousVersion": 28,
+  "version": 29,
+  "verified": true,
+  "sourceReadback": true,
+  "statePreserved": true,
+  "validation": {
+    "valid": true,
+    "groundBoards": 599,
+    "maxLength": 2.3946066874116663,
+    "deterministic": true,
+    "coverageAndJointGaps": "pass",
+    "colors": "four independently selected wood tones"
+  }
+}

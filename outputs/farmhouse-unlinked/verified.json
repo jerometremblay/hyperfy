@@ -1,0 +1,130 @@
+{
+  "verifiedAt": "2026-11-04T02:04:27.906Z",
+  "entities": [
+    {
+      "id": "BNOtoeFUw7",
+      "type": "app",
+      "blueprint": "75229b2d-6a31-49e3-864c-49101ac52e23",
+      "position": [
+        38.74452828306172,
+        0.12096717663691132,
+        8.655169323135702
+      ],
+      "quaternion": [
+        0,
+        -0.537299608346824,
+        0,
+        0.8433914458128858
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "mover": null,
+      "uploader": null,
+      "pinned": false,
+      "state": {}
+    },
+    {
+      "position": [
+        37.89803680996949,
+        0.12096717663691132,
+        9.049894779601516
+      ],
+      "quaternion": [
+        0,
+        -0.8268953776149095,
+        0,
+        -0.5623557899400492
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "dd153105-9f8d-49b4-a7d0-cd06a4523337",
+      "blueprint": "ef1e4dd5-779d-4b38-91b4-b86e8a7ad44a",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    },
+    {
+      "position": [
+        38.326136203938425,
+        0.12096717663691132,
+        7.7579246139694185
+      ],
+      "quaternion": [
+        0,
+        0.2164396139381029,
+        0,
+        0.9762960071199336
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "7458501f-2b22-4313-9d28-d64e26047cc2",
+      "blueprint": "42e60d4d-0bf0-4a5f-aa8a-4c152605d803",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    },
+    {
+      "position": [
+        39.59101975615395,
+        0.12096717663691132,
+        8.260443866669888
+      ],
+      "quaternion": [
+        0,
+        -0.5117598933727221,
+        0,
+        0.8591285186368455
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "bad4f0b8-1150-456f-a209-08dc1a77be17",
+      "blueprint": "dba8bb90-9f3e-4d1a-b0e7-04cd599ab57f",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    },
+    {
+      "position": [
+        39.16292036218501,
+        0.12096717663691132,
+        9.552414032301986
+      ],
+      "quaternion": [
+        0,
+        -0.9823489213494399,
+        0,
+        0.18705773633718692
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "40014a91-4783-4215-939d-cb8510f53c05",
+      "blueprint": "04f1939c-f348-49ca-92f0-df54c4c9ee10",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  ]
+}

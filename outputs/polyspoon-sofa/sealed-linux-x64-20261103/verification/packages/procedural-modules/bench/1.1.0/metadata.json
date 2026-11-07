@@ -1,0 +1,661 @@
+{
+  "formatVersion": 1,
+  "semantics": {
+    "version": 1,
+    "identity": {
+      "family": "bench",
+      "recipeVersion": "1.1.0"
+    },
+    "coordinates": {
+      "lengthUnit": "m",
+      "up": "+Y",
+      "front": "+Z",
+      "origin": "ground-center",
+      "anchorSpace": "root"
+    },
+    "controls": [
+      {
+        "key": "width",
+        "label": "Seat width",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.9,
+        "max": 2.4,
+        "step": 0.05,
+        "default": 1.6,
+        "hint": "Outside seat width.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat-slat",
+          "apron",
+          "leg",
+          "seat-support",
+          "back-post",
+          "back-slat"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "depth",
+        "label": "Seat depth",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.32,
+        "max": 0.65,
+        "step": 0.01,
+        "default": 0.45,
+        "hint": "Outside seat depth.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat-slat",
+          "leg",
+          "seat-support",
+          "apron",
+          "back-post",
+          "back-slat"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "seatHeight",
+        "label": "Seat height",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.35,
+        "max": 0.55,
+        "step": 0.01,
+        "default": 0.45,
+        "hint": "Ground to seat top.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "seat-slat",
+          "leg",
+          "apron",
+          "seat-support",
+          "back-post",
+          "back-slat"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "slatCount",
+        "label": "Seat slats",
+        "kind": "integer",
+        "group": "construction",
+        "min": 3,
+        "max": 6,
+        "step": 1,
+        "default": 4,
+        "hint": "Changes the number and width of seat boards.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "seat-slat"
+        ],
+        "unit": "count",
+        "inputUnit": "integer",
+        "displayUnit": "count"
+      },
+      {
+        "key": "backrest",
+        "label": "Backrest",
+        "kind": "toggle",
+        "group": "construction",
+        "default": true,
+        "hint": "Adds two supported back boards.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "back-post",
+          "back-slat"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "backHeight",
+        "label": "Back height",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.25,
+        "max": 0.55,
+        "step": 0.01,
+        "default": 0.35,
+        "hint": "Seat top to back top. Used only with a backrest.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "back-post",
+          "back-slat"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "colorway",
+        "label": "Palette",
+        "kind": "choice",
+        "group": "colors",
+        "default": "oak",
+        "options": [
+          {
+            "value": "oak",
+            "label": "Oak"
+          },
+          {
+            "value": "painted",
+            "label": "Painted"
+          }
+        ],
+        "hint": "Starting colors; individual roles can override them.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "wood",
+          "frame"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "color.wood",
+        "label": "Boards",
+        "kind": "color",
+        "group": "colors",
+        "default": "#b88654",
+        "role": "wood",
+        "hint": "Seat and back boards.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "seat-slat",
+          "back-slat"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.frame",
+        "label": "Frame",
+        "kind": "color",
+        "group": "colors",
+        "default": "#604532",
+        "role": "frame",
+        "hint": "Legs, supports and aprons.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "leg",
+          "apron",
+          "seat-support",
+          "back-post"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      }
+    ],
+    "anchors": {
+      "ground": [
+        0,
+        0,
+        0
+      ],
+      "seat": [
+        0,
+        0.45,
+        0
+      ]
+    },
+    "materials": [
+      {
+        "id": "frame"
+      },
+      {
+        "id": "wood"
+      }
+    ],
+    "parts": [
+      {
+        "id": "leg--1--1",
+        "node": "leg--1--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "leg--1-1",
+        "node": "leg--1-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "seat-support--1",
+        "node": "seat-support--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "apron--1",
+        "node": "apron--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "leg-1--1",
+        "node": "leg-1--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "leg-1-1",
+        "node": "leg-1-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "seat-support-1",
+        "node": "seat-support-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "apron-1",
+        "node": "apron-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "seat-slat-0",
+        "node": "seat-slat-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "seat-slat-1",
+        "node": "seat-slat-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "seat-slat-2",
+        "node": "seat-slat-2",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "seat-slat-3",
+        "node": "seat-slat-3",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "back-post--1",
+        "node": "back-post--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "back-post-1",
+        "node": "back-post-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "back-slat-0",
+        "node": "back-slat-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "back-slat-1",
+        "node": "back-slat-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      }
+    ],
+    "joints": [],
+    "delivery": {
+      "version": 1,
+      "mode": "editable",
+      "identity": "node-per-part",
+      "movingGroups": "separate"
+    }
+  },
+  "id": "bench",
+  "version": "1.1.0",
+  "title": "Slatted bench",
+  "description": "An original contributor example with supported seat boards and an optional backrest.",
+  "controls": [
+    {
+      "key": "width",
+      "label": "Seat width",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.9,
+      "max": 2.4,
+      "step": 0.05,
+      "default": 1.6,
+      "hint": "Outside seat width.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat-slat",
+        "apron",
+        "leg",
+        "seat-support",
+        "back-post",
+        "back-slat"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "depth",
+      "label": "Seat depth",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.32,
+      "max": 0.65,
+      "step": 0.01,
+      "default": 0.45,
+      "hint": "Outside seat depth.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat-slat",
+        "leg",
+        "seat-support",
+        "apron",
+        "back-post",
+        "back-slat"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "seatHeight",
+      "label": "Seat height",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.35,
+      "max": 0.55,
+      "step": 0.01,
+      "default": 0.45,
+      "hint": "Ground to seat top.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat-slat",
+        "leg",
+        "apron",
+        "seat-support",
+        "back-post",
+        "back-slat"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "slatCount",
+      "label": "Seat slats",
+      "kind": "integer",
+      "group": "construction",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "default": 4,
+      "hint": "Changes the number and width of seat boards.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "seat-slat"
+      ],
+      "unit": "count",
+      "inputUnit": "integer",
+      "displayUnit": "count"
+    },
+    {
+      "key": "backrest",
+      "label": "Backrest",
+      "kind": "toggle",
+      "group": "construction",
+      "default": true,
+      "hint": "Adds two supported back boards.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "back-post",
+        "back-slat"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "backHeight",
+      "label": "Back height",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.25,
+      "max": 0.55,
+      "step": 0.01,
+      "default": 0.35,
+      "hint": "Seat top to back top. Used only with a backrest.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "back-post",
+        "back-slat"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "colorway",
+      "label": "Palette",
+      "kind": "choice",
+      "group": "colors",
+      "default": "oak",
+      "options": [
+        {
+          "value": "oak",
+          "label": "Oak"
+        },
+        {
+          "value": "painted",
+          "label": "Painted"
+        }
+      ],
+      "hint": "Starting colors; individual roles can override them.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "wood",
+        "frame"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "color.wood",
+      "label": "Boards",
+      "kind": "color",
+      "group": "colors",
+      "default": "#b88654",
+      "role": "wood",
+      "hint": "Seat and back boards.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "seat-slat",
+        "back-slat"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.frame",
+      "label": "Frame",
+      "kind": "color",
+      "group": "colors",
+      "default": "#604532",
+      "role": "frame",
+      "hint": "Legs, supports and aprons.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "leg",
+        "apron",
+        "seat-support",
+        "back-post"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    }
+  ],
+  "defaults": {
+    "width": 1.6,
+    "depth": 0.45,
+    "seatHeight": 0.45,
+    "slatCount": 4,
+    "backrest": true,
+    "backHeight": 0.35,
+    "colorway": "oak",
+    "color.wood": "#b88654",
+    "color.frame": "#604532"
+  },
+  "presets": [
+    {
+      "id": "garden",
+      "name": "Garden bench",
+      "description": "Four oak seat boards with a backrest.",
+      "parameters": {}
+    },
+    {
+      "id": "low-seat",
+      "name": "Low seat",
+      "description": "A short three-board seat without a backrest.",
+      "parameters": {
+        "width": 1.1,
+        "seatHeight": 0.35,
+        "slatCount": 3,
+        "backrest": false
+      }
+    },
+    {
+      "id": "park",
+      "name": "Park bench",
+      "description": "A wider painted bench with a taller back.",
+      "parameters": {
+        "width": 2.2,
+        "depth": 0.55,
+        "slatCount": 5,
+        "backHeight": 0.48,
+        "colorway": "painted"
+      }
+    }
+  ],
+  "palettes": [
+    {
+      "id": "oak",
+      "label": "Oak",
+      "colors": [
+        "#b88654",
+        "#604532"
+      ]
+    },
+    {
+      "id": "painted",
+      "label": "Painted",
+      "colors": [
+        "#8ca58b",
+        "#384a42"
+      ]
+    }
+  ],
+  "constraints": [
+    "Dimensions are meters; the seat anchor is at the center of the upper seat surface. Back height only affects geometry when the backrest is enabled."
+  ],
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "configuration": {
+    "kind": "default"
+  },
+  "source": {
+    "entry": "examples/recipes/bench/index.ts",
+    "exportName": "benchRecipe",
+    "sha256": "cb06890a6e79e0e977a29473818eb25b7ed5131a4d7620e474bdf4abd8104ffe",
+    "files": {
+      "examples/recipes/bench/index.ts": "d05a88b48cb1f235e4e44504230719f1311fd7a6dc15cda2bef93e43316782e9",
+      "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "src/catalog/build.ts": "cb9eee04337244055efd058948a6fb440975ec25315b16f61915a02015c7e904",
+      "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+      "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "src/recipes/legacy-v1/bench.ts": "d71d6c0741f48f36787cc642813d469a3bd4659858bcadfdbd7fb9cfc53bdb13",
+      "src/recipes/types.ts": "5ec1e3ee4a39ffe8932751b38596c360fb4f818bc512e20918cbce017d6695da"
+    }
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "thirdParty": "Three ConvexGeometry/ConvexHull and BufferGeometryUtils MIT; see THIRD-PARTY.txt"
+  }
+}

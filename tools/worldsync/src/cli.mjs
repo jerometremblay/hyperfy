@@ -148,7 +148,7 @@ async function run() {
     let bytes
     let detail
     if (source.manifest.mode === 'hyp') {
-      const original = await resolveLocalReference(root, source.objectDir, source.manifest.source, 'legacy .hyp source')
+      const original = await resolveLocalReference(root, source.objectDir, 'file:' + source.manifest.source, 'legacy .hyp source')
       bytes = await readBoundedFile(original.absolutePath, { label: original.relativePath })
       detail = 'Copied original HYP unchanged'
     } else {

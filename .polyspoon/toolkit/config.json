@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "family": "bench",
+  "familyVersion": "1.1.0",
+  "requested": {},
+  "applied": {
+    "width": 1.6,
+    "depth": 0.45,
+    "seatHeight": 0.45,
+    "slatCount": 4,
+    "backrest": true,
+    "backHeight": 0.35,
+    "colorway": "oak",
+    "color.wood": "#b88654",
+    "color.frame": "#604532"
+  }
+}

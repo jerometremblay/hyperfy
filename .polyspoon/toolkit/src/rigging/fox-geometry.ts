@@ -1,0 +1,7 @@
+import { BufferGeometry,Float32BufferAttribute,Uint16BufferAttribute } from 'three';
+export type FoxRole='fur'|'cream'|'dark';
+export function partitionFoxSkin(parts:Record<FoxRole,BufferGeometry[]>,geometry:BufferGeometry,role:FoxRole|((triangle:number)=>FoxRole)):void {
+  const buckets:Record<FoxRole,{positions:number[];joints:number[];weights:number[]}>={fur:{positions:[],joints:[],weights:[]},cream:{positions:[],joints:[],weights:[]},dark:{positions:[],joints:[],weights:[]}},p=geometry.getAttribute('position'),j=geometry.getAttribute('skinIndex'),w=geometry.getAttribute('skinWeight'),indices=geometry.index!,count=indices.count;
+  for(let corner=0;corner<count;corner+=3){const bucket=buckets[typeof role==='string'?role:role(corner/3)];for(let k=0;k<3;k++){const slot=indices.getX(corner+k);bucket.positions.push(p.getX(slot),p.getY(slot),p.getZ(slot));for(let component=0;component<4;component++){bucket.joints.push(j.getComponent(slot,component));bucket.weights.push(w.getComponent(slot,component));}}}
+  geometry.dispose();for(const key of ['fur','cream','dark'] as const){const bucket=buckets[key];if(!bucket.positions.length)continue;const part=new BufferGeometry();part.setAttribute('position',new Float32BufferAttribute(bucket.positions,3));part.setAttribute('skinIndex',new Uint16BufferAttribute(bucket.joints,4));part.setAttribute('skinWeight',new Float32BufferAttribute(bucket.weights,4));part.setIndex(Array.from({length:bucket.positions.length/3},(_,i)=>i));part.computeVertexNormals();parts[key].push(part);}
+}

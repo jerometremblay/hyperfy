@@ -1,0 +1,57 @@
+diff --git a/docs/contributing/source-packages.json b/docs/contributing/source-packages.json
+index db9e2b3..77558de 100644
+--- a/docs/contributing/source-packages.json
++++ b/docs/contributing/source-packages.json
+@@ -359,6 +359,13 @@
+       "softwareLicense": "Apache-2.0",
+       "contentLicense": "CC0-1.0",
+       "contentDesignation": "Original supplied default and curated preset parameter content for rigged-rabbit; external material and private edits excluded."
++    },
++    "cognac-leather-sofa": {
++      "author": "Jérôme Tremblay, with OpenAI assistance",
++      "statement": "Procedural sofa adapted from a Hyperfy sofa created for Jérôme Tremblay with OpenAI assistance; Three.js utilities retain their MIT license.",
++      "softwareLicense": "Apache-2.0",
++      "contentLicense": "CC0-1.0",
++      "contentDesignation": "Original default and preset parameter content for the cognac leather sofa; third-party code retains its own license."
+     }
+   }
+ }
+diff --git a/src/recipes/index.ts b/src/recipes/index.ts
+index 5730de0..ebaba38 100644
+--- a/src/recipes/index.ts
++++ b/src/recipes/index.ts
+@@ -10,5 +10,6 @@ import { humanoidRecipe,foxRecipe } from './rigged.ts';
+ export type { Recipe, RecipeCase } from './types.ts';
+ 
+ export const registry = new RecipeRegistry();
+-for (const entry of [lanternRecipe,cottageRecipe,treeRecipe,fenceRecipe,crateRecipe,boulderRecipe,benchRecipe,planterRecipe,treasureChestRecipe,wheelbarrowRecipe,stoneWellRecipe,coniferRecipe,humanoidRecipe,foxRecipe]) registry.register(entry);
++import { cognacLeatherSofaRecipe } from '../../examples/recipes/cognac-leather-sofa/index.ts';
++for (const entry of [lanternRecipe,cottageRecipe,treeRecipe,fenceRecipe,crateRecipe,boulderRecipe,benchRecipe,planterRecipe,treasureChestRecipe,wheelbarrowRecipe,stoneWellRecipe,coniferRecipe,humanoidRecipe,foxRecipe,cognacLeatherSofaRecipe]) registry.register(entry);
+ export const recipe = (id: string) => registry.get(id);
+diff --git a/tests/f2-catalog.test.ts b/tests/f2-catalog.test.ts
+index ba06e4b..3550f2b 100644
+--- a/tests/f2-catalog.test.ts
++++ b/tests/f2-catalog.test.ts
+@@ -25,7 +25,7 @@ function partBounds(b: ReturnType<typeof buildAsset>, name: string) {
+ 
+ test('catalog retains twelve construction families and adds the two reviewed rigs',()=>{
+   assert.equal(original.length+promoted.length,12);
+-  assert.deepEqual(catalog.map(d=>d.id).sort(),[...original,...promoted,'stylized-humanoid','stylized-fox'].sort());
++  assert.deepEqual(catalog.map(d=>d.id).sort(),[...original,...promoted,'stylized-humanoid','stylized-fox','cognac-leather-sofa'].sort());
+   for (const id of promoted) {
+     const r = recipe(id), d = r.descriptor;
+     assert.ok(d.presets.length>=3,id);
+diff --git a/tests/procedural-module-immutability.test.ts b/tests/procedural-module-immutability.test.ts
+index 22362dc..de85cb0 100644
+--- a/tests/procedural-module-immutability.test.ts
++++ b/tests/procedural-module-immutability.test.ts
+@@ -20,7 +20,8 @@ test('indexed release guide bytes survive repository guide drift and fresh-outpu
+   assert.deepEqual(filesForProceduralRelease('new-recipe','1.0.0',changed,releases),changed);
+   for(const name of ['asset.mjs','asset.d.mts','metadata.json','LICENSE','NOTICE','THIRD-PARTY.txt','example.html'])assert.throws(()=>filesForProceduralRelease(release.entry.id,release.entry.version,{...changed,[name]:changed[name]+'\n'},releases),/recipe version change/);
+   const output=await workspace('fresh-output-'),index=await buildProceduralModules(output,{retainPublished:true});
+-  assert.equal(index.packages.length,releases.length);
++  assert.equal(index.packages.length,releases.length + 1);
++  assert.ok(index.packages.some(item=>item.id==='cognac-leather-sofa'));
+   for(const item of releases)for(const [name,text] of Object.entries(item.files))assert.equal(await readFile(join(output,item.entry.id,item.entry.version,name),'utf8'),text);
+   assert.deepEqual(await buildProceduralModules(output,{retainPublished:true}),index);
+   await writeFile(join(evidence,'fresh-output.json'),JSON.stringify({output,packages:index.packages.length,indexSha256:sha256(await readFile(join(output,'index.json'))),exactPublishedFiles:true,idempotent:true},null,2)+'\n');

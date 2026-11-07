@@ -1,0 +1,770 @@
+{
+  "formatVersion": 1,
+  "packages": [
+    {
+      "id": "work-lantern",
+      "version": "0.6.0",
+      "url": "procedural-modules/work-lantern/0.6.0/asset.mjs",
+      "sha256": "56f1c03de6dcbd836655aefd81a2b196db72669555c042049e453595abe05bcd",
+      "bytes": 215993,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "56f1c03de6dcbd836655aefd81a2b196db72669555c042049e453595abe05bcd",
+          "bytes": 215993
+        },
+        "asset.d.mts": {
+          "sha256": "f85a2315f107b5061ad549fa5be9cb951450c7c71af5a00202799d7616399e8b",
+          "bytes": 21329
+        },
+        "metadata.json": {
+          "sha256": "6080e5b7fd4e9e95a3f4de5a3492486913fd4aa212bec3ff3bb8221b94a13280",
+          "bytes": 31077
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "d2c0685603abffcace476bfc713db1e732ff8965465d441f9a6872c5ce6c6d41",
+          "bytes": 523
+        }
+      }
+    },
+    {
+      "id": "cottage",
+      "version": "0.6.0",
+      "url": "procedural-modules/cottage/0.6.0/asset.mjs",
+      "sha256": "2d5ea39c7547ad2d59e80bf004cfc4c5afaa04267c649ce877a0733034d3c246",
+      "bytes": 243797,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "2d5ea39c7547ad2d59e80bf004cfc4c5afaa04267c649ce877a0733034d3c246",
+          "bytes": 243797
+        },
+        "asset.d.mts": {
+          "sha256": "4a70716d336c88a71dc5fd79d1ff8a44f7b4f6459084a89e693348165c1faae2",
+          "bytes": 52305
+        },
+        "metadata.json": {
+          "sha256": "2c2f7c5bb196d4f398453da537ab7f73206828e6a3498f9667a3d192083d9674",
+          "bytes": 79744
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "15496782cf37457f673edc548a0562f158e75a4d6cdc67e0a61554ac6c1cbf0f",
+          "bytes": 527
+        }
+      }
+    },
+    {
+      "id": "tree",
+      "version": "0.6.0",
+      "url": "procedural-modules/tree/0.6.0/asset.mjs",
+      "sha256": "d55612695cbfea0624aac72f85bd05e7b86d0a7ffdbc51db30385727801d76ad",
+      "bytes": 213786,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "d55612695cbfea0624aac72f85bd05e7b86d0a7ffdbc51db30385727801d76ad",
+          "bytes": 213786
+        },
+        "asset.d.mts": {
+          "sha256": "a6b3a3cca9683a75921fccb20475c958bbe3ffe37d91e51c82f51500e7514ab7",
+          "bytes": 18770
+        },
+        "metadata.json": {
+          "sha256": "7eeaf4b38b04ac973388066d32dca5eaff2ebcb5fd7eff9201682134ba9b8f4b",
+          "bytes": 26487
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "6149943d2e863931c3f476eaa7263f04943be764dd5173afb4c5a8315db80cd3",
+          "bytes": 525
+        }
+      }
+    },
+    {
+      "id": "fence",
+      "version": "0.6.0",
+      "url": "procedural-modules/fence/0.6.0/asset.mjs",
+      "sha256": "c54e3d84d93840e7487b691cd3fa6235223cd19d771396e47cf660c4c717114b",
+      "bytes": 214561,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "c54e3d84d93840e7487b691cd3fa6235223cd19d771396e47cf660c4c717114b",
+          "bytes": 214561
+        },
+        "asset.d.mts": {
+          "sha256": "8ac2f80737362c32e9a27718a55f02cc5abc11c028e31a5d16fded7fc9647379",
+          "bytes": 19615
+        },
+        "metadata.json": {
+          "sha256": "1956c19eafe7c7c9a7a5511776b8267b56726ebc2f672bc471929ff15b4bc68f",
+          "bytes": 28106
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "7f3ca2ba7fc9d087fe038736427f3eb83ab874d3e01aae50282769555bdb0175",
+          "bytes": 523
+        }
+      }
+    },
+    {
+      "id": "crate",
+      "version": "0.6.0",
+      "url": "procedural-modules/crate/0.6.0/asset.mjs",
+      "sha256": "84da4620f30c492b5b2c585c3077e8a0504dd328b725538d1538c21357c01cd6",
+      "bytes": 216176,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "84da4620f30c492b5b2c585c3077e8a0504dd328b725538d1538c21357c01cd6",
+          "bytes": 216176
+        },
+        "asset.d.mts": {
+          "sha256": "d7395dc73e3818bd7e51fea7e9c89ff82602b2258db9c6b7cb1daa644fa15e6c",
+          "bytes": 21329
+        },
+        "metadata.json": {
+          "sha256": "f6dd569b8026949a676c3988e393bcd6c1aba463543f68bb9ac495e2a1ddafce",
+          "bytes": 30689
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "920f5b764782a8ea0f2634b7a3ba1b4c47746d2e7554d50a84fd78c82d22cee8",
+          "bytes": 523
+        }
+      }
+    },
+    {
+      "id": "boulder",
+      "version": "0.6.0",
+      "url": "procedural-modules/boulder/0.6.0/asset.mjs",
+      "sha256": "c9cab5d049c1314f462403154f5ddf526135eafad1cb6c86f5244a820f19f4f6",
+      "bytes": 212456,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "c9cab5d049c1314f462403154f5ddf526135eafad1cb6c86f5244a820f19f4f6",
+          "bytes": 212456
+        },
+        "asset.d.mts": {
+          "sha256": "2bf4a25e7dfc3a8ef6063ec17cb4dbe61f17ec90272cfa22b36b5596b02e4448",
+          "bytes": 17300
+        },
+        "metadata.json": {
+          "sha256": "2adb46b13e64093ac43d05c5da66a4f13a0185ea2c82d70160cc31dccdea3a8a",
+          "bytes": 24083
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "0442b9659f6cdff61a2816bf62f2c8592a2b5c2b6a24466b09a08ead52021d32",
+          "bytes": 524
+        }
+      }
+    },
+    {
+      "id": "bench",
+      "version": "1.1.0",
+      "url": "procedural-modules/bench/1.1.0/asset.mjs",
+      "sha256": "77489c0d6178c42f4fb7ea8449477bdc35d96b6c8c6d04c48afb533ee49ef816",
+      "bytes": 45908,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "77489c0d6178c42f4fb7ea8449477bdc35d96b6c8c6d04c48afb533ee49ef816",
+          "bytes": 45908
+        },
+        "asset.d.mts": {
+          "sha256": "e4fa154850c53e1b53daf420ef41bd82a2f15746fdde651b9dc7933ac4d264ef",
+          "bytes": 10457
+        },
+        "metadata.json": {
+          "sha256": "b269b3f7b8e0e0cfd0359e4f571e44bab7a7fe3255bca58958e887a49fcaf04d",
+          "bytes": 15095
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "53f4a8b50a2be344429c0da6234d51f1beb87cd03f96d73f249f32624c132e92",
+          "bytes": 524
+        }
+      }
+    },
+    {
+      "id": "planter",
+      "version": "1.1.0",
+      "url": "procedural-modules/planter/1.1.0/asset.mjs",
+      "sha256": "b79a72e6aea114fdfeb67c8368427b12da4e3a05f599e6141708c2959087a8e3",
+      "bytes": 44570,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "b79a72e6aea114fdfeb67c8368427b12da4e3a05f599e6141708c2959087a8e3",
+          "bytes": 44570
+        },
+        "asset.d.mts": {
+          "sha256": "50143973a9b00d22e0c536de6d34a501949ab6eff91484453e2e6e4469c7019c",
+          "bytes": 10466
+        },
+        "metadata.json": {
+          "sha256": "4b37a09090a011b61e21bd067082dc1d5d8c503033c9c9957e14ecf8d990d52f",
+          "bytes": 15438
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "f4ad9fbec0fa49fb7c20f992bafef4f22e50df07e79d76c3a4b1bce3b42bda89",
+          "bytes": 530
+        }
+      }
+    },
+    {
+      "id": "treasure-chest",
+      "version": "1.1.0",
+      "url": "procedural-modules/treasure-chest/1.1.0/asset.mjs",
+      "sha256": "40c326bf56392ddfd4a5688c8bbd858e41258784b8ece8204c06e116febbaece",
+      "bytes": 54135,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "40c326bf56392ddfd4a5688c8bbd858e41258784b8ece8204c06e116febbaece",
+          "bytes": 54135
+        },
+        "asset.d.mts": {
+          "sha256": "3d7940ad1522f0f8728774ec22deec285f44f4d922fcff633fe3da91b386b439",
+          "bytes": 15869
+        },
+        "metadata.json": {
+          "sha256": "5565af01c10f5ab3be729769b41cacedef04f48eaa3c176aa1ae7223bf8949f8",
+          "bytes": 23864
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "543386dad030ff6c5185730a2cc6def135c91c7b3f8cac7be62811d29b771ae2",
+          "bytes": 532
+        }
+      }
+    },
+    {
+      "id": "wheelbarrow",
+      "version": "1.1.0",
+      "url": "procedural-modules/wheelbarrow/1.1.0/asset.mjs",
+      "sha256": "406cdc42f700cbb463db136df38ef00bf62a211de514d688a1c1b63799f541da",
+      "bytes": 53970,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "406cdc42f700cbb463db136df38ef00bf62a211de514d688a1c1b63799f541da",
+          "bytes": 53970
+        },
+        "asset.d.mts": {
+          "sha256": "63a6a6739207bd5d240c8d2b23f18361f641de588a7115dac2aa219878fc491c",
+          "bytes": 15574
+        },
+        "metadata.json": {
+          "sha256": "db0fea4e5cf190c88105c7af2f74463ae79712c5b0c5cf942d074f072176cb10",
+          "bytes": 23282
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "b40f3768aaf88aa5659f754665b5406a8e250896852b8800e403c95c886252ef",
+          "bytes": 529
+        }
+      }
+    },
+    {
+      "id": "stone-well",
+      "version": "1.1.0",
+      "url": "procedural-modules/stone-well/1.1.0/asset.mjs",
+      "sha256": "013bd377c02e9c30595579efc146eb3d42d4870be11e4386f3611fd6689a5ac4",
+      "bytes": 65645,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "013bd377c02e9c30595579efc146eb3d42d4870be11e4386f3611fd6689a5ac4",
+          "bytes": 65645
+        },
+        "asset.d.mts": {
+          "sha256": "4d303b16cb0936e1ad40a5b5ca351f916d61786e994bdc8138ec3c44b9a04fed",
+          "bytes": 24635
+        },
+        "metadata.json": {
+          "sha256": "2005bd14999847493285c2e9fbcba3201db71bb367b2a99cba91721a087d2fcd",
+          "bytes": 37849
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "1599912a80016feab2cfa7362764ac71d2493efde7a29f561a8779e6178fe4a8",
+          "bytes": 521
+        }
+      }
+    },
+    {
+      "id": "conifer",
+      "version": "1.1.0",
+      "url": "procedural-modules/conifer/1.1.0/asset.mjs",
+      "sha256": "abfbeefa7cc8680dd42c29ed09686af65882bde7960944caab0d4d736deb0598",
+      "bytes": 59000,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "abfbeefa7cc8680dd42c29ed09686af65882bde7960944caab0d4d736deb0598",
+          "bytes": 59000
+        },
+        "asset.d.mts": {
+          "sha256": "891706b3d91f16172e0c654ac646d536417c6635ae20b0ed7e756cb118ab6503",
+          "bytes": 19644
+        },
+        "metadata.json": {
+          "sha256": "041145b11688c35be4cedb8107d44da33f1b1d4389c68938c2e2940e17110254",
+          "bytes": 29487
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+          "bytes": 5499
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "4d31a079961670067401d51d6e6398829f504647bcce06b814d6daca3c9d5e31",
+          "bytes": 520
+        }
+      }
+    },
+    {
+      "id": "stylized-humanoid",
+      "version": "1.0.0",
+      "url": "procedural-modules/stylized-humanoid/1.0.0/asset.mjs",
+      "sha256": "3cf57d441cbf42418b2b8bb63f10717a089833937203d72a50a5aa88667e84ee",
+      "bytes": 66790,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "3cf57d441cbf42418b2b8bb63f10717a089833937203d72a50a5aa88667e84ee",
+          "bytes": 66790
+        },
+        "asset.d.mts": {
+          "sha256": "6a6a7b3a05de7b41b1a8f2732435893fe9821d5a401f48c5cb9e0c3f33c7f5e3",
+          "bytes": 10099
+        },
+        "metadata.json": {
+          "sha256": "8af3872dd40df97f0219963f283e501b5eeebc1da252c9726fe3d90402f0d087",
+          "bytes": 14010
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+          "bytes": 5837
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "0b5d9acbd6668f1fb738baac04410be0ba87ff225563573bfaaab7f7645c66c5",
+          "bytes": 530
+        }
+      }
+    },
+    {
+      "id": "stylized-fox",
+      "version": "1.1.0",
+      "url": "procedural-modules/stylized-fox/1.1.0/asset.mjs",
+      "sha256": "305f3c6727d778c6220e2f94848dee0f19f9a864d8cf2945925c580d4bc2be7c",
+      "bytes": 66654,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "305f3c6727d778c6220e2f94848dee0f19f9a864d8cf2945925c580d4bc2be7c",
+          "bytes": 66654
+        },
+        "asset.d.mts": {
+          "sha256": "10c40392f458cdd6f4de38d34b5da7d68a588516d26768374cabb41c89032f2a",
+          "bytes": 9965
+        },
+        "metadata.json": {
+          "sha256": "379caa244efe2b048293b305c16cc21b964dca4b07a23ba70807b5aa05a0eb13",
+          "bytes": 13779
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+          "bytes": 5837
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "e25c57975094b7b40ffd31a18e3225ca25ab440f511b43cdaf1cc349597a754b",
+          "bytes": 523
+        }
+      }
+    },
+    {
+      "id": "cognac-leather-sofa",
+      "version": "1.1.0",
+      "url": "procedural-modules/cognac-leather-sofa/1.1.0/asset.mjs",
+      "sha256": "bca43248232f29216f612d7b8badd8690ec32b4007ffa03c47914becb228cdee",
+      "bytes": 60661,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "bca43248232f29216f612d7b8badd8690ec32b4007ffa03c47914becb228cdee",
+          "bytes": 60661
+        },
+        "asset.d.mts": {
+          "sha256": "83038bfa9db2a58f415cefa5dc2928871caa00bdb142134df37b46245ff68542",
+          "bytes": 22119
+        },
+        "metadata.json": {
+          "sha256": "6bac6a4e22d0f7133d44632ae347b4348bf4ac3b6bab82ee8c419d4e8265f8a6",
+          "bytes": 32262
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+          "bytes": 5837
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "c79953bb69092f0426375a7022068b789167146f61c9475d6a1d38b089ebcceb",
+          "bytes": 530
+        }
+      }
+    }
+  ]
+}

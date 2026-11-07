@@ -42,6 +42,7 @@ const names = [
   'playerSession',
   'playerSeatAttachment',
   'playerSeatAttachmentResult',
+  'clientBuild',
 ]
 
 const byName = {}

@@ -1,0 +1,4 @@
+import {build} from 'esbuild'; import {createRequire} from 'node:module'; import fs from 'node:fs/promises';
+const require=createRequire('/Users/jerome/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/package.json'); const {chromium}=require('playwright');
+const result=await build({entryPoints:['outputs/polyfork-office/browser-export.mjs'],bundle:true,format:'iife',platform:'browser',write:false});
+const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}); try { const page=await browser.newPage(); await page.addScriptTag({content:result.outputFiles[0].text}); let models=await page.evaluate(()=>window.exportModels()); for(const [name,data] of Object.entries(models)){await fs.writeFile(`outputs/polyfork-office/${name}.glb`,Buffer.from(data,'base64')); console.log(name,Buffer.from(data,'base64').length)} } finally {await browser.close()}

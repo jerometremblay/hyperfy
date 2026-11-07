@@ -3,6 +3,7 @@ import { Ranks } from '../core/extras/ranks.js'
 import { clientIpKey } from './uploadLimits.js'
 import { parseBearer } from './uploadPolicy.js'
 import { compilePolyspoonRecipe } from './compilePolyspoonRecipe.js'
+import { compilePolyforkRecipe } from './compilePolyforkRecipe.js'
 import { resolvePolyspoonAsset, applyPolyspoonCatalogPreset } from './polyspoonCatalog.js'
 
 export async function polyspoonRoutes(fastify, {
@@ -34,6 +35,15 @@ export async function polyspoonRoutes(fastify, {
     if (!socket.player.isAdmin()) return 403
     return 0
   }
+  fastify.get('/api/polyspoon/cdn', async (req, reply) => {
+    const token = parseBearer(req.headers.authorization)
+    const data = token && await readJWT(token)
+    const socket = data?.userId && getSocket(data.userId)
+    const code = status(socket)
+    if (code) return reply.code(code).send({ error: code === 401 ? 'A connected session is required' : 'Admin rank required' })
+    const url = process.env.POLYFORK_CDN_URL || ''
+    return reply.header('Cache-Control', 'no-store').send({ url: /^https:\/\/polyfork\.dev\/c\/[a-f0-9]+\/$/.test(url) ? url : '' })
+  })
   const authenticate = async (req, reply) => {
     const token = parseBearer(req.headers.authorization)
     const data = token && await readJWT(token)
@@ -93,7 +103,7 @@ export async function polyspoonRoutes(fastify, {
       }
       let compiled
       try {
-        compiled = await compileRecipe(source)
+        compiled = req.body?.format === 'polyfork' ? await compilePolyforkRecipe(source) : await compileRecipe(source)
         if (catalog) compiled = applyPolyspoonCatalogPreset(compiled, catalog.hint)
         const recipe = await world.loader.buildPolyspoonRecipe(compiled, params)
         recipe.disposeAsset(recipe.createAsset())

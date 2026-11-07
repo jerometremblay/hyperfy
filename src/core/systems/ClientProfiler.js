@@ -9,6 +9,8 @@ export class ClientProfiler extends System {
   constructor(world) {
     super(world)
     this.active = false
+    this.details = false
+    this.appsView = false
     this.metric = 'cpu'
     this.rows = []
     this.pending = new Map()
@@ -33,13 +35,44 @@ export class ClientProfiler extends System {
   }
 
   checkPermission = () => {
-    if (this.active && !this.allowed()) this.toggle(false)
+    if (!this.allowed()) {
+      this.details = false
+      this.updateActive()
+    } else if (this.appsView) {
+      this.updateActive()
+    }
   }
 
-  onDisconnect = () => this.toggle(false)
+  onDisconnect = () => {
+    this.details = false
+    this.appsView = false
+    this.updateActive()
+  }
 
-  toggle(value = !this.active) {
+  toggle(value = !this.details) {
     if (value && !this.allowed()) return false
+    if (this.details === value) return this.details
+    this.details = value
+    if (value) {
+      this.world.stats?.toggle(true)
+      this.overlay = new ProfilerOverlay(this.world, this)
+    } else {
+      this.overlay?.destroy()
+      this.overlay = null
+    }
+    this.updateActive()
+    this.publish()
+    return this.details
+  }
+
+  setAppsView(value) {
+    if (this.appsView === value) return
+    this.appsView = value
+    this.updateActive()
+  }
+
+  updateActive() {
+    const value = this.allowed() && (this.details || this.appsView)
     if (this.active === value) return this.active
     this.gpuMeasurement?.cancel()
     this.gpuResults.clear()
@@ -53,10 +86,7 @@ export class ClientProfiler extends System {
     this.elapsed = 0
     this.selected = null
     this.serverReport = null
-    if (value) {
-      this.world.stats?.toggle(true)
-      this.overlay = new ProfilerOverlay(this.world, this)
-    } else {
+    if (!value) {
       this.overlay?.destroy()
       this.overlay = null
     }
@@ -177,7 +207,7 @@ export class ClientProfiler extends System {
 
   postTick() {
     if (!this.active) return
-    if (!this.allowed()) return this.toggle(false)
+    if (!this.allowed()) return this.checkPermission()
     const now = performance.now()
     if (this.lastTick !== undefined) this.elapsed += (now - this.lastTick) / 1000
     this.lastTick = now
@@ -303,7 +333,7 @@ export class ClientProfiler extends System {
   }
 
   destroy() {
-    this.toggle(false)
+    this.onDisconnect()
     this.world.off('rank', this.checkPermission)
     this.world.settings.off('change', this.checkPermission)
     this.world.off('disconnect', this.onDisconnect)

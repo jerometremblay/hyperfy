@@ -1,0 +1,35 @@
+{
+  "formatVersion": 1,
+  "family": "bookcase",
+  "familyVersion": "1.0.0",
+  "requested": {
+    "width": 1.68,
+    "height": 1.25,
+    "depth": 0.38,
+    "shelves": 2,
+    "doors": true,
+    "crown": false,
+    "fill": 0.7,
+    "seed": 4,
+    "colorway": "painted"
+  },
+  "applied": {
+    "width": 1.68,
+    "height": 1.25,
+    "depth": 0.38,
+    "shelves": 2,
+    "fill": 0.7,
+    "doors": true,
+    "crown": false,
+    "seed": 4,
+    "colorway": "painted",
+    "color.wood": "#6f8a7a",
+    "color.trim": "#e3dccb",
+    "color.back": "#4f6459",
+    "color.red": "#b5543d",
+    "color.green": "#5b7a3c",
+    "color.blue": "#3f6185",
+    "color.tan": "#cfae78",
+    "color.gilt": "#b88b3a"
+  }
+}

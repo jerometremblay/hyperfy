@@ -55,3 +55,17 @@ restoring a world. Worldsync does not yet capture or deploy this recipe type:
 its source capture must not be treated as a complete backup of these objects.
 Existing connected clients must reload after the initial engine update; later
 recipe additions and parameter edits do not require a reload.
+
+## Polyfork HD models
+
+Admins can choose **New Polyfork Object** in Add. Configure the server with
+`POLYFORK_CDN_URL`, or enter an account CDN URL in the browser. HD is preferred by default; objects without an HD edition use
+the standard edition. Uncheck **Prefer HD edition** to use standard models. A browser-entered URL is saved in that browser. The selected URL is
+used to fetch HD modules directly from Polyfork; the original model page is
+retained for refresh.
+
+The recipe worker carries generated RGBA data textures and grouped physical
+materials into Hyperfy at their original dimensions. The worker accepts textures
+up to 2048 pixels per dimension and applies bounded total texture and geometry limits. Unsupported
+texture formats or material maps are rejected; custom shader modifications are
+not reproduced. Polyfork retains its own licensing terms for the assets.

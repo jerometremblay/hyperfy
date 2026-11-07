@@ -80,3 +80,24 @@ test('uncaptured keyboard input and typing keep their browser defaults', () => {
   }
   document.activeElement = { tagName: 'BODY' }
 })
+
+test('Shift keeps vertical wheel input on the same axis through repeated gestures', () => {
+  for (const isMac of [true, false]) {
+    const controls = new ClientControls({})
+    controls.isMac = isMac
+    const aim = controls.bind({ priority: 1 })
+    aim.scrollDelta.capture = true
+    for (const shiftKey of [false, true, true, true, false, true]) {
+      for (const deltaY of [-120, 120]) {
+        controls.scroll.delta = 0
+        controls.onScroll({ shiftKey, deltaX: 0, deltaY, preventDefault() {} })
+        controls.preFixedUpdate()
+        assert.equal(aim.scrollDelta.value, isMac ? deltaY : -deltaY)
+      }
+      controls.scroll.delta = 0
+      controls.onScroll({ shiftKey, deltaX: 120, deltaY: 0, preventDefault() {} })
+      controls.preFixedUpdate()
+      assert.equal(aim.scrollDelta.value, 0, 'sideways swipes must not become vertical power input')
+    }
+  }
+})

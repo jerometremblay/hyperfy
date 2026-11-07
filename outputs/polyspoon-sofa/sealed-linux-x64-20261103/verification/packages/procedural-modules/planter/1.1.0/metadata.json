@@ -1,0 +1,691 @@
+{
+  "formatVersion": 1,
+  "semantics": {
+    "version": 1,
+    "identity": {
+      "family": "planter",
+      "recipeVersion": "1.1.0"
+    },
+    "coordinates": {
+      "lengthUnit": "m",
+      "up": "+Y",
+      "front": "+Z",
+      "origin": "ground-center",
+      "anchorSpace": "root"
+    },
+    "controls": [
+      {
+        "key": "width",
+        "label": "width",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.6,
+        "max": 1.8,
+        "step": 0.05,
+        "default": 1.1,
+        "hint": "Outside width in meters.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "wall",
+          "post",
+          "floor",
+          "foot",
+          "rim"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "depth",
+        "label": "depth",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.3,
+        "max": 0.8,
+        "step": 0.05,
+        "default": 0.5,
+        "hint": "Outside depth in meters.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "wall",
+          "post",
+          "floor",
+          "foot",
+          "rim"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "height",
+        "label": "height",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.25,
+        "max": 0.85,
+        "step": 0.05,
+        "default": 0.5,
+        "hint": "Outside height in meters.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "wall",
+          "post",
+          "floor",
+          "foot",
+          "rim"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "boardCount",
+        "label": "Wall boards",
+        "kind": "integer",
+        "group": "construction",
+        "min": 2,
+        "max": 5,
+        "step": 1,
+        "default": 3,
+        "hint": "Horizontal board courses with small gaps.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "wall",
+          "post",
+          "floor",
+          "foot",
+          "rim"
+        ],
+        "unit": "count",
+        "inputUnit": "integer",
+        "displayUnit": "count"
+      },
+      {
+        "key": "feet",
+        "label": "Raised feet",
+        "kind": "toggle",
+        "group": "construction",
+        "default": true,
+        "hint": "Adds four ground-supported feet below the floor.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "wall",
+          "post",
+          "floor",
+          "foot",
+          "rim"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "colorway",
+        "label": "Palette",
+        "kind": "choice",
+        "group": "colors",
+        "default": "oak",
+        "options": [
+          {
+            "value": "oak",
+            "label": "Oak"
+          },
+          {
+            "value": "painted",
+            "label": "Painted"
+          }
+        ],
+        "hint": "Board and post colors.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "wood",
+          "frame",
+          "rim"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "color.wood",
+        "label": "Boards",
+        "kind": "color",
+        "group": "colors",
+        "default": "#b88654",
+        "role": "wood",
+        "hint": "Walls and floor.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "wall",
+          "floor",
+          "rim"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.frame",
+        "label": "Posts",
+        "kind": "color",
+        "group": "colors",
+        "default": "#604532",
+        "role": "frame",
+        "hint": "Posts and feet.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "post",
+          "foot"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      }
+    ],
+    "anchors": {
+      "ground": [
+        0,
+        0,
+        0
+      ],
+      "opening": [
+        0,
+        0.5,
+        0
+      ]
+    },
+    "materials": [
+      {
+        "id": "frame"
+      },
+      {
+        "id": "wood"
+      }
+    ],
+    "parts": [
+      {
+        "id": "post--1--1",
+        "node": "post--1--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "foot--1--1",
+        "node": "foot--1--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "post--1-1",
+        "node": "post--1-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "foot--1-1",
+        "node": "foot--1-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "post-1--1",
+        "node": "post-1--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "foot-1--1",
+        "node": "foot-1--1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "post-1-1",
+        "node": "post-1-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "foot-1-1",
+        "node": "foot-1-1",
+        "materialId": "frame",
+        "material": "frame",
+        "group": "static"
+      },
+      {
+        "id": "wall-rear-0",
+        "node": "wall-rear-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-left-0",
+        "node": "wall-left-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-front-0",
+        "node": "wall-front-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-right-0",
+        "node": "wall-right-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-rear-1",
+        "node": "wall-rear-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-left-1",
+        "node": "wall-left-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-front-1",
+        "node": "wall-front-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-right-1",
+        "node": "wall-right-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-rear-2",
+        "node": "wall-rear-2",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-left-2",
+        "node": "wall-left-2",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-front-2",
+        "node": "wall-front-2",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "wall-right-2",
+        "node": "wall-right-2",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "floor",
+        "node": "floor",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "rim-rear",
+        "node": "rim-rear",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "rim-left",
+        "node": "rim-left",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "rim-front",
+        "node": "rim-front",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "rim-right",
+        "node": "rim-right",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      }
+    ],
+    "joints": [],
+    "delivery": {
+      "version": 1,
+      "mode": "editable",
+      "identity": "node-per-part",
+      "movingGroups": "separate"
+    }
+  },
+  "id": "planter",
+  "version": "1.1.0",
+  "title": "Slatted planter box",
+  "description": "An open planter with stacked wall boards, corner posts, a floor and optional feet.",
+  "controls": [
+    {
+      "key": "width",
+      "label": "width",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.6,
+      "max": 1.8,
+      "step": 0.05,
+      "default": 1.1,
+      "hint": "Outside width in meters.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "wall",
+        "post",
+        "floor",
+        "foot",
+        "rim"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "depth",
+      "label": "depth",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.3,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.5,
+      "hint": "Outside depth in meters.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "wall",
+        "post",
+        "floor",
+        "foot",
+        "rim"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "height",
+      "label": "height",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.25,
+      "max": 0.85,
+      "step": 0.05,
+      "default": 0.5,
+      "hint": "Outside height in meters.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "wall",
+        "post",
+        "floor",
+        "foot",
+        "rim"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "boardCount",
+      "label": "Wall boards",
+      "kind": "integer",
+      "group": "construction",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 3,
+      "hint": "Horizontal board courses with small gaps.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "wall",
+        "post",
+        "floor",
+        "foot",
+        "rim"
+      ],
+      "unit": "count",
+      "inputUnit": "integer",
+      "displayUnit": "count"
+    },
+    {
+      "key": "feet",
+      "label": "Raised feet",
+      "kind": "toggle",
+      "group": "construction",
+      "default": true,
+      "hint": "Adds four ground-supported feet below the floor.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "wall",
+        "post",
+        "floor",
+        "foot",
+        "rim"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "colorway",
+      "label": "Palette",
+      "kind": "choice",
+      "group": "colors",
+      "default": "oak",
+      "options": [
+        {
+          "value": "oak",
+          "label": "Oak"
+        },
+        {
+          "value": "painted",
+          "label": "Painted"
+        }
+      ],
+      "hint": "Board and post colors.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "wood",
+        "frame",
+        "rim"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "color.wood",
+      "label": "Boards",
+      "kind": "color",
+      "group": "colors",
+      "default": "#b88654",
+      "role": "wood",
+      "hint": "Walls and floor.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "wall",
+        "floor",
+        "rim"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.frame",
+      "label": "Posts",
+      "kind": "color",
+      "group": "colors",
+      "default": "#604532",
+      "role": "frame",
+      "hint": "Posts and feet.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "post",
+        "foot"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    }
+  ],
+  "defaults": {
+    "width": 1.1,
+    "depth": 0.5,
+    "height": 0.5,
+    "boardCount": 3,
+    "feet": true,
+    "colorway": "oak",
+    "color.wood": "#b88654",
+    "color.frame": "#604532"
+  },
+  "presets": [
+    {
+      "id": "raised-box",
+      "name": "Raised box",
+      "description": "Three oak board courses with four raised feet.",
+      "parameters": {}
+    },
+    {
+      "id": "herb-trough",
+      "name": "Herb trough",
+      "description": "A low long oak box resting on the ground.",
+      "parameters": {
+        "width": 1.5,
+        "depth": 0.4,
+        "height": 0.3,
+        "boardCount": 2,
+        "feet": false
+      }
+    },
+    {
+      "id": "patio-box",
+      "name": "Patio box",
+      "description": "A tall square painted planter on feet.",
+      "parameters": {
+        "width": 0.7,
+        "depth": 0.7,
+        "height": 0.8,
+        "boardCount": 5,
+        "feet": true,
+        "colorway": "painted"
+      }
+    }
+  ],
+  "palettes": [
+    {
+      "id": "oak",
+      "label": "Oak",
+      "colors": [
+        "#b88654",
+        "#604532"
+      ]
+    },
+    {
+      "id": "painted",
+      "label": "Painted",
+      "colors": [
+        "#8ca58b",
+        "#384a42"
+      ]
+    }
+  ],
+  "constraints": [
+    "Dimensions are meters. Open top, no soil or plants. Board gaps are 6 mm. Feet consume 10 cm of total height. Floor has no drainage holes."
+  ],
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "configuration": {
+    "kind": "default"
+  },
+  "source": {
+    "entry": "examples/recipes/planter/index.ts",
+    "exportName": "planterRecipe",
+    "sha256": "ecfc165d79ad7fe9ad66f3ae0a7795fbb3a3ba5885fe7bba783805759e5c3534",
+    "files": {
+      "examples/recipes/planter/index.ts": "f0d0d836f6c2878fa1430274d0cf300f58dfcbedefb116cbd8f60212d8b0350f",
+      "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "src/catalog/build.ts": "cb9eee04337244055efd058948a6fb440975ec25315b16f61915a02015c7e904",
+      "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+      "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "src/recipes/legacy-v1/planter.ts": "c6ed1f78b474f593afec76954fa06746eeb51aa41912a8f13c7508002093ac81",
+      "src/recipes/types.ts": "5ec1e3ee4a39ffe8932751b38596c360fb4f818bc512e20918cbce017d6695da"
+    }
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "thirdParty": "Three ConvexGeometry/ConvexHull and BufferGeometryUtils MIT; see THIRD-PARTY.txt"
+  }
+}

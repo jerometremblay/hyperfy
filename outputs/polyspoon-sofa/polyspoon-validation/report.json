@@ -1,0 +1,52 @@
+{
+  "family": "cognac-leather-sofa",
+  "version": "1.1.0",
+  "dimensions": [
+    2.6380103473663326,
+    1.0779266319695464,
+    0.8859999939426783
+  ],
+  "anchors": {
+    "ground": [
+      0,
+      0,
+      0
+    ],
+    "seat": [
+      0,
+      0.6700012665987015,
+      0.085
+    ]
+  },
+  "geometry": {
+    "errors": [],
+    "parts": 88,
+    "triangles": 8832,
+    "vertices": 21908,
+    "bounds": {
+      "min": [
+        -1.3190051736831663,
+        -0.0022465630932453073,
+        -0.4529999935626985
+      ],
+      "max": [
+        1.3190051736831663,
+        1.0779127590765754,
+        0.43300000037997977
+      ]
+    }
+  },
+  "glbSha256": "5ac2b766d881724ab5713a86bf7f66bda6de7f9451f5b4d72f01f048915b7e11",
+  "formats": {},
+  "controls": "asset.controls.json",
+  "toolkit": {
+    "recipe": "bench",
+    "recipeVersion": "1.1.0",
+    "deliveryRevision": 3,
+    "sha256": "09831a9f297372b663ef8705e1b0c63c0b9f8649b9b129cc244bec161aaad4bb",
+    "sourceHash": "b206980cfff82780dc384261c85e50432dce2ab410d87203fd36cc25990e43ed"
+  },
+  "limits": [
+    "Geometry/export evidence only; inspect actual views and verify the requested target separately."
+  ]
+}

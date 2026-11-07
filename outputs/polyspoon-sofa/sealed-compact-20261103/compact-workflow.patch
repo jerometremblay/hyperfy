@@ -1,0 +1,266 @@
+diff --git a/docs/authoring/guide.md b/docs/authoring/guide.md
+index 43dc8bf..87f98ed 100644
+--- a/docs/authoring/guide.md
++++ b/docs/authoring/guide.md
+@@ -174,9 +174,11 @@ This first command supports Linux, including cleanup of detached browser descend
+ 
+ Use your recipe's own behavior test. The bench example uses its existing contract test. The named test must be a regular .test.ts file contained under tests, without symlinks or parent traversal. This executes trusted repository tests; it is not a sandbox for uploaded code. Request text is recorded as provenance and never interpreted as code or a model prompt.
+ 
++The verifier stores validation and Unity fixture GLBs as gzip-compressed evidence, checks their original hashes and validates the decompressed bytes. The selected GLB remains uncompressed. Its package stage emits only the selected recipe's source package and procedural module. Standalone `validate` and `recipe:package` retain their default output behavior.
++
+ The output must be a fresh directory under the project's evidence directory. Existing directories and symlink paths are rejected. Fix failures and choose a new attempt directory; do not overwrite a failed run. Optional --timeout-ms sets the per-command limit, default 300000 milliseconds, maximum 3600000. SIGINT/SIGTERM cancels the run. Owned subprocess groups, including the isolated renderer's server/browser, are terminated. The local preview on port 4173 is not used.
+ 
+-The command runs typecheck, the existing explicit recipe suite, your named behavior test, family GLB validation cases, seven neutral selected views plus preset images, selected export, source packaging and package integrity checking. It does not install dependencies. Missing installed tooling produces a retained failure. Package generation follows the existing catalog-wide packaging path and can fail on another registered recipe's missing declaration.
++The command runs typecheck, the existing explicit recipe suite, your named behavior test, family GLB validation cases, seven neutral selected views plus preset images, selected export, source packaging and package integrity checking. It does not install dependencies. Missing installed tooling produces a retained failure. Packaging builds only the selected recipe, while still checking the shared declaration inventory.
+ 
+ Without --config, selected.design.json records the descriptor defaults. With --config path/to/saved.design.json, it records the validated selected design, including appearance. Export and rendering both consume that exact saved file. A conflicting family is rejected before output creation. Config inputs must be regular files within this checkout.
+ 
+diff --git a/scripts/cli.ts b/scripts/cli.ts
+index 1533df7..3e2540a 100644
+--- a/scripts/cli.ts
++++ b/scripts/cli.ts
+@@ -11,15 +11,16 @@ import { geometrySnapshot, inspectGeometry } from '../src/lantern/inspect.ts';
+ import { sha256, sourceProvenance } from './provenance.ts';
+ import { convertGlb, exportFormats, type ExportFormat } from '../src/formats/index.ts';
+ import { controlsDocument } from '../src/formats/controls.ts';
++import { gzipSync } from 'node:zlib';
+ 
+ const [command,...args] = process.argv.slice(2);
+ const options = new Map<string,string>();
+ for (let i=0;i<args.length;i+=2) {
+   const key=args[i]!, value=args[i+1];
+-  if (!['--family','--preset','--config','--out','--formats'].includes(key) || !value || value.startsWith('--') || options.has(key)) throw new Error('Invalid argument: '+key);
++  if (!['--family','--preset','--config','--out','--formats','--compression'].includes(key) || !value || value.startsWith('--') || options.has(key)) throw new Error('Invalid argument: '+key);
+   options.set(key,value);
+ }
+-async function exportOne(family: string,input: unknown,output: string,provenance: Awaited<ReturnType<typeof sourceProvenance>>, expectation = false, migration?: MigrationNotice) {
++async function exportOne(family: string,input: unknown,output: string,provenance: Awaited<ReturnType<typeof sourceProvenance>>, expectation = false, migration?: MigrationNotice, compress = false) {
+   const build=buildAsset(family,input);
+   if(migration)build.config.migration=migration;
+   try {
+@@ -31,7 +32,7 @@ async function exportOne(family: string,input: unknown,output: string,provenance
+     const measured=measurements(build), configHash=sha256(JSON.stringify(build.config));
+     const manifest={configuration:build.config,geometry,measurements:measured,handleGap:build.handleGap,geometryHash:sha256(JSON.stringify(geometrySnapshot(build.root))),configHash,glbHash:sha256(bytes),glbBytes:bytes.byteLength,validation,provenance};
+     await mkdir(dirname(output),{recursive:true});
+-    await writeFile(output,bytes);
++    await writeFile(output+(compress?'.gz':''),compress?gzipSync(bytes):bytes);
+     await writeFile(output.slice(0,-4)+'.json',JSON.stringify(manifest,null,2));
+     if (expectation) await writeFile(output.slice(0,-4)+'.expected.json',JSON.stringify({
+       name:output.split('/').at(-1)!.slice(0,-4),sha256:sha256(bytes),...measured,
+@@ -43,6 +44,7 @@ async function exportOne(family: string,input: unknown,output: string,provenance
+ async function main() {
+   const provenance=await sourceProvenance();
+   if (command==='export') {
++    if(options.has('--compression'))throw new Error('Compression is only supported for validation evidence');
+     const saved=options.has('--config') ? JSON.parse(await readFile(options.get('--config')!,'utf8')) : undefined;
+     const resolved=resolveExport({family:options.get('--family'),preset:options.get('--preset')},saved);
+     const output=options.get('--out') ?? 'evidence/exports/'+resolved.family+'.glb';
+@@ -60,17 +62,19 @@ async function main() {
+   }
+   if (command!=='validate') throw new Error('Use export or validate');
+   if (options.has('--config') || options.has('--preset')) throw new Error('validate accepts --family and --out only');
++  const compression=options.get('--compression');
++  if(compression!==undefined&&compression!=='gzip')throw new Error('Validation compression must be gzip');
+   const directory=options.get('--out') ?? 'evidence/catalog';
+   const selected=options.has('--family') ? [descriptor(options.get('--family')!)] : catalog;
+   const results: unknown[]=[];
+   for (const d of selected) for (const fixture of validationCases(d.id)) {
+     const output=join(directory,d.id+'-'+fixture.id+'.glb');
+-    results.push({name:d.id+'-'+fixture.id, ...await exportOne(d.id,fixture.parameters,output,provenance)});
++    results.push({name:d.id+'-'+fixture.id, ...await exportOne(d.id,fixture.parameters,output,provenance,false,undefined,compression==='gzip')});
+   }
+   const stable=selected.flatMap(d=>recipe(d.id).integrationCases.map(c=>({name:d.id+'-'+c.id,family:d.id,input:c.parameters})));
+-  for (const c of stable) await exportOne(c.family,c.input,join(directory,'unity-inputs',c.name+'.glb'),provenance,true);
++  for (const c of stable) await exportOne(c.family,c.input,join(directory,'unity-inputs',c.name+'.glb'),provenance,true,undefined,compression==='gzip');
+   if ((await sourceProvenance()).sourceHash!==provenance.sourceHash) throw new Error('Source changed during validation; rerun');
+-  await writeFile(join(directory,'report.json'),JSON.stringify({generatedAt:new Date().toISOString(),provenance,testedConfigurations:results.length,unityInputs:stable.map(c=>c.name),results},null,2));
++  await writeFile(join(directory,'report.json'),JSON.stringify({generatedAt:new Date().toISOString(),provenance,testedConfigurations:results.length,unityInputs:stable.map(c=>c.name),results,...(compression?{compression}:{})},null,compression?undefined:2));
+   console.log(results.length+' real GLBs passed with zero validator errors/warnings; '+stable.length+' Unity expectation pairs. '+directory+'/report.json');
+ }
+ main().catch(error=>{console.error(error);process.exitCode=1;});
+diff --git a/scripts/recipe-module.ts b/scripts/recipe-module.ts
+index bb4a6ce..61e4fcd 100644
+--- a/scripts/recipe-module.ts
++++ b/scripts/recipe-module.ts
+@@ -117,7 +117,8 @@ async function publishProceduralReleases(output:string,releases:PublishedProcedu
+   finally{await handle.close();try{await unlink(temporary);}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}}
+   return index;
+ }
+-export async function buildProceduralModules(output=join(root,'public/procedural-modules'),options:{retainPublished?:boolean}={}){
++export async function buildProceduralModules(output=join(root,'public/procedural-modules'),options:{retainPublished?:boolean;families?:readonly string[]}={}){
++  if(options.families&&(resolve(output)===resolve(root,'public/procedural-modules')||!options.families.length||new Set(options.families).size!==options.families.length||options.families.some(id=>!catalog.some(d=>d.id===id))))throw Error('Family selection requires valid families and an explicit candidate output');
+   const published=await readPublishedProceduralReleases(join(root,'public/procedural-modules'));
+   if(options.retainPublished&&!published.length)throw new Error('Missing published module records');
+   const declarationsMetadata=JSON.parse(await readFile(join(root,'docs/contributing/source-packages.json'),'utf8'));
+@@ -127,7 +128,7 @@ export async function buildProceduralModules(output=join(root,'public/procedural
+   const installed=JSON.parse(await readFile(join(root,'node_modules/three/package.json'),'utf8'));
+   if(installed.version!==pinnedDependencies.three)throw new Error('Installed Three version differs from pinned dependency');
+   const prepared:PublishedProceduralRelease[]=[];
+-  for(const item of catalog){
++  for(const item of catalog.filter(item=>!options.families||options.families.includes(item.id))){
+     const d=descriptor(item.id),r=recipe(d.id);
+     const exported=await import(pathToFileURL(join(root,r.source.entry)).href);
+     if(exported[r.source.exportName]!==r)throw new Error('Registered recipe source/export mismatch: '+d.id);
+diff --git a/scripts/recipe-package.ts b/scripts/recipe-package.ts
+index f623f57..c37dcb5 100644
+--- a/scripts/recipe-package.ts
++++ b/scripts/recipe-package.ts
+@@ -99,7 +99,13 @@ export async function buildSourcePackages(output=join(root,'public/recipe-packag
+   return index;
+ }
+ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
+-  const args=process.argv.slice(2);
+-  if(args.length&&!(args.length===2&&args[0]==='--out'))throw new Error('Use --out directory');
+-  buildSourcePackages(args[1]).then(async result=>{await buildProceduralModules(args[1]?join(resolve(args[1]),'procedural-modules'):undefined,{retainPublished:true});return result;}).then(result=>console.log(JSON.stringify(result,null,2))).catch(error=>{console.error(error);process.exitCode=1;});
++  const args=process.argv.slice(2),values=new Map<string,string>();
++  for(let i=0;i<args.length;i+=2){
++    const key=args[i]!,value=args[i+1];
++    if(!['--out','--family'].includes(key)||!value||value.startsWith('--')||values.has(key))throw Error('Use --out directory [--family id]');
++    values.set(key,value);
++  }
++  const output=values.get('--out'),family=values.get('--family'),families=family?[family]:undefined;
++  if(family&&!output)throw Error('Family selection requires an explicit candidate output');
++  buildSourcePackages(output,families).then(async result=>{await buildProceduralModules(output?join(resolve(output),'procedural-modules'):undefined,{retainPublished:true,families});return result;}).then(result=>console.log(JSON.stringify(result,null,2))).catch(error=>{console.error(error);process.exitCode=1;});
+ }
+diff --git a/scripts/recipe-verify-evidence.ts b/scripts/recipe-verify-evidence.ts
+index 9adf83c..784499f 100644
+--- a/scripts/recipe-verify-evidence.ts
++++ b/scripts/recipe-verify-evidence.ts
+@@ -1,6 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { readFile, readdir } from 'node:fs/promises';
+ import { join, relative } from 'node:path';
++import { gunzipSync } from 'node:zlib';
+ import { validateBytes } from 'gltf-validator';
+ import { descriptor, validationCases } from '../src/catalog/index.ts';
+ import { recipe } from '../src/recipes/index.ts';
+@@ -34,6 +35,14 @@ export type VerificationSnapshot=Awaited<ReturnType<typeof verificationSnapshot>
+ export function checkPackagedSources(files:Record<string,string>,sources:Record<string,string>) {
+   for(const [path,text] of Object.entries(files))if(/^(src|scripts|examples)\//.test(path))assert.equal(sha256(text),sources[path],'Packaged source mismatch: '+path);
+ }
++export async function checkStoredGlb(path:string,expected:string,compressed=false) {
++  const stored=await readFile(path+(compressed?'.gz':''));
++  const bytes=compressed?gunzipSync(stored,{maxOutputLength:64*1024*1024}):stored;
++  assert.equal(sha256(bytes),expected,'GLB hash differs: '+path);
++  const checked=await validateBytes(bytes,{uri:path,maxIssues:100});
++  assert.equal(checked.issues.numErrors,0,path+' errors');
++  assert.equal(checked.issues.numWarnings,0,path+' warnings');
++}
+ export async function checkEvidence(prepared:PreparedVerification,before:VerificationSnapshot) {
+   const {output,family,design}=prepared,d=descriptor(family);
+   const json=async(path:string)=>JSON.parse(await readFile(join(output,path),'utf8'));
+@@ -41,32 +50,27 @@ export async function checkEvidence(prepared:PreparedVerification,before:Verific
+     assert.equal(provenance.sourceHash,before.provenance.sourceHash,'Artifact source hash differs');
+     assert.equal(provenance.lockHash,before.provenance.lockHash,'Artifact dependency lock differs');
+   };
+-  const glb=async(path:string,expected:string)=>{
+-    const bytes=await readFile(join(output,path));
+-    assert.equal(sha256(bytes),expected,'GLB hash differs: '+path);
+-    const checked=await validateBytes(bytes,{uri:path,maxIssues:100});
+-    assert.equal(checked.issues.numErrors,0,path+' errors');
+-    assert.equal(checked.issues.numWarnings,0,path+' warnings');
+-  };
++  const glb=(path:string,expected:string,compressed=false)=>checkStoredGlb(join(output,path),expected,compressed);
+   const exported=await json('selected.json');
+   assert.deepEqual(exported.configuration,design,'Export does not match selected design');
+   assert.equal(exported.configHash,sha256(JSON.stringify(design)));
+   identity(exported.provenance);
+   await glb('selected.glb',exported.glbHash);
+   const validation=await json('validation/report.json'),cases=validationCases(family);
++  if(validation.compression!==undefined&&validation.compression!=='gzip')throw Error('Unsupported validation evidence compression');
+   identity(validation.provenance);
+   assert.equal(validation.testedConfigurations,cases.length);
+   assert.deepEqual(validation.results.map((item:{name:string})=>item.name),cases.map(c=>family+'-'+c.id));
+   for(const result of validation.results) {
+     identity(result.provenance);
+     assert.deepEqual(result.geometry.errors,[]);
+-    await glb('validation/'+result.name+'.glb',result.glbHash);
++    await glb('validation/'+result.name+'.glb',result.glbHash,validation.compression==='gzip');
+   }
+   assert.deepEqual(validation.unityInputs,recipe(family).integrationCases.map(c=>family+'-'+c.id));
+   for(const name of validation.unityInputs) {
+     const expected=await json('validation/unity-inputs/'+name+'.expected.json');
+     identity(expected.producer.provenance);
+-    await glb('validation/unity-inputs/'+name+'.glb',expected.sha256);
++    await glb('validation/unity-inputs/'+name+'.glb',expected.sha256,validation.compression==='gzip');
+   }
+   const rendered=await json('renders/manifest.json');
+   assert.equal(rendered.family,family);assert.equal(rendered.version,d.version);
+diff --git a/scripts/recipe-verify.ts b/scripts/recipe-verify.ts
+index f5bd286..9bad602 100644
+--- a/scripts/recipe-verify.ts
++++ b/scripts/recipe-verify.ts
+@@ -21,10 +21,10 @@ export async function verifyRecipe(args:string[],signal:AbortSignal) {
+   add('typecheck',['node_modules/typescript/bin/tsc','--noEmit']);
+   add('recipe-tests',['--import','tsx','scripts/test-current.ts','recipes']);
+   add('behavior-test',['--import','tsx','--test',prepared.test]);
+-  add('validate',['--import','tsx','scripts/cli.ts','validate','--family',prepared.family,'--out',join(prepared.output,'validation')]);
++  add('validate',['--import','tsx','scripts/cli.ts','validate','--family',prepared.family,'--out',join(prepared.output,'validation'),'--compression','gzip']);
+   add('render',['--import','tsx','scripts/recipe-render.ts','--family',prepared.family,'--config',selected,'--out',join(prepared.output,'renders')]);
+   add('export',['--import','tsx','scripts/cli.ts','export','--family',prepared.family,'--config',selected,'--out',join(prepared.output,'selected.glb')]);
+-  add('package',['--import','tsx','scripts/recipe-package.ts','--out',join(prepared.output,'packages')]);
++  add('package',['--import','tsx','scripts/recipe-package.ts','--out',join(prepared.output,'packages'),'--family',prepared.family]);
+   add('package-check',['--import','tsx','scripts/recipe-verify-package.ts',join(prepared.output,'packages/index.json'),prepared.family,prepared.design.familyVersion]);
+   let baseline:Awaited<ReturnType<typeof verificationSnapshot>>|undefined;
+   const snapshot=async()=>{
+diff --git a/tests/cli.test.ts b/tests/cli.test.ts
+index 6a2ea5e..b3f368d 100644
+--- a/tests/cli.test.ts
++++ b/tests/cli.test.ts
+@@ -5,6 +5,7 @@ import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { descriptor } from '../src/catalog/index.ts';
++import { checkStoredGlb } from '../scripts/recipe-verify-evidence.ts';
+ test('CLI exports saved family and rejects ambiguous or invalid options', async () => {
+   const directory=await mkdtemp(join(tmpdir(),'workshop-cli-'));
+   const config=join(directory,'tree.design.json'), output=join(directory,'tree.glb');
+@@ -21,5 +22,23 @@ test('CLI exports saved family and rejects ambiguous or invalid options', async
+     ['export','--family','unknown'],
+     ['export','--family','tree','--family','tree'],
+     ['validate','--preset','field'],
++    ['validate','--compression','unknown'],
++    ['export','--family','tree','--compression','gzip'],
+   ]) assert.throws(()=>run(args));
+ });
++
++test('compressed validation retains every GLB and verifies its original bytes', async () => {
++  const directory=await mkdtemp(join(tmpdir(),'workshop-compressed-'));
++  execFileSync(process.execPath,['--import','tsx','scripts/cli.ts','validate','--family','bench','--out',directory,'--compression','gzip'],{stdio:'pipe'});
++  const report=JSON.parse(await readFile(join(directory,'report.json'),'utf8'));
++  assert.equal(report.compression,'gzip');
++  assert.ok(report.results.length>1);
++  for(const result of report.results)await checkStoredGlb(join(directory,result.name+'.glb'),result.glbHash,true);
++  for(const name of report.unityInputs) {
++    const expected=JSON.parse(await readFile(join(directory,'unity-inputs',name+'.expected.json'),'utf8'));
++    await checkStoredGlb(join(directory,'unity-inputs',name+'.glb'),expected.sha256,true);
++  }
++  const selected=join(directory,report.results[0].name+'.glb');
++  await assert.rejects(readFile(selected),{code:'ENOENT'});
++  await assert.rejects(checkStoredGlb(selected,'0'.repeat(64),true),/GLB hash differs/);
++});
+diff --git a/tests/recipe-package-delivery.test.ts b/tests/recipe-package-delivery.test.ts
+index c2878b2..ca6a01d 100644
+--- a/tests/recipe-package-delivery.test.ts
++++ b/tests/recipe-package-delivery.test.ts
+@@ -5,8 +5,20 @@ import { join,resolve } from 'node:path';
+ import { buildSourcePackages } from '../scripts/recipe-package.ts';
+ import { readPackageZip } from '../scripts/recipe-check.ts';
+ import { sha256,validatePackageFiles } from '../scripts/recipe-package-core.ts';
++import { execFileSync } from 'node:child_process';
+ 
+ const evidence=resolve('evidence/revision14/packages');
++test('family candidate packages only the requested source and procedural module',async()=>{
++  await mkdir(evidence,{recursive:true});
++  const directory=await mkdtemp(join(evidence,'single-family-'));
++  execFileSync(process.execPath,['--import','tsx','scripts/recipe-package.ts','--out',directory,'--family','bench'],{stdio:'pipe'});
++  const source=JSON.parse(await readFile(join(directory,'index.json'),'utf8'));
++  const modules=JSON.parse(await readFile(join(directory,'procedural-modules/index.json'),'utf8'));
++  assert.deepEqual(source.packages.map((item:{id:string})=>item.id),['bench']);
++  assert.deepEqual(modules.packages.map((item:{id:string})=>item.id),['bench']);
++  await assert.rejects(readFile(join(directory,'cottage-0.6.0-source.3.zip')),{code:'ENOENT'});
++  assert.throws(()=>execFileSync(process.execPath,['--import','tsx','scripts/recipe-package.ts','--family','bench'],{stdio:'pipe'}));
++});
+ test('legacy immutable source archives validate under the frozen delivery contract',async()=>{
+   for(const family of ['cottage-0.5.0','cottage-0.6.0','bench-1.1.0']){
+     const files=readPackageZip(await readFile('public/recipe-packages/'+family+'.zip'));

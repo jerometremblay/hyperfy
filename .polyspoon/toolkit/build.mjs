@@ -1,0 +1,14 @@
+import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const root=dirname(fileURLToPath(import.meta.url));
+const manifest=JSON.parse(await readFile(join(root,'manifest.json'),'utf8'));
+const sources=Object.keys(manifest.files).filter(path=>path.endsWith('.ts'));
+if(sources.some(path=>! /^(src\/(catalog|recipes|engine|lantern|families|rigging)\/|examples\/recipes\/|scripts\/node-platform\.ts$|runner\.ts$)[a-zA-Z0-9/_.-]*$/.test(path)||path.split('/').includes('..')))throw new Error('Unsafe source path');
+const compiled=spawnSync(process.execPath,[join(root,'node_modules/typescript/bin/tsc'),'--ignoreConfig','--noCheck','--target','ES2023','--module','ESNext','--moduleResolution','Bundler','--rewriteRelativeImportExtensions','--rootDir',root,'--outDir',join(root,'.recipe-build'),...sources],{cwd:root,stdio:'inherit'});
+if(compiled.error)throw compiled.error;
+if(compiled.status!==0)process.exit(compiled.status??1);
+const result=spawnSync(process.execPath,[join(root,'.recipe-build/runner.js'),...process.argv.slice(2)],{cwd:root,stdio:'inherit'});
+if(result.error)throw result.error;
+process.exitCode=result.status??1;

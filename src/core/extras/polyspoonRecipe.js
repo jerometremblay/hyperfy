@@ -4,7 +4,7 @@ export const runtimePolyspoonHash = model => /^polyspoon:\/\/([a-f0-9]{64})$/.ex
 
 // The worker returns only JSON. Validate it before allocating engine objects.
 export function recipeFromSandbox(output) {
-  if (typeof output !== 'string' || output.length > 32000000) throw new Error('Invalid recipe output')
+  if (typeof output !== 'string' || output.length > 48000000) throw new Error('Invalid recipe output')
   const data = JSON.parse(output)
   if (
     !data ||
@@ -18,6 +18,35 @@ export function recipeFromSandbox(output) {
   ) {
     throw new Error('Invalid recipe output')
   }
+  const textureData = data.textures ?? []
+  if (!Array.isArray(textureData) || textureData.length > 64) throw new Error('Invalid recipe textures')
+  let textureBytes = 0
+  for (const t of textureData) {
+    if (
+      !t ||
+      !Number.isInteger(t.width) ||
+      !Number.isInteger(t.height) ||
+      t.width < 1 ||
+      t.height < 1 ||
+      t.width > 2048 ||
+      t.height > 2048 ||
+      typeof t.data !== 'string' ||
+      t.data.length !== Math.ceil((t.width * t.height * 4) / 3) * 4 ||
+      !/^[A-Za-z0-9+/]*={0,2}$/.test(t.data) ||
+      !['', 'srgb', 'srgb-linear'].includes(t.colorSpace) ||
+      ![1000, 1001, 1002].includes(t.wrapS) ||
+      ![1000, 1001, 1002].includes(t.wrapT) ||
+      ![t.repeat, t.offset, t.center].every(
+        a => Array.isArray(a) && a.length === 2 && a.every(n => Number.isFinite(n) && Math.abs(n) <= 10000)
+      ) ||
+      !Number.isFinite(t.rotation) ||
+      Math.abs(t.rotation) > 10000 ||
+      typeof t.flipY !== 'boolean'
+    )
+      throw new Error('Invalid recipe texture')
+    textureBytes += t.width * t.height * 4
+  }
+  if (textureBytes > 32000000) throw new Error('Invalid recipe textures')
   const appliedValues = Object.create(null)
   const controlKeys = new Set()
   const controls = data.controls.map(control => {
@@ -135,7 +164,7 @@ export function recipeFromSandbox(output) {
     const mat = mesh.material
     if (
       !mat ||
-      !['MeshBasicMaterial', 'MeshStandardMaterial'].includes(mat.type) ||
+      !['MeshBasicMaterial', 'MeshStandardMaterial', 'MeshPhysicalMaterial'].includes(mat.type) ||
       !Number.isInteger(mat.color) ||
       mat.color < 0 ||
       mat.color > 0xffffff ||
@@ -145,15 +174,67 @@ export function recipeFromSandbox(output) {
       ![0, 1, 2].includes(mat.side)
     )
       throw new Error('Invalid recipe material')
-    for (const key of ['roughness', 'metalness', 'emissiveIntensity'])
+    for (const key of [
+      'roughness',
+      'metalness',
+      'emissiveIntensity',
+      'clearcoat',
+      'clearcoatRoughness',
+      'sheen',
+      'sheenRoughness',
+    ])
       if (mat[key] !== undefined && (!Number.isFinite(mat[key]) || Math.abs(mat[key]) > 1000))
         throw new Error('Invalid recipe material')
     if (mat.emissive !== undefined && (!Number.isInteger(mat.emissive) || mat.emissive < 0 || mat.emissive > 0xffffff))
       throw new Error('Invalid recipe material')
+    if (
+      mat.sheenColor !== undefined &&
+      (!Number.isInteger(mat.sheenColor) || mat.sheenColor < 0 || mat.sheenColor > 0xffffff)
+    )
+      throw new Error('Invalid recipe material')
+    if (
+      mat.normalScale !== undefined &&
+      (!Array.isArray(mat.normalScale) ||
+        mat.normalScale.length !== 2 ||
+        !mat.normalScale.every(n => Number.isFinite(n) && Math.abs(n) < 1000))
+    )
+      throw new Error('Invalid recipe material')
+    if (
+      mat.maps !== undefined &&
+      (!mat.maps ||
+        typeof mat.maps !== 'object' ||
+        Array.isArray(mat.maps) ||
+        Object.entries(mat.maps).some(
+          ([key, id]) =>
+            !['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'aoMap'].includes(key) ||
+            (id !== null && (!Number.isInteger(id) || id < 0 || id >= textureData.length))
+        ))
+    )
+      throw new Error('Invalid recipe material maps')
   }
   if (vertices > 250000 || indices > 1000000) throw new Error('Recipe geometry exceeds limits')
   const object = new THREE.Group()
+  const textures = []
   try {
+    for (const t of textureData) {
+      const decoded = atob(t.data)
+      if (decoded.length !== t.width * t.height * 4) throw new Error('Invalid recipe texture data')
+      const pixels = Uint8Array.from(decoded, ch => ch.charCodeAt(0))
+      const texture = new THREE.DataTexture(pixels, t.width, t.height, THREE.RGBAFormat)
+      texture.colorSpace = t.colorSpace
+      texture.wrapS = t.wrapS
+      texture.wrapT = t.wrapT
+      texture.repeat.fromArray(t.repeat)
+      texture.offset.fromArray(t.offset)
+      texture.center.fromArray(t.center)
+      texture.rotation = t.rotation
+      texture.flipY = t.flipY
+      texture.generateMipmaps = true
+      texture.minFilter = THREE.LinearMipmapLinearFilter
+      texture.magFilter = THREE.LinearFilter
+      texture.needsUpdate = true
+      textures.push(texture)
+    }
     for (const mesh of data.meshes) {
       const geometry = new THREE.BufferGeometry()
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(mesh.positions, 3))
@@ -173,15 +254,28 @@ export function recipeFromSandbox(output) {
       }
       let material
       if (mat.type === 'MeshBasicMaterial') material = new THREE.MeshBasicMaterial(options)
-      else
-        material = new THREE.MeshStandardMaterial({
+      else {
+        const Material = mat.type === 'MeshPhysicalMaterial' ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial
+        material = new Material({
           ...options,
           roughness: mat.roughness,
           metalness: mat.metalness,
           emissive: mat.emissive,
           emissiveIntensity: mat.emissiveIntensity,
           flatShading: mat.flatShading === true,
+          ...(mat.type === 'MeshPhysicalMaterial'
+            ? {
+                clearcoat: mat.clearcoat,
+                clearcoatRoughness: mat.clearcoatRoughness,
+                sheen: mat.sheen,
+                sheenRoughness: mat.sheenRoughness,
+                sheenColor: mat.sheenColor,
+              }
+            : {}),
         })
+        if (mat.normalScale) material.normalScale.fromArray(mat.normalScale)
+      }
+      for (const [key, id] of Object.entries(mat.maps || {})) if (id !== null) material[key] = textures[id]
       const node = new THREE.Mesh(geometry, material)
       node.name = typeof mesh.name === 'string' ? mesh.name.slice(0, 160) : ''
       new THREE.Matrix4().fromArray(mesh.matrix).decompose(node.position, node.quaternion, node.scale)
@@ -192,15 +286,18 @@ export function recipeFromSandbox(output) {
     return {
       metadata: { controls },
       createAsset: () => object,
-      disposeAsset: () =>
+      disposeAsset: () => {
+        textures.forEach(texture => texture.dispose())
         object.traverse(node => {
           if (node.isMesh) {
             node.geometry.dispose()
             node.material.dispose()
           }
-        }),
+        })
+      },
     }
   } catch (error) {
+    textures.forEach(texture => texture.dispose())
     object.traverse(node => {
       if (node.isMesh) {
         node.geometry.dispose()

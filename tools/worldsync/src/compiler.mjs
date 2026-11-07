@@ -105,7 +105,7 @@ async function compileObject(root, source) {
     warnings = [...resolved.warnings, ...findExternalScriptReferences(assets)]
     sourceAssets = assets
   } else {
-    const resolvedSource = await resolveLocalReference(root, source.objectDir, manifest.source, 'legacy .hyp source')
+    const resolvedSource = await resolveLocalReference(root, source.objectDir, 'file:' + manifest.source, 'legacy .hyp source')
     const bytes = await readBoundedFile(resolvedSource.absolutePath, { label: resolvedSource.relativePath })
     const imported = parseHyp(bytes)
     blueprint = { ...ENGINE_DEFAULTS, ...structuredClone(imported.blueprint) }

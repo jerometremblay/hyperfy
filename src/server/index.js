@@ -14,6 +14,7 @@ import compress from '@fastify/compress'
 import statics from '@fastify/static'
 import multipart from '@fastify/multipart'
 
+import { watchClientBuild } from './clientBuild'
 import { createServerWorld } from '../core/createServerWorld'
 import { getDB } from './db'
 import { Storage } from './Storage'
@@ -171,6 +172,12 @@ fastify.register(compress, {
     return path.endsWith('.spz') || path.endsWith('.sogs') || path.endsWith('.ksplat') || path.endsWith('.zip')
   },
 })
+const stopClientBuildWatch = watchClientBuild(path.join(__dirname, 'public', 'index.html'), build => {
+  world.network.clientBuild = build
+  world.network.send('clientBuild', build)
+})
+fastify.addHook('onClose', async () => stopClientBuildWatch())
+
 fastify.get('/', async (req, reply) => {
   const title = world.settings.title || 'World'
   const desc = world.settings.desc || ''

@@ -1,0 +1,267 @@
+{
+  "blueprints": [
+    {
+      "image": null,
+      "author": null,
+      "url": "",
+      "desc": "Independent static extraction of the imported Farmhouse set. Unlinked from Polyspoon updates.",
+      "script": null,
+      "props": {},
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": true,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Farmhouse Table (Unlinked)",
+      "model": "asset://d8e8d24248f4f5ba75ed5acea90a1eacd54fbadf09f0d52bee2a3b53786ce9e0.glb",
+      "id": "75229b2d-6a31-49e3-864c-49101ac52e23",
+      "version": 0
+    },
+    {
+      "image": null,
+      "author": null,
+      "url": "",
+      "desc": "Independent static extraction of the imported Farmhouse set. Unlinked from Polyspoon updates.",
+      "script": "asset://c2cf53c8438c830be8095a862c42b881107557828eceaa8730652cec45f14f90.js",
+      "props": {
+        "sitEmote": {
+          "type": "emote",
+          "url": "asset://440bbd2e231ddefbe36f380d6fb0b6b322791a3d79459e649b3f063cf745c7ec.glb"
+        }
+      },
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": true,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Farmhouse Chair 1 (Unlinked)",
+      "model": "asset://a09f079db4eee466108cf3c3a759b8159a68b4552b0fcbeb074a3eaa83fbb6ec.glb",
+      "id": "ef1e4dd5-779d-4b38-91b4-b86e8a7ad44a",
+      "version": 0
+    },
+    {
+      "image": null,
+      "author": null,
+      "url": "",
+      "desc": "Independent static extraction of the imported Farmhouse set. Unlinked from Polyspoon updates.",
+      "script": "asset://c2cf53c8438c830be8095a862c42b881107557828eceaa8730652cec45f14f90.js",
+      "props": {
+        "sitEmote": {
+          "type": "emote",
+          "url": "asset://440bbd2e231ddefbe36f380d6fb0b6b322791a3d79459e649b3f063cf745c7ec.glb"
+        }
+      },
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": true,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Farmhouse Chair 2 (Unlinked)",
+      "model": "asset://e061b8baa1cf77d9eb355bc13522f9ed5cc3227702198059c67ac5153aace216.glb",
+      "id": "42e60d4d-0bf0-4a5f-aa8a-4c152605d803",
+      "version": 0
+    },
+    {
+      "image": null,
+      "author": null,
+      "url": "",
+      "desc": "Independent static extraction of the imported Farmhouse set. Unlinked from Polyspoon updates.",
+      "script": "asset://c2cf53c8438c830be8095a862c42b881107557828eceaa8730652cec45f14f90.js",
+      "props": {
+        "sitEmote": {
+          "type": "emote",
+          "url": "asset://440bbd2e231ddefbe36f380d6fb0b6b322791a3d79459e649b3f063cf745c7ec.glb"
+        }
+      },
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": true,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Farmhouse Chair 3 (Unlinked)",
+      "model": "asset://b645f43d8d6799939ee9a104c957d062ab305407e97c9a1fc397aad53834ca24.glb",
+      "id": "dba8bb90-9f3e-4d1a-b0e7-04cd599ab57f",
+      "version": 0
+    },
+    {
+      "image": null,
+      "author": null,
+      "url": "",
+      "desc": "Independent static extraction of the imported Farmhouse set. Unlinked from Polyspoon updates.",
+      "script": "asset://c2cf53c8438c830be8095a862c42b881107557828eceaa8730652cec45f14f90.js",
+      "props": {
+        "sitEmote": {
+          "type": "emote",
+          "url": "asset://440bbd2e231ddefbe36f380d6fb0b6b322791a3d79459e649b3f063cf745c7ec.glb"
+        }
+      },
+      "preload": false,
+      "public": false,
+      "locked": false,
+      "unique": true,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Farmhouse Chair 4 (Unlinked)",
+      "model": "asset://a15a6e25f19ae4e6f6948d2c820c37f5599835e9d8710960585f631a5f7b51ac.glb",
+      "id": "04f1939c-f348-49ca-92f0-df54c4c9ee10",
+      "version": 0
+    }
+  ],
+  "entities": [
+    {
+      "id": "BNOtoeFUw7",
+      "type": "app",
+      "blueprint": "75229b2d-6a31-49e3-864c-49101ac52e23",
+      "position": [
+        38.74452828306172,
+        0.12096717663691132,
+        8.655169323135702
+      ],
+      "quaternion": [
+        0,
+        -0.537299608346824,
+        0,
+        0.8433914458128858
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "mover": null,
+      "uploader": null,
+      "pinned": false,
+      "state": {}
+    },
+    {
+      "position": [
+        37.89803680996949,
+        0.12096717663691132,
+        9.049894779601516
+      ],
+      "quaternion": [
+        0,
+        -0.8268953776149095,
+        0,
+        -0.5623557899400492
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "dd153105-9f8d-49b4-a7d0-cd06a4523337",
+      "blueprint": "ef1e4dd5-779d-4b38-91b4-b86e8a7ad44a",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    },
+    {
+      "position": [
+        38.326136203938425,
+        0.12096717663691132,
+        7.7579246139694185
+      ],
+      "quaternion": [
+        0,
+        0.2164396139381029,
+        0,
+        0.9762960071199336
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "7458501f-2b22-4313-9d28-d64e26047cc2",
+      "blueprint": "42e60d4d-0bf0-4a5f-aa8a-4c152605d803",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    },
+    {
+      "position": [
+        39.59101975615395,
+        0.12096717663691132,
+        8.260443866669888
+      ],
+      "quaternion": [
+        0,
+        -0.5117598933727221,
+        0,
+        0.8591285186368455
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "bad4f0b8-1150-456f-a209-08dc1a77be17",
+      "blueprint": "dba8bb90-9f3e-4d1a-b0e7-04cd599ab57f",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    },
+    {
+      "position": [
+        39.16292036218501,
+        0.12096717663691132,
+        9.552414032301986
+      ],
+      "quaternion": [
+        0,
+        -0.9823489213494399,
+        0,
+        0.18705773633718692
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "40014a91-4783-4215-939d-cb8510f53c05",
+      "blueprint": "04f1939c-f348-49ca-92f0-df54c4c9ee10",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  ],
+  "original": {
+    "id": "BNOtoeFUw7",
+    "blueprint": "Io1ikeh2RJ",
+    "position": [
+      38.74452828306172,
+      0.12096717663691132,
+      8.655169323135702
+    ],
+    "quaternion": [
+      0,
+      -0.537299608346824,
+      0,
+      0.8433914458128858
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "pinned": false
+  }
+}

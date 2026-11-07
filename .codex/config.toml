@@ -1,0 +1,3 @@
+[mcp_servers.polyfork]
+url = "https://polyfork.dev/mcp"
+http_headers_helper = "sh /Users/jerome/metaverse/hyperfy/scripts/polyfork-mcp-headers.sh"

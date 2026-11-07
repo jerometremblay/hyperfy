@@ -1,0 +1,2110 @@
+{
+  "formatVersion": 1,
+  "status": "technical-success",
+  "visualReview": "pending",
+  "portableRebuild": "pending",
+  "metadata": {
+    "workflow": "recipe:verify",
+    "family": "cognac-leather-sofa",
+    "version": "1.1.0",
+    "request": "Export the Hyperfy three-place cognac leather sofa as an editable Polyspoon recipe, including extruded pieces and a leather color control shared by all seat cushions.",
+    "behaviorTest": "/private/tmp/polyspoon-vm-share/source/tests/cognac-leather-sofa.test.ts",
+    "selectedDesign": {
+      "formatVersion": 1,
+      "family": "cognac-leather-sofa",
+      "familyVersion": "1.1.0",
+      "requested": {},
+      "applied": {
+        "seatCount": 3,
+        "seatWidth": 0.7,
+        "seatDepth": 0.66,
+        "backDepth": 0.22,
+        "armDepth": 0.84,
+        "seatRadius": 0.08,
+        "backRadius": 0.09,
+        "armRadius": 0.09,
+        "bevelSize": 20,
+        "bevelThickness": 18,
+        "color.leather": "#8a4f2b",
+        "color.leatherDark": "#6d3b22",
+        "color.piping": "#b8774b",
+        "color.wood": "#2b1b13"
+      }
+    },
+    "output": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103"
+  },
+  "stages": [
+    {
+      "id": "typecheck",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/typecheck.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/typecheck.stderr.log",
+        "startedAt": "2026-11-03T21:52:23.408Z",
+        "durationMs": 8047
+      }
+    },
+    {
+      "id": "recipe-tests",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/test-current.ts",
+        "recipes"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/recipe-tests.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/recipe-tests.stderr.log",
+        "startedAt": "2026-11-03T21:52:32.854Z",
+        "durationMs": 212659
+      }
+    },
+    {
+      "id": "behavior-test",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "--test",
+        "/private/tmp/polyspoon-vm-share/source/tests/cognac-leather-sofa.test.ts"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/behavior-test.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/behavior-test.stderr.log",
+        "startedAt": "2026-11-03T21:56:06.967Z",
+        "durationMs": 20991
+      }
+    },
+    {
+      "id": "validate",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/cli.ts",
+        "validate",
+        "--family",
+        "cognac-leather-sofa",
+        "--out",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/validation"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/validate.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/validate.stderr.log",
+        "startedAt": "2026-11-03T21:56:29.259Z",
+        "durationMs": 26780
+      }
+    },
+    {
+      "id": "render",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/recipe-render.ts",
+        "--family",
+        "cognac-leather-sofa",
+        "--config",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/selected.design.json",
+        "--out",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/renders"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/render.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/render.stderr.log",
+        "startedAt": "2026-11-03T21:56:57.957Z",
+        "durationMs": 33375
+      }
+    },
+    {
+      "id": "export",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/cli.ts",
+        "export",
+        "--family",
+        "cognac-leather-sofa",
+        "--config",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/selected.design.json",
+        "--out",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/selected.glb"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/export.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/export.stderr.log",
+        "startedAt": "2026-11-03T21:57:32.523Z",
+        "durationMs": 5603
+      }
+    },
+    {
+      "id": "package",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/recipe-package.ts",
+        "--out",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/packages"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/package.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/package.stderr.log",
+        "startedAt": "2026-11-03T21:57:39.220Z",
+        "durationMs": 23127
+      }
+    },
+    {
+      "id": "package-check",
+      "command": "/home/jerome.guest/polyspoon-tools/node-v22.22.1-linux-x64/bin/node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/recipe-verify-package.ts",
+        "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/packages/index.json",
+        "cognac-leather-sofa",
+        "1.1.0"
+      ],
+      "timeoutMs": 900000,
+      "status": "passed",
+      "result": {
+        "outcome": "passed",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/package-check.stdout.log",
+        "stderr": "/private/tmp/polyspoon-vm-share/source/evidence/authoring/cognac-leather-sofa-seal-20261103/logs/package-check.stderr.log",
+        "startedAt": "2026-11-03T21:58:03.496Z",
+        "durationMs": 5059
+      }
+    }
+  ],
+  "files": {
+    "logs/behavior-test.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/behavior-test.stdout.log": {
+      "sha256": "ed4f6d873b53e8138e241010379c701414f39df3b1eea5192a7e8c5c116f9bfe",
+      "bytes": 564
+    },
+    "logs/export.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/export.stdout.log": {
+      "sha256": "20f5cb3e7ed4b11c72d5e3181cfdb255b7a1f7e3f575798f8068bcf1bab08059",
+      "bytes": 17081
+    },
+    "logs/package-check.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/package-check.stdout.log": {
+      "sha256": "b4adabed1a7a567055160901c30e3e93bf4fd1f93c5ca6480f419f72b8a5c0df",
+      "bytes": 202
+    },
+    "logs/package.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/package.stdout.log": {
+      "sha256": "aa7070666d8ca37a2efc25f6e474541175d32524e8ddc9fd960d76354414fe16",
+      "bytes": 8369
+    },
+    "logs/recipe-tests.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/recipe-tests.stdout.log": {
+      "sha256": "042ea4f5ebe3b37b22a5249f438cadf1488fa0eb732fc1ab4a5e667efc054fb6",
+      "bytes": 17130
+    },
+    "logs/render.stderr.log": {
+      "sha256": "057642a1c048bee260000ca0f7b342b8d4ff060136ac18eb298dd30e7297f83e",
+      "bytes": 8552
+    },
+    "logs/render.stdout.log": {
+      "sha256": "e4c6808c59ebd223e9a2ff3fae13d76c9245de0a5ec0e8697c293adf7cb2d3cf",
+      "bytes": 204
+    },
+    "logs/typecheck.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/typecheck.stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/validate.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/validate.stdout.log": {
+      "sha256": "f7817159c2ed2e8532e8e3894e42dc6904063748dad14cea0825ddbf68b26a13",
+      "bytes": 199
+    },
+    "packages/bench-1.1.0-source.3.zip": {
+      "sha256": "3d1287c0dc5e92cf13bd0b2461eb247a5b74af4e5fbeb992b94f3cf38f4d1b23",
+      "bytes": 612266
+    },
+    "packages/boulder-0.6.0-source.3.zip": {
+      "sha256": "a4cdb824437ae449216a7f52879eef5b5833ffe470292f16fb23d340d44acf57",
+      "bytes": 615666
+    },
+    "packages/cognac-leather-sofa-1.1.0-source.3.zip": {
+      "sha256": "b4b158fb83ccd7d5ba35c4dafdb07bc8d4203dc5f943fd3a1e1f4f1fdd4fc338",
+      "bytes": 613802
+    },
+    "packages/conifer-1.1.0-source.3.zip": {
+      "sha256": "4cc60b5088ed09e753f743195b5da84a2f7f2f3e70105af46f1aad11901d679d",
+      "bytes": 611692
+    },
+    "packages/cottage-0.6.0-source.3.zip": {
+      "sha256": "dd7689ed85cd706830339b7acd722583315271439d2fb906dab733644a71caf2",
+      "bytes": 620449
+    },
+    "packages/crate-0.6.0-source.3.zip": {
+      "sha256": "034609569523f883b537c5ae2c268e2e52a4fb1f1fc4cd0cfbe4d0f7f9fffe5e",
+      "bytes": 615672
+    },
+    "packages/fence-0.6.0-source.3.zip": {
+      "sha256": "1b8b16c24bffdc25f967b567badceaa827a122de99a860d0a296277077c546fe",
+      "bytes": 616234
+    },
+    "packages/index.json": {
+      "sha256": "aa7070666d8ca37a2efc25f6e474541175d32524e8ddc9fd960d76354414fe16",
+      "bytes": 8369
+    },
+    "packages/planter-1.1.0-source.3.zip": {
+      "sha256": "1a26cfc3bf0d6d030b6db61fd866854b21c3ea923ebb3256d69a62f9def889fd",
+      "bytes": 611801
+    },
+    "packages/procedural-modules/bench/1.1.0/asset.d.mts": {
+      "sha256": "e4fa154850c53e1b53daf420ef41bd82a2f15746fdde651b9dc7933ac4d264ef",
+      "bytes": 10457
+    },
+    "packages/procedural-modules/bench/1.1.0/asset.mjs": {
+      "sha256": "77489c0d6178c42f4fb7ea8449477bdc35d96b6c8c6d04c48afb533ee49ef816",
+      "bytes": 45908
+    },
+    "packages/procedural-modules/bench/1.1.0/example.html": {
+      "sha256": "53f4a8b50a2be344429c0da6234d51f1beb87cd03f96d73f249f32624c132e92",
+      "bytes": 524
+    },
+    "packages/procedural-modules/bench/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/bench/1.1.0/metadata.json": {
+      "sha256": "b269b3f7b8e0e0cfd0359e4f571e44bab7a7fe3255bca58958e887a49fcaf04d",
+      "bytes": 15095
+    },
+    "packages/procedural-modules/bench/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/bench/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/bench/1.1.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/bench/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/boulder/0.6.0/asset.d.mts": {
+      "sha256": "2bf4a25e7dfc3a8ef6063ec17cb4dbe61f17ec90272cfa22b36b5596b02e4448",
+      "bytes": 17300
+    },
+    "packages/procedural-modules/boulder/0.6.0/asset.mjs": {
+      "sha256": "c9cab5d049c1314f462403154f5ddf526135eafad1cb6c86f5244a820f19f4f6",
+      "bytes": 212456
+    },
+    "packages/procedural-modules/boulder/0.6.0/example.html": {
+      "sha256": "0442b9659f6cdff61a2816bf62f2c8592a2b5c2b6a24466b09a08ead52021d32",
+      "bytes": 524
+    },
+    "packages/procedural-modules/boulder/0.6.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/boulder/0.6.0/metadata.json": {
+      "sha256": "2adb46b13e64093ac43d05c5da66a4f13a0185ea2c82d70160cc31dccdea3a8a",
+      "bytes": 24083
+    },
+    "packages/procedural-modules/boulder/0.6.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/boulder/0.6.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/boulder/0.6.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/boulder/0.6.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/asset.d.mts": {
+      "sha256": "83038bfa9db2a58f415cefa5dc2928871caa00bdb142134df37b46245ff68542",
+      "bytes": 22119
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/asset.mjs": {
+      "sha256": "bca43248232f29216f612d7b8badd8690ec32b4007ffa03c47914becb228cdee",
+      "bytes": 60661
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/example.html": {
+      "sha256": "c79953bb69092f0426375a7022068b789167146f61c9475d6a1d38b089ebcceb",
+      "bytes": 530
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/metadata.json": {
+      "sha256": "6bac6a4e22d0f7133d44632ae347b4348bf4ac3b6bab82ee8c419d4e8265f8a6",
+      "bytes": 32262
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/semantic-contract.md": {
+      "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+      "bytes": 5837
+    },
+    "packages/procedural-modules/cognac-leather-sofa/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/conifer/1.1.0/asset.d.mts": {
+      "sha256": "891706b3d91f16172e0c654ac646d536417c6635ae20b0ed7e756cb118ab6503",
+      "bytes": 19644
+    },
+    "packages/procedural-modules/conifer/1.1.0/asset.mjs": {
+      "sha256": "abfbeefa7cc8680dd42c29ed09686af65882bde7960944caab0d4d736deb0598",
+      "bytes": 59000
+    },
+    "packages/procedural-modules/conifer/1.1.0/example.html": {
+      "sha256": "4d31a079961670067401d51d6e6398829f504647bcce06b814d6daca3c9d5e31",
+      "bytes": 520
+    },
+    "packages/procedural-modules/conifer/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/conifer/1.1.0/metadata.json": {
+      "sha256": "041145b11688c35be4cedb8107d44da33f1b1d4389c68938c2e2940e17110254",
+      "bytes": 29487
+    },
+    "packages/procedural-modules/conifer/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/conifer/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/conifer/1.1.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/conifer/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/cottage/0.6.0/asset.d.mts": {
+      "sha256": "4a70716d336c88a71dc5fd79d1ff8a44f7b4f6459084a89e693348165c1faae2",
+      "bytes": 52305
+    },
+    "packages/procedural-modules/cottage/0.6.0/asset.mjs": {
+      "sha256": "2d5ea39c7547ad2d59e80bf004cfc4c5afaa04267c649ce877a0733034d3c246",
+      "bytes": 243797
+    },
+    "packages/procedural-modules/cottage/0.6.0/example.html": {
+      "sha256": "15496782cf37457f673edc548a0562f158e75a4d6cdc67e0a61554ac6c1cbf0f",
+      "bytes": 527
+    },
+    "packages/procedural-modules/cottage/0.6.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/cottage/0.6.0/metadata.json": {
+      "sha256": "2c2f7c5bb196d4f398453da537ab7f73206828e6a3498f9667a3d192083d9674",
+      "bytes": 79744
+    },
+    "packages/procedural-modules/cottage/0.6.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/cottage/0.6.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/cottage/0.6.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/cottage/0.6.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/crate/0.6.0/asset.d.mts": {
+      "sha256": "d7395dc73e3818bd7e51fea7e9c89ff82602b2258db9c6b7cb1daa644fa15e6c",
+      "bytes": 21329
+    },
+    "packages/procedural-modules/crate/0.6.0/asset.mjs": {
+      "sha256": "84da4620f30c492b5b2c585c3077e8a0504dd328b725538d1538c21357c01cd6",
+      "bytes": 216176
+    },
+    "packages/procedural-modules/crate/0.6.0/example.html": {
+      "sha256": "920f5b764782a8ea0f2634b7a3ba1b4c47746d2e7554d50a84fd78c82d22cee8",
+      "bytes": 523
+    },
+    "packages/procedural-modules/crate/0.6.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/crate/0.6.0/metadata.json": {
+      "sha256": "f6dd569b8026949a676c3988e393bcd6c1aba463543f68bb9ac495e2a1ddafce",
+      "bytes": 30689
+    },
+    "packages/procedural-modules/crate/0.6.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/crate/0.6.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/crate/0.6.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/crate/0.6.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/fence/0.6.0/asset.d.mts": {
+      "sha256": "8ac2f80737362c32e9a27718a55f02cc5abc11c028e31a5d16fded7fc9647379",
+      "bytes": 19615
+    },
+    "packages/procedural-modules/fence/0.6.0/asset.mjs": {
+      "sha256": "c54e3d84d93840e7487b691cd3fa6235223cd19d771396e47cf660c4c717114b",
+      "bytes": 214561
+    },
+    "packages/procedural-modules/fence/0.6.0/example.html": {
+      "sha256": "7f3ca2ba7fc9d087fe038736427f3eb83ab874d3e01aae50282769555bdb0175",
+      "bytes": 523
+    },
+    "packages/procedural-modules/fence/0.6.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/fence/0.6.0/metadata.json": {
+      "sha256": "1956c19eafe7c7c9a7a5511776b8267b56726ebc2f672bc471929ff15b4bc68f",
+      "bytes": 28106
+    },
+    "packages/procedural-modules/fence/0.6.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/fence/0.6.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/fence/0.6.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/fence/0.6.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/index.json": {
+      "sha256": "039c2facbdb984de27973201d51d5f62b4637efa97429bcde5a58aad71afce35",
+      "bytes": 25750
+    },
+    "packages/procedural-modules/planter/1.1.0/asset.d.mts": {
+      "sha256": "50143973a9b00d22e0c536de6d34a501949ab6eff91484453e2e6e4469c7019c",
+      "bytes": 10466
+    },
+    "packages/procedural-modules/planter/1.1.0/asset.mjs": {
+      "sha256": "b79a72e6aea114fdfeb67c8368427b12da4e3a05f599e6141708c2959087a8e3",
+      "bytes": 44570
+    },
+    "packages/procedural-modules/planter/1.1.0/example.html": {
+      "sha256": "f4ad9fbec0fa49fb7c20f992bafef4f22e50df07e79d76c3a4b1bce3b42bda89",
+      "bytes": 530
+    },
+    "packages/procedural-modules/planter/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/planter/1.1.0/metadata.json": {
+      "sha256": "4b37a09090a011b61e21bd067082dc1d5d8c503033c9c9957e14ecf8d990d52f",
+      "bytes": 15438
+    },
+    "packages/procedural-modules/planter/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/planter/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/planter/1.1.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/planter/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/stone-well/1.1.0/asset.d.mts": {
+      "sha256": "4d303b16cb0936e1ad40a5b5ca351f916d61786e994bdc8138ec3c44b9a04fed",
+      "bytes": 24635
+    },
+    "packages/procedural-modules/stone-well/1.1.0/asset.mjs": {
+      "sha256": "013bd377c02e9c30595579efc146eb3d42d4870be11e4386f3611fd6689a5ac4",
+      "bytes": 65645
+    },
+    "packages/procedural-modules/stone-well/1.1.0/example.html": {
+      "sha256": "1599912a80016feab2cfa7362764ac71d2493efde7a29f561a8779e6178fe4a8",
+      "bytes": 521
+    },
+    "packages/procedural-modules/stone-well/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/stone-well/1.1.0/metadata.json": {
+      "sha256": "2005bd14999847493285c2e9fbcba3201db71bb367b2a99cba91721a087d2fcd",
+      "bytes": 37849
+    },
+    "packages/procedural-modules/stone-well/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/stone-well/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/stone-well/1.1.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/stone-well/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/asset.d.mts": {
+      "sha256": "10c40392f458cdd6f4de38d34b5da7d68a588516d26768374cabb41c89032f2a",
+      "bytes": 9965
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/asset.mjs": {
+      "sha256": "305f3c6727d778c6220e2f94848dee0f19f9a864d8cf2945925c580d4bc2be7c",
+      "bytes": 66654
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/example.html": {
+      "sha256": "e25c57975094b7b40ffd31a18e3225ca25ab440f511b43cdaf1cc349597a754b",
+      "bytes": 523
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/metadata.json": {
+      "sha256": "379caa244efe2b048293b305c16cc21b964dca4b07a23ba70807b5aa05a0eb13",
+      "bytes": 13779
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/semantic-contract.md": {
+      "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+      "bytes": 5837
+    },
+    "packages/procedural-modules/stylized-fox/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/asset.d.mts": {
+      "sha256": "6a6a7b3a05de7b41b1a8f2732435893fe9821d5a401f48c5cb9e0c3f33c7f5e3",
+      "bytes": 10099
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/asset.mjs": {
+      "sha256": "3cf57d441cbf42418b2b8bb63f10717a089833937203d72a50a5aa88667e84ee",
+      "bytes": 66790
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/example.html": {
+      "sha256": "0b5d9acbd6668f1fb738baac04410be0ba87ff225563573bfaaab7f7645c66c5",
+      "bytes": 530
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/metadata.json": {
+      "sha256": "8af3872dd40df97f0219963f283e501b5eeebc1da252c9726fe3d90402f0d087",
+      "bytes": 14010
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/semantic-contract.md": {
+      "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+      "bytes": 5837
+    },
+    "packages/procedural-modules/stylized-humanoid/1.0.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/asset.d.mts": {
+      "sha256": "3d7940ad1522f0f8728774ec22deec285f44f4d922fcff633fe3da91b386b439",
+      "bytes": 15869
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/asset.mjs": {
+      "sha256": "40c326bf56392ddfd4a5688c8bbd858e41258784b8ece8204c06e116febbaece",
+      "bytes": 54135
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/example.html": {
+      "sha256": "543386dad030ff6c5185730a2cc6def135c91c7b3f8cac7be62811d29b771ae2",
+      "bytes": 532
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/metadata.json": {
+      "sha256": "5565af01c10f5ab3be729769b41cacedef04f48eaa3c176aa1ae7223bf8949f8",
+      "bytes": 23864
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/treasure-chest/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/tree/0.6.0/asset.d.mts": {
+      "sha256": "a6b3a3cca9683a75921fccb20475c958bbe3ffe37d91e51c82f51500e7514ab7",
+      "bytes": 18770
+    },
+    "packages/procedural-modules/tree/0.6.0/asset.mjs": {
+      "sha256": "d55612695cbfea0624aac72f85bd05e7b86d0a7ffdbc51db30385727801d76ad",
+      "bytes": 213786
+    },
+    "packages/procedural-modules/tree/0.6.0/example.html": {
+      "sha256": "6149943d2e863931c3f476eaa7263f04943be764dd5173afb4c5a8315db80cd3",
+      "bytes": 525
+    },
+    "packages/procedural-modules/tree/0.6.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/tree/0.6.0/metadata.json": {
+      "sha256": "7eeaf4b38b04ac973388066d32dca5eaff2ebcb5fd7eff9201682134ba9b8f4b",
+      "bytes": 26487
+    },
+    "packages/procedural-modules/tree/0.6.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/tree/0.6.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/tree/0.6.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/tree/0.6.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/asset.d.mts": {
+      "sha256": "63a6a6739207bd5d240c8d2b23f18361f641de588a7115dac2aa219878fc491c",
+      "bytes": 15574
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/asset.mjs": {
+      "sha256": "406cdc42f700cbb463db136df38ef00bf62a211de514d688a1c1b63799f541da",
+      "bytes": 53970
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/example.html": {
+      "sha256": "b40f3768aaf88aa5659f754665b5406a8e250896852b8800e403c95c886252ef",
+      "bytes": 529
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/metadata.json": {
+      "sha256": "db0fea4e5cf190c88105c7af2f74463ae79712c5b0c5cf942d074f072176cb10",
+      "bytes": 23282
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/wheelbarrow/1.1.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/asset.d.mts": {
+      "sha256": "f85a2315f107b5061ad549fa5be9cb951450c7c71af5a00202799d7616399e8b",
+      "bytes": 21329
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/asset.mjs": {
+      "sha256": "56f1c03de6dcbd836655aefd81a2b196db72669555c042049e453595abe05bcd",
+      "bytes": 215993
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/example.html": {
+      "sha256": "d2c0685603abffcace476bfc713db1e732ff8965465d441f9a6872c5ce6c6d41",
+      "bytes": 523
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/metadata.json": {
+      "sha256": "6080e5b7fd4e9e95a3f4de5a3492486913fd4aa212bec3ff3bb8221b94a13280",
+      "bytes": 31077
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/README.md": {
+      "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+      "bytes": 4352
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/semantic-contract.md": {
+      "sha256": "75ddb1760c5292ba472bcae83c37edb4ca1a3b4f5f8a344e23ca536efa566ddc",
+      "bytes": 5499
+    },
+    "packages/procedural-modules/work-lantern/0.6.0/THIRD-PARTY.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "packages/stone-well-1.1.0-source.3.zip": {
+      "sha256": "4832e0b104710b0b7197d572c49f558b02a7d6ac8d34f316303da994970145a0",
+      "bytes": 613649
+    },
+    "packages/stylized-fox-1.1.0-source.3.zip": {
+      "sha256": "0a5a59fed00351dfb3c1e17bf880e9ffa2c232dcfb382eca2c8baf6b907c778a",
+      "bytes": 612469
+    },
+    "packages/stylized-humanoid-1.0.0-source.3.zip": {
+      "sha256": "c33bda3be06818805dd766f514816cf87e05398cfa9a14bfdb70ce586e8d6f14",
+      "bytes": 612445
+    },
+    "packages/treasure-chest-1.1.0-source.3.zip": {
+      "sha256": "f80bc75441185a64b5867d488d18564f03a8071856b61700bda208a76683bada",
+      "bytes": 612934
+    },
+    "packages/tree-0.6.0-source.3.zip": {
+      "sha256": "38673fe017143675b832eeb26fe0e9cb6a0183f22758970f2c228bd3866663f5",
+      "bytes": 615892
+    },
+    "packages/wheelbarrow-1.1.0-source.3.zip": {
+      "sha256": "6cf1184da72389db03b310d88df7d9560afe373f4797bfe926c0c1806f83ec8c",
+      "bytes": 613001
+    },
+    "packages/work-lantern-0.6.0-source.3.zip": {
+      "sha256": "deb1e7cc64fbb295f2f0f29965b5205654e621909e4248cd6ff2f4c230801718",
+      "bytes": 617046
+    },
+    "renders/cognac-leather-sofa-three-seat.png": {
+      "sha256": "5d2c31d6ac25567e1002f46c9747859193f9b8f80b91c50827af0edcc388b932",
+      "bytes": 40615
+    },
+    "renders/manifest.json": {
+      "sha256": "b885aaaff53793337088c1728adae63cbea08901497375fc6e513b7bbfb62ffc",
+      "bytes": 64113
+    },
+    "renders/preset-three-seat-oblique.png": {
+      "sha256": "92fcba221f7d0410556622dd554b36a8b391ea71f5bf2db242148f53189fe27b",
+      "bytes": 69931
+    },
+    "renders/selected-front.png": {
+      "sha256": "2bfa6cafc710ad35f08f6b0183c33dbe2974dbfbf5f82f02a3270bc3f666c0d2",
+      "bytes": 33790
+    },
+    "renders/selected-left.png": {
+      "sha256": "11587ff3213321fb2efd7987e1c00b84c575434b84768d646753a2db601b609b",
+      "bytes": 40390
+    },
+    "renders/selected-oblique.png": {
+      "sha256": "92fcba221f7d0410556622dd554b36a8b391ea71f5bf2db242148f53189fe27b",
+      "bytes": 69931
+    },
+    "renders/selected-rear-oblique.png": {
+      "sha256": "02557218615f4c27ab46ebf11ec6e96c2c3683872dea1b6a601747eb94880f46",
+      "bytes": 38803
+    },
+    "renders/selected-rear.png": {
+      "sha256": "dd74556c8cc06bf52edf8d36b4da626196ecfc0d9f41e3dd71f5c7f5d9851f4b",
+      "bytes": 16510
+    },
+    "renders/selected-right.png": {
+      "sha256": "f56916f38934cbda64bdda6871a6780a8fd85e291c7922375adead4222c98a2e",
+      "bytes": 30243
+    },
+    "renders/selected-top.png": {
+      "sha256": "16c005136299273d795e79fecc0c2cb40a5218e8b33a6bfa59a3a3de9ae44a7d",
+      "bytes": 34907
+    },
+    "selected.controls.json": {
+      "sha256": "76403a736e8d2bb3cc82272f94db39ed7c5e3e2a31edfa27f8bad873e8f66974",
+      "bytes": 23365
+    },
+    "selected.design.json": {
+      "sha256": "bb86bd4257b8a5e25dc0f4c525d67e7a09e07a40baf17f16092e224a87526537",
+      "bytes": 482
+    },
+    "selected.glb": {
+      "sha256": "9218df2e9242d1b0088c17cd2dfc5cf67e31af9efb7f87cf4b9ea013de2a7a68",
+      "bytes": 859472
+    },
+    "selected.glb.provenance.json": {
+      "sha256": "03b9c6aded014027862600d833602da748be5ab80a663db25c94fd8f0e11eb74",
+      "bytes": 23198
+    },
+    "selected.json": {
+      "sha256": "994a0516cde9db54914706297dccd294264bc418f0aaac84dd9df15364cd8015",
+      "bytes": 96214
+    },
+    "validation/cognac-leather-sofa-armDepth-max.glb": {
+      "sha256": "f017a8cd922de994509dd5a6c6442b02d6588b7afda9a2ab93c61671ae18232a",
+      "bytes": 859496
+    },
+    "validation/cognac-leather-sofa-armDepth-max.json": {
+      "sha256": "7c940f0be54e919edf6e395a3490a93a262ad51c5ee518576c569a39d2dc7811",
+      "bytes": 96274
+    },
+    "validation/cognac-leather-sofa-armDepth-min.glb": {
+      "sha256": "522b16bf9c7c1a8ab43fcfa9f15b88e06c0ad968000463fe31591ee1ea42b6b3",
+      "bytes": 859492
+    },
+    "validation/cognac-leather-sofa-armDepth-min.json": {
+      "sha256": "c78c14ae00bbbca896de9e9c1059c4bdabb9e7e97de932bcf7f4fe5ed0c8befd",
+      "bytes": 96279
+    },
+    "validation/cognac-leather-sofa-armRadius-max.glb": {
+      "sha256": "5a547553b6e45b52cd1485ee76999c06d35269508122a13c79dcf1a3e816ed31",
+      "bytes": 859488
+    },
+    "validation/cognac-leather-sofa-armRadius-max.json": {
+      "sha256": "31f5484b32a21c66e8ae6cd57f6ced003a59ebe251f5e1acfa2295c5aced8d57",
+      "bytes": 96283
+    },
+    "validation/cognac-leather-sofa-armRadius-min.glb": {
+      "sha256": "7bf5a3845e268d0a851e3034441801e03ce3feded3449bb1bc489e3041e11d83",
+      "bytes": 859412
+    },
+    "validation/cognac-leather-sofa-armRadius-min.json": {
+      "sha256": "6f4c9751c9cc2aa7f43ea1b50266bc53466cd40f25a66646b7244cf4ec57e770",
+      "bytes": 96279
+    },
+    "validation/cognac-leather-sofa-backDepth-max.glb": {
+      "sha256": "47e2bf7407afea9b121e168375d70a542713316b31b6500efde3b0e80bb2387f",
+      "bytes": 859668
+    },
+    "validation/cognac-leather-sofa-backDepth-max.json": {
+      "sha256": "46f6fc744a4fb03b6ef6fd8f894c78c829f147fa56f015bed4915e7ae1f821dd",
+      "bytes": 96275
+    },
+    "validation/cognac-leather-sofa-backDepth-min.glb": {
+      "sha256": "b9bcb2fafa180ea1ae199190d677918044daef92a0522fa6463d136f70d1b176",
+      "bytes": 859488
+    },
+    "validation/cognac-leather-sofa-backDepth-min.json": {
+      "sha256": "3a77dfd7f564d9274b1fec2bf4af68d3dc28c0c58ce306e5e9dc4c54731cebef",
+      "bytes": 96281
+    },
+    "validation/cognac-leather-sofa-backRadius-max.glb": {
+      "sha256": "4546fd153f28c12b7f745ca870ff02d1747dd97d9affac9c3813b905e2bdfb26",
+      "bytes": 859396
+    },
+    "validation/cognac-leather-sofa-backRadius-max.json": {
+      "sha256": "8702ee3e23333b9aacbad2f17ac0bbfed29e5c724a24ccc7a0e6d95fbfca90b7",
+      "bytes": 96286
+    },
+    "validation/cognac-leather-sofa-backRadius-min.glb": {
+      "sha256": "2c27f1dbe055df54aa19758204a46937eeb264b2377dc1d3a2f0b352c08c3fde",
+      "bytes": 859340
+    },
+    "validation/cognac-leather-sofa-backRadius-min.json": {
+      "sha256": "398eb7b57f6ad2faa7f00dff1d30dd2f671815f52990e9538dd330446a0cc812",
+      "bytes": 96292
+    },
+    "validation/cognac-leather-sofa-bevelSize-max.glb": {
+      "sha256": "430b090fb004baec7af8b024ae702f0dc6243c4b9617b80ea5ab501ab26f88db",
+      "bytes": 859476
+    },
+    "validation/cognac-leather-sofa-bevelSize-max.json": {
+      "sha256": "85bfa668f0bc57a09c327d3de491f48bc5d80397b67153312c99593e3d23151a",
+      "bytes": 96285
+    },
+    "validation/cognac-leather-sofa-bevelSize-min.glb": {
+      "sha256": "c8286f948d4e5a5687d742d0efe04a4bb3127d0838edda4ba120cfacaef4d23c",
+      "bytes": 859188
+    },
+    "validation/cognac-leather-sofa-bevelSize-min.json": {
+      "sha256": "2ccfb8ceaf1422073934e30dece0725af465f3078bd13f29c09c85d65c0d20c7",
+      "bytes": 96286
+    },
+    "validation/cognac-leather-sofa-bevelThickness-max.glb": {
+      "sha256": "194a5c5a0be5d6d275b0c5c31892fdea3a65366c45e6c7ac01468c8f84e502d4",
+      "bytes": 859468
+    },
+    "validation/cognac-leather-sofa-bevelThickness-max.json": {
+      "sha256": "db7253b08ed80471f5c2a406938923d2705ecc9e3c788911059c7a81dc6b2812",
+      "bytes": 96283
+    },
+    "validation/cognac-leather-sofa-bevelThickness-min.glb": {
+      "sha256": "b3bf69e66ac908dca3978798a8db13c97137804bcd3b58732eed2d97e485fc7c",
+      "bytes": 859476
+    },
+    "validation/cognac-leather-sofa-bevelThickness-min.json": {
+      "sha256": "2745bf008d3a83c25c30a05d21c813c3b7dadeafc774b4301b1adc4313df2435",
+      "bytes": 96286
+    },
+    "validation/cognac-leather-sofa-default.glb": {
+      "sha256": "9218df2e9242d1b0088c17cd2dfc5cf67e31af9efb7f87cf4b9ea013de2a7a68",
+      "bytes": 859472
+    },
+    "validation/cognac-leather-sofa-default.json": {
+      "sha256": "3598c173684170dc739941645e27f5236e0a87c3b52cec4a835a1f7bcd174000",
+      "bytes": 96244
+    },
+    "validation/cognac-leather-sofa-seatCount-max.glb": {
+      "sha256": "2cb9713c5d514af01c5cdd5aac7839fcb35c9d0844f73ade9f1543d2ccdd43eb",
+      "bytes": 1234176
+    },
+    "validation/cognac-leather-sofa-seatCount-max.json": {
+      "sha256": "d4cfab16f9e61225d6d6a54c0e203a08dbe73ab88ea1670445978823c2bb1b7c",
+      "bytes": 113754
+    },
+    "validation/cognac-leather-sofa-seatCount-min.glb": {
+      "sha256": "f9ec5c5fdd6291b03c6d76c25a62b4fd7a7d7b422ecf7d9ed79b645e610e13ff",
+      "bytes": 483804
+    },
+    "validation/cognac-leather-sofa-seatCount-min.json": {
+      "sha256": "3af96098498f377a93c7bc08e71b01001c53b461e95ce14e38ed112080ec8a3e",
+      "bytes": 75322
+    },
+    "validation/cognac-leather-sofa-seatDepth-max.glb": {
+      "sha256": "4a085000fe62b7b9bb94af78cba6212c09db112fb9b2920ec9d3f234c96c9edb",
+      "bytes": 859496
+    },
+    "validation/cognac-leather-sofa-seatDepth-max.json": {
+      "sha256": "0a48a46cf94aae5e29d1647b4699209ce7866ac49e28b079350bd3bb67385a4b",
+      "bytes": 96280
+    },
+    "validation/cognac-leather-sofa-seatDepth-min.glb": {
+      "sha256": "5055b2446f72ecef34bf0741c7969d22ad1b9df752ab8ea16153c9d55a3836d8",
+      "bytes": 859668
+    },
+    "validation/cognac-leather-sofa-seatDepth-min.json": {
+      "sha256": "98fcb9bcb8cee220ed61ffb5af4f38af1897f5f96fd35d83c98546fc6a21f6cb",
+      "bytes": 96273
+    },
+    "validation/cognac-leather-sofa-seatRadius-max.glb": {
+      "sha256": "74e11dc8f47b27eb45cedbe95f1958da5994ca9fc4b6d0acee5c5f866ac09793",
+      "bytes": 859480
+    },
+    "validation/cognac-leather-sofa-seatRadius-max.json": {
+      "sha256": "dc74008bccf0e9d0763711d16d4faeab6fd0362b1f13249850eb1e11e07bfa15",
+      "bytes": 96274
+    },
+    "validation/cognac-leather-sofa-seatRadius-min.glb": {
+      "sha256": "7e7fb7f33a33419f1df40e9e94e28115f0b7ea851c8bcb2fc931b2e13c0815c9",
+      "bytes": 859468
+    },
+    "validation/cognac-leather-sofa-seatRadius-min.json": {
+      "sha256": "f8227df27536756388800439be4476153adc39c8efb850ff12f5e3a3c9369fef",
+      "bytes": 96293
+    },
+    "validation/cognac-leather-sofa-seatWidth-max.glb": {
+      "sha256": "b3574a4c0f058dc0b8e837ae4909a43cfef74987d4254b2dc2401efd0119e035",
+      "bytes": 859480
+    },
+    "validation/cognac-leather-sofa-seatWidth-max.json": {
+      "sha256": "0893e4ab04a8e529d1447e57d87314b9b9d5bb15c5328f12c06fe0cb47b59838",
+      "bytes": 96255
+    },
+    "validation/cognac-leather-sofa-seatWidth-min.glb": {
+      "sha256": "d457bf245ae28f0eb4e18576457a12827cbd69cb9856513f554b4455435ea6af",
+      "bytes": 859324
+    },
+    "validation/cognac-leather-sofa-seatWidth-min.json": {
+      "sha256": "abc19f5d5ec75550c3de27262b0d3f1dabc209ee37dc86bf0c0e6408c8169165",
+      "bytes": 96322
+    },
+    "validation/report.json": {
+      "sha256": "e083f3d5e4f67b7ab6defd970f9e00ca45b8fca288f1c28b314fd0207f28c3dc",
+      "bytes": 2286800
+    },
+    "validation/unity-inputs/cognac-leather-sofa-default.expected.json": {
+      "sha256": "da0e8dfaf5c8a6465802d61dac59f10d5f985dcfe92a56f53f6e647a8de5a50e",
+      "bytes": 73550
+    },
+    "validation/unity-inputs/cognac-leather-sofa-default.glb": {
+      "sha256": "9218df2e9242d1b0088c17cd2dfc5cf67e31af9efb7f87cf4b9ea013de2a7a68",
+      "bytes": 859472
+    },
+    "validation/unity-inputs/cognac-leather-sofa-default.json": {
+      "sha256": "4bb96f17d8c3c46eb8ba8409e18402a7449a6c822efb3259f8f9022137bcc791",
+      "bytes": 96257
+    },
+    "validation/unity-inputs/cognac-leather-sofa-two-seats.expected.json": {
+      "sha256": "8265139bfa618081916e7037c0673190dba8cbe48bfcc58b40cdd809d084717a",
+      "bytes": 66368
+    },
+    "validation/unity-inputs/cognac-leather-sofa-two-seats.glb": {
+      "sha256": "d59b13c33e65f05a101dca5d1d922e9ccf3259710bb6e589fa36b1cd4095c951",
+      "bytes": 671816
+    },
+    "validation/unity-inputs/cognac-leather-sofa-two-seats.json": {
+      "sha256": "d0e4e702f3ee53c66f5351f01d3031684f7432a648e00892db035f63084b2e2e",
+      "bytes": 85858
+    }
+  },
+  "nextAction": "Inspect the actual neutral renders, record visual findings separately, then explicitly verify the inspected source package with this selected design and the requested target.",
+  "limits": [
+    "Technical checks do not establish visual quality.",
+    "Portable rebuilding requires source inspection and a separate explicit execution.",
+    "Target import/use is not established by this command."
+  ],
+  "before": {
+    "provenance": {
+      "node": "v22.22.1",
+      "sourceHash": "6981535975b400479a281af0de5d1aa4b7b9d33444f88392f9a72d73bad21775",
+      "lockHash": "f02a3305f73c4d56ea367485e16ac6805ba70fa55b17e28d41f87ea191968991",
+      "sources": {
+        "CONTRIBUTING.md": "23d500fe51bf255fa9b1e7ccf89d420fde2fc5db23b03a65f751e0b1d641f1bd",
+        "docs/authoring/coding-agent.md": "e5a83f80e8425fefe4b43f86943dbd245960fa2116b65dc7f0f28a561d2ad274",
+        "docs/authoring/guide.md": "1555b36f9b3f324de73774061651300d93dfc9869cb9f7df4b0354cfa205fabe",
+        "docs/contributing/review.md": "3139f8f8daf81f8a35b364cbadfaf2c4234e1560bda55ef55200b7f8a7f35fc4",
+        "examples/recipes/bench/index.ts": "d05a88b48cb1f235e4e44504230719f1311fd7a6dc15cda2bef93e43316782e9",
+        "examples/recipes/cognac-leather-sofa/index.ts": "ae14e655ea6eedc9638517fe9d4d7b3cf58b2ab3b08d276a5e98a6c34b5a8586",
+        "examples/recipes/cognac-leather-sofa/sofa.ts": "c48dc33f6b462f91f73d983e5976ab67e1e69036e11e3945323fbfb37065b40a",
+        "examples/recipes/conifer/index.ts": "707e1033d592f281b7610eba2e77b3593d97f124b5a7c3c00ef3a44a72b8f66f",
+        "examples/recipes/planter/index.ts": "f0d0d836f6c2878fa1430274d0cf300f58dfcbedefb116cbd8f60212d8b0350f",
+        "examples/recipes/starter/README.md": "35346e73a6fb73e2cebbfc673192610d784f5efde88e43d663f86a371a21bb85",
+        "examples/recipes/starter/scaffold.mjs": "14e143476886e715fb9f6020d01513e6abf10efbc51b717fc259bde4fb770890",
+        "examples/recipes/stone-well/index.ts": "c856284c2be9433cb1b092883801f940878e90ea16883350af33721877896348",
+        "examples/recipes/stylized-fox/index.ts": "e43bf708c97d4aed4fa355ea34f9d48dc376b265412cdc30d5cfebb020e1c49d",
+        "examples/recipes/stylized-humanoid/index.ts": "d109d6a93259f0477b48c2e7ff44cb9d505d96b35e1219f6c1714dadacf376af",
+        "examples/recipes/treasure-chest/index.ts": "c1e9b7a2140da6839bae1ae76f686342651fa8908fcde4589fa533563140b89c",
+        "examples/recipes/wheelbarrow/index.ts": "3e052ce5dbc2b7362ad7974ec5e2a0061916bc4dcbf85d52fce72e6e6df54922",
+        "index.html": "9e801a5f2eefe65bd4e8ce2c6918ea567b3b3ef35bdf8b23ea93e1ae2636140c",
+        "package-lock.json": "f02a3305f73c4d56ea367485e16ac6805ba70fa55b17e28d41f87ea191968991",
+        "package.json": "52636f34f0d87e4916e2e86761db1ecd089ab260b7298b3adb8aa2af85095367",
+        "scripts/agent-bundle.ts": "ea8bb0c4a0e2c151b3f9983b0344ae0f546d160bd823eeff03f298f1aa08ad54",
+        "scripts/cli.ts": "411691fdac73aa7efc6eae906232d7b5ab5f6962d82feea9b8896e1f3f0cfa0a",
+        "scripts/deploy-preflight.ts": "b40d9c6d5e5b7eb8f3e5f4c9b527cb3dbeabc77329f1cc12ebe5251eb702194f",
+        "scripts/deploy-production.ts": "4d4f605b092df60fdb72e5a4681295f2ad4828469c9df46361c374ae301d28db",
+        "scripts/environment-cli.ts": "3d005def52d8ed54cf1e32bbf2bc5fa5a81f2032e581d7db71757b21cd26b5cf",
+        "scripts/fox-cli.ts": "66a76bb10e771f386b6fc0e782752173dc685c9145aa5597b086fe3e09614b2f",
+        "scripts/model-controls.ts": "9c7a06bb2f479a3bb436c33bea730eb03ee04ad309a926b9d06c1d8d2626ee30",
+        "scripts/node-platform.ts": "5cb288d3360839e1e814cdb00d70ae8f8cd5e2499f3b46c21e7d6088f3d9eee4",
+        "scripts/product-release-files.json": "b538c61b132d549341068e2257f809290293d311f768ee9172979889b586ee7d",
+        "scripts/product-release.d.mts": "f65d50954a4fed27e3c17c8b85b851f5733c6fdc6d3109d402e6d2dbca6917e0",
+        "scripts/product-release.mjs": "71456557bf88450557f80855b32df453448aa57eea1fc6df0f89d974d7676b15",
+        "scripts/provenance.ts": "8fef9c138893cfa9702890c84e8ce53de62b4b37e6287d9f9ead48e90fac0047",
+        "scripts/public-allowlist.ts": "795a1a78c6c0a854af945d7eda62d079d258a5155bc4d8068f2566134f0512dd",
+        "scripts/recipe-check.ts": "6aa051659f210aef67d58be704f77ba5ea19dce813520a40c0bb5762e276a2d0",
+        "scripts/recipe-module-consumer.ts": "ccf00a478da5ef8dad6476014f0aea4989e8992bd3781a4236b5390ff5772f78",
+        "scripts/recipe-module.ts": "aa013e2b0e62c8a3a29048b0ff1022d21e851f84c7dab27d325baa703f769f18",
+        "scripts/recipe-package-core.ts": "df5cae9b8325371a6333c71565e66bbd64c400b0dc307763a2a96721611e2c58",
+        "scripts/recipe-package-identity.ts": "3863cd620264ed72a56d442e9350d998f422b81da02be9689b7b8774ea8e5d07",
+        "scripts/recipe-package-legacy.ts": "9a9fc58c37f5c7ed99d2e071d354e51e1add8d6b61a7b7d58739c52c9109212a",
+        "scripts/recipe-package-rigged-templates.ts": "51122197dc97860dcc52b65037f515bd5f87cb7db410559a7071626ae77a0c04",
+        "scripts/recipe-package-templates.ts": "d847beb2e31dc283ec20f26bd2ec8a6b7a0f4e5418f44edeb8cc97c98530444e",
+        "scripts/recipe-package.ts": "3f92814d34c03954a69956294bc6b7cc915533e694859a240a259fd087f19b83",
+        "scripts/recipe-render.ts": "b6d9ba345e46078db820578736dfdc8662608dfcaf96f6b2715ada2825a1fed1",
+        "scripts/recipe-review.ts": "514696451f2f7dcbb5ec01e2c945a9d92b1f1a582366c8aa501bf09c819f15f1",
+        "scripts/recipe-verify-evidence.ts": "3adcf814ee5f11f321a7eda6703c540f83b4140da1c7f0e66123d15a72b65263",
+        "scripts/recipe-verify-input.ts": "3fbc5aee082caab1614f4d154d82ad35d27c323d5dd11bcc345731c37f1548bd",
+        "scripts/recipe-verify-package.ts": "088c72fd24c33462cd3754b29bc8800f7fce84cbb651cc03aa1d879cf311f374",
+        "scripts/recipe-verify.ts": "7100a06f6e049b4d05223e7e0cde9de528a0d4fb579bdfa3b102a8ef41c06fa4",
+        "scripts/render-kit.ts": "6d2c13ffe49b741e7e2e94cf996e1ca76f4b0ff6fea17039663f506a50742602",
+        "scripts/render.ts": "e418b6447911ceaa207b115076b08ae326a2659f4838fc1648bb4f2b938e138f",
+        "scripts/revision3-unity-fixtures.ts": "a729e906112b7f44396de91209127947f1cfd8eba206334ff41388ffeb4ee6e1",
+        "scripts/revision4-cottage-capture.ts": "2ae286423c557a2826a7c962a694c94bb474b794b3a1d1a1292195ae6b8db114",
+        "scripts/revision4-default-capture.ts": "b56e300301a015f772a9b8432793b792e684c4e4038f0b5b172dc21299427ee7",
+        "scripts/revision4-physical-capture.ts": "204065f4b84e44a6a39fd532b9b1bd8aef2fa93e6ec38eff52327d832796f73e",
+        "scripts/revision4-physical-check.ts": "e28a1016acf0e5839ed9555273e376bca351d43aba6d7e4ea11cddfd7ae661aa",
+        "scripts/revision4-presets-capture.ts": "5b3ed81b163d138998e3f40d36e8a2f8487ee8ae253587a67f082e17663b3539",
+        "scripts/revision4-unity-fixtures.ts": "7e18c35b99d643ed11c03e388113fb4aa328c9a59717ff0b5be8c2e1b075851c",
+        "scripts/revision5-unity-fixtures.ts": "bb144182623b0da7e2921fa987dd4c606953f69bca8ee0b10d6b5b3f990924dd",
+        "scripts/rigged-cli.ts": "08426158dd147243f5070b731274dd712d6c573e4f0cec9db0b98c1b99e8f7c0",
+        "scripts/semantic-render.ts": "bd8608000ff329a17f9a2af2f3f851d950d8cc3b453cb86014e445061c82d403",
+        "scripts/test-current.ts": "91fe708d9343683a8b6e065218f257ef419e8f91fc769612ae7141d5e9d95664",
+        "scripts/unity-bridge.ts": "ef04d610f32eba9cf5f4e860b9abd51de2dfbd341feb53ff221e57d0d1e62fbd",
+        "scripts/upload-private-release.ts": "fb52e3d9a6e51ad3f253b44ba81304dbe6122e875c36370c0b996ff12bdc7d95",
+        "scripts/verification-process.ts": "a65ade2b1dea3bf64c321f45b6797a6f73de28941126f19596ac0e847b438dee",
+        "scripts/verification-run.ts": "615d083520c0ab33f80f5bc4b0cef609b0fe51e9ba8545a650fc279dc46e7bd5",
+        "scripts/verify-formats-blender.py": "6114fa4979b46d18ae9de400ecaa78ccb653ba7c98a153960b4a5a33d368736e",
+        "scripts/zenov-upload.ts": "eeef95002921761b9ce0714f70e5f0a1254461921a281f76b93631065b8dd87b",
+        "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+        "src/catalog/build.ts": "14aadccd4bfd1739a95276360c45e78afbe1e68ff840b6b748f0909628851f5f",
+        "src/catalog/delivery.ts": "516529bded5253e151e86d7d83cbb6356f274ec3add16db7b66d9d26049fca27",
+        "src/catalog/export.ts": "5473a5611be3ef728adbdaf57a597d224dcee4b716950cc89c732315f872346d",
+        "src/catalog/index.ts": "34e45e4355feb2edd90548e52dfca3ecde596f679b873df063ed8515a1ca4619",
+        "src/catalog/measure.ts": "d7c854db8c84587d23a6fe202aa01056722b10245dfdea9b3226b0467027418c",
+        "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+        "src/catalog/session.ts": "35966c1737278dc2bed59bbe6ed951d1bef4282b3c03f33292d39a2473844fef",
+        "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+        "src/catalog/workshop.ts": "c382d8fbd42f31db23b1ca2e2fea944f5d3e61cd1ce74b80063fc4ab1d6f13e4",
+        "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+        "src/engine/convex-stone.ts": "50d0641fd34c999c428ec5d6bb047d22d729b31334f2fe0973fb448c668aa755",
+        "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+        "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+        "src/engine/roof.ts": "4a0cb05b4d06ebfde8fc63ff949c17df454a9d8164efdddb555aad6d0d2bf763",
+        "src/engine/style.ts": "af5d9fb2ee32c028109b8b5fb0c0d3130e9f93c3dffea855690877af37c91e20",
+        "src/engine/timber.ts": "9e58b9511ba427526b668a1cc8a9508c68afdc15fa9be32674abf1a8b7ecf461",
+        "src/environment/example.ts": "6d0a8a237477d0c914fc4246963ae33982daf34abbe82a37ea6414910e0b6be6",
+        "src/environment/export.ts": "1631df888c69da23fcd732f4bfe3625a175ab13f1c92a1dfbe6d60df8b67289c",
+        "src/environment/features.ts": "337d05c3955427eba18417a61ff7ffcdd2e316a63859864152a0b9755ab05822",
+        "src/environment/framing.ts": "315afad035bba15eb950ad11862f594de184eb29130531541cb5250b081ef41e",
+        "src/environment/index.ts": "c9854e02802587b2e6a4801269d38ecc87dbccfba090229285b12a93bde83736",
+        "src/environment/manifest.ts": "3544900e24e893b8dc1b44d772e34aebc03a617d5b8328236123d30b2b1e0104",
+        "src/environment/preview.css": "961fcd60f70da4b99b93e1df51f74e63b9a7f109b533b2b5583a4d2e712b2e63",
+        "src/environment/preview.ts": "a258171016c9d1ee4b4bcedffb0a42cf6848de6ee1f3cde1a4d1084aabfd519c",
+        "src/environment/terrain.ts": "d2e05b5c6c6b3f0764b43f63bb62cf42fbbe645f5ffe324d6af2196e58b7659c",
+        "src/environment/validation.ts": "1d057e772757e9e20fb68da07d43e38fb8c5ed53b06247ca827c4d4d2a768d81",
+        "src/families/assembly.ts": "bacdf7af9aee38a3456e61bbce6145e7a72c4b27b31d78af26072b52ddaf5f19",
+        "src/families/boulder.ts": "f24399e4ff802b0bb372f2ab71702fc3dc5c7c67a88a13a5efd962d694eea523",
+        "src/families/config.ts": "44e3537f114edea55a1a4a8821d88e8565df54637baaec100aff5c3cdbee0e36",
+        "src/families/cottage.ts": "0714a3cf86972ad423fa0883677e797069638566600977bd6474784c1b8f6aec",
+        "src/families/crate.ts": "f427ffe54d70aabdc9e40299f0753d561ada3503efdbb05ded77b77738ce151e",
+        "src/families/fence.ts": "49f8409703a7c01c7473bef846e5a562ec5aa7b8243b55f7775f7add0eecda02",
+        "src/families/index.ts": "a6adc5b6581906fbbda5b69fbd88498de7a941a50c1a3f3d18e78017824a59c5",
+        "src/families/legacy-config.ts": "4d250c98245d6dc73e9f2715be9cd718254156531066cd19590349b441aebb39",
+        "src/families/legacy-typed-config.ts": "ef889d69010ba7b73d20353c63968fa39d1c795ca768ff79af0015451f5ce47d",
+        "src/families/revision2-config.ts": "aa80d74774bcb9f741d57c6fd8595d972e6d3e83a7fa3826fb6ae1dcc128d961",
+        "src/families/revision3-config.ts": "553031d6cdd15119c30e478e2b79c7db4433a00f985d80973dd7b02c30d68954",
+        "src/families/revision4-config.ts": "b671492205cd1aab3607f57db5b598721302474a07e9343586d4f3967e777343",
+        "src/families/tree.ts": "d8782885092fe97bfae5713b99c2ad66607526a0170d952522bf1386ed3369f9",
+        "src/forge-review/forge-review.css": "d80e2176c551f9bcff3470d70df5b3f8dbf9628256ba650ba95d277f5395d3b6",
+        "src/forge-review/main.ts": "6138c45dc7e67be2f8df6236f19887365ea67ab047b7d4163de872a7d669ab61",
+        "src/formats/agent.ts": "68f1e1e411d80a953e4b856bf9f34fffae12938c1d790e0302713a4f8650afc3",
+        "src/formats/controls.ts": "f5ee57d28566d1867c14aebe50793c0f35b2d04f6fc3a885e008793e05d16bfb",
+        "src/formats/gltf-read.ts": "cf5b0cbe6554660620b9f2ba391f24c84c20a251106a7e47ff87c07a49fc2f8c",
+        "src/formats/index.ts": "a43d7c2636dc5618943d54178e3d9a41bdcfe1d46ea0a8480256c59e066cf0f5",
+        "src/formats/model-controls.json": "b8247de02e4b8e4324552d2196fe58c32564af0fd758f67a094382b207f8fc44",
+        "src/formats/writers.ts": "2e450241b9b98f475aaf85db51135c0ab5c744d7131f08f2689f9ee2426c9fc4",
+        "src/gltf-validator.d.ts": "69a2f2843ce7e6c9a01a917f31d9637a3997c98d98764a6705f774fae69416e6",
+        "src/kit-review/main.ts": "fef77cf9e8b6a2958ed382966e91f4f44a909ac9bdd388667a685832e0841505",
+        "src/lantern/config.ts": "b531822e4975c30b8cb2e3a71852b97f252e887aa809fffebaecac0e3edf9093",
+        "src/lantern/export.ts": "1b5f437a78325663b9d8602d1bfd26888a37325d2c30c32d302e54bb43c105f3",
+        "src/lantern/generator.ts": "d97476a03c6597c0422abdc4c48dad16b2ec52f76101ebbbd98cded89117ecc5",
+        "src/lantern/geometry.ts": "72d1963a5bee9b211d44ba296c3fa3e3b291e9ecca8b510f5acc8f868d89f440",
+        "src/lantern/inspect.ts": "a395eaca317e22c27f25b424cf98d91c3b8fb9ea3156fe2ee09890b558ccfd49",
+        "src/lantern/revision2-config.ts": "25200fdb4bac1da0c50528447e634ac3e058cebb4dd29bea712f3608a61c6ad7",
+        "src/lantern/revision3-config.ts": "d1f78f9a6b31e7dbf291e891428f0767d5881aa8f1ceaf244a9947eef7babcf7",
+        "src/lantern/revision4-config.ts": "c200f53f66b907ef9ec7e73f9de52fd16310c5aaaa01f23eaa52df041554d107",
+        "src/lantern/rustic.ts": "46c96cb453b21adbb8b8100c20add5f32abec1cab9c7862124a334db0a34504a",
+        "src/mcp/server.ts": "4f54f5c3a7e8c6f002a4203af04682ad3e9894ee10425e85a6ca302a2271ca28",
+        "src/mcp/stdio.ts": "01b25b66b44e99648224a7555a85cff3e4f2ab2964afa58d20d61000b361624c",
+        "src/recipes/builtins.ts": "5b609bf811dcc0b1874a8a9bb269af346e1147d0c929818ebdc6700ffd900c2b",
+        "src/recipes/index.ts": "7f1b5799a05ae266805a79575277035bce69e598c5f8cfb970dba76cd498d6f1",
+        "src/recipes/legacy-v1/bench.ts": "d71d6c0741f48f36787cc642813d469a3bd4659858bcadfdbd7fb9cfc53bdb13",
+        "src/recipes/legacy-v1/conifer.ts": "65dd6bb89d20617c689b6081be780492f85c0ad7be66a4bc597121127d8920f8",
+        "src/recipes/legacy-v1/planter.ts": "c6ed1f78b474f593afec76954fa06746eeb51aa41912a8f13c7508002093ac81",
+        "src/recipes/legacy-v1/stone-well.ts": "f26840964ac986d5d9ff8013ce0ef9c2719cfed33a1f8c030c1f1bbcc52dbe4b",
+        "src/recipes/legacy-v1/treasure-chest.ts": "35efbe7ec7857a5015d38797a29ebe8353348235946ba627e65f67e7f2f608d5",
+        "src/recipes/legacy-v1/wheelbarrow.ts": "d90e5a9b1feb104d8a8509b72978373b242441ca47a63fc087cce19117d86c32",
+        "src/recipes/registry.ts": "15e6e733aa16d0d42b84c2e8b92951f59c57d31fb65da691306a8e21f7b7e63a",
+        "src/recipes/rigged.ts": "a2d1d9025fa19d4c2dc3cf8ec4e6d600c2d7c7d1e50cc0e7ed6dc159b97416a4",
+        "src/recipes/types.ts": "cf3704bb5d069ad820890a5304ff41d1eba59d9793ce57551a9e617ccc89781e",
+        "src/review/files.ts": "eb77546828e91c5e673a28022e19a7e5311feb707fc67aa9ae11e1c0550bc5c6",
+        "src/review/identity.ts": "eab877369bf5bd83a9aafff96514ad929061e30e285ffc28f3c53e9155aa54b2",
+        "src/review/publication.ts": "262d05482c0163fbf40f501f017e17906c3716bf5ba4bb2170160aafdf3bda40",
+        "src/review/records.ts": "773d65d6a64bae8054ffee4081dba5e0d4e87ccbb21958469dce75d249bc66e4",
+        "src/review/subject.ts": "360beef117274dcf6f3ff07a1d4cef7a2b1479e171f240ba2c78ed7c6bc695ac",
+        "src/review/types.ts": "3aa60446c465308c3b58f7e296eee0f19679c870a92357d13a2ce81e2f3dfced",
+        "src/rigging/bounds.ts": "1bfc4bd2d38f5451054a8a12d5491b6331b689813403a75c2b03a5bc2ca81cb5",
+        "src/rigging/build.ts": "469741a1f1e7abb23e732fa15eab3c3c637248de3b799d1e2324291086f1d791",
+        "src/rigging/export.ts": "bd240c7f4bdee1e06ebe225aa752da85c663c04bfb4422e99bec44a6b18d1288",
+        "src/rigging/fox-build.ts": "f7709859e36c6ecaeb118e32d51b274c6b99a114dc1f45697d384224d1086876",
+        "src/rigging/fox-geometry.ts": "f9246ce2ccc97de401bae273c6abbab99e3e7743759b92c9ffe2937e72ba2b54",
+        "src/rigging/fox-motion.ts": "a2a1a52b88f203e39c2fd81ae36e5246601ee7094794a318af6fe6b6da702ca8",
+        "src/rigging/ik.ts": "c830d8b30f49d7b351d5e6f495fe11252ba6b7f17230e2bfdf56f7e24ccc6ea6",
+        "src/rigging/motion.ts": "8a72911aa9b1f933513f65f728809ec1039f8bdf59e11ff1b0f6c47217012106",
+        "src/rigging/preview.css": "7789b966d8a011355ffe2c1babc0d1fb0fbe3a21385883e321ae92ea776de7c9",
+        "src/rigging/preview.ts": "050d7b09120346b93dd8c6e43529518cedbd1d96d578bea5a96aa202e0bda18e",
+        "src/rigging/skin.ts": "a7cc9337482a4412d088f8f421a3d900f2b135b0c4466347522d2297c5bfb84f",
+        "src/rigging/types.ts": "dc2c7d8b2a84b31b4f6dcebd77613d5cd107ac9475852cdcecf041a813bba7a8",
+        "src/rigging/validation.ts": "99f63557df28525fbc05556266acb059d67bb3144689b2a41a7ce01c61adabb3",
+        "src/site/artifact-integrity.ts": "77abb4ec6bb42efc086593aacea79cd7f6ecdbb55625270a26b493a575cac3a6",
+        "src/site/brand.ts": "4f69e14a6437efdb1953e2f0763c8f591094fcabff29e038399745ff78d51968",
+        "src/site/contribute.ts": "fc732115ccc82bb77460f22e35c209ebb889fe77db10226d21509b8c5ea3d21d",
+        "src/site/discovery.ts": "c0cd7bb2a70f94dc71687b07d808adda7c47c0a5cc8c5ece2c30714afc7e7f95",
+        "src/site/docs.ts": "071c7e593e56b30dca3685e99006d6fc84861ddd41132b91a77a0e6e0feaf591",
+        "src/site/entry-pages.ts": "8bf70d556f80fc3f80b8ada1e2dbbcac34eae5b310b7ebc76889eb638494209b",
+        "src/site/icons.ts": "c517da4e3f43c10662a9bf99ff7baa4df0c8eba7f63242711f00530bf3de1a5a",
+        "src/site/identity.css": "689df13df4fb70beaa3196ab6f146013ef315756383ac7137b9706d05f01e81c",
+        "src/site/presentation.ts": "844c304ef1407826046b3a5bfc78af8d8c5032e87d597f87e5528e65f76873a8",
+        "src/site/previews/bench-garden.png": "b070cded94eb9952a17aa4a0430dc8b277aaf8f019a78f23a27825ad68d21e39",
+        "src/site/previews/bench-low-seat.png": "22505ada5a952165082ad9fa012af387bb59852ffaec9e747be72bba4d626fda",
+        "src/site/previews/bench-park.png": "74505ae78f74d5fee5ab9132abce9f458d1f09b2d4fc5e5d712f366d6cc881b2",
+        "src/site/previews/boulder-field.png": "4695b28b739807ef44eb4d1170d9960f0c8ada6e279c0381fbdc5d8dca09e225",
+        "src/site/previews/boulder-slab.png": "ec52ede46ba3f4d109928f0a5390be0a017dad6c70c18c77674eda5c4970fa98",
+        "src/site/previews/boulder-standing.png": "c1e02e20a7637647f9e94168cb1fee60ddacd97428139ee35f81c6f6681a02c9",
+        "src/site/previews/conifer-slender.png": "964cf5c29ecb0c064fac1f440b32a13cce5fe5607313a08242f13d8a388fad08",
+        "src/site/previews/conifer-windswept.png": "b86abc00e23cf6cf89abc817e3d9aa70a2282d22134809cc0c31d0d9ce6fea74",
+        "src/site/previews/conifer-woodland.png": "039f85faab131d01522e1296bc415b28662fe3df886fd129291134df52bbbea7",
+        "src/site/previews/cottage-compact.png": "f7d2811d7c4ef84fbd638b34020ce47c58053c32756120d73ddd743cb2ed2630",
+        "src/site/previews/cottage-longhouse.png": "8c10806df86f6d0e3987c72d9c3580b6f75d6e9aec90f536e863fc08bbb55887",
+        "src/site/previews/cottage-workshop.png": "c160627a99ef6c5fd3a428750919d7a03d1b44affff152b12ebcf0a061ad7988",
+        "src/site/previews/crate-shallow.png": "1fe7b3ffc2f2aecd3adba2260d36cd173322686e540b1e9dac8b9d99c0ddb2fe",
+        "src/site/previews/crate-supply.png": "f82d94c6e317a7452f14790d049e4fc78aced81da22fa7cd5aff28e90fff2db7",
+        "src/site/previews/crate-tall.png": "de59f6c43a9e05359c363363b61b20df190bce99e36ad902547da8685a6ded70",
+        "src/site/previews/f2-manifest.json": "74851397a5bb23cbc193050b5a85cb34b5b3816e18d47013fe2f977cd32c0ce0",
+        "src/site/previews/fence-boundary.png": "ee784d61a07967b0ca48fae0373b96cf5faf8b075b6249ce4546cbd9930fd4ec",
+        "src/site/previews/fence-garden.png": "119e1d647cdbbd4b20cbcc0051a9076fffcd93c5bcad266db5b9067068e5d64c",
+        "src/site/previews/fence-low-run.png": "c9b00e2ad4d385ef685691243bef7a7f4cd977d2fd55df86faa85b95ffaa5bf3",
+        "src/site/previews/manifest.json": "d3e07b8a3e38c1e5ceb12ea8562a7eaef4c888eb99243620a38fc28f475f1ab2",
+        "src/site/previews/planter-herb-trough.png": "3805bf67ac92ff8f4c0674c3c4924a9b1b87d6779c21f97621bd488d492233ee",
+        "src/site/previews/planter-patio-box.png": "033dc5b9174f8787160ebcb9f1c5df184f02dfdda21191567446e19b30d2b436",
+        "src/site/previews/planter-raised-box.png": "3c2113cc03a22182e1f040604799da698d1c41b20495b0741020c7ff84f4126c",
+        "src/site/previews/stone-well-courtyard.png": "5f4ece340a9f9fc8b7c5cb7141f411723a02207ba680855308e6cf0168f4514b",
+        "src/site/previews/stone-well-market.png": "f7c51e88dbb4482a56556c4dcb98e4aa85c0040859b2c5d00f35cec550ee57da",
+        "src/site/previews/stone-well-village.png": "dfc722ff9013c8873913808688aefc8f94e7c91aac6c32fd55cc7e890bd8c43e",
+        "src/site/previews/treasure-chest-large.png": "c59c9dc605a8aaa14edc9826ed31b885603f3d1e22fd7baa842473802b8cbff3",
+        "src/site/previews/treasure-chest-oak.png": "3b159a1461309f71008718079e52f215a33585b8ffa974d28c82a0018114df3d",
+        "src/site/previews/treasure-chest-small.png": "974b1b088e344fa1ba33afea4132e1925bf9a6dfb9a902e967ec1739aea18a25",
+        "src/site/previews/tree-orchard.png": "b8c92ea1a760966b829cd2c4f25dc87769a8498aa28e3c805de8908dff7acc99",
+        "src/site/previews/tree-shelter.png": "c263018f2c4f743d5e9aa1c5f134dc7f1daf87860e83902ddd0c38d8fa197839",
+        "src/site/previews/tree-young.png": "d5892fd0bf5c5a87f201ccb99e941284e3d97acd5d944749857f3bc9ef1641ef",
+        "src/site/previews/wheelbarrow-farm.png": "419dbeae34d7b181af02106a7d6f15aefa9e8e4559b9f140751bae35ee94b64e",
+        "src/site/previews/wheelbarrow-garden.png": "018257fc0bbefb7508acbe0944811997416409d0691add0f07d7c61f4ed68d27",
+        "src/site/previews/wheelbarrow-heavy.png": "da58d24e47194815ddcfa295b58c1a617496cce3a9cb63bc4dd5d0d27899737a",
+        "src/site/previews/work-lantern-field.png": "4a2ab8184a7270e943db140836ca4ec15ceb8855713d18fe20a98cd48644bcce",
+        "src/site/previews/work-lantern-harbor.png": "5d205739ad49c61e4bcbbe5bbf35fcefc759bb895d5167efdd49d896f8f47808",
+        "src/site/previews/work-lantern-trail.png": "5cfbdb3bdaeea1d9410928266e66d50450855895ec66b3c4827c240f2206b773",
+        "src/site/previews/workshop-scene.png": "6a479eb0e1d1acf73268aebbd41f1aa1c43dfe1b01f0f20411b20cd7f3c7fc8c",
+        "src/site/procedural-download.ts": "855115dbb84f0ed7fe40aafec35e90ae71f9bd104431376a1dce2c21394ff133",
+        "src/site/site.css": "eeca47dcada5b0a64507fea146d4fc045a7f9f3803c164b37ad7ded7daba218b",
+        "src/site/site.ts": "ff0f4d96043f60b048d87a06388f847005437306786a998291836f5588d471df",
+        "src/site/source-download.ts": "1ee55518f82215855f99057dd33eab6dcc27dc5315b0f7340b6585e0e40b000a",
+        "src/site/usage.ts": "3aeaf6ff49a158e6c8182eb9e1f9294dfd478476d3d2e83da60fa36959aa53d2",
+        "src/site/workspace.css": "12838a959ea38dc5364667f93371878138dd58c008abcc1b30204b923a4dbf92",
+        "src/site/workspace.ts": "0b2d9fdb1594d6926b0df57249d28fd110c4fefb4200aee26129fac0cb7ffc9a",
+        "src/studio/controls.ts": "a6ba74d1f4e76e2b13d7c5d70a0cc8b993a65a23ba95cdc6f791dacecdb3b90d",
+        "src/studio/design-snapshot.ts": "1c68da1736b995b3993c1e46d0aeed2a0189fb76dbe03fd7bae90897b3ea2afd",
+        "src/studio/effects.ts": "82d9d6c0825fa9a2ae09332df19b1acc42be386b29319b8ae9f9fdef81442e2f",
+        "src/studio/export-delivery.ts": "c82053ffec518a5e505c8938b75d5488f68ad844e6a23f1d5c80a708be708e20",
+        "src/studio/framing.ts": "51da7a9e7cfd041f25b6af9b23b1a1269dc729fefb99d77a02f4759c645728d7",
+        "src/studio/main.ts": "047b73ccf65fbd1041e7ef2cfe5ee2624e2011ac9af332322517ecdc1f470d8e",
+        "src/studio/stage.ts": "5cdf63a2d9c7e996a9c3bfc3e38f7bf330f247fba8cbfbfa0ea1cbaf45f79e6a",
+        "src/studio/style.css": "b8bcf9ad912af30669f651886d06de93414e95260c4843015a057a609176829c",
+        "tsconfig.json": "c4d6d6cd5013abf3be2b4cbc0898fb2680a2380d7c90de86d91a34f2f307bd25",
+        "vite.config.ts": "c5a746d9244d12961768211a6976c8a12fe7389a712f9d1a35dfe3f5533fc515"
+      }
+    },
+    "verificationInputs": {
+      "tests/agent-install.test.ts": "e798657a54a201e514ab111f24e5e1b2e990042fd938d0505e2b1530507c682e",
+      "tests/agent-rigged.test.ts": "6e9876b1946aac0ee77fea9462721ed331e36db83cd491a188c3067245924486",
+      "tests/agent-site.test.ts": "1136db92fd268780cbf6b13ba852289d247a3be539a4faad4179a63079ed03c7",
+      "tests/artifact-recovery-site.test.ts": "884bb1c0ddc681140dcd4da1df9a2a3346d6b1d1da561416c726b75af07b99f6",
+      "tests/brand-site.test.ts": "63009ac376738a2fed1903e9ee0aefbe762fc1cfa5d1042f85487b7a2dc4b117",
+      "tests/catalog-card-presentation.test.ts": "a8e3fba518267bdf7206ae5436c117593345ca106b755c6a5bfe54144f48edce",
+      "tests/catalog-derived-log.test.ts": "b86f5fd1f67cdcab2d896a5c4a07069f2dd8423f4b002f21a0b5713c454c8bfd",
+      "tests/catalog-rigged-portability.test.ts": "82705204028df90731425b99ce3b2ec56c485f022036f7a28adad18d7cbafb19",
+      "tests/catalog-rigged.test.ts": "823b203900effbca679702becebeddd3dc3bed34a88abaf54957704eeda29ce7",
+      "tests/catalog.test.ts": "d9cbaf5b31ef32478d5a272347b7cf269fa4b1777a98085feb975a0bf9959f26",
+      "tests/cli.test.ts": "b4ca599320faba98ec322458215f41977c281460b0b8618d6f7503c0d8eb6b3b",
+      "tests/cognac-leather-sofa.test.ts": "f9f993c0a20ec8083969bfa89d4f86bb0156958e381eb59f1150b40fe9387352",
+      "tests/community.test.ts": "6b47ec46f1419d88c455d04a9cdaa85ab761a3555d3c5ed885a507306fdbaa9f",
+      "tests/cosmetics-collections.test.ts": "797c30467018f441f10eafab01d28376128351cd177e6e6ec5592a294804c6bd",
+      "tests/css-stub-hook.mjs": "f83b9b827dc0d3867732239ab15e9c115d196fe030681f09734736388826f3e0",
+      "tests/deploy-allowlist.test.ts": "32ac524b75f7f5c067b5f0fc5142790fbc4f05a7d3760d46df338e52c8b478d3",
+      "tests/editor-customization-site.test.ts": "41156fd2941e9dee93cfcda4bd308bc96b92c523168cdb9e4c091eef9d365166",
+      "tests/environment-cli.test.ts": "ac37c2d1151be91542ca7312af03514c0e712e06f07ae9d9a28ae166af8c996f",
+      "tests/environment-features.test.ts": "650244e3d985a78e7f897be2d1779c96e9b085cc5c9fdd78fbab132f0e2505c9",
+      "tests/environment-foundation.test.ts": "7f98a120ad3e893cd226a8650a69fa7f1e421a5443553177e3e45925d596bfdb",
+      "tests/environment-rigged.test.ts": "d4da28aaf25ed30fb39b5d6161ab93081659dea02b76bf2181eb1a31813cfcfe",
+      "tests/export-formats.test.ts": "2a1f88a2ce59c7e8fb6121f7844b099c0d31012099a54bcd583318ae2e10c1fd",
+      "tests/export.test.ts": "fdd437940c250d308dbdb35b5574bd3c8d63131ef15567bbed59dfadf55779f8",
+      "tests/f2-catalog.test.ts": "b43ef572555c9fb1958dbbe20a5a85c0f9d49454a2c744e1da82d1dac58f8778",
+      "tests/f2-integration.test.ts": "2ffce6e18b000b05d5c1bf525e4c9a3cfce1ec2a4e9b40b39d11eb261edcbfd2",
+      "tests/f2-palettes.test.ts": "0691665995fee24e55e6fa5c87238f52b5adb2dcaadbfdc3fc703d1f7114a00a",
+      "tests/f2-site.test.ts": "12388cc81e7b132ed41c892deeb175a20de8aa463aaab6218c948355ae593d58",
+      "tests/families.test.ts": "c17b08159abc09b964a1d57f89c888ae5a834376c67e9052421cd64eb5d17bd8",
+      "tests/fixtures/cottage-colored-prior.design.json": "c00b0b450b46f250434a6ca4f91e990b5e0d8ca0e0e9ab277898257189cee0ef",
+      "tests/fixtures/family-v020-custom.json": "cffdbb5f906ec82bc4da4595ddd142714262c44034244689c11063603afe5864",
+      "tests/fixtures/family-v020.json": "02255495e3595666dfaf7aabdafef85dca3c9df8771d0d4f7c134a77fcf28122",
+      "tests/fixtures/r2-accepted-construction.json": "8104c6cdbd298e7642b086d4f1cb5fa0d4084f2e59fee1bcf2070cf6c543ac0c",
+      "tests/fixtures/review-defects/bench-fixtures.ts": "915bb0c2a7a6a017de3f8fcd1c14c0893107c509478efb375347b11099ce9e16",
+      "tests/fixtures/review-defects/capture.ts": "f00ba01f44701ce04f528f4ad329d4f0ff37131fc9207864001d2be3aa8d7060",
+      "tests/fixtures/review-defects/export-check.ts": "d595cddc14f411eb2e299553a85fb019beedc34f6cc8280a4b6dccefe04025d9",
+      "tests/fixtures/review-defects/README.md": "b99faeb2b6433ae86159005d2a854af48ba97748e9d7c67264d6cd4fd9abf628",
+      "tests/fixtures/review-defects/viewer.html": "bbf13d9e41c6491b22fcefa216eb406f855b5dfad59f047b32b89957c0e8bff4",
+      "tests/fixtures/review-defects/viewer.ts": "56cf159c75792a8941fec4ce6ff917037e2e386ab5ff61d31e8554f0f8ca72b0",
+      "tests/fixtures/revision2-to-revision3.json": "8d6558c0abb5f501774b40dca5b90b97bec15f8a3d118f4478aeec3f26e18d8a",
+      "tests/fixtures/rig-fox-custom-before.glb": "b5d40fbf316763faae267d060b0a8ef4febcea78e4494a857a2091eaee2686e2",
+      "tests/fixtures/rig-fox-default-before.glb": "e28295a5893c44f8c10b877f6512b7ee2e5e3a0174ed15948e8fab93a29015c3",
+      "tests/fixtures/rig-humanoid-custom-before.glb": "228b268364c8ccf461495436a2523e3bb91b4773b085188590fa20a83d9a7483",
+      "tests/fixtures/rig-humanoid-default-before.glb": "6879f01bec5f5e2af88ae24cb4be53f400bd97a7f7c106a16e227dd813ecd8dd",
+      "tests/fixtures/semantic-baseline-builds.json.gz": "6b554727d3a6aeb03cf3d9e2454926efbebba5e491b5be6e5507f3db53a570f0",
+      "tests/format-reader-robustness.test.ts": "6ebd056194738e4d7565e0a151dd2cd7627e5ad4f401f7a23776cf63114fb121",
+      "tests/framing.test.ts": "53694a45b5abc3a93f4acc8dc48437b0cd653cd095d74f3c06cb31004ec778e9",
+      "tests/historical-public.ts": "beb14d3e7923390e8ccb03ae0a63d4b020b54501f1a2cf55349f59235404adbd",
+      "tests/hosted-browser.test.ts": "4e898da9a034dc21969b3e32c33c064d1aa76ede9abcb6d0fbf700eed342359c",
+      "tests/hosted-build-candidate.test.ts": "7a7317e86f4e8d976edcc98fbfad8447ff5e0f4d82b0f60afd2545a720368656",
+      "tests/hosted-build.test.ts": "f5743262227aec7ce1d5813af395dd461dda5563d179f923034e70fd440d7bf7",
+      "tests/hosted-client.test.ts": "58f72141cd987ce0d8d5bb27c5c72564bae8feaa885152d8fa9642ad2512c2fb",
+      "tests/hosted-date.test.ts": "9b9381930a33e2ea549d7844449b5d104409f0e39ee2c1f4dc724099ad9d96bf",
+      "tests/hosted-discovery-browser.test.ts": "75aad498d508765fb9501804dbe8e84a7083be845a1d3bbcea336582d8d6b409",
+      "tests/hosted-discovery-layout-browser.test.ts": "f43b203ffbc643a0f96004c9c1630c7461e5e7bf76d44a30b04106de252afc3e",
+      "tests/hosted-discovery.test.ts": "2c6ac567992ccd08181bbe9d8b145a759f59491fd9baf559880b556b8e48d17b",
+      "tests/hosted-download-labels.test.ts": "063d5ff575506cd811d75359f5ba36717a1a3b2945fb5a282385046a28637e75",
+      "tests/hosted-edited-design.test.ts": "7d9731215b36d2ad13bb77c84e63fb33fc1a950b3022a09f3e3bf677959b28f4",
+      "tests/hosted-editor-browser.test.ts": "fee4bd9f03382d2ec87a1b86836fd376f36c60b5c597f0faf4dd115ef54a3b60",
+      "tests/hosted-editor-layout-browser.test.ts": "962df12df418d8a5d54f81ac4b12ed19f429337ac03a4ad7810375ceffc22986",
+      "tests/hosted-editor-mobile.test.ts": "faa9d5e85bc3b91074fdcb9d05f36063ebf7f29c171bf85aba6c3ae9e2e5e5ac",
+      "tests/hosted-full-submission.test.ts": "2e55c10cc6d75c0682f1b8984f7680d5760819e4dbbd6301c99ca88fa5bdc630",
+      "tests/hosted-moderation-appeal-browser.test.ts": "47a2ab848bedbbf000329afbd4beb1a14111149d3b1cef7fad9b4f5ae4d28572",
+      "tests/hosted-moderation-browser.test.ts": "97a8c62fcbe2ce5d15f3c0ffa5a6d4f0f8a50278e5ee5f18b3b0af16a170aac7",
+      "tests/hosted-moderation-gallery-browser.test.ts": "5575b84458504174801aba7742764bf25bbb8474a19b8fd77a31ca0ac1f97662",
+      "tests/hosted-moderation-gallery.test.ts": "d5597bca1f068e93350f4033a500e0c28a21a0846fe7fe9c6d1e619edb5ca717",
+      "tests/hosted-moderation-review-access-browser.test.ts": "1f7e57e928f092c175b82e0434b7a0b4e9d9c3b4bc50c7b5d02e4f73d57c8425",
+      "tests/hosted-moderation-withdrawal-browser.test.ts": "4002c9b4603b7787e6311def1222ac80b0950600d23023fe07d74561b7eb3279",
+      "tests/hosted-moderation.test.ts": "8cff4189983efb7d71e8968720db89aa844f7dbe0412a92dbe864dc3a571a520",
+      "tests/hosted-processing-browser.test.ts": "d41e96ef151013cd8f6bbce23ac372681cae8eaad1dcc293938026d64451ed81",
+      "tests/hosted-processing.test.ts": "0b5ac9b35b85279ec0e8d4910c9c237dedaa6b045c7b6c37400461bc003015cc",
+      "tests/hosted-public-delivery-browser.test.ts": "fe7324bb5401d83dd1877790aaf76eb65327bafefecc485f5f7a74300f84c6e8",
+      "tests/hosted-review-inspection-browser.test.ts": "f2aa3008a6af6645fe5159359d44438649598626b23bb6916242dd76d0ebda28",
+      "tests/hosted-review-inspection.test.ts": "fb2530566d342a6b7069d81cf09c6415e8b78e7d708a72e98cfa76b14799ce6a",
+      "tests/hosted-review.test.ts": "208c48313d39e21f668260051b13991b99e9ef4fd91bb89ea803a6b06fd7e13b",
+      "tests/hosted-runtime-identity.test.ts": "a8d66dec00a0488eacbb5895bc7b6616abc7f5c9a577655077e3201084e283f0",
+      "tests/hosted-trusted.test.ts": "23bdad77b9f216aa46e37399c5d90d71c7f9d5fedbf4a669b3926ba3a0e7fbc2",
+      "tests/hosted-upload.test.ts": "349d84b4085bfcd8fef9219009cad70edf019926f7271c4b02e01ef894df21d2",
+      "tests/individual-discovery.test.ts": "3004c42569fd85cb3aa3424b6d5678284c6176a327ceeab025690159f51cc0b5",
+      "tests/lantern.test.ts": "c88ef15bc728b3062a6c79ea2c83c3505605cfab65beb501dd480a4e8254631e",
+      "tests/live-queue-page.test.ts": "cf6699d22eefb4c9b123e5994d99a8d29cb92b9b3ea51e315ada5596472fc7b3",
+      "tests/local-artifact-activation.test.ts": "f6818a691e1dbdca9a137633697a3a611a2f46872b79f821478a220fb9e3179e",
+      "tests/mcp.test.ts": "53435bd2838b9014e625292aa15d172149b5b9a350c8c18730e0bc27285e7c3f",
+      "tests/measure.test.ts": "8718f97269e721c12bfc24aecbb0d77d2cbe2b70ce7a81c5a361a14529fd18c7",
+      "tests/polyspoon-identity-site.test.ts": "47624ea0e5c2c9858bf9a7b6d4b922151c99a14adc87dd36ecbf455dfd031587",
+      "tests/polyspoon-technical-header.test.ts": "4b974c87226fe493febf00bb01c90de3a01124ad3d9bf2c54c32656dc30ef93f",
+      "tests/procedural-module-immutability.test.ts": "fd381bd97715c20c85c5bae53fb684b430dbeac83de6e1e2067a6203979919b5",
+      "tests/procedural-module-site.test.ts": "7be7bede67db7c9bd94271186a9e39ba02ba76f1c9f99fe4f17bb00ea708ca99",
+      "tests/procedural-module.test.ts": "25f8048bdc415a672cad4097eaf012f8f12e7ca47d65ef2f02dc2a9626ba9e25",
+      "tests/procedural-rigged.test.ts": "61c2d719e854b89f42ba429c40b1f248d786878fd66a8add1323ce326051a268",
+      "tests/processor-unlit.test.ts": "97aa88d6ea28d72fe38f20192004032966508a8a93ddc276c522707fdf5b1c99",
+      "tests/product-release.test.ts": "b741a83e3cc1cf571d22db4a1aa74c7ea200f8a792f7d1825d9bf2198bc0a87e",
+      "tests/product-unity-runner.test.ts": "302c04596b7068c3c7e6b335e32e49c4758c768c60c99fec27eb87cec9d86899",
+      "tests/public-agent-files.test.ts": "5104255a3010b36a8487329e15d6b7887c3f96cd0a8bd0d8b0a0c3c6f22c0f1c",
+      "tests/public-home-content.test.ts": "d59e4f35617328998d1e10b11c7f157e3ea3f838c8eb03d972f520db05b1be87",
+      "tests/public-login-redirect.test.ts": "c100382cdc7c0591a6594290fe53a10fca5f9c0e9d5e52b945bdaa397ecf8b82",
+      "tests/r2-art-architecture.test.ts": "9301532368c1ad95fbaedf09c164089d26468265a8350b345250f0790271d816",
+      "tests/r2-art-furniture-catalog.test.ts": "9512611037ca6e61f9c0ce6e1ad5ad5468c93d2d09266d2f31ee32b525fce758",
+      "tests/r2-art-mechanisms.test.ts": "b85121adc7a8650afa506b65e73e72deab8291ee900e5646e6a5d50c35a24266",
+      "tests/r2-art-organic-catalog.test.ts": "bda723a0124323ffc4b5410b009c47c05f411848aa683cf073dad1c9b6b6233e",
+      "tests/r2-art-props-catalog.test.ts": "16d621f5eb5d1d6e08ab2ea484b188dd51ee047e02b4292ec42869d0ecce71b3",
+      "tests/r2-art-tree.test.ts": "9d68949226f172e55148317f977448280a56d33f3853a812e54fe715c9d92fdf",
+      "tests/r2-construction-migration.test.ts": "39527ecea73eaff57def0bf22f4fce72116205aa128ecb99ceca68358779118a",
+      "tests/r2-current-delivery.test.ts": "3d7a0d00ff73be507579520d12261aa92edfafeb224186bbd748172811f8ba42",
+      "tests/r2-export-migration-site.test.ts": "65b7279b21d2a8ae3e54a2a189ab9ce13ec50a1d8f41944f9a6933df90a97630",
+      "tests/r2-mcp-migration.test.ts": "6a14ab75c3e942614853e8ef2be7d47887f0f4e1c9538d9c8182ac8aea606b25",
+      "tests/README.md": "8885cc9961acf3029202e4992e149b6569f0c3ac81e6867d3053530b3dfb3b8e",
+      "tests/recipe-contract.test.ts": "942b39efa41c975468acec937c250f4ae868952e883da01b1224f5141dbc178a",
+      "tests/recipe-controls.test.ts": "5ab1a3cd026d98026517af66c3007e49015d98b9754a07fb4841f68ac2872acd",
+      "tests/recipe-integration.test.ts": "2404d7d874a066f86e2768647570f9b63275680e268324480bf47480661848db",
+      "tests/recipe-package-delivery-portability.test.ts": "b3c85be94cee522fe2956ae4d60c28ee0d6b16c98f3bff5a26e94bda5eab04af",
+      "tests/recipe-package-delivery.test.ts": "6d8f15c731a8391d8c5892b9de21e51b3fe12b0450f4f66cf006e03e83754fa7",
+      "tests/recipe-package-portability.ts": "68d35a93a3cc0539a7afe01f472d8f3802919f6862fc550c56f7800557c091a3",
+      "tests/recipe-package-rigged.test.ts": "90ea39b3f1a9189717bd22613fc56829ff591a2ce595aa4be614f0419a35e548",
+      "tests/recipe-package.test.ts": "3617310dba90e90025ca684a9c024294a43ee33f2e00688633f117c0385bde6b",
+      "tests/recipe-registration.test.ts": "b225941589a275d575b8ae57308385f9a0b111679a7324b0c83ef539aa521d01",
+      "tests/recipe-render.test.ts": "93bc5627ce60ad52d09719a37722fa051ff40fbcae9c5d410396ffb168659bb5",
+      "tests/recipe-site.test.ts": "ca32bcd8c85896802b19f2d2eebf1e5ddc56ee5f9a3178b9f89a244b60103949",
+      "tests/recipe-source-download.test.ts": "d3a376b600b872381c21e5ca06cb0c52dce084d0c01a3034b7439f8332f836c2",
+      "tests/recipe-source-site.test.ts": "e01fae5902fe8aabdcf05822486e8b05d98405879dc21d41f2261abd7253e835",
+      "tests/recipe-unity-preparation.test.ts": "3293a1059629c8d177a18dfdef81a26925defff8eeb5acd1d5a43efb84b43e8f",
+      "tests/recipe-verify.test.ts": "0c5d298127069c8556761f05590d7856a545f5c6804b437ecffaa6035fd9543b",
+      "tests/register-css-stub.mjs": "69696bb039caf2cde4429bc52d5e0625fc6c4b2b760ad985e405dd503a5aa5ad",
+      "tests/review-defect-fixtures.test.ts": "5a4c1080d9bfe5a8b140e59a6282ebbd33e5ca90e94e2a465bb6a5bf4b1fdb33",
+      "tests/review-evidence.test.ts": "cd8f41f4b74ca99941cde74f757303bb4fd306a002e555a73de656d10b45cc87",
+      "tests/review-pipeline-v2.test.ts": "366503add18c12a84b0c06e6878e090824f1c653b832fe2a57ac9dcc53f1d9f0",
+      "tests/review-records.test.ts": "0a47969b361ff2779485cf18e0ba23524fac056edc9c7d65aaf779f3a10b728c",
+      "tests/revision2-construction-browser.test.ts": "e820f95acfaa5efb67a07d6cb7a4c2b71330454b5e279492917aa862ca6fee2b",
+      "tests/revision2-editor-polish.test.ts": "616218174d82ddd98df278b8cdd73a769b49a4a23fd46642deaf96859fb8f730",
+      "tests/revision2-editor.test.ts": "afd34db98a22311a8713c7b05b30a88232764ba588022d2db1625fab1a2e661c",
+      "tests/revision2-engine.test.ts": "3a3d10023660fd950bf48edfb48bd9903c8056b809788cc597c1ba1c8d860923",
+      "tests/revision2-layout.test.ts": "78937bf6aac4ec13d52b88cdbf5cd8ac59e6fe0a94d1051ebf78695da1b2a992",
+      "tests/revision2-organic-pass2.test.ts": "773a1caea61ecd3eb309a3b3b94baaadd282b100f1c868d98d4e6fe4aef7736c",
+      "tests/revision2-organic.test.ts": "43f6c5655561c833a55268cc422a559aefc1ffedc0fca50209e45a39957f95ac",
+      "tests/revision2-pass2.test.ts": "3641d0b1c9a1ea6458b40a0cb182181ec3fa3bc4b0279bbdc762f0dc2e062289",
+      "tests/revision2-placement.test.ts": "b2d4bf5def0995bbf5ca0c13ce643a9e509ea61df5bb763be403040b73850d30",
+      "tests/revision2-pointer.test.ts": "28debd6572e76284bbb18a04effb482dbacb2ce58eefcb608209c97f0eb1ddbe",
+      "tests/revision2-props-packet.test.ts": "f09484fba06471764c4b11fc492065e922175c851a060f68b3f73bc41c0de147",
+      "tests/revision2-props.test.ts": "60ea79b0c5a4175d57569bf25bb4ff712872e30258bff0cc9b0fc504167740e0",
+      "tests/revision2-session.test.ts": "3df7430fb61a07cfec5e9067b9c39a4ab1c584667a47b9519ace03d4ef032fb8",
+      "tests/revision3-art.test.ts": "a100211e3c4ba14c126821aaea91cf811a80d3b8945f4c1ac3ee4aada981a8cc",
+      "tests/revision3-construction-cases.ts": "462c7cfa7aaf65046f33b7a0690a82c4a101971a54f17bceeb1fb0ea861e885d",
+      "tests/revision3-final-presentation.test.ts": "71a59cbecd34a723d8af27d3028b735186895c6e44ba681e6ea08c32a83fbf76",
+      "tests/revision3-manufactured.test.ts": "c2aefffd74151378553f6dddcd2b0bbb14cdb2317fc66e713309e0419f0a29ef",
+      "tests/revision3-material-browser.test.ts": "c0895e924b2d9bfd59730d1ec36ae1a694db55fa0dec64312e54616ae5769b9c",
+      "tests/revision3-material-restore.test.ts": "4d976153ccc6ec7f720aa3423e465583f54067a301da04d98bd60e4c7d749447",
+      "tests/revision3-pass4.test.ts": "f67f36a68ae271d26375b50898f6da73c11e2242feb5ac755c1bd75678147e3f",
+      "tests/revision3-seating.test.ts": "c89f68f74b4df47ed3a325acbbf395c77de0d07c0eff157673309c53380778b8",
+      "tests/revision3-site-controls.test.ts": "a987691024b45f64d44c76fd3fbadff509214733034450b977cff2e69fc7b472",
+      "tests/revision3-site.test.ts": "34730ab36ac4d5bc1a45a573ca92a59371805ac66c31578ecdc5d421b258a58f",
+      "tests/revision3-stone.test.ts": "e64f3e418ea1df434370ae5c126505c1b0ba44d7ff23b9d923f079df5439f467",
+      "tests/revision3-thumbnail-inputs.test.ts": "98ffbefb7301d8f755077315ad4c580173b0bd7d69cf10fd5391e602ba87d131",
+      "tests/revision3-thumbnail-inputs.ts": "2a517d513b4754b369cfc768a4df02e45e8ce589aaae4990da1c890af1f96f53",
+      "tests/revision3-thumbnails.ts": "dc9494d40536a5a1b206bd470aa0610aa54f49a57df0d248e388b65f6c6f6e34",
+      "tests/revision3-usage.test.ts": "47b928c8bd50b23ed2991b0e2d3abad14a5c3cd635516025f28552cb58b2db90",
+      "tests/revision4-appearance-integration.test.ts": "17015e9233b1e721560480df52d7a616f66e959ef728478923cb0882a8e1a79c",
+      "tests/revision4-appearance.test.ts": "a700386792dbb28f4b5559882c513bacc4a4c9449dc01efbb0fea9683c727fa0",
+      "tests/revision4-bundle.test.ts": "3146432a67c17a2f83488b479d6ee78ba927d3d405a4fb8816d953f9a8f01735",
+      "tests/revision4-defaults.test.ts": "cc24762ba26d660cfbb0d5f1ccd81dcc4834a000c7a946bc93e8583fed2fb0a8",
+      "tests/revision4-kit-route.test.ts": "544f781ca7e9f59f4906eba74b75648b7902c959324f6f9d9904fabddb469d04",
+      "tests/revision4-layout.test.ts": "6e3cfb0bb1df38be813ef790d27698decdd352cbcad815acb713eb51df12d475",
+      "tests/revision4-material-production.ts": "e3682ff21ab002ffa0afe27dc748662131b2cd90ba9d003306ab27994335e77b",
+      "tests/revision4-outline.test.ts": "26e56a2c403a4f60a9e00349f754de470a1d17223e2f152e0c317690c821031a",
+      "tests/revision4-production.test.ts": "1530a0218d56ee2cc3fb423a30dff712ae838fc6d612b0bed18bc7a1ed6bbcf6",
+      "tests/revision4-stage-acceptance.test.ts": "0a3e217bc1cdda063491fce3505ec6c2a7180f57487f99319122051114f68841",
+      "tests/revision4-unity-preparation.test.ts": "b100fdc4c2db235e4f8a6a37afd02eae55843162135f5685d5b5b5290f17da61",
+      "tests/revision4-unity-prepare.test.py": "de76823b4c92be1a6d0d31afbd8ba337c3a78dd440a680ea47d3320b6bab4deb",
+      "tests/revision4-viewer-core.test.ts": "65957708ac62b5fdd7667aa9f97b266d6ce2fbf6a42b1efd59f613e29a3784c9",
+      "tests/revision4-visibility-lines.test.ts": "e4d895a35218eddfddb2316d1dd59bf4a812a8e06e967800330725abf6359066",
+      "tests/rigged-cli.test.ts": "183fb2f7fc854265e71cdac1bbd9f3c5e852d65acb6c4c2f30d0641255487904",
+      "tests/rigged-details.test.ts": "16da17b61788a1c9d110412e6573bd3262baeb31bc72e4280ec4992c5b77a571",
+      "tests/rigged-entrypoints.test.ts": "5ed3a0a2c978e1909f7ba3cb91e68832828d328df8c9b6b161029176c5cdcf4a",
+      "tests/rigged-export.test.ts": "81b42bc8e9c708340fc4c55ad8e205a1474d106b296a22085059f6f0c02e3024",
+      "tests/rigged-fox-cli.test.ts": "72bc6671a901b5f3b88475ee2f19ad4da6cd4e63c3ff69844f68bac9bf2705bf",
+      "tests/rigged-fox-shape.test.ts": "3cc9315b11dcaafd530ba7990ec1a75be24c72acf40688ff77a892f1e53fad6e",
+      "tests/rigged-fox.test.ts": "55341ecd14d9594ddc491708d3f05b6f5c6c2a01e9d42b6a0c2696bc711ea487",
+      "tests/rigged-humanoid.test.ts": "b7009ed9c4521769cd9fc7d07771ecc76fe9336e72f08d806e9643379883190a",
+      "tests/rigged-motion.test.ts": "5cbd8325e6a40da843239f436c76f7c46ad5715ebe6a2063ca098a61a0989baf",
+      "tests/safety-v1.test.ts": "01a315686e3553c47c973b37da4a32d57beeed777f26aef8e871b3970090df43",
+      "tests/score-cache.test.ts": "f48bcbc738b0f0f0399eace98d387d9fcb95eea4b7a162c6353215fd266a7724",
+      "tests/semantic-contract.test.ts": "81e552ec0edfd4427790e703c61aea6f46df30953578d902ce34c85e5c846154",
+      "tests/semantic-legacy-payload.ts": "d466c397cf0bcc17560d4c1eacb928aff99caf34476263d64c0d1ae06454fa01",
+      "tests/server-appeal-lifecycle.test.ts": "41e695bd3cebf392066e454eb652e26661c864b6d84ac2a9f1ede380548664d6",
+      "tests/server-auth-ip.test.ts": "2ca26b313e05f6f9f5f3104abc87c159d94d3d03b79f3378ec2cdfd2a19a5f87",
+      "tests/server-auth-reuse.test.ts": "afa4601d6c460aa832b221b67f2aa205a0fd128cf95cd94a8ddcc3c87854f5a0",
+      "tests/server-delivery.test.ts": "3006629227fd0cb5723abaef6ecfb7207e326ff8c3e730107aca8c88fc52f07c",
+      "tests/server-deployment.test.ts": "14093e8049f7475ffac688c366901e1acb4879e12e24b77f633d27290690012b",
+      "tests/server-domain.test.ts": "e8bedb16e33bdcaa50d19ac85e07a5239faf0497f53bbcb9a0972534c0cf46e8",
+      "tests/server-full-subject.test.ts": "930cfbff44b718442ece3c498136ed3d530206f4ae7fe944a23bbe813e430732",
+      "tests/server-health.test.ts": "9ccc524bdf1933cb744a59a455b4dcef428fcb3e9fe53132b6ed748afd76950b",
+      "tests/server-http.test.ts": "00eba48f69e11bb22462bf4f5486b098b9622d5c3b87987d0ecf58c8573ba983",
+      "tests/server-mail-diagnostics.test.ts": "1242d30c00c75880aa7ce17e001eca424625ab3f61ed0a3b51285bbd6c651307",
+      "tests/server-marketplace.test.ts": "c5ca56406e5b12c8f38317b061cfb3fe4028830ca09e6a260cda771695e13cc1",
+      "tests/server-model-discovery.test.ts": "b21b373e72ad04a95116c76634fd3786d9cfc01727e655f28bad0800441afc68",
+      "tests/server-moderation-abuse.test.ts": "318bfb68b5d898b2489a6f931b82181a0e0b1ceb4059aae457e04ad52d841576",
+      "tests/server-moderation-schema.py": "90ff3fdf6a81f9b21e405739d5dea5b5411d271ac05773caa24427d789a166f0",
+      "tests/server-moderation.test.ts": "03faaee2c655d08074aef61f5df4ef841071497058ac7b9919052f60bf2c8f44",
+      "tests/server-oversize.test.ts": "938c198eeac7b70febb856e610cb052703d7666b85b56ef8fbb9e55d79325bf0",
+      "tests/server-owner-bootstrap.test.ts": "c5a0fc49ab2957e5012c6d5f2e8bef1898620ca00506717a71b0ce37cf6882d7",
+      "tests/server-processing.test.ts": "e9198864ad2a9ef08a39352b387b868581d1d69145f871ae13f07196471c5636",
+      "tests/server-provider-workerd.test.ts": "6fe7d86901ae2735ce605e7aac8f5353a5f94c53e373d9c746f08e680f6a6681",
+      "tests/server-provider.test.ts": "c1864de0711c2f854b11160c00a49eee969e0cb39adec6bc221541625d24346f",
+      "tests/server-public-delivery.test.ts": "3a7bfa74236f53ed9c59107d9acf6c6e1f429c79199d69eb24bf40dc6cd79cf2",
+      "tests/server-recovery.test.py": "18362069e9dc7dbbf66a37a01f7da9e996cf44474166520c45911b694c35b909",
+      "tests/server-review-inspection.test.ts": "b848ddae02bed19db6bc02de0ef1a4b05530e5dc4ed99f04bee452497ff7f099",
+      "tests/server-scoped-shell.test.ts": "cca83aa8b0d2e5688bc7c77266e16bb05f85126b2a5ac70d297de02a926f7f0a",
+      "tests/server-votes-eligibility.test.ts": "3bd324f9c49c33fb20c56986e16d2a55683de4a3f53bd60b26e43233f322df8c",
+      "tests/source-delivery-site.test.ts": "6de444afab9b8199bbaf054529aed2f8cc51d57af9b4aa59de4346e21601ec0a",
+      "tests/studio-catalog.test.ts": "782471e3fa6ebbda826b12ace00633b1ac07d65bae74c286e797c6028de5334d",
+      "tests/studio-export-delivery.test.ts": "cfb7927580ae4c702285a2bcef152f09d5e42cefe635c545f314607ad7bc65bd",
+      "tests/studio.test.ts": "abf087d104b28a4e14c4ae5c7ddd7687544b85c1d0f8a65a3379e317abc2b205",
+      "tests/test_processor_integration.py": "d7d87494238f9413780e8c592482075e28b5a6725ba2a2ad896c630d270cb181",
+      "tests/test_processor_service_live.py": "ce3701b3c423a6ab4bcca30c03b1ba4450355f702df30b87c1e74d1c93ae3675",
+      "tests/test_processor_service.py": "a02fbae56ec5bd272cced759cc3c7489d70ce07c06e3a8fb6b87a06d8c5aafef",
+      "tests/test_processor_unlit.py": "176edf20d96e1e5b991a95cb93a205c76a819fe7a7acecb9b3456b93179ef153",
+      "tests/test_processor.py": "c3cf6f3f51b5562cab352e38530e15e5356bc7ac17a42fa45399074a543f0284",
+      "tests/unity-bridge.test.ts": "92967cfb42179d635540679df5202ba6e30a4c699aa5f7652b6b8b577ecbd622",
+      "tests/viewport-rail-browser.test.ts": "b98ae9f437d9df182c1da64584ed4c6a1742c126a0dd1ffe1a4cfb1afe787011",
+      "tests/workshop-placement.test.ts": "0c2ba68a3ac3ffa4e9186b2396d930a67d4b73516c5249fceeb3d69cfa128c9c",
+      "docs/contributing/source-packages.json": "2f6fae258ae42ddfe967ccefcc2190e7d3ce0fd03b35d718c9fa833199b65661",
+      "docs/licensing-dependencies.json": "facc2f7c8cb90e53bed22823170dd181ef846d25131499b51c6f642993df3f6e",
+      "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "NOTICE": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "LICENSES/Apache-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "LICENSES/CC0-1.0.txt": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "evidence/revision5/recipes/legacy-baseline.json": "ab001097fa826cf82bbeb4adccc603751cf97bad447e7ad551cdad9dc460fe83",
+      "evidence/revision7/catalog/seven-family-baseline.json": "83e3e8985508c79237ef15dd202a044716050dc1d68872b43e35c52ced2ed027",
+      "evidence/revision7/catalog/reviewed-defaults.json": "3a9ce73f3a1f6e20d8f6e5b4ef31643712cd28fe05edc01dc9576cd00ed6c361",
+      "evidence/revision7/catalog/scene-inputs.json": "b29413e06775cbbab0d545ca4888d1ccffc384278facf1c336ea0c42f809f8d4",
+      "integrations/unity/ImportFixture/Assets/Editor/FixtureRun.cs": "f4f8ba558aaf481e58849b53858de72bae95dd0fcfda934f52d9dc550e6925c7",
+      "integrations/unity/run-editor.sh": "867abde55fcb2b208717bdc568bd2ed031548ac2a9c67bd7a38925e564ba2ec9",
+      "selected.design.json": "bb86bd4257b8a5e25dc0f4c525d67e7a09e07a40baf17f16092e224a87526537"
+    },
+    "verificationHash": "69468d6f2a1149533799a0b1406d92aa44cb481ee742dee23a976641af2ecbc7"
+  },
+  "after": {
+    "provenance": {
+      "node": "v22.22.1",
+      "sourceHash": "6981535975b400479a281af0de5d1aa4b7b9d33444f88392f9a72d73bad21775",
+      "lockHash": "f02a3305f73c4d56ea367485e16ac6805ba70fa55b17e28d41f87ea191968991",
+      "sources": {
+        "CONTRIBUTING.md": "23d500fe51bf255fa9b1e7ccf89d420fde2fc5db23b03a65f751e0b1d641f1bd",
+        "docs/authoring/coding-agent.md": "e5a83f80e8425fefe4b43f86943dbd245960fa2116b65dc7f0f28a561d2ad274",
+        "docs/authoring/guide.md": "1555b36f9b3f324de73774061651300d93dfc9869cb9f7df4b0354cfa205fabe",
+        "docs/contributing/review.md": "3139f8f8daf81f8a35b364cbadfaf2c4234e1560bda55ef55200b7f8a7f35fc4",
+        "examples/recipes/bench/index.ts": "d05a88b48cb1f235e4e44504230719f1311fd7a6dc15cda2bef93e43316782e9",
+        "examples/recipes/cognac-leather-sofa/index.ts": "ae14e655ea6eedc9638517fe9d4d7b3cf58b2ab3b08d276a5e98a6c34b5a8586",
+        "examples/recipes/cognac-leather-sofa/sofa.ts": "c48dc33f6b462f91f73d983e5976ab67e1e69036e11e3945323fbfb37065b40a",
+        "examples/recipes/conifer/index.ts": "707e1033d592f281b7610eba2e77b3593d97f124b5a7c3c00ef3a44a72b8f66f",
+        "examples/recipes/planter/index.ts": "f0d0d836f6c2878fa1430274d0cf300f58dfcbedefb116cbd8f60212d8b0350f",
+        "examples/recipes/starter/README.md": "35346e73a6fb73e2cebbfc673192610d784f5efde88e43d663f86a371a21bb85",
+        "examples/recipes/starter/scaffold.mjs": "14e143476886e715fb9f6020d01513e6abf10efbc51b717fc259bde4fb770890",
+        "examples/recipes/stone-well/index.ts": "c856284c2be9433cb1b092883801f940878e90ea16883350af33721877896348",
+        "examples/recipes/stylized-fox/index.ts": "e43bf708c97d4aed4fa355ea34f9d48dc376b265412cdc30d5cfebb020e1c49d",
+        "examples/recipes/stylized-humanoid/index.ts": "d109d6a93259f0477b48c2e7ff44cb9d505d96b35e1219f6c1714dadacf376af",
+        "examples/recipes/treasure-chest/index.ts": "c1e9b7a2140da6839bae1ae76f686342651fa8908fcde4589fa533563140b89c",
+        "examples/recipes/wheelbarrow/index.ts": "3e052ce5dbc2b7362ad7974ec5e2a0061916bc4dcbf85d52fce72e6e6df54922",
+        "index.html": "9e801a5f2eefe65bd4e8ce2c6918ea567b3b3ef35bdf8b23ea93e1ae2636140c",
+        "package-lock.json": "f02a3305f73c4d56ea367485e16ac6805ba70fa55b17e28d41f87ea191968991",
+        "package.json": "52636f34f0d87e4916e2e86761db1ecd089ab260b7298b3adb8aa2af85095367",
+        "scripts/agent-bundle.ts": "ea8bb0c4a0e2c151b3f9983b0344ae0f546d160bd823eeff03f298f1aa08ad54",
+        "scripts/cli.ts": "411691fdac73aa7efc6eae906232d7b5ab5f6962d82feea9b8896e1f3f0cfa0a",
+        "scripts/deploy-preflight.ts": "b40d9c6d5e5b7eb8f3e5f4c9b527cb3dbeabc77329f1cc12ebe5251eb702194f",
+        "scripts/deploy-production.ts": "4d4f605b092df60fdb72e5a4681295f2ad4828469c9df46361c374ae301d28db",
+        "scripts/environment-cli.ts": "3d005def52d8ed54cf1e32bbf2bc5fa5a81f2032e581d7db71757b21cd26b5cf",
+        "scripts/fox-cli.ts": "66a76bb10e771f386b6fc0e782752173dc685c9145aa5597b086fe3e09614b2f",
+        "scripts/model-controls.ts": "9c7a06bb2f479a3bb436c33bea730eb03ee04ad309a926b9d06c1d8d2626ee30",
+        "scripts/node-platform.ts": "5cb288d3360839e1e814cdb00d70ae8f8cd5e2499f3b46c21e7d6088f3d9eee4",
+        "scripts/product-release-files.json": "b538c61b132d549341068e2257f809290293d311f768ee9172979889b586ee7d",
+        "scripts/product-release.d.mts": "f65d50954a4fed27e3c17c8b85b851f5733c6fdc6d3109d402e6d2dbca6917e0",
+        "scripts/product-release.mjs": "71456557bf88450557f80855b32df453448aa57eea1fc6df0f89d974d7676b15",
+        "scripts/provenance.ts": "8fef9c138893cfa9702890c84e8ce53de62b4b37e6287d9f9ead48e90fac0047",
+        "scripts/public-allowlist.ts": "795a1a78c6c0a854af945d7eda62d079d258a5155bc4d8068f2566134f0512dd",
+        "scripts/recipe-check.ts": "6aa051659f210aef67d58be704f77ba5ea19dce813520a40c0bb5762e276a2d0",
+        "scripts/recipe-module-consumer.ts": "ccf00a478da5ef8dad6476014f0aea4989e8992bd3781a4236b5390ff5772f78",
+        "scripts/recipe-module.ts": "aa013e2b0e62c8a3a29048b0ff1022d21e851f84c7dab27d325baa703f769f18",
+        "scripts/recipe-package-core.ts": "df5cae9b8325371a6333c71565e66bbd64c400b0dc307763a2a96721611e2c58",
+        "scripts/recipe-package-identity.ts": "3863cd620264ed72a56d442e9350d998f422b81da02be9689b7b8774ea8e5d07",
+        "scripts/recipe-package-legacy.ts": "9a9fc58c37f5c7ed99d2e071d354e51e1add8d6b61a7b7d58739c52c9109212a",
+        "scripts/recipe-package-rigged-templates.ts": "51122197dc97860dcc52b65037f515bd5f87cb7db410559a7071626ae77a0c04",
+        "scripts/recipe-package-templates.ts": "d847beb2e31dc283ec20f26bd2ec8a6b7a0f4e5418f44edeb8cc97c98530444e",
+        "scripts/recipe-package.ts": "3f92814d34c03954a69956294bc6b7cc915533e694859a240a259fd087f19b83",
+        "scripts/recipe-render.ts": "b6d9ba345e46078db820578736dfdc8662608dfcaf96f6b2715ada2825a1fed1",
+        "scripts/recipe-review.ts": "514696451f2f7dcbb5ec01e2c945a9d92b1f1a582366c8aa501bf09c819f15f1",
+        "scripts/recipe-verify-evidence.ts": "3adcf814ee5f11f321a7eda6703c540f83b4140da1c7f0e66123d15a72b65263",
+        "scripts/recipe-verify-input.ts": "3fbc5aee082caab1614f4d154d82ad35d27c323d5dd11bcc345731c37f1548bd",
+        "scripts/recipe-verify-package.ts": "088c72fd24c33462cd3754b29bc8800f7fce84cbb651cc03aa1d879cf311f374",
+        "scripts/recipe-verify.ts": "7100a06f6e049b4d05223e7e0cde9de528a0d4fb579bdfa3b102a8ef41c06fa4",
+        "scripts/render-kit.ts": "6d2c13ffe49b741e7e2e94cf996e1ca76f4b0ff6fea17039663f506a50742602",
+        "scripts/render.ts": "e418b6447911ceaa207b115076b08ae326a2659f4838fc1648bb4f2b938e138f",
+        "scripts/revision3-unity-fixtures.ts": "a729e906112b7f44396de91209127947f1cfd8eba206334ff41388ffeb4ee6e1",
+        "scripts/revision4-cottage-capture.ts": "2ae286423c557a2826a7c962a694c94bb474b794b3a1d1a1292195ae6b8db114",
+        "scripts/revision4-default-capture.ts": "b56e300301a015f772a9b8432793b792e684c4e4038f0b5b172dc21299427ee7",
+        "scripts/revision4-physical-capture.ts": "204065f4b84e44a6a39fd532b9b1bd8aef2fa93e6ec38eff52327d832796f73e",
+        "scripts/revision4-physical-check.ts": "e28a1016acf0e5839ed9555273e376bca351d43aba6d7e4ea11cddfd7ae661aa",
+        "scripts/revision4-presets-capture.ts": "5b3ed81b163d138998e3f40d36e8a2f8487ee8ae253587a67f082e17663b3539",
+        "scripts/revision4-unity-fixtures.ts": "7e18c35b99d643ed11c03e388113fb4aa328c9a59717ff0b5be8c2e1b075851c",
+        "scripts/revision5-unity-fixtures.ts": "bb144182623b0da7e2921fa987dd4c606953f69bca8ee0b10d6b5b3f990924dd",
+        "scripts/rigged-cli.ts": "08426158dd147243f5070b731274dd712d6c573e4f0cec9db0b98c1b99e8f7c0",
+        "scripts/semantic-render.ts": "bd8608000ff329a17f9a2af2f3f851d950d8cc3b453cb86014e445061c82d403",
+        "scripts/test-current.ts": "91fe708d9343683a8b6e065218f257ef419e8f91fc769612ae7141d5e9d95664",
+        "scripts/unity-bridge.ts": "ef04d610f32eba9cf5f4e860b9abd51de2dfbd341feb53ff221e57d0d1e62fbd",
+        "scripts/upload-private-release.ts": "fb52e3d9a6e51ad3f253b44ba81304dbe6122e875c36370c0b996ff12bdc7d95",
+        "scripts/verification-process.ts": "a65ade2b1dea3bf64c321f45b6797a6f73de28941126f19596ac0e847b438dee",
+        "scripts/verification-run.ts": "615d083520c0ab33f80f5bc4b0cef609b0fe51e9ba8545a650fc279dc46e7bd5",
+        "scripts/verify-formats-blender.py": "6114fa4979b46d18ae9de400ecaa78ccb653ba7c98a153960b4a5a33d368736e",
+        "scripts/zenov-upload.ts": "eeef95002921761b9ce0714f70e5f0a1254461921a281f76b93631065b8dd87b",
+        "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+        "src/catalog/build.ts": "14aadccd4bfd1739a95276360c45e78afbe1e68ff840b6b748f0909628851f5f",
+        "src/catalog/delivery.ts": "516529bded5253e151e86d7d83cbb6356f274ec3add16db7b66d9d26049fca27",
+        "src/catalog/export.ts": "5473a5611be3ef728adbdaf57a597d224dcee4b716950cc89c732315f872346d",
+        "src/catalog/index.ts": "34e45e4355feb2edd90548e52dfca3ecde596f679b873df063ed8515a1ca4619",
+        "src/catalog/measure.ts": "d7c854db8c84587d23a6fe202aa01056722b10245dfdea9b3226b0467027418c",
+        "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+        "src/catalog/session.ts": "35966c1737278dc2bed59bbe6ed951d1bef4282b3c03f33292d39a2473844fef",
+        "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+        "src/catalog/workshop.ts": "c382d8fbd42f31db23b1ca2e2fea944f5d3e61cd1ce74b80063fc4ab1d6f13e4",
+        "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+        "src/engine/convex-stone.ts": "50d0641fd34c999c428ec5d6bb047d22d729b31334f2fe0973fb448c668aa755",
+        "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+        "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+        "src/engine/roof.ts": "4a0cb05b4d06ebfde8fc63ff949c17df454a9d8164efdddb555aad6d0d2bf763",
+        "src/engine/style.ts": "af5d9fb2ee32c028109b8b5fb0c0d3130e9f93c3dffea855690877af37c91e20",
+        "src/engine/timber.ts": "9e58b9511ba427526b668a1cc8a9508c68afdc15fa9be32674abf1a8b7ecf461",
+        "src/environment/example.ts": "6d0a8a237477d0c914fc4246963ae33982daf34abbe82a37ea6414910e0b6be6",
+        "src/environment/export.ts": "1631df888c69da23fcd732f4bfe3625a175ab13f1c92a1dfbe6d60df8b67289c",
+        "src/environment/features.ts": "337d05c3955427eba18417a61ff7ffcdd2e316a63859864152a0b9755ab05822",
+        "src/environment/framing.ts": "315afad035bba15eb950ad11862f594de184eb29130531541cb5250b081ef41e",
+        "src/environment/index.ts": "c9854e02802587b2e6a4801269d38ecc87dbccfba090229285b12a93bde83736",
+        "src/environment/manifest.ts": "3544900e24e893b8dc1b44d772e34aebc03a617d5b8328236123d30b2b1e0104",
+        "src/environment/preview.css": "961fcd60f70da4b99b93e1df51f74e63b9a7f109b533b2b5583a4d2e712b2e63",
+        "src/environment/preview.ts": "a258171016c9d1ee4b4bcedffb0a42cf6848de6ee1f3cde1a4d1084aabfd519c",
+        "src/environment/terrain.ts": "d2e05b5c6c6b3f0764b43f63bb62cf42fbbe645f5ffe324d6af2196e58b7659c",
+        "src/environment/validation.ts": "1d057e772757e9e20fb68da07d43e38fb8c5ed53b06247ca827c4d4d2a768d81",
+        "src/families/assembly.ts": "bacdf7af9aee38a3456e61bbce6145e7a72c4b27b31d78af26072b52ddaf5f19",
+        "src/families/boulder.ts": "f24399e4ff802b0bb372f2ab71702fc3dc5c7c67a88a13a5efd962d694eea523",
+        "src/families/config.ts": "44e3537f114edea55a1a4a8821d88e8565df54637baaec100aff5c3cdbee0e36",
+        "src/families/cottage.ts": "0714a3cf86972ad423fa0883677e797069638566600977bd6474784c1b8f6aec",
+        "src/families/crate.ts": "f427ffe54d70aabdc9e40299f0753d561ada3503efdbb05ded77b77738ce151e",
+        "src/families/fence.ts": "49f8409703a7c01c7473bef846e5a562ec5aa7b8243b55f7775f7add0eecda02",
+        "src/families/index.ts": "a6adc5b6581906fbbda5b69fbd88498de7a941a50c1a3f3d18e78017824a59c5",
+        "src/families/legacy-config.ts": "4d250c98245d6dc73e9f2715be9cd718254156531066cd19590349b441aebb39",
+        "src/families/legacy-typed-config.ts": "ef889d69010ba7b73d20353c63968fa39d1c795ca768ff79af0015451f5ce47d",
+        "src/families/revision2-config.ts": "aa80d74774bcb9f741d57c6fd8595d972e6d3e83a7fa3826fb6ae1dcc128d961",
+        "src/families/revision3-config.ts": "553031d6cdd15119c30e478e2b79c7db4433a00f985d80973dd7b02c30d68954",
+        "src/families/revision4-config.ts": "b671492205cd1aab3607f57db5b598721302474a07e9343586d4f3967e777343",
+        "src/families/tree.ts": "d8782885092fe97bfae5713b99c2ad66607526a0170d952522bf1386ed3369f9",
+        "src/forge-review/forge-review.css": "d80e2176c551f9bcff3470d70df5b3f8dbf9628256ba650ba95d277f5395d3b6",
+        "src/forge-review/main.ts": "6138c45dc7e67be2f8df6236f19887365ea67ab047b7d4163de872a7d669ab61",
+        "src/formats/agent.ts": "68f1e1e411d80a953e4b856bf9f34fffae12938c1d790e0302713a4f8650afc3",
+        "src/formats/controls.ts": "f5ee57d28566d1867c14aebe50793c0f35b2d04f6fc3a885e008793e05d16bfb",
+        "src/formats/gltf-read.ts": "cf5b0cbe6554660620b9f2ba391f24c84c20a251106a7e47ff87c07a49fc2f8c",
+        "src/formats/index.ts": "a43d7c2636dc5618943d54178e3d9a41bdcfe1d46ea0a8480256c59e066cf0f5",
+        "src/formats/model-controls.json": "b8247de02e4b8e4324552d2196fe58c32564af0fd758f67a094382b207f8fc44",
+        "src/formats/writers.ts": "2e450241b9b98f475aaf85db51135c0ab5c744d7131f08f2689f9ee2426c9fc4",
+        "src/gltf-validator.d.ts": "69a2f2843ce7e6c9a01a917f31d9637a3997c98d98764a6705f774fae69416e6",
+        "src/kit-review/main.ts": "fef77cf9e8b6a2958ed382966e91f4f44a909ac9bdd388667a685832e0841505",
+        "src/lantern/config.ts": "b531822e4975c30b8cb2e3a71852b97f252e887aa809fffebaecac0e3edf9093",
+        "src/lantern/export.ts": "1b5f437a78325663b9d8602d1bfd26888a37325d2c30c32d302e54bb43c105f3",
+        "src/lantern/generator.ts": "d97476a03c6597c0422abdc4c48dad16b2ec52f76101ebbbd98cded89117ecc5",
+        "src/lantern/geometry.ts": "72d1963a5bee9b211d44ba296c3fa3e3b291e9ecca8b510f5acc8f868d89f440",
+        "src/lantern/inspect.ts": "a395eaca317e22c27f25b424cf98d91c3b8fb9ea3156fe2ee09890b558ccfd49",
+        "src/lantern/revision2-config.ts": "25200fdb4bac1da0c50528447e634ac3e058cebb4dd29bea712f3608a61c6ad7",
+        "src/lantern/revision3-config.ts": "d1f78f9a6b31e7dbf291e891428f0767d5881aa8f1ceaf244a9947eef7babcf7",
+        "src/lantern/revision4-config.ts": "c200f53f66b907ef9ec7e73f9de52fd16310c5aaaa01f23eaa52df041554d107",
+        "src/lantern/rustic.ts": "46c96cb453b21adbb8b8100c20add5f32abec1cab9c7862124a334db0a34504a",
+        "src/mcp/server.ts": "4f54f5c3a7e8c6f002a4203af04682ad3e9894ee10425e85a6ca302a2271ca28",
+        "src/mcp/stdio.ts": "01b25b66b44e99648224a7555a85cff3e4f2ab2964afa58d20d61000b361624c",
+        "src/recipes/builtins.ts": "5b609bf811dcc0b1874a8a9bb269af346e1147d0c929818ebdc6700ffd900c2b",
+        "src/recipes/index.ts": "7f1b5799a05ae266805a79575277035bce69e598c5f8cfb970dba76cd498d6f1",
+        "src/recipes/legacy-v1/bench.ts": "d71d6c0741f48f36787cc642813d469a3bd4659858bcadfdbd7fb9cfc53bdb13",
+        "src/recipes/legacy-v1/conifer.ts": "65dd6bb89d20617c689b6081be780492f85c0ad7be66a4bc597121127d8920f8",
+        "src/recipes/legacy-v1/planter.ts": "c6ed1f78b474f593afec76954fa06746eeb51aa41912a8f13c7508002093ac81",
+        "src/recipes/legacy-v1/stone-well.ts": "f26840964ac986d5d9ff8013ce0ef9c2719cfed33a1f8c030c1f1bbcc52dbe4b",
+        "src/recipes/legacy-v1/treasure-chest.ts": "35efbe7ec7857a5015d38797a29ebe8353348235946ba627e65f67e7f2f608d5",
+        "src/recipes/legacy-v1/wheelbarrow.ts": "d90e5a9b1feb104d8a8509b72978373b242441ca47a63fc087cce19117d86c32",
+        "src/recipes/registry.ts": "15e6e733aa16d0d42b84c2e8b92951f59c57d31fb65da691306a8e21f7b7e63a",
+        "src/recipes/rigged.ts": "a2d1d9025fa19d4c2dc3cf8ec4e6d600c2d7c7d1e50cc0e7ed6dc159b97416a4",
+        "src/recipes/types.ts": "cf3704bb5d069ad820890a5304ff41d1eba59d9793ce57551a9e617ccc89781e",
+        "src/review/files.ts": "eb77546828e91c5e673a28022e19a7e5311feb707fc67aa9ae11e1c0550bc5c6",
+        "src/review/identity.ts": "eab877369bf5bd83a9aafff96514ad929061e30e285ffc28f3c53e9155aa54b2",
+        "src/review/publication.ts": "262d05482c0163fbf40f501f017e17906c3716bf5ba4bb2170160aafdf3bda40",
+        "src/review/records.ts": "773d65d6a64bae8054ffee4081dba5e0d4e87ccbb21958469dce75d249bc66e4",
+        "src/review/subject.ts": "360beef117274dcf6f3ff07a1d4cef7a2b1479e171f240ba2c78ed7c6bc695ac",
+        "src/review/types.ts": "3aa60446c465308c3b58f7e296eee0f19679c870a92357d13a2ce81e2f3dfced",
+        "src/rigging/bounds.ts": "1bfc4bd2d38f5451054a8a12d5491b6331b689813403a75c2b03a5bc2ca81cb5",
+        "src/rigging/build.ts": "469741a1f1e7abb23e732fa15eab3c3c637248de3b799d1e2324291086f1d791",
+        "src/rigging/export.ts": "bd240c7f4bdee1e06ebe225aa752da85c663c04bfb4422e99bec44a6b18d1288",
+        "src/rigging/fox-build.ts": "f7709859e36c6ecaeb118e32d51b274c6b99a114dc1f45697d384224d1086876",
+        "src/rigging/fox-geometry.ts": "f9246ce2ccc97de401bae273c6abbab99e3e7743759b92c9ffe2937e72ba2b54",
+        "src/rigging/fox-motion.ts": "a2a1a52b88f203e39c2fd81ae36e5246601ee7094794a318af6fe6b6da702ca8",
+        "src/rigging/ik.ts": "c830d8b30f49d7b351d5e6f495fe11252ba6b7f17230e2bfdf56f7e24ccc6ea6",
+        "src/rigging/motion.ts": "8a72911aa9b1f933513f65f728809ec1039f8bdf59e11ff1b0f6c47217012106",
+        "src/rigging/preview.css": "7789b966d8a011355ffe2c1babc0d1fb0fbe3a21385883e321ae92ea776de7c9",
+        "src/rigging/preview.ts": "050d7b09120346b93dd8c6e43529518cedbd1d96d578bea5a96aa202e0bda18e",
+        "src/rigging/skin.ts": "a7cc9337482a4412d088f8f421a3d900f2b135b0c4466347522d2297c5bfb84f",
+        "src/rigging/types.ts": "dc2c7d8b2a84b31b4f6dcebd77613d5cd107ac9475852cdcecf041a813bba7a8",
+        "src/rigging/validation.ts": "99f63557df28525fbc05556266acb059d67bb3144689b2a41a7ce01c61adabb3",
+        "src/site/artifact-integrity.ts": "77abb4ec6bb42efc086593aacea79cd7f6ecdbb55625270a26b493a575cac3a6",
+        "src/site/brand.ts": "4f69e14a6437efdb1953e2f0763c8f591094fcabff29e038399745ff78d51968",
+        "src/site/contribute.ts": "fc732115ccc82bb77460f22e35c209ebb889fe77db10226d21509b8c5ea3d21d",
+        "src/site/discovery.ts": "c0cd7bb2a70f94dc71687b07d808adda7c47c0a5cc8c5ece2c30714afc7e7f95",
+        "src/site/docs.ts": "071c7e593e56b30dca3685e99006d6fc84861ddd41132b91a77a0e6e0feaf591",
+        "src/site/entry-pages.ts": "8bf70d556f80fc3f80b8ada1e2dbbcac34eae5b310b7ebc76889eb638494209b",
+        "src/site/icons.ts": "c517da4e3f43c10662a9bf99ff7baa4df0c8eba7f63242711f00530bf3de1a5a",
+        "src/site/identity.css": "689df13df4fb70beaa3196ab6f146013ef315756383ac7137b9706d05f01e81c",
+        "src/site/presentation.ts": "844c304ef1407826046b3a5bfc78af8d8c5032e87d597f87e5528e65f76873a8",
+        "src/site/previews/bench-garden.png": "b070cded94eb9952a17aa4a0430dc8b277aaf8f019a78f23a27825ad68d21e39",
+        "src/site/previews/bench-low-seat.png": "22505ada5a952165082ad9fa012af387bb59852ffaec9e747be72bba4d626fda",
+        "src/site/previews/bench-park.png": "74505ae78f74d5fee5ab9132abce9f458d1f09b2d4fc5e5d712f366d6cc881b2",
+        "src/site/previews/boulder-field.png": "4695b28b739807ef44eb4d1170d9960f0c8ada6e279c0381fbdc5d8dca09e225",
+        "src/site/previews/boulder-slab.png": "ec52ede46ba3f4d109928f0a5390be0a017dad6c70c18c77674eda5c4970fa98",
+        "src/site/previews/boulder-standing.png": "c1e02e20a7637647f9e94168cb1fee60ddacd97428139ee35f81c6f6681a02c9",
+        "src/site/previews/conifer-slender.png": "964cf5c29ecb0c064fac1f440b32a13cce5fe5607313a08242f13d8a388fad08",
+        "src/site/previews/conifer-windswept.png": "b86abc00e23cf6cf89abc817e3d9aa70a2282d22134809cc0c31d0d9ce6fea74",
+        "src/site/previews/conifer-woodland.png": "039f85faab131d01522e1296bc415b28662fe3df886fd129291134df52bbbea7",
+        "src/site/previews/cottage-compact.png": "f7d2811d7c4ef84fbd638b34020ce47c58053c32756120d73ddd743cb2ed2630",
+        "src/site/previews/cottage-longhouse.png": "8c10806df86f6d0e3987c72d9c3580b6f75d6e9aec90f536e863fc08bbb55887",
+        "src/site/previews/cottage-workshop.png": "c160627a99ef6c5fd3a428750919d7a03d1b44affff152b12ebcf0a061ad7988",
+        "src/site/previews/crate-shallow.png": "1fe7b3ffc2f2aecd3adba2260d36cd173322686e540b1e9dac8b9d99c0ddb2fe",
+        "src/site/previews/crate-supply.png": "f82d94c6e317a7452f14790d049e4fc78aced81da22fa7cd5aff28e90fff2db7",
+        "src/site/previews/crate-tall.png": "de59f6c43a9e05359c363363b61b20df190bce99e36ad902547da8685a6ded70",
+        "src/site/previews/f2-manifest.json": "74851397a5bb23cbc193050b5a85cb34b5b3816e18d47013fe2f977cd32c0ce0",
+        "src/site/previews/fence-boundary.png": "ee784d61a07967b0ca48fae0373b96cf5faf8b075b6249ce4546cbd9930fd4ec",
+        "src/site/previews/fence-garden.png": "119e1d647cdbbd4b20cbcc0051a9076fffcd93c5bcad266db5b9067068e5d64c",
+        "src/site/previews/fence-low-run.png": "c9b00e2ad4d385ef685691243bef7a7f4cd977d2fd55df86faa85b95ffaa5bf3",
+        "src/site/previews/manifest.json": "d3e07b8a3e38c1e5ceb12ea8562a7eaef4c888eb99243620a38fc28f475f1ab2",
+        "src/site/previews/planter-herb-trough.png": "3805bf67ac92ff8f4c0674c3c4924a9b1b87d6779c21f97621bd488d492233ee",
+        "src/site/previews/planter-patio-box.png": "033dc5b9174f8787160ebcb9f1c5df184f02dfdda21191567446e19b30d2b436",
+        "src/site/previews/planter-raised-box.png": "3c2113cc03a22182e1f040604799da698d1c41b20495b0741020c7ff84f4126c",
+        "src/site/previews/stone-well-courtyard.png": "5f4ece340a9f9fc8b7c5cb7141f411723a02207ba680855308e6cf0168f4514b",
+        "src/site/previews/stone-well-market.png": "f7c51e88dbb4482a56556c4dcb98e4aa85c0040859b2c5d00f35cec550ee57da",
+        "src/site/previews/stone-well-village.png": "dfc722ff9013c8873913808688aefc8f94e7c91aac6c32fd55cc7e890bd8c43e",
+        "src/site/previews/treasure-chest-large.png": "c59c9dc605a8aaa14edc9826ed31b885603f3d1e22fd7baa842473802b8cbff3",
+        "src/site/previews/treasure-chest-oak.png": "3b159a1461309f71008718079e52f215a33585b8ffa974d28c82a0018114df3d",
+        "src/site/previews/treasure-chest-small.png": "974b1b088e344fa1ba33afea4132e1925bf9a6dfb9a902e967ec1739aea18a25",
+        "src/site/previews/tree-orchard.png": "b8c92ea1a760966b829cd2c4f25dc87769a8498aa28e3c805de8908dff7acc99",
+        "src/site/previews/tree-shelter.png": "c263018f2c4f743d5e9aa1c5f134dc7f1daf87860e83902ddd0c38d8fa197839",
+        "src/site/previews/tree-young.png": "d5892fd0bf5c5a87f201ccb99e941284e3d97acd5d944749857f3bc9ef1641ef",
+        "src/site/previews/wheelbarrow-farm.png": "419dbeae34d7b181af02106a7d6f15aefa9e8e4559b9f140751bae35ee94b64e",
+        "src/site/previews/wheelbarrow-garden.png": "018257fc0bbefb7508acbe0944811997416409d0691add0f07d7c61f4ed68d27",
+        "src/site/previews/wheelbarrow-heavy.png": "da58d24e47194815ddcfa295b58c1a617496cce3a9cb63bc4dd5d0d27899737a",
+        "src/site/previews/work-lantern-field.png": "4a2ab8184a7270e943db140836ca4ec15ceb8855713d18fe20a98cd48644bcce",
+        "src/site/previews/work-lantern-harbor.png": "5d205739ad49c61e4bcbbe5bbf35fcefc759bb895d5167efdd49d896f8f47808",
+        "src/site/previews/work-lantern-trail.png": "5cfbdb3bdaeea1d9410928266e66d50450855895ec66b3c4827c240f2206b773",
+        "src/site/previews/workshop-scene.png": "6a479eb0e1d1acf73268aebbd41f1aa1c43dfe1b01f0f20411b20cd7f3c7fc8c",
+        "src/site/procedural-download.ts": "855115dbb84f0ed7fe40aafec35e90ae71f9bd104431376a1dce2c21394ff133",
+        "src/site/site.css": "eeca47dcada5b0a64507fea146d4fc045a7f9f3803c164b37ad7ded7daba218b",
+        "src/site/site.ts": "ff0f4d96043f60b048d87a06388f847005437306786a998291836f5588d471df",
+        "src/site/source-download.ts": "1ee55518f82215855f99057dd33eab6dcc27dc5315b0f7340b6585e0e40b000a",
+        "src/site/usage.ts": "3aeaf6ff49a158e6c8182eb9e1f9294dfd478476d3d2e83da60fa36959aa53d2",
+        "src/site/workspace.css": "12838a959ea38dc5364667f93371878138dd58c008abcc1b30204b923a4dbf92",
+        "src/site/workspace.ts": "0b2d9fdb1594d6926b0df57249d28fd110c4fefb4200aee26129fac0cb7ffc9a",
+        "src/studio/controls.ts": "a6ba74d1f4e76e2b13d7c5d70a0cc8b993a65a23ba95cdc6f791dacecdb3b90d",
+        "src/studio/design-snapshot.ts": "1c68da1736b995b3993c1e46d0aeed2a0189fb76dbe03fd7bae90897b3ea2afd",
+        "src/studio/effects.ts": "82d9d6c0825fa9a2ae09332df19b1acc42be386b29319b8ae9f9fdef81442e2f",
+        "src/studio/export-delivery.ts": "c82053ffec518a5e505c8938b75d5488f68ad844e6a23f1d5c80a708be708e20",
+        "src/studio/framing.ts": "51da7a9e7cfd041f25b6af9b23b1a1269dc729fefb99d77a02f4759c645728d7",
+        "src/studio/main.ts": "047b73ccf65fbd1041e7ef2cfe5ee2624e2011ac9af332322517ecdc1f470d8e",
+        "src/studio/stage.ts": "5cdf63a2d9c7e996a9c3bfc3e38f7bf330f247fba8cbfbfa0ea1cbaf45f79e6a",
+        "src/studio/style.css": "b8bcf9ad912af30669f651886d06de93414e95260c4843015a057a609176829c",
+        "tsconfig.json": "c4d6d6cd5013abf3be2b4cbc0898fb2680a2380d7c90de86d91a34f2f307bd25",
+        "vite.config.ts": "c5a746d9244d12961768211a6976c8a12fe7389a712f9d1a35dfe3f5533fc515"
+      }
+    },
+    "verificationInputs": {
+      "tests/agent-install.test.ts": "e798657a54a201e514ab111f24e5e1b2e990042fd938d0505e2b1530507c682e",
+      "tests/agent-rigged.test.ts": "6e9876b1946aac0ee77fea9462721ed331e36db83cd491a188c3067245924486",
+      "tests/agent-site.test.ts": "1136db92fd268780cbf6b13ba852289d247a3be539a4faad4179a63079ed03c7",
+      "tests/artifact-recovery-site.test.ts": "884bb1c0ddc681140dcd4da1df9a2a3346d6b1d1da561416c726b75af07b99f6",
+      "tests/brand-site.test.ts": "63009ac376738a2fed1903e9ee0aefbe762fc1cfa5d1042f85487b7a2dc4b117",
+      "tests/catalog-card-presentation.test.ts": "a8e3fba518267bdf7206ae5436c117593345ca106b755c6a5bfe54144f48edce",
+      "tests/catalog-derived-log.test.ts": "b86f5fd1f67cdcab2d896a5c4a07069f2dd8423f4b002f21a0b5713c454c8bfd",
+      "tests/catalog-rigged-portability.test.ts": "82705204028df90731425b99ce3b2ec56c485f022036f7a28adad18d7cbafb19",
+      "tests/catalog-rigged.test.ts": "823b203900effbca679702becebeddd3dc3bed34a88abaf54957704eeda29ce7",
+      "tests/catalog.test.ts": "d9cbaf5b31ef32478d5a272347b7cf269fa4b1777a98085feb975a0bf9959f26",
+      "tests/cli.test.ts": "b4ca599320faba98ec322458215f41977c281460b0b8618d6f7503c0d8eb6b3b",
+      "tests/cognac-leather-sofa.test.ts": "f9f993c0a20ec8083969bfa89d4f86bb0156958e381eb59f1150b40fe9387352",
+      "tests/community.test.ts": "6b47ec46f1419d88c455d04a9cdaa85ab761a3555d3c5ed885a507306fdbaa9f",
+      "tests/cosmetics-collections.test.ts": "797c30467018f441f10eafab01d28376128351cd177e6e6ec5592a294804c6bd",
+      "tests/css-stub-hook.mjs": "f83b9b827dc0d3867732239ab15e9c115d196fe030681f09734736388826f3e0",
+      "tests/deploy-allowlist.test.ts": "32ac524b75f7f5c067b5f0fc5142790fbc4f05a7d3760d46df338e52c8b478d3",
+      "tests/editor-customization-site.test.ts": "41156fd2941e9dee93cfcda4bd308bc96b92c523168cdb9e4c091eef9d365166",
+      "tests/environment-cli.test.ts": "ac37c2d1151be91542ca7312af03514c0e712e06f07ae9d9a28ae166af8c996f",
+      "tests/environment-features.test.ts": "650244e3d985a78e7f897be2d1779c96e9b085cc5c9fdd78fbab132f0e2505c9",
+      "tests/environment-foundation.test.ts": "7f98a120ad3e893cd226a8650a69fa7f1e421a5443553177e3e45925d596bfdb",
+      "tests/environment-rigged.test.ts": "d4da28aaf25ed30fb39b5d6161ab93081659dea02b76bf2181eb1a31813cfcfe",
+      "tests/export-formats.test.ts": "2a1f88a2ce59c7e8fb6121f7844b099c0d31012099a54bcd583318ae2e10c1fd",
+      "tests/export.test.ts": "fdd437940c250d308dbdb35b5574bd3c8d63131ef15567bbed59dfadf55779f8",
+      "tests/f2-catalog.test.ts": "b43ef572555c9fb1958dbbe20a5a85c0f9d49454a2c744e1da82d1dac58f8778",
+      "tests/f2-integration.test.ts": "2ffce6e18b000b05d5c1bf525e4c9a3cfce1ec2a4e9b40b39d11eb261edcbfd2",
+      "tests/f2-palettes.test.ts": "0691665995fee24e55e6fa5c87238f52b5adb2dcaadbfdc3fc703d1f7114a00a",
+      "tests/f2-site.test.ts": "12388cc81e7b132ed41c892deeb175a20de8aa463aaab6218c948355ae593d58",
+      "tests/families.test.ts": "c17b08159abc09b964a1d57f89c888ae5a834376c67e9052421cd64eb5d17bd8",
+      "tests/fixtures/cottage-colored-prior.design.json": "c00b0b450b46f250434a6ca4f91e990b5e0d8ca0e0e9ab277898257189cee0ef",
+      "tests/fixtures/family-v020-custom.json": "cffdbb5f906ec82bc4da4595ddd142714262c44034244689c11063603afe5864",
+      "tests/fixtures/family-v020.json": "02255495e3595666dfaf7aabdafef85dca3c9df8771d0d4f7c134a77fcf28122",
+      "tests/fixtures/r2-accepted-construction.json": "8104c6cdbd298e7642b086d4f1cb5fa0d4084f2e59fee1bcf2070cf6c543ac0c",
+      "tests/fixtures/review-defects/bench-fixtures.ts": "915bb0c2a7a6a017de3f8fcd1c14c0893107c509478efb375347b11099ce9e16",
+      "tests/fixtures/review-defects/capture.ts": "f00ba01f44701ce04f528f4ad329d4f0ff37131fc9207864001d2be3aa8d7060",
+      "tests/fixtures/review-defects/export-check.ts": "d595cddc14f411eb2e299553a85fb019beedc34f6cc8280a4b6dccefe04025d9",
+      "tests/fixtures/review-defects/README.md": "b99faeb2b6433ae86159005d2a854af48ba97748e9d7c67264d6cd4fd9abf628",
+      "tests/fixtures/review-defects/viewer.html": "bbf13d9e41c6491b22fcefa216eb406f855b5dfad59f047b32b89957c0e8bff4",
+      "tests/fixtures/review-defects/viewer.ts": "56cf159c75792a8941fec4ce6ff917037e2e386ab5ff61d31e8554f0f8ca72b0",
+      "tests/fixtures/revision2-to-revision3.json": "8d6558c0abb5f501774b40dca5b90b97bec15f8a3d118f4478aeec3f26e18d8a",
+      "tests/fixtures/rig-fox-custom-before.glb": "b5d40fbf316763faae267d060b0a8ef4febcea78e4494a857a2091eaee2686e2",
+      "tests/fixtures/rig-fox-default-before.glb": "e28295a5893c44f8c10b877f6512b7ee2e5e3a0174ed15948e8fab93a29015c3",
+      "tests/fixtures/rig-humanoid-custom-before.glb": "228b268364c8ccf461495436a2523e3bb91b4773b085188590fa20a83d9a7483",
+      "tests/fixtures/rig-humanoid-default-before.glb": "6879f01bec5f5e2af88ae24cb4be53f400bd97a7f7c106a16e227dd813ecd8dd",
+      "tests/fixtures/semantic-baseline-builds.json.gz": "6b554727d3a6aeb03cf3d9e2454926efbebba5e491b5be6e5507f3db53a570f0",
+      "tests/format-reader-robustness.test.ts": "6ebd056194738e4d7565e0a151dd2cd7627e5ad4f401f7a23776cf63114fb121",
+      "tests/framing.test.ts": "53694a45b5abc3a93f4acc8dc48437b0cd653cd095d74f3c06cb31004ec778e9",
+      "tests/historical-public.ts": "beb14d3e7923390e8ccb03ae0a63d4b020b54501f1a2cf55349f59235404adbd",
+      "tests/hosted-browser.test.ts": "4e898da9a034dc21969b3e32c33c064d1aa76ede9abcb6d0fbf700eed342359c",
+      "tests/hosted-build-candidate.test.ts": "7a7317e86f4e8d976edcc98fbfad8447ff5e0f4d82b0f60afd2545a720368656",
+      "tests/hosted-build.test.ts": "f5743262227aec7ce1d5813af395dd461dda5563d179f923034e70fd440d7bf7",
+      "tests/hosted-client.test.ts": "58f72141cd987ce0d8d5bb27c5c72564bae8feaa885152d8fa9642ad2512c2fb",
+      "tests/hosted-date.test.ts": "9b9381930a33e2ea549d7844449b5d104409f0e39ee2c1f4dc724099ad9d96bf",
+      "tests/hosted-discovery-browser.test.ts": "75aad498d508765fb9501804dbe8e84a7083be845a1d3bbcea336582d8d6b409",
+      "tests/hosted-discovery-layout-browser.test.ts": "f43b203ffbc643a0f96004c9c1630c7461e5e7bf76d44a30b04106de252afc3e",
+      "tests/hosted-discovery.test.ts": "2c6ac567992ccd08181bbe9d8b145a759f59491fd9baf559880b556b8e48d17b",
+      "tests/hosted-download-labels.test.ts": "063d5ff575506cd811d75359f5ba36717a1a3b2945fb5a282385046a28637e75",
+      "tests/hosted-edited-design.test.ts": "7d9731215b36d2ad13bb77c84e63fb33fc1a950b3022a09f3e3bf677959b28f4",
+      "tests/hosted-editor-browser.test.ts": "fee4bd9f03382d2ec87a1b86836fd376f36c60b5c597f0faf4dd115ef54a3b60",
+      "tests/hosted-editor-layout-browser.test.ts": "962df12df418d8a5d54f81ac4b12ed19f429337ac03a4ad7810375ceffc22986",
+      "tests/hosted-editor-mobile.test.ts": "faa9d5e85bc3b91074fdcb9d05f36063ebf7f29c171bf85aba6c3ae9e2e5e5ac",
+      "tests/hosted-full-submission.test.ts": "2e55c10cc6d75c0682f1b8984f7680d5760819e4dbbd6301c99ca88fa5bdc630",
+      "tests/hosted-moderation-appeal-browser.test.ts": "47a2ab848bedbbf000329afbd4beb1a14111149d3b1cef7fad9b4f5ae4d28572",
+      "tests/hosted-moderation-browser.test.ts": "97a8c62fcbe2ce5d15f3c0ffa5a6d4f0f8a50278e5ee5f18b3b0af16a170aac7",
+      "tests/hosted-moderation-gallery-browser.test.ts": "5575b84458504174801aba7742764bf25bbb8474a19b8fd77a31ca0ac1f97662",
+      "tests/hosted-moderation-gallery.test.ts": "d5597bca1f068e93350f4033a500e0c28a21a0846fe7fe9c6d1e619edb5ca717",
+      "tests/hosted-moderation-review-access-browser.test.ts": "1f7e57e928f092c175b82e0434b7a0b4e9d9c3b4bc50c7b5d02e4f73d57c8425",
+      "tests/hosted-moderation-withdrawal-browser.test.ts": "4002c9b4603b7787e6311def1222ac80b0950600d23023fe07d74561b7eb3279",
+      "tests/hosted-moderation.test.ts": "8cff4189983efb7d71e8968720db89aa844f7dbe0412a92dbe864dc3a571a520",
+      "tests/hosted-processing-browser.test.ts": "d41e96ef151013cd8f6bbce23ac372681cae8eaad1dcc293938026d64451ed81",
+      "tests/hosted-processing.test.ts": "0b5ac9b35b85279ec0e8d4910c9c237dedaa6b045c7b6c37400461bc003015cc",
+      "tests/hosted-public-delivery-browser.test.ts": "fe7324bb5401d83dd1877790aaf76eb65327bafefecc485f5f7a74300f84c6e8",
+      "tests/hosted-review-inspection-browser.test.ts": "f2aa3008a6af6645fe5159359d44438649598626b23bb6916242dd76d0ebda28",
+      "tests/hosted-review-inspection.test.ts": "fb2530566d342a6b7069d81cf09c6415e8b78e7d708a72e98cfa76b14799ce6a",
+      "tests/hosted-review.test.ts": "208c48313d39e21f668260051b13991b99e9ef4fd91bb89ea803a6b06fd7e13b",
+      "tests/hosted-runtime-identity.test.ts": "a8d66dec00a0488eacbb5895bc7b6616abc7f5c9a577655077e3201084e283f0",
+      "tests/hosted-trusted.test.ts": "23bdad77b9f216aa46e37399c5d90d71c7f9d5fedbf4a669b3926ba3a0e7fbc2",
+      "tests/hosted-upload.test.ts": "349d84b4085bfcd8fef9219009cad70edf019926f7271c4b02e01ef894df21d2",
+      "tests/individual-discovery.test.ts": "3004c42569fd85cb3aa3424b6d5678284c6176a327ceeab025690159f51cc0b5",
+      "tests/lantern.test.ts": "c88ef15bc728b3062a6c79ea2c83c3505605cfab65beb501dd480a4e8254631e",
+      "tests/live-queue-page.test.ts": "cf6699d22eefb4c9b123e5994d99a8d29cb92b9b3ea51e315ada5596472fc7b3",
+      "tests/local-artifact-activation.test.ts": "f6818a691e1dbdca9a137633697a3a611a2f46872b79f821478a220fb9e3179e",
+      "tests/mcp.test.ts": "53435bd2838b9014e625292aa15d172149b5b9a350c8c18730e0bc27285e7c3f",
+      "tests/measure.test.ts": "8718f97269e721c12bfc24aecbb0d77d2cbe2b70ce7a81c5a361a14529fd18c7",
+      "tests/polyspoon-identity-site.test.ts": "47624ea0e5c2c9858bf9a7b6d4b922151c99a14adc87dd36ecbf455dfd031587",
+      "tests/polyspoon-technical-header.test.ts": "4b974c87226fe493febf00bb01c90de3a01124ad3d9bf2c54c32656dc30ef93f",
+      "tests/procedural-module-immutability.test.ts": "fd381bd97715c20c85c5bae53fb684b430dbeac83de6e1e2067a6203979919b5",
+      "tests/procedural-module-site.test.ts": "7be7bede67db7c9bd94271186a9e39ba02ba76f1c9f99fe4f17bb00ea708ca99",
+      "tests/procedural-module.test.ts": "25f8048bdc415a672cad4097eaf012f8f12e7ca47d65ef2f02dc2a9626ba9e25",
+      "tests/procedural-rigged.test.ts": "61c2d719e854b89f42ba429c40b1f248d786878fd66a8add1323ce326051a268",
+      "tests/processor-unlit.test.ts": "97aa88d6ea28d72fe38f20192004032966508a8a93ddc276c522707fdf5b1c99",
+      "tests/product-release.test.ts": "b741a83e3cc1cf571d22db4a1aa74c7ea200f8a792f7d1825d9bf2198bc0a87e",
+      "tests/product-unity-runner.test.ts": "302c04596b7068c3c7e6b335e32e49c4758c768c60c99fec27eb87cec9d86899",
+      "tests/public-agent-files.test.ts": "5104255a3010b36a8487329e15d6b7887c3f96cd0a8bd0d8b0a0c3c6f22c0f1c",
+      "tests/public-home-content.test.ts": "d59e4f35617328998d1e10b11c7f157e3ea3f838c8eb03d972f520db05b1be87",
+      "tests/public-login-redirect.test.ts": "c100382cdc7c0591a6594290fe53a10fca5f9c0e9d5e52b945bdaa397ecf8b82",
+      "tests/r2-art-architecture.test.ts": "9301532368c1ad95fbaedf09c164089d26468265a8350b345250f0790271d816",
+      "tests/r2-art-furniture-catalog.test.ts": "9512611037ca6e61f9c0ce6e1ad5ad5468c93d2d09266d2f31ee32b525fce758",
+      "tests/r2-art-mechanisms.test.ts": "b85121adc7a8650afa506b65e73e72deab8291ee900e5646e6a5d50c35a24266",
+      "tests/r2-art-organic-catalog.test.ts": "bda723a0124323ffc4b5410b009c47c05f411848aa683cf073dad1c9b6b6233e",
+      "tests/r2-art-props-catalog.test.ts": "16d621f5eb5d1d6e08ab2ea484b188dd51ee047e02b4292ec42869d0ecce71b3",
+      "tests/r2-art-tree.test.ts": "9d68949226f172e55148317f977448280a56d33f3853a812e54fe715c9d92fdf",
+      "tests/r2-construction-migration.test.ts": "39527ecea73eaff57def0bf22f4fce72116205aa128ecb99ceca68358779118a",
+      "tests/r2-current-delivery.test.ts": "3d7a0d00ff73be507579520d12261aa92edfafeb224186bbd748172811f8ba42",
+      "tests/r2-export-migration-site.test.ts": "65b7279b21d2a8ae3e54a2a189ab9ce13ec50a1d8f41944f9a6933df90a97630",
+      "tests/r2-mcp-migration.test.ts": "6a14ab75c3e942614853e8ef2be7d47887f0f4e1c9538d9c8182ac8aea606b25",
+      "tests/README.md": "8885cc9961acf3029202e4992e149b6569f0c3ac81e6867d3053530b3dfb3b8e",
+      "tests/recipe-contract.test.ts": "942b39efa41c975468acec937c250f4ae868952e883da01b1224f5141dbc178a",
+      "tests/recipe-controls.test.ts": "5ab1a3cd026d98026517af66c3007e49015d98b9754a07fb4841f68ac2872acd",
+      "tests/recipe-integration.test.ts": "2404d7d874a066f86e2768647570f9b63275680e268324480bf47480661848db",
+      "tests/recipe-package-delivery-portability.test.ts": "b3c85be94cee522fe2956ae4d60c28ee0d6b16c98f3bff5a26e94bda5eab04af",
+      "tests/recipe-package-delivery.test.ts": "6d8f15c731a8391d8c5892b9de21e51b3fe12b0450f4f66cf006e03e83754fa7",
+      "tests/recipe-package-portability.ts": "68d35a93a3cc0539a7afe01f472d8f3802919f6862fc550c56f7800557c091a3",
+      "tests/recipe-package-rigged.test.ts": "90ea39b3f1a9189717bd22613fc56829ff591a2ce595aa4be614f0419a35e548",
+      "tests/recipe-package.test.ts": "3617310dba90e90025ca684a9c024294a43ee33f2e00688633f117c0385bde6b",
+      "tests/recipe-registration.test.ts": "b225941589a275d575b8ae57308385f9a0b111679a7324b0c83ef539aa521d01",
+      "tests/recipe-render.test.ts": "93bc5627ce60ad52d09719a37722fa051ff40fbcae9c5d410396ffb168659bb5",
+      "tests/recipe-site.test.ts": "ca32bcd8c85896802b19f2d2eebf1e5ddc56ee5f9a3178b9f89a244b60103949",
+      "tests/recipe-source-download.test.ts": "d3a376b600b872381c21e5ca06cb0c52dce084d0c01a3034b7439f8332f836c2",
+      "tests/recipe-source-site.test.ts": "e01fae5902fe8aabdcf05822486e8b05d98405879dc21d41f2261abd7253e835",
+      "tests/recipe-unity-preparation.test.ts": "3293a1059629c8d177a18dfdef81a26925defff8eeb5acd1d5a43efb84b43e8f",
+      "tests/recipe-verify.test.ts": "0c5d298127069c8556761f05590d7856a545f5c6804b437ecffaa6035fd9543b",
+      "tests/register-css-stub.mjs": "69696bb039caf2cde4429bc52d5e0625fc6c4b2b760ad985e405dd503a5aa5ad",
+      "tests/review-defect-fixtures.test.ts": "5a4c1080d9bfe5a8b140e59a6282ebbd33e5ca90e94e2a465bb6a5bf4b1fdb33",
+      "tests/review-evidence.test.ts": "cd8f41f4b74ca99941cde74f757303bb4fd306a002e555a73de656d10b45cc87",
+      "tests/review-pipeline-v2.test.ts": "366503add18c12a84b0c06e6878e090824f1c653b832fe2a57ac9dcc53f1d9f0",
+      "tests/review-records.test.ts": "0a47969b361ff2779485cf18e0ba23524fac056edc9c7d65aaf779f3a10b728c",
+      "tests/revision2-construction-browser.test.ts": "e820f95acfaa5efb67a07d6cb7a4c2b71330454b5e279492917aa862ca6fee2b",
+      "tests/revision2-editor-polish.test.ts": "616218174d82ddd98df278b8cdd73a769b49a4a23fd46642deaf96859fb8f730",
+      "tests/revision2-editor.test.ts": "afd34db98a22311a8713c7b05b30a88232764ba588022d2db1625fab1a2e661c",
+      "tests/revision2-engine.test.ts": "3a3d10023660fd950bf48edfb48bd9903c8056b809788cc597c1ba1c8d860923",
+      "tests/revision2-layout.test.ts": "78937bf6aac4ec13d52b88cdbf5cd8ac59e6fe0a94d1051ebf78695da1b2a992",
+      "tests/revision2-organic-pass2.test.ts": "773a1caea61ecd3eb309a3b3b94baaadd282b100f1c868d98d4e6fe4aef7736c",
+      "tests/revision2-organic.test.ts": "43f6c5655561c833a55268cc422a559aefc1ffedc0fca50209e45a39957f95ac",
+      "tests/revision2-pass2.test.ts": "3641d0b1c9a1ea6458b40a0cb182181ec3fa3bc4b0279bbdc762f0dc2e062289",
+      "tests/revision2-placement.test.ts": "b2d4bf5def0995bbf5ca0c13ce643a9e509ea61df5bb763be403040b73850d30",
+      "tests/revision2-pointer.test.ts": "28debd6572e76284bbb18a04effb482dbacb2ce58eefcb608209c97f0eb1ddbe",
+      "tests/revision2-props-packet.test.ts": "f09484fba06471764c4b11fc492065e922175c851a060f68b3f73bc41c0de147",
+      "tests/revision2-props.test.ts": "60ea79b0c5a4175d57569bf25bb4ff712872e30258bff0cc9b0fc504167740e0",
+      "tests/revision2-session.test.ts": "3df7430fb61a07cfec5e9067b9c39a4ab1c584667a47b9519ace03d4ef032fb8",
+      "tests/revision3-art.test.ts": "a100211e3c4ba14c126821aaea91cf811a80d3b8945f4c1ac3ee4aada981a8cc",
+      "tests/revision3-construction-cases.ts": "462c7cfa7aaf65046f33b7a0690a82c4a101971a54f17bceeb1fb0ea861e885d",
+      "tests/revision3-final-presentation.test.ts": "71a59cbecd34a723d8af27d3028b735186895c6e44ba681e6ea08c32a83fbf76",
+      "tests/revision3-manufactured.test.ts": "c2aefffd74151378553f6dddcd2b0bbb14cdb2317fc66e713309e0419f0a29ef",
+      "tests/revision3-material-browser.test.ts": "c0895e924b2d9bfd59730d1ec36ae1a694db55fa0dec64312e54616ae5769b9c",
+      "tests/revision3-material-restore.test.ts": "4d976153ccc6ec7f720aa3423e465583f54067a301da04d98bd60e4c7d749447",
+      "tests/revision3-pass4.test.ts": "f67f36a68ae271d26375b50898f6da73c11e2242feb5ac755c1bd75678147e3f",
+      "tests/revision3-seating.test.ts": "c89f68f74b4df47ed3a325acbbf395c77de0d07c0eff157673309c53380778b8",
+      "tests/revision3-site-controls.test.ts": "a987691024b45f64d44c76fd3fbadff509214733034450b977cff2e69fc7b472",
+      "tests/revision3-site.test.ts": "34730ab36ac4d5bc1a45a573ca92a59371805ac66c31578ecdc5d421b258a58f",
+      "tests/revision3-stone.test.ts": "e64f3e418ea1df434370ae5c126505c1b0ba44d7ff23b9d923f079df5439f467",
+      "tests/revision3-thumbnail-inputs.test.ts": "98ffbefb7301d8f755077315ad4c580173b0bd7d69cf10fd5391e602ba87d131",
+      "tests/revision3-thumbnail-inputs.ts": "2a517d513b4754b369cfc768a4df02e45e8ce589aaae4990da1c890af1f96f53",
+      "tests/revision3-thumbnails.ts": "dc9494d40536a5a1b206bd470aa0610aa54f49a57df0d248e388b65f6c6f6e34",
+      "tests/revision3-usage.test.ts": "47b928c8bd50b23ed2991b0e2d3abad14a5c3cd635516025f28552cb58b2db90",
+      "tests/revision4-appearance-integration.test.ts": "17015e9233b1e721560480df52d7a616f66e959ef728478923cb0882a8e1a79c",
+      "tests/revision4-appearance.test.ts": "a700386792dbb28f4b5559882c513bacc4a4c9449dc01efbb0fea9683c727fa0",
+      "tests/revision4-bundle.test.ts": "3146432a67c17a2f83488b479d6ee78ba927d3d405a4fb8816d953f9a8f01735",
+      "tests/revision4-defaults.test.ts": "cc24762ba26d660cfbb0d5f1ccd81dcc4834a000c7a946bc93e8583fed2fb0a8",
+      "tests/revision4-kit-route.test.ts": "544f781ca7e9f59f4906eba74b75648b7902c959324f6f9d9904fabddb469d04",
+      "tests/revision4-layout.test.ts": "6e3cfb0bb1df38be813ef790d27698decdd352cbcad815acb713eb51df12d475",
+      "tests/revision4-material-production.ts": "e3682ff21ab002ffa0afe27dc748662131b2cd90ba9d003306ab27994335e77b",
+      "tests/revision4-outline.test.ts": "26e56a2c403a4f60a9e00349f754de470a1d17223e2f152e0c317690c821031a",
+      "tests/revision4-production.test.ts": "1530a0218d56ee2cc3fb423a30dff712ae838fc6d612b0bed18bc7a1ed6bbcf6",
+      "tests/revision4-stage-acceptance.test.ts": "0a3e217bc1cdda063491fce3505ec6c2a7180f57487f99319122051114f68841",
+      "tests/revision4-unity-preparation.test.ts": "b100fdc4c2db235e4f8a6a37afd02eae55843162135f5685d5b5b5290f17da61",
+      "tests/revision4-unity-prepare.test.py": "de76823b4c92be1a6d0d31afbd8ba337c3a78dd440a680ea47d3320b6bab4deb",
+      "tests/revision4-viewer-core.test.ts": "65957708ac62b5fdd7667aa9f97b266d6ce2fbf6a42b1efd59f613e29a3784c9",
+      "tests/revision4-visibility-lines.test.ts": "e4d895a35218eddfddb2316d1dd59bf4a812a8e06e967800330725abf6359066",
+      "tests/rigged-cli.test.ts": "183fb2f7fc854265e71cdac1bbd9f3c5e852d65acb6c4c2f30d0641255487904",
+      "tests/rigged-details.test.ts": "16da17b61788a1c9d110412e6573bd3262baeb31bc72e4280ec4992c5b77a571",
+      "tests/rigged-entrypoints.test.ts": "5ed3a0a2c978e1909f7ba3cb91e68832828d328df8c9b6b161029176c5cdcf4a",
+      "tests/rigged-export.test.ts": "81b42bc8e9c708340fc4c55ad8e205a1474d106b296a22085059f6f0c02e3024",
+      "tests/rigged-fox-cli.test.ts": "72bc6671a901b5f3b88475ee2f19ad4da6cd4e63c3ff69844f68bac9bf2705bf",
+      "tests/rigged-fox-shape.test.ts": "3cc9315b11dcaafd530ba7990ec1a75be24c72acf40688ff77a892f1e53fad6e",
+      "tests/rigged-fox.test.ts": "55341ecd14d9594ddc491708d3f05b6f5c6c2a01e9d42b6a0c2696bc711ea487",
+      "tests/rigged-humanoid.test.ts": "b7009ed9c4521769cd9fc7d07771ecc76fe9336e72f08d806e9643379883190a",
+      "tests/rigged-motion.test.ts": "5cbd8325e6a40da843239f436c76f7c46ad5715ebe6a2063ca098a61a0989baf",
+      "tests/safety-v1.test.ts": "01a315686e3553c47c973b37da4a32d57beeed777f26aef8e871b3970090df43",
+      "tests/score-cache.test.ts": "f48bcbc738b0f0f0399eace98d387d9fcb95eea4b7a162c6353215fd266a7724",
+      "tests/semantic-contract.test.ts": "81e552ec0edfd4427790e703c61aea6f46df30953578d902ce34c85e5c846154",
+      "tests/semantic-legacy-payload.ts": "d466c397cf0bcc17560d4c1eacb928aff99caf34476263d64c0d1ae06454fa01",
+      "tests/server-appeal-lifecycle.test.ts": "41e695bd3cebf392066e454eb652e26661c864b6d84ac2a9f1ede380548664d6",
+      "tests/server-auth-ip.test.ts": "2ca26b313e05f6f9f5f3104abc87c159d94d3d03b79f3378ec2cdfd2a19a5f87",
+      "tests/server-auth-reuse.test.ts": "afa4601d6c460aa832b221b67f2aa205a0fd128cf95cd94a8ddcc3c87854f5a0",
+      "tests/server-delivery.test.ts": "3006629227fd0cb5723abaef6ecfb7207e326ff8c3e730107aca8c88fc52f07c",
+      "tests/server-deployment.test.ts": "14093e8049f7475ffac688c366901e1acb4879e12e24b77f633d27290690012b",
+      "tests/server-domain.test.ts": "e8bedb16e33bdcaa50d19ac85e07a5239faf0497f53bbcb9a0972534c0cf46e8",
+      "tests/server-full-subject.test.ts": "930cfbff44b718442ece3c498136ed3d530206f4ae7fe944a23bbe813e430732",
+      "tests/server-health.test.ts": "9ccc524bdf1933cb744a59a455b4dcef428fcb3e9fe53132b6ed748afd76950b",
+      "tests/server-http.test.ts": "00eba48f69e11bb22462bf4f5486b098b9622d5c3b87987d0ecf58c8573ba983",
+      "tests/server-mail-diagnostics.test.ts": "1242d30c00c75880aa7ce17e001eca424625ab3f61ed0a3b51285bbd6c651307",
+      "tests/server-marketplace.test.ts": "c5ca56406e5b12c8f38317b061cfb3fe4028830ca09e6a260cda771695e13cc1",
+      "tests/server-model-discovery.test.ts": "b21b373e72ad04a95116c76634fd3786d9cfc01727e655f28bad0800441afc68",
+      "tests/server-moderation-abuse.test.ts": "318bfb68b5d898b2489a6f931b82181a0e0b1ceb4059aae457e04ad52d841576",
+      "tests/server-moderation-schema.py": "90ff3fdf6a81f9b21e405739d5dea5b5411d271ac05773caa24427d789a166f0",
+      "tests/server-moderation.test.ts": "03faaee2c655d08074aef61f5df4ef841071497058ac7b9919052f60bf2c8f44",
+      "tests/server-oversize.test.ts": "938c198eeac7b70febb856e610cb052703d7666b85b56ef8fbb9e55d79325bf0",
+      "tests/server-owner-bootstrap.test.ts": "c5a0fc49ab2957e5012c6d5f2e8bef1898620ca00506717a71b0ce37cf6882d7",
+      "tests/server-processing.test.ts": "e9198864ad2a9ef08a39352b387b868581d1d69145f871ae13f07196471c5636",
+      "tests/server-provider-workerd.test.ts": "6fe7d86901ae2735ce605e7aac8f5353a5f94c53e373d9c746f08e680f6a6681",
+      "tests/server-provider.test.ts": "c1864de0711c2f854b11160c00a49eee969e0cb39adec6bc221541625d24346f",
+      "tests/server-public-delivery.test.ts": "3a7bfa74236f53ed9c59107d9acf6c6e1f429c79199d69eb24bf40dc6cd79cf2",
+      "tests/server-recovery.test.py": "18362069e9dc7dbbf66a37a01f7da9e996cf44474166520c45911b694c35b909",
+      "tests/server-review-inspection.test.ts": "b848ddae02bed19db6bc02de0ef1a4b05530e5dc4ed99f04bee452497ff7f099",
+      "tests/server-scoped-shell.test.ts": "cca83aa8b0d2e5688bc7c77266e16bb05f85126b2a5ac70d297de02a926f7f0a",
+      "tests/server-votes-eligibility.test.ts": "3bd324f9c49c33fb20c56986e16d2a55683de4a3f53bd60b26e43233f322df8c",
+      "tests/source-delivery-site.test.ts": "6de444afab9b8199bbaf054529aed2f8cc51d57af9b4aa59de4346e21601ec0a",
+      "tests/studio-catalog.test.ts": "782471e3fa6ebbda826b12ace00633b1ac07d65bae74c286e797c6028de5334d",
+      "tests/studio-export-delivery.test.ts": "cfb7927580ae4c702285a2bcef152f09d5e42cefe635c545f314607ad7bc65bd",
+      "tests/studio.test.ts": "abf087d104b28a4e14c4ae5c7ddd7687544b85c1d0f8a65a3379e317abc2b205",
+      "tests/test_processor_integration.py": "d7d87494238f9413780e8c592482075e28b5a6725ba2a2ad896c630d270cb181",
+      "tests/test_processor_service_live.py": "ce3701b3c423a6ab4bcca30c03b1ba4450355f702df30b87c1e74d1c93ae3675",
+      "tests/test_processor_service.py": "a02fbae56ec5bd272cced759cc3c7489d70ce07c06e3a8fb6b87a06d8c5aafef",
+      "tests/test_processor_unlit.py": "176edf20d96e1e5b991a95cb93a205c76a819fe7a7acecb9b3456b93179ef153",
+      "tests/test_processor.py": "c3cf6f3f51b5562cab352e38530e15e5356bc7ac17a42fa45399074a543f0284",
+      "tests/unity-bridge.test.ts": "92967cfb42179d635540679df5202ba6e30a4c699aa5f7652b6b8b577ecbd622",
+      "tests/viewport-rail-browser.test.ts": "b98ae9f437d9df182c1da64584ed4c6a1742c126a0dd1ffe1a4cfb1afe787011",
+      "tests/workshop-placement.test.ts": "0c2ba68a3ac3ffa4e9186b2396d930a67d4b73516c5249fceeb3d69cfa128c9c",
+      "docs/contributing/source-packages.json": "2f6fae258ae42ddfe967ccefcc2190e7d3ce0fd03b35d718c9fa833199b65661",
+      "docs/licensing-dependencies.json": "facc2f7c8cb90e53bed22823170dd181ef846d25131499b51c6f642993df3f6e",
+      "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "NOTICE": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "LICENSES/Apache-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "LICENSES/CC0-1.0.txt": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "evidence/revision5/recipes/legacy-baseline.json": "ab001097fa826cf82bbeb4adccc603751cf97bad447e7ad551cdad9dc460fe83",
+      "evidence/revision7/catalog/seven-family-baseline.json": "83e3e8985508c79237ef15dd202a044716050dc1d68872b43e35c52ced2ed027",
+      "evidence/revision7/catalog/reviewed-defaults.json": "3a9ce73f3a1f6e20d8f6e5b4ef31643712cd28fe05edc01dc9576cd00ed6c361",
+      "evidence/revision7/catalog/scene-inputs.json": "b29413e06775cbbab0d545ca4888d1ccffc384278facf1c336ea0c42f809f8d4",
+      "integrations/unity/ImportFixture/Assets/Editor/FixtureRun.cs": "f4f8ba558aaf481e58849b53858de72bae95dd0fcfda934f52d9dc550e6925c7",
+      "integrations/unity/run-editor.sh": "867abde55fcb2b208717bdc568bd2ed031548ac2a9c67bd7a38925e564ba2ec9",
+      "selected.design.json": "bb86bd4257b8a5e25dc0f4c525d67e7a09e07a40baf17f16092e224a87526537"
+    },
+    "verificationHash": "69468d6f2a1149533799a0b1406d92aa44cb481ee742dee23a976641af2ecbc7"
+  },
+  "checks": {
+    "deliveryRevision": 3,
+    "glb": "selected.glb",
+    "design": "selected.design.json",
+    "sourceZip": "packages/cognac-leather-sofa-1.1.0-source.3.zip",
+    "renders": [
+      "renders/selected-front.png",
+      "renders/selected-rear.png",
+      "renders/selected-left.png",
+      "renders/selected-right.png",
+      "renders/selected-top.png",
+      "renders/selected-oblique.png",
+      "renders/selected-rear-oblique.png",
+      "renders/preset-three-seat-oblique.png",
+      "renders/cognac-leather-sofa-three-seat.png"
+    ],
+    "validatedConfigurations": 21,
+    "selectedConfigHash": "160491c6028e4b2b487bf245a4714989da779a14bceaef3b448e68eaa4fdef6c",
+    "selectedGlbHash": "9218df2e9242d1b0088c17cd2dfc5cf67e31af9efb7f87cf4b9ea013de2a7a68",
+    "packageHash": "b4b158fb83ccd7d5ba35c4dafdb07bc8d4203dc5f943fd3a1e1f4f1fdd4fc338",
+    "packageDefaultDesignMatchesSelected": true
+  }
+}

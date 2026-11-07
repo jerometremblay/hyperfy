@@ -1,0 +1,1108 @@
+{
+  "formatVersion": 1,
+  "semantics": {
+    "version": 1,
+    "identity": {
+      "family": "fence",
+      "recipeVersion": "0.6.0"
+    },
+    "coordinates": {
+      "lengthUnit": "m",
+      "up": "+Y",
+      "front": "+Z",
+      "origin": "ground-center",
+      "anchorSpace": "root"
+    },
+    "controls": [
+      {
+        "kind": "range",
+        "key": "length",
+        "label": "Post center length",
+        "default": 3,
+        "min": 1.2,
+        "max": 6,
+        "step": 0.05,
+        "group": "shape",
+        "hint": "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "fence"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "kind": "range",
+        "key": "height",
+        "label": "Post height",
+        "default": 1.1,
+        "min": 0.7,
+        "max": 1.5,
+        "step": 0.05,
+        "group": "shape",
+        "hint": "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "fence"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "kind": "integer",
+        "key": "bays",
+        "label": "Rail bays",
+        "default": 2,
+        "min": 1,
+        "max": 4,
+        "step": 1,
+        "group": "shape",
+        "hint": "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "fence"
+        ],
+        "unit": "count",
+        "inputUnit": "integer",
+        "displayUnit": "count"
+      },
+      {
+        "key": "railStyle",
+        "kind": "choice",
+        "group": "construction",
+        "label": "Rail construction",
+        "default": "two-rail",
+        "options": [
+          {
+            "value": "two-rail",
+            "label": "Two rails"
+          },
+          {
+            "value": "cross-braced",
+            "label": "Cross braced"
+          }
+        ],
+        "hint": "Adds a supported diagonal brace inside each rail bay.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "post-*",
+          "rail-*",
+          "brace-*"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "postHead",
+        "kind": "choice",
+        "group": "construction",
+        "label": "Post head",
+        "default": "chamfered",
+        "options": [
+          {
+            "value": "flat",
+            "label": "Flat cut"
+          },
+          {
+            "value": "chamfered",
+            "label": "Chamfered head"
+          },
+          {
+            "value": "peaked",
+            "label": "Peaked"
+          }
+        ],
+        "hint": "Changes the top profile while keeping post height and modular endpoints.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "post-*",
+          "rail-*",
+          "brace-*"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "detail",
+        "kind": "choice",
+        "group": "construction",
+        "label": "Detail",
+        "default": "inspection",
+        "options": [
+          {
+            "value": "scene",
+            "label": "Scene"
+          },
+          {
+            "value": "inspection",
+            "label": "Inspection"
+          }
+        ],
+        "hint": "Inspection adds joint pegs; structural rails and supports remain in both tiers.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "post-*",
+          "rail-*",
+          "brace-*"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "integer",
+        "default": 2,
+        "min": 2,
+        "max": 4,
+        "key": "railCount",
+        "label": "Rail count",
+        "group": "construction",
+        "hint": "Places two to four supported horizontal rails in each bay.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "rail-*",
+          "joint-peg-*"
+        ],
+        "step": 1,
+        "unit": "count",
+        "inputUnit": "integer",
+        "displayUnit": "count"
+      },
+      {
+        "kind": "choice",
+        "default": "stout",
+        "options": [
+          {
+            "value": "light",
+            "label": "Light"
+          },
+          {
+            "value": "stout",
+            "label": "Stout"
+          }
+        ],
+        "key": "memberWeight",
+        "label": "Member section",
+        "group": "construction",
+        "hint": "Changes post, rail and picket sections together while preserving the run length.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "post-*",
+          "post-cap-*",
+          "rail-*",
+          "picket-*",
+          "brace-*"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "choice",
+        "default": "open",
+        "options": [
+          {
+            "value": "open",
+            "label": "Open"
+          },
+          {
+            "value": "pickets",
+            "label": "Pickets"
+          }
+        ],
+        "key": "infill",
+        "label": "Infill",
+        "group": "construction",
+        "hint": "Adds pointed timber pickets between the posts.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "picket-*"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "range",
+        "default": 0.16,
+        "min": 0.1,
+        "max": 0.25,
+        "step": 0.01,
+        "key": "picketSpacing",
+        "label": "Picket spacing",
+        "group": "construction",
+        "hint": "Target picket center spacing in meters; each bay fits a whole number with at least 20 mm between boards.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "picket-*"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "kind": "range",
+        "key": "weathering",
+        "label": "Timber weathering",
+        "default": 0.3,
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "group": "construction",
+        "hint": "Timber weathering adjusts connected construction.",
+        "affects": [
+          "geometry",
+          "material"
+        ],
+        "targets": [
+          "fence"
+        ],
+        "ratioBasis": "normalized",
+        "unit": "ratio",
+        "inputUnit": "dimensionless",
+        "displayUnit": "ratio"
+      },
+      {
+        "kind": "range",
+        "key": "timberTone",
+        "label": "Timber tone",
+        "default": 0.35,
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "group": "construction",
+        "hint": "Timber tone adjusts connected construction.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "fence"
+        ],
+        "ratioBasis": "normalized",
+        "unit": "ratio",
+        "inputUnit": "dimensionless",
+        "displayUnit": "ratio"
+      },
+      {
+        "kind": "range",
+        "key": "toneVariation",
+        "label": "Timber tone variation",
+        "default": 0.06,
+        "min": 0,
+        "max": 0.12,
+        "step": 0.05,
+        "group": "construction",
+        "hint": "Timber tone variation adjusts connected construction.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "fence"
+        ],
+        "ratioBasis": "normalized",
+        "unit": "ratio",
+        "inputUnit": "dimensionless",
+        "displayUnit": "ratio"
+      },
+      {
+        "kind": "choice",
+        "key": "colorway",
+        "label": "Colorway",
+        "default": "forest",
+        "options": [
+          {
+            "value": "forest",
+            "label": "Forest"
+          },
+          {
+            "value": "harbor",
+            "label": "Harbor"
+          },
+          {
+            "value": "ember",
+            "label": "Ember"
+          }
+        ],
+        "group": "colors",
+        "hint": "Select colorway.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "colorway"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "color",
+        "key": "color.timber",
+        "label": "Posts",
+        "role": "timber",
+        "default": "#896039",
+        "group": "colors",
+        "hint": "Changes only timber color.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "timber"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "kind": "color",
+        "key": "color.wood",
+        "label": "Rails",
+        "role": "wood",
+        "default": "#b68747",
+        "group": "colors",
+        "hint": "Changes only wood color.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "wood"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      }
+    ],
+    "anchors": {
+      "ground": [
+        0,
+        0,
+        0
+      ],
+      "start": [
+        -1.5,
+        0,
+        0
+      ],
+      "end": [
+        1.5,
+        0,
+        0
+      ]
+    },
+    "materials": [
+      {
+        "id": "timber"
+      },
+      {
+        "id": "wood"
+      }
+    ],
+    "parts": [
+      {
+        "id": "post-0",
+        "node": "post-0",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "post-cap-0",
+        "node": "post-cap-0",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rail-0-0",
+        "node": "rail-0-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-0-0-0",
+        "node": "joint-peg-0-0-0",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-0-0-1",
+        "node": "joint-peg-0-0-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rail-0-1",
+        "node": "rail-0-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-0-1-0",
+        "node": "joint-peg-0-1-0",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-0-1-1",
+        "node": "joint-peg-0-1-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "post-1",
+        "node": "post-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "post-cap-1",
+        "node": "post-cap-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rail-1-0",
+        "node": "rail-1-0",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-1-0-0",
+        "node": "joint-peg-1-0-0",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-1-0-1",
+        "node": "joint-peg-1-0-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rail-1-1",
+        "node": "rail-1-1",
+        "materialId": "wood",
+        "material": "wood",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-1-1-0",
+        "node": "joint-peg-1-1-0",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "joint-peg-1-1-1",
+        "node": "joint-peg-1-1-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "post-2",
+        "node": "post-2",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "post-cap-2",
+        "node": "post-cap-2",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      }
+    ],
+    "joints": [],
+    "delivery": {
+      "version": 1,
+      "mode": "editable",
+      "identity": "node-per-part",
+      "movingGroups": "separate"
+    }
+  },
+  "id": "fence",
+  "version": "0.6.0",
+  "title": "Wooden fence",
+  "description": "An open wooden boundary.",
+  "controls": [
+    {
+      "kind": "range",
+      "key": "length",
+      "label": "Post center length",
+      "default": 3,
+      "min": 1.2,
+      "max": 6,
+      "step": 0.05,
+      "group": "shape",
+      "hint": "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "fence"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "kind": "range",
+      "key": "height",
+      "label": "Post height",
+      "default": 1.1,
+      "min": 0.7,
+      "max": 1.5,
+      "step": 0.05,
+      "group": "shape",
+      "hint": "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "fence"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "kind": "integer",
+      "key": "bays",
+      "label": "Rail bays",
+      "default": 2,
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "group": "shape",
+      "hint": "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "fence"
+      ],
+      "unit": "count",
+      "inputUnit": "integer",
+      "displayUnit": "count"
+    },
+    {
+      "key": "railStyle",
+      "kind": "choice",
+      "group": "construction",
+      "label": "Rail construction",
+      "default": "two-rail",
+      "options": [
+        {
+          "value": "two-rail",
+          "label": "Two rails"
+        },
+        {
+          "value": "cross-braced",
+          "label": "Cross braced"
+        }
+      ],
+      "hint": "Adds a supported diagonal brace inside each rail bay.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "post-*",
+        "rail-*",
+        "brace-*"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "postHead",
+      "kind": "choice",
+      "group": "construction",
+      "label": "Post head",
+      "default": "chamfered",
+      "options": [
+        {
+          "value": "flat",
+          "label": "Flat cut"
+        },
+        {
+          "value": "chamfered",
+          "label": "Chamfered head"
+        },
+        {
+          "value": "peaked",
+          "label": "Peaked"
+        }
+      ],
+      "hint": "Changes the top profile while keeping post height and modular endpoints.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "post-*",
+        "rail-*",
+        "brace-*"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "detail",
+      "kind": "choice",
+      "group": "construction",
+      "label": "Detail",
+      "default": "inspection",
+      "options": [
+        {
+          "value": "scene",
+          "label": "Scene"
+        },
+        {
+          "value": "inspection",
+          "label": "Inspection"
+        }
+      ],
+      "hint": "Inspection adds joint pegs; structural rails and supports remain in both tiers.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "post-*",
+        "rail-*",
+        "brace-*"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "integer",
+      "default": 2,
+      "min": 2,
+      "max": 4,
+      "key": "railCount",
+      "label": "Rail count",
+      "group": "construction",
+      "hint": "Places two to four supported horizontal rails in each bay.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "rail-*",
+        "joint-peg-*"
+      ],
+      "step": 1,
+      "unit": "count",
+      "inputUnit": "integer",
+      "displayUnit": "count"
+    },
+    {
+      "kind": "choice",
+      "default": "stout",
+      "options": [
+        {
+          "value": "light",
+          "label": "Light"
+        },
+        {
+          "value": "stout",
+          "label": "Stout"
+        }
+      ],
+      "key": "memberWeight",
+      "label": "Member section",
+      "group": "construction",
+      "hint": "Changes post, rail and picket sections together while preserving the run length.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "post-*",
+        "post-cap-*",
+        "rail-*",
+        "picket-*",
+        "brace-*"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "choice",
+      "default": "open",
+      "options": [
+        {
+          "value": "open",
+          "label": "Open"
+        },
+        {
+          "value": "pickets",
+          "label": "Pickets"
+        }
+      ],
+      "key": "infill",
+      "label": "Infill",
+      "group": "construction",
+      "hint": "Adds pointed timber pickets between the posts.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "picket-*"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "range",
+      "default": 0.16,
+      "min": 0.1,
+      "max": 0.25,
+      "step": 0.01,
+      "key": "picketSpacing",
+      "label": "Picket spacing",
+      "group": "construction",
+      "hint": "Target picket center spacing in meters; each bay fits a whole number with at least 20 mm between boards.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "picket-*"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "kind": "range",
+      "key": "weathering",
+      "label": "Timber weathering",
+      "default": 0.3,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "group": "construction",
+      "hint": "Timber weathering adjusts connected construction.",
+      "affects": [
+        "geometry",
+        "material"
+      ],
+      "targets": [
+        "fence"
+      ],
+      "ratioBasis": "normalized",
+      "unit": "ratio",
+      "inputUnit": "dimensionless",
+      "displayUnit": "ratio"
+    },
+    {
+      "kind": "range",
+      "key": "timberTone",
+      "label": "Timber tone",
+      "default": 0.35,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "group": "construction",
+      "hint": "Timber tone adjusts connected construction.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "fence"
+      ],
+      "ratioBasis": "normalized",
+      "unit": "ratio",
+      "inputUnit": "dimensionless",
+      "displayUnit": "ratio"
+    },
+    {
+      "kind": "range",
+      "key": "toneVariation",
+      "label": "Timber tone variation",
+      "default": 0.06,
+      "min": 0,
+      "max": 0.12,
+      "step": 0.05,
+      "group": "construction",
+      "hint": "Timber tone variation adjusts connected construction.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "fence"
+      ],
+      "ratioBasis": "normalized",
+      "unit": "ratio",
+      "inputUnit": "dimensionless",
+      "displayUnit": "ratio"
+    },
+    {
+      "kind": "choice",
+      "key": "colorway",
+      "label": "Colorway",
+      "default": "forest",
+      "options": [
+        {
+          "value": "forest",
+          "label": "Forest"
+        },
+        {
+          "value": "harbor",
+          "label": "Harbor"
+        },
+        {
+          "value": "ember",
+          "label": "Ember"
+        }
+      ],
+      "group": "colors",
+      "hint": "Select colorway.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "colorway"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "color",
+      "key": "color.timber",
+      "label": "Posts",
+      "role": "timber",
+      "default": "#896039",
+      "group": "colors",
+      "hint": "Changes only timber color.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "timber"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "kind": "color",
+      "key": "color.wood",
+      "label": "Rails",
+      "role": "wood",
+      "default": "#b68747",
+      "group": "colors",
+      "hint": "Changes only wood color.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "wood"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    }
+  ],
+  "defaults": {
+    "length": 3,
+    "height": 1.1,
+    "bays": 2,
+    "railStyle": "two-rail",
+    "postHead": "chamfered",
+    "detail": "inspection",
+    "railCount": 2,
+    "memberWeight": "stout",
+    "infill": "open",
+    "picketSpacing": 0.16,
+    "weathering": 0.3,
+    "timberTone": 0.35,
+    "toneVariation": 0.06,
+    "colorway": "forest",
+    "color.timber": "#896039",
+    "color.wood": "#b68747"
+  },
+  "presets": [
+    {
+      "id": "garden",
+      "name": "Peaked garden pickets",
+      "parameters": {
+        "length": 2.4,
+        "height": 0.95,
+        "bays": 2,
+        "infill": "pickets",
+        "railCount": 2,
+        "picketSpacing": 0.13,
+        "postHead": "peaked",
+        "weathering": 0.15,
+        "timberTone": 0.55
+      },
+      "description": "Peaked garden pickets proportions"
+    },
+    {
+      "id": "boundary",
+      "name": "Four-rail boundary",
+      "parameters": {
+        "length": 4.8,
+        "height": 1.4,
+        "bays": 3,
+        "railStyle": "cross-braced",
+        "railCount": 4,
+        "memberWeight": "stout",
+        "weathering": 0.65,
+        "timberTone": 0.25,
+        "toneVariation": 0.09
+      },
+      "description": "Four-rail boundary proportions"
+    },
+    {
+      "id": "low-run",
+      "name": "Light pasture rails",
+      "parameters": {
+        "length": 5.6,
+        "height": 0.8,
+        "bays": 4,
+        "railCount": 2,
+        "memberWeight": "light",
+        "postHead": "flat",
+        "weathering": 0.4,
+        "timberTone": 0.65
+      },
+      "description": "Light pasture rails proportions"
+    }
+  ],
+  "palettes": [
+    {
+      "id": "forest",
+      "label": "Forest",
+      "colors": [
+        "#896039",
+        "#b68747"
+      ]
+    },
+    {
+      "id": "harbor",
+      "label": "Harbor",
+      "colors": [
+        "#896039",
+        "#b68747"
+      ]
+    },
+    {
+      "id": "ember",
+      "label": "Ember",
+      "colors": [
+        "#896039",
+        "#b68747"
+      ]
+    }
+  ],
+  "constraints": [
+    "Post-center length divided by rail bays must be 0.6–2 m. Increase bays or reduce length above 2 m; reduce bays or increase length below 0.6 m."
+  ],
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "configuration": {
+    "kind": "default"
+  },
+  "source": {
+    "entry": "src/recipes/builtins.ts",
+    "exportName": "fenceRecipe",
+    "sha256": "7c7b16190a405677bba664bffa18ef5bf120ddb6e4ffcab0cc3bac33b92c14ec",
+    "files": {
+      "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "src/catalog/build.ts": "cb9eee04337244055efd058948a6fb440975ec25315b16f61915a02015c7e904",
+      "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "src/engine/convex-stone.ts": "50d0641fd34c999c428ec5d6bb047d22d729b31334f2fe0973fb448c668aa755",
+      "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+      "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "src/engine/roof.ts": "4a0cb05b4d06ebfde8fc63ff949c17df454a9d8164efdddb555aad6d0d2bf763",
+      "src/engine/style.ts": "af5d9fb2ee32c028109b8b5fb0c0d3130e9f93c3dffea855690877af37c91e20",
+      "src/engine/timber.ts": "9e58b9511ba427526b668a1cc8a9508c68afdc15fa9be32674abf1a8b7ecf461",
+      "src/families/assembly.ts": "bacdf7af9aee38a3456e61bbce6145e7a72c4b27b31d78af26072b52ddaf5f19",
+      "src/families/boulder.ts": "f24399e4ff802b0bb372f2ab71702fc3dc5c7c67a88a13a5efd962d694eea523",
+      "src/families/config.ts": "44e3537f114edea55a1a4a8821d88e8565df54637baaec100aff5c3cdbee0e36",
+      "src/families/cottage.ts": "0714a3cf86972ad423fa0883677e797069638566600977bd6474784c1b8f6aec",
+      "src/families/crate.ts": "f427ffe54d70aabdc9e40299f0753d561ada3503efdbb05ded77b77738ce151e",
+      "src/families/fence.ts": "49f8409703a7c01c7473bef846e5a562ec5aa7b8243b55f7775f7add0eecda02",
+      "src/families/index.ts": "a6adc5b6581906fbbda5b69fbd88498de7a941a50c1a3f3d18e78017824a59c5",
+      "src/families/legacy-config.ts": "4d250c98245d6dc73e9f2715be9cd718254156531066cd19590349b441aebb39",
+      "src/families/legacy-typed-config.ts": "ef889d69010ba7b73d20353c63968fa39d1c795ca768ff79af0015451f5ce47d",
+      "src/families/revision2-config.ts": "aa80d74774bcb9f741d57c6fd8595d972e6d3e83a7fa3826fb6ae1dcc128d961",
+      "src/families/revision3-config.ts": "553031d6cdd15119c30e478e2b79c7db4433a00f985d80973dd7b02c30d68954",
+      "src/families/revision4-config.ts": "b671492205cd1aab3607f57db5b598721302474a07e9343586d4f3967e777343",
+      "src/families/tree.ts": "d8782885092fe97bfae5713b99c2ad66607526a0170d952522bf1386ed3369f9",
+      "src/lantern/config.ts": "b531822e4975c30b8cb2e3a71852b97f252e887aa809fffebaecac0e3edf9093",
+      "src/lantern/generator.ts": "d97476a03c6597c0422abdc4c48dad16b2ec52f76101ebbbd98cded89117ecc5",
+      "src/lantern/geometry.ts": "72d1963a5bee9b211d44ba296c3fa3e3b291e9ecca8b510f5acc8f868d89f440",
+      "src/lantern/revision2-config.ts": "25200fdb4bac1da0c50528447e634ac3e058cebb4dd29bea712f3608a61c6ad7",
+      "src/lantern/revision3-config.ts": "d1f78f9a6b31e7dbf291e891428f0767d5881aa8f1ceaf244a9947eef7babcf7",
+      "src/lantern/revision4-config.ts": "c200f53f66b907ef9ec7e73f9de52fd16310c5aaaa01f23eaa52df041554d107",
+      "src/lantern/rustic.ts": "46c96cb453b21adbb8b8100c20add5f32abec1cab9c7862124a334db0a34504a",
+      "src/recipes/builtins.ts": "5b609bf811dcc0b1874a8a9bb269af346e1147d0c929818ebdc6700ffd900c2b",
+      "src/recipes/types.ts": "5ec1e3ee4a39ffe8932751b38596c360fb4f818bc512e20918cbce017d6695da"
+    }
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "thirdParty": "Three ConvexGeometry/ConvexHull and BufferGeometryUtils MIT; see THIRD-PARTY.txt"
+  }
+}

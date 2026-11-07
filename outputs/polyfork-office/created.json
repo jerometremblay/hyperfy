@@ -1,0 +1,190 @@
+[
+  {
+    "key": "bookcase",
+    "blueprint": {
+      "image": null,
+      "author": "Polyfork",
+      "url": null,
+      "desc": "Polyfork HD office furnishing",
+      "script": null,
+      "props": {},
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Polyfork HD Alcove Bookcase",
+      "model": "asset://0124520ae936fafe87aee40e082e804b1d73486eab7569e537e9fb4ff2f078b2.glb",
+      "id": "1dbaa447-f163-484a-907a-8671610dd654",
+      "version": 0
+    },
+    "entity": {
+      "position": [
+        39.32702324071792,
+        3.302967176636911,
+        18.294055422400334
+      ],
+      "quaternion": [
+        0,
+        0.9914448613738104,
+        0,
+        0.13052619222005163
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "89e6c02d-7063-49b2-a79a-f20db0f36285",
+      "blueprint": "1dbaa447-f163-484a-907a-8671610dd654",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  },
+  {
+    "key": "plant",
+    "blueprint": {
+      "image": null,
+      "author": "Polyfork",
+      "url": null,
+      "desc": "Polyfork HD office furnishing",
+      "script": null,
+      "props": {},
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Polyfork HD Floor Houseplant",
+      "model": "asset://23a224cb7bb95ebbb5f47ef3eb23d570ee43613bd1c7f62b5c80fe189bc65c82.glb",
+      "id": "b1403782-269b-4914-adf0-af10b5353bf4",
+      "version": 0
+    },
+    "entity": {
+      "position": [
+        40.783245346076036,
+        3.302967176636911,
+        13.632101199130183
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "f0a030d0-c65c-4dbf-9e56-a0e6302f9832",
+      "blueprint": "b1403782-269b-4914-adf0-af10b5353bf4",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  },
+  {
+    "key": "rug",
+    "blueprint": {
+      "image": null,
+      "author": "Polyfork",
+      "url": null,
+      "desc": "Polyfork HD office furnishing",
+      "script": null,
+      "props": {},
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Polyfork HD Wool Rug",
+      "model": "asset://9522815579009dd2c2e67b6d07d1710bcfbcf353f2586c095c3671fac17f0a80.glb",
+      "id": "4fe65466-99ca-4c56-a800-195f35c5938f",
+      "version": 0
+    },
+    "entity": {
+      "position": [
+        40.78475504401583,
+        3.304967176636911,
+        16.137874078066368
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "29599712-c19e-45f2-b138-dab2e0597106",
+      "blueprint": "4fe65466-99ca-4c56-a800-195f35c5938f",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  },
+  {
+    "key": "lamp",
+    "blueprint": {
+      "image": null,
+      "author": "Polyfork",
+      "url": null,
+      "desc": "Polyfork HD office furnishing",
+      "script": null,
+      "props": {},
+      "preload": true,
+      "public": false,
+      "locked": false,
+      "unique": false,
+      "frozen": false,
+      "scene": false,
+      "disabled": false,
+      "name": "Polyfork HD Table Lamp",
+      "model": "asset://8da739de850f4290f10eab0679e0b71e195eee8652244233d020529e08d9c4ca.glb",
+      "id": "eca25bec-226c-420a-b3c2-af26abe2190e",
+      "version": 0
+    },
+    "entity": {
+      "position": [
+        41.9602611639815,
+        4.083967176636911,
+        18.357758165563563
+      ],
+      "quaternion": [
+        0,
+        0.6087614290087207,
+        0,
+        0.7933533402912352
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false,
+      "id": "55db867d-cfaa-465e-95cb-324a410b6eae",
+      "blueprint": "eca25bec-226c-420a-b3c2-af26abe2190e",
+      "type": "app",
+      "mover": null,
+      "uploader": null,
+      "state": {}
+    }
+  }
+]

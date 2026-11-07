@@ -1,0 +1,448 @@
+TAP version 13
+# Subtest: catalog retains twelve construction families and adds the two reviewed rigs
+ok 1 - catalog retains twelve construction families and adds the two reviewed rigs
+  ---
+  duration_ms: 21.58492
+  type: 'test'
+  ...
+# Subtest: seven existing families retain configurations measurements exports and saved design loading
+ok 2 - seven existing families retain configurations measurements exports and saved design loading
+  ---
+  duration_ms: 10922.276837
+  type: 'test'
+  ...
+# Subtest: promoted defaults preserve the reviewed construction geometry
+ok 3 - promoted defaults preserve the reviewed construction geometry
+  ---
+  duration_ms: 1235.619327
+  type: 'test'
+  ...
+# Subtest: planter supported cases build finite grounded geometry and round-trip exports
+ok 4 - planter supported cases build finite grounded geometry and round-trip exports
+  ---
+  duration_ms: 2732.499931
+  type: 'test'
+  ...
+# Subtest: treasure-chest supported cases build finite grounded geometry and round-trip exports
+ok 5 - treasure-chest supported cases build finite grounded geometry and round-trip exports
+  ---
+  duration_ms: 4193.482892
+  type: 'test'
+  ...
+# Subtest: wheelbarrow supported cases build finite grounded geometry and round-trip exports
+ok 6 - wheelbarrow supported cases build finite grounded geometry and round-trip exports
+  ---
+  duration_ms: 2343.805087
+  type: 'test'
+  ...
+# Subtest: stone-well supported cases build finite grounded geometry and round-trip exports
+ok 7 - stone-well supported cases build finite grounded geometry and round-trip exports
+  ---
+  duration_ms: 5400.705408
+  type: 'test'
+  ...
+# Subtest: conifer supported cases build finite grounded geometry and round-trip exports
+ok 8 - conifer supported cases build finite grounded geometry and round-trip exports
+  ---
+  duration_ms: 8169.020343
+  type: 'test'
+  ...
+# Subtest: historical shared scene retains its twelve families with an open approach and supported lantern
+ok 9 - historical shared scene retains its twelve families with an open approach and supported lantern
+  ---
+  duration_ms: 1121.155806
+  type: 'test'
+  ...
+# Subtest: planter courses and feet preserve the opening and total height
+ok 10 - planter courses and feet preserve the opening and total height
+  ---
+  duration_ms: 104.824015
+  type: 'test'
+  ...
+# Subtest: chest opens the lid and bands around the rear hinge while the hollow body stays fixed
+ok 11 - chest opens the lid and bands around the rear hinge while the hollow body stays fixed
+  ---
+  duration_ms: 105.57665
+  type: 'test'
+  ...
+# Subtest: wheelbarrow reconstruction changes courses and opens a spoked wheel with supported floor
+ok 12 - wheelbarrow reconstruction changes courses and opens a spoked wheel with supported floor
+  ---
+  duration_ms: 55.707008
+  type: 'test'
+  ...
+# Subtest: well options retain masonry and posts and keep bucket connected to its windlass
+ok 13 - well options retain masonry and posts and keep bucket connected to its windlass
+  ---
+  duration_ms: 288.04462
+  type: 'test'
+  ...
+# Subtest: conifer tier density changes construction with connected branches and stable crown bounds
+ok 14 - conifer tier density changes construction with connected branches and stable crown bounds
+  ---
+  duration_ms: 1059.055435
+  type: 'test'
+  ...
+# Subtest: non-colorway palettes require a valid semantic color patch at registration
+ok 15 - non-colorway palettes require a valid semantic color patch at registration
+  ---
+  duration_ms: 29.637754
+  type: 'test'
+  ...
+# Subtest: semantic palette application and comparison are independent of control and preview swatch order
+ok 16 - semantic palette application and comparison are independent of control and preview swatch order
+  ---
+  duration_ms: 8.19098
+  type: 'test'
+  ...
+# Subtest: existing colorway application clears overrides and keeps its requested palette path
+ok 17 - existing colorway application clears overrides and keeps its requested palette path
+  ---
+  duration_ms: 3.16779
+  type: 'test'
+  ...
+# Subtest: indexed release guide bytes survive repository guide drift and fresh-output generation
+ok 18 - indexed release guide bytes survive repository guide drift and fresh-output generation
+  ---
+  duration_ms: 4948.473317
+  type: 'test'
+  ...
+# Subtest: published release validation rejects tampered member/index and symlinked paths
+ok 19 - published release validation rejects tampered member/index and symlinked paths
+  ---
+  duration_ms: 706.320546
+  type: 'test'
+  ...
+# Subtest: existing destination conflicts preserve every file and mutable index before publication
+ok 20 - existing destination conflicts preserve every file and mutable index before publication
+  ---
+  duration_ms: 1024.808514
+  type: 'test'
+  ...
+# Subtest: published index and metadata require exact dependency and default configuration objects
+ok 21 - published index and metadata require exact dependency and default configuration objects
+  ---
+  duration_ms: 185.428378
+  type: 'test'
+  ...
+# Subtest: all registered recipes publish synchronous modules and typed pinned metadata
+ok 22 - all registered recipes publish synchronous modules and typed pinned metadata
+  ---
+  duration_ms: 17166.585155
+  type: 'test'
+  ...
+# Subtest: procedural index rejects wrong versions, duplicate records and malformed metadata
+ok 23 - procedural index rejects wrong versions, duplicate records and malformed metadata
+  ---
+  duration_ms: 9.801204
+  type: 'test'
+  ...
+# Subtest: current-design snippet preserves exact requested parameters and appearance
+ok 24 - current-design snippet preserves exact requested parameters and appearance
+  ---
+  duration_ms: 51.984726
+  type: 'test'
+  ...
+# Subtest: packager rejects a registered source/export mismatch before publishing
+ok 25 - packager rejects a registered source/export mismatch before publishing
+  ---
+  duration_ms: 436.681316
+  type: 'test'
+  ...
+# Subtest: verified artifact modules reject HTML invalid UTF8 and caller mutation
+ok 26 - verified artifact modules reject HTML invalid UTF8 and caller mutation
+  ---
+  duration_ms: 9.550535
+  type: 'test'
+  ...
+# Subtest: new contributor bench uses production catalog build, save, load and export
+ok 27 - new contributor bench uses production catalog build, save, load and export
+  ---
+  duration_ms: 863.473128
+  type: 'test'
+  ...
+# Subtest: original six preserve historical payload bytes and measurements beneath added semantics
+ok 28 - original six preserve historical payload bytes and measurements beneath added semantics
+  ---
+  duration_ms: 8468.027401
+  type: 'test'
+  ...
+# Subtest: legacy immutable source archives validate under the frozen delivery contract
+ok 29 - legacy immutable source archives validate under the frozen delivery contract
+  ---
+  duration_ms: 4100.328538
+  type: 'test'
+  ...
+# Subtest: delivery revision conflicts preflight all outputs and identical repeats are idempotent
+ok 30 - delivery revision conflicts preflight all outputs and identical repeats are idempotent
+  ---
+  duration_ms: 10503.315705
+  type: 'test'
+  ...
+# Subtest: package paths reject traversal, absolute paths, secrets and private evidence
+ok 31 - package paths reject traversal, absolute paths, secrets and private evidence
+  ---
+  duration_ms: 11.818018
+  type: 'test'
+  ...
+# Subtest: source closure rejects unknown imports, dynamic imports and symlinks
+ok 32 - source closure rejects unknown imports, dynamic imports and symlinks
+  ---
+  duration_ms: 109.588242
+  type: 'test'
+  ...
+# Subtest: manifest validation rejects changed, missing, extra members and invalid metadata without execution
+ok 33 - manifest validation rejects changed, missing, extra members and invalid metadata without execution
+  ---
+  duration_ms: 382.838631
+  type: 'test'
+  ...
+# Subtest: source closure allows the used pinned geometry utility and rejects unrelated addons
+ok 34 - source closure allows the used pinned geometry utility and rejects unrelated addons
+  ---
+  duration_ms: 7.352422
+  type: 'test'
+  ...
+# Subtest: registration rejects duplicate identities and malformed declarations without partial insertion
+ok 35 - registration rejects duplicate identities and malformed declarations without partial insertion
+  ---
+  duration_ms: 22.259019
+  type: 'test'
+  ...
+# Subtest: independent recipe registration reaches existing catalog build load and export dispatch
+ok 36 - independent recipe registration reaches existing catalog build load and export dispatch
+  ---
+  duration_ms: 235.096006
+  type: 'test'
+  ...
+# Subtest: bench controls change geometry topology and semantic material roles
+ok 37 - bench controls change geometry topology and semantic material roles
+  ---
+  duration_ms: 145.473007
+  type: 'test'
+  ...
+# Subtest: source identity includes the executable contributor entry
+ok 38 - source identity includes the executable contributor entry
+  ---
+  duration_ms: 353.380517
+  type: 'test'
+  ...
+# Subtest: generic render command validates family preset and mutually exclusive saved inputs
+ok 39 - generic render command validates family preset and mutually exclusive saved inputs
+  ---
+  duration_ms: 9.029984
+  type: 'test'
+  ...
+# Subtest: render command refuses an existing output directory before launching browser or altering files
+ok 40 - render command refuses an existing output directory before launching browser or altering files
+  ---
+  duration_ms: 358.83407
+  type: 'test'
+  ...
+# Subtest: capture input clears prior appearance while preserving the exact selected design
+ok 41 - capture input clears prior appearance while preserving the exact selected design
+  ---
+  duration_ms: 520.394179
+  type: 'test'
+  ...
+# Subtest: render selection binds validated migration without contaminating fresh preset configuration
+ok 42 - render selection binds validated migration without contaminating fresh preset configuration
+  ---
+  duration_ms: 1414.575643
+  type: 'test'
+  ...
+# Subtest: render readiness accepts observed migration appearance key ordering and preserves every JSON value
+ok 43 - render readiness accepts observed migration appearance key ordering and preserves every JSON value
+  ---
+  duration_ms: 1054.231136
+  type: 'test'
+  ...
+# Subtest: source download requires matching identity version and a default-design package
+ok 44 - source download requires matching identity version and a default-design package
+  ---
+  duration_ms: 11.687724
+  type: 'test'
+  ...
+# Subtest: source download rejects external paths and encoded traversal
+ok 45 - source download rejects external paths and encoded traversal
+  ---
+  duration_ms: 2.562114
+  type: 'test'
+  ...
+# Subtest: verified source bytes require size digest and ZIP content
+ok 46 - verified source bytes require size digest and ZIP content
+  ---
+  duration_ms: 105.561976
+  type: 'test'
+  ...
+# Subtest: source metadata keeps older indexes compatible without inventing license claims
+ok 47 - source metadata keeps older indexes compatible without inventing license claims
+  ---
+  duration_ms: 2.621949
+  type: 'test'
+  ...
+# Subtest: source delivery selects only supported versioned identities and exact filenames
+ok 48 - source delivery selects only supported versioned identities and exact filenames
+  ---
+  duration_ms: 2.621073
+  type: 'test'
+  ...
+# Subtest: revision5 routes are separate and retain the existing fixture verifier
+ok 49 - revision5 routes are separate and retain the existing fixture verifier
+  ---
+  duration_ms: 91.96477
+  type: 'test'
+  ...
+# Subtest: four canonical bench fixtures retain geometry and appearance expectations and refuse overwrite
+ok 50 - four canonical bench fixtures retain geometry and appearance expectations and refuse overwrite
+  ---
+  duration_ms: 2415.874176
+  type: 'test'
+  ...
+# Subtest: original bench fixture detects measured disconnected support and fresh production repair
+ok 51 - original bench fixture detects measured disconnected support and fresh production repair
+  ---
+  duration_ms: 300.527015
+  type: 'test'
+  ...
+# Subtest: actual width request changes measured geometry while ignored adapter fails the same check
+ok 52 - actual width request changes measured geometry while ignored adapter fails the same check
+  ---
+  duration_ms: 40.548153
+  type: 'test'
+  ...
+# Subtest: real exporter and validator distinguish structural validity from fixture contact failure
+ok 53 - real exporter and validator distinguish structural validity from fixture contact failure
+  ---
+  duration_ms: 864.484683
+  type: 'test'
+  ...
+# Subtest: actual bounded terminal run supports immutable sealing CLI records and fail closed evidence
+ok 54 - actual bounded terminal run supports immutable sealing CLI records and fail closed evidence
+  ---
+  duration_ms: 31975.278057
+  type: 'test'
+  ...
+# Subtest: failed terminal attempts remain auditable and cannot seal successful subjects
+ok 55 - failed terminal attempts remain auditable and cannot seal successful subjects
+  ---
+  duration_ms: 503.012351
+  type: 'test'
+  ...
+# Subtest: canonical identity preserves literal request and rejects non JSON values
+ok 56 - canonical identity preserves literal request and rejects non JSON values
+  ---
+  duration_ms: 17.079495
+  type: 'test'
+  ...
+# Subtest: findings bind actual cases parts views and own evidence keys
+ok 57 - findings bind actual cases parts views and own evidence keys
+  ---
+  duration_ms: 16.665281
+  type: 'test'
+  ...
+# Subtest: failed observations require repairs; unresolved and contradictory findings cannot pass
+ok 58 - failed observations require repairs; unresolved and contradictory findings cannot pass
+  ---
+  duration_ms: 6.960791
+  type: 'test'
+  ...
+# Subtest: source and portability passing records require applicable archive and replay scope
+ok 59 - source and portability passing records require applicable archive and replay scope
+  ---
+  duration_ms: 10.615042
+  type: 'test'
+  ...
+# Subtest: one independent qualified reviewer may cover all categories with separate technical authority
+ok 60 - one independent qualified reviewer may cover all categories with separate technical authority
+  ---
+  duration_ms: 26.643483
+  type: 'test'
+  ...
+# Subtest: uncertain or conflicting trusted records block eligibility
+ok 61 - uncertain or conflicting trusted records block eligibility
+  ---
+  duration_ms: 7.434796
+  type: 'test'
+  ...
+# Subtest: all families expose versioned JSON semantics and preserve anchors through GLB import
+ok 62 - all families expose versioned JSON semantics and preserve anchors through GLB import
+  ---
+  duration_ms: 5643.746069
+  type: 'test'
+  ...
+# Subtest: input units distinguish centimeters for display from meter inputs
+ok 63 - input units distinguish centimeters for display from meter inputs
+  ---
+  duration_ms: 3.505291
+  type: 'test'
+  ...
+# Subtest: declared joints rotate around fixed root-relative pivots while supports remain fixed
+ok 64 - declared joints rotate around fixed root-relative pivots while supports remain fixed
+  ---
+  duration_ms: 306.23609
+  type: 'test'
+  ...
+# Subtest: invalid semantic anchors and duplicate or dangling references reject
+ok 65 - invalid semantic anchors and duplicate or dangling references reject
+  ---
+  duration_ms: 28.453004
+  type: 'test'
+  ...
+# Subtest: parts retain semantic identity through structural variants and runtime poses preserve saved parameters
+ok 66 - parts retain semantic identity through structural variants and runtime poses preserve saved parameters
+  ---
+  duration_ms: 111.92266
+  type: 'test'
+  ...
+# Subtest: articulated GLB preserves joints, pose and anchors while rejecting damaged mapping
+ok 67 - articulated GLB preserves joints, pose and anchors while rejecting damaged mapping
+  ---
+  duration_ms: 393.208162
+  type: 'test'
+  ...
+# Subtest: semantic JSON ignores object key order and rejects duplicate control references
+ok 68 - semantic JSON ignores object key order and rejects duplicate control references
+  ---
+  duration_ms: 13.705621
+  type: 'test'
+  ...
+# Subtest: actual node material/group identity and joint transform damage reject
+ok 69 - actual node material/group identity and joint transform damage reject
+  ---
+  duration_ms: 688.966835
+  type: 'test'
+  ...
+# Subtest: control metadata retains legacy units and rejects malformed domains
+ok 70 - control metadata retains legacy units and rejects malformed domains
+  ---
+  duration_ms: 20.083321
+  type: 'test'
+  ...
+# Subtest: semantic export includes hidden preview meshes and complete moving groups
+ok 71 - semantic export includes hidden preview meshes and complete moving groups
+  ---
+  duration_ms: 202.892405
+  type: 'test'
+  ...
+# Subtest: all reparented cases retain original geometry materials config anchors and dimensions
+ok 72 - all reparented cases retain original geometry materials config anchors and dimensions
+  ---
+  duration_ms: 8829.449074
+  type: 'test'
+  ...
+# Subtest: portable joint node names round trip and sanitized-name declarations reject
+ok 73 - portable joint node names round trip and sanitized-name declarations reject
+  ---
+  duration_ms: 134.056421
+  type: 'test'
+  ...
+1..73
+# tests 73
+# suites 0
+# pass 73
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 208882.341192

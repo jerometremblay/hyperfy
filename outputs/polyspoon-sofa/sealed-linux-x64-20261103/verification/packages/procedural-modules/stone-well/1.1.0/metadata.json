@@ -1,0 +1,1623 @@
+{
+  "formatVersion": 1,
+  "semantics": {
+    "version": 1,
+    "identity": {
+      "family": "stone-well",
+      "recipeVersion": "1.1.0"
+    },
+    "coordinates": {
+      "lengthUnit": "m",
+      "up": "+Y",
+      "front": "+Z",
+      "origin": "ground-center",
+      "anchorSpace": "root"
+    },
+    "controls": [
+      {
+        "key": "diameter",
+        "label": "Outside diameter",
+        "kind": "range",
+        "group": "shape",
+        "min": 1.8,
+        "max": 3.2,
+        "step": 0.05,
+        "default": 2.2,
+        "hint": "Outside masonry diameter. Shaft stays open with 25 cm walls.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "stone",
+          "coping",
+          "post",
+          "windlass",
+          "roof-board"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "wallHeight",
+        "label": "Wall height",
+        "kind": "range",
+        "group": "shape",
+        "min": 0.65,
+        "max": 1.4,
+        "step": 0.05,
+        "default": 0.95,
+        "hint": "Ground to coping top. Timber and mechanism follow the wall.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "stone",
+          "coping",
+          "post",
+          "windlass",
+          "bucket-shell"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "roofSize",
+        "label": "Roof size",
+        "kind": "range",
+        "group": "shape",
+        "ratioBasis": "width",
+        "min": 1.15,
+        "max": 1.6,
+        "step": 0.05,
+        "default": 1.35,
+        "hint": "Roof width as a multiple of well diameter. Depth is 85 percent of width.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "roof-board",
+          "rafter",
+          "ridge"
+        ],
+        "unit": "ratio",
+        "inputUnit": "dimensionless",
+        "displayUnit": "ratio"
+      },
+      {
+        "key": "roof",
+        "label": "Timber roof",
+        "kind": "toggle",
+        "group": "construction",
+        "default": true,
+        "hint": "Roof boards, rafters and braces; posts remain with an open top.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "roof-board",
+          "rafter",
+          "ridge",
+          "fascia",
+          "tie",
+          "brace",
+          "post"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "bucket",
+        "label": "Suspended bucket",
+        "kind": "toggle",
+        "group": "construction",
+        "default": true,
+        "hint": "Bucket, handle and hanging rope. Requires the windlass.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "bucket",
+          "hanging-rope"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "windlass",
+        "label": "Windlass mechanism",
+        "kind": "toggle",
+        "group": "construction",
+        "default": true,
+        "hint": "Axle, bearings, crank and rope spool. Remove the bucket before disabling.",
+        "affects": [
+          "topology"
+        ],
+        "targets": [
+          "windlass",
+          "axle-bearing",
+          "spool-flange",
+          "crank",
+          "rope-coil"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "key": "bucketDrop",
+        "label": "Bucket drop",
+        "kind": "range",
+        "group": "construction",
+        "min": 0,
+        "max": 0.6,
+        "step": 0.05,
+        "default": 0,
+        "hint": "Lowers the bucket from its default height and lengthens the hanging rope.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "bucket",
+          "hanging-rope"
+        ],
+        "unit": "m",
+        "inputUnit": "m",
+        "displayUnit": "m"
+      },
+      {
+        "key": "color.stone",
+        "label": "stone",
+        "kind": "color",
+        "group": "colors",
+        "default": "#898880",
+        "role": "stone",
+        "hint": "Color of stone parts.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "stone"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.coping",
+        "label": "coping",
+        "kind": "color",
+        "group": "colors",
+        "default": "#b2ac96",
+        "role": "coping",
+        "hint": "Color of coping parts.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "coping"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.timber",
+        "label": "timber",
+        "kind": "color",
+        "group": "colors",
+        "default": "#62432e",
+        "role": "timber",
+        "hint": "Color of timber parts.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "timber"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.roof",
+        "label": "roof",
+        "kind": "color",
+        "group": "colors",
+        "default": "#a77342",
+        "role": "roof",
+        "hint": "Color of roof parts.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "roof"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.iron",
+        "label": "iron",
+        "kind": "color",
+        "group": "colors",
+        "default": "#343b3b",
+        "role": "iron",
+        "hint": "Color of iron parts.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "iron"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "key": "color.rope",
+        "label": "rope",
+        "kind": "color",
+        "group": "colors",
+        "default": "#bca879",
+        "role": "rope",
+        "hint": "Color of rope parts.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "rope"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      }
+    ],
+    "anchors": {
+      "ground": [
+        0,
+        0,
+        0
+      ],
+      "shaft": [
+        0,
+        0.95,
+        0
+      ],
+      "bucket": [
+        0,
+        1.0999999999999999,
+        0.125
+      ]
+    },
+    "materials": [
+      {
+        "id": "coping"
+      },
+      {
+        "id": "iron"
+      },
+      {
+        "id": "roof"
+      },
+      {
+        "id": "rope"
+      },
+      {
+        "id": "stone"
+      },
+      {
+        "id": "timber"
+      }
+    ],
+    "parts": [
+      {
+        "id": "stone-mortar",
+        "node": "stone-mortar",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-0",
+        "node": "stone-0-0",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-1",
+        "node": "stone-0-1",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-2",
+        "node": "stone-0-2",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-3",
+        "node": "stone-0-3",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-4",
+        "node": "stone-0-4",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-5",
+        "node": "stone-0-5",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-6",
+        "node": "stone-0-6",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-7",
+        "node": "stone-0-7",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-8",
+        "node": "stone-0-8",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-9",
+        "node": "stone-0-9",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-10",
+        "node": "stone-0-10",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-0-11",
+        "node": "stone-0-11",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-0",
+        "node": "stone-1-0",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-1",
+        "node": "stone-1-1",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-2",
+        "node": "stone-1-2",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-3",
+        "node": "stone-1-3",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-4",
+        "node": "stone-1-4",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-5",
+        "node": "stone-1-5",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-6",
+        "node": "stone-1-6",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-7",
+        "node": "stone-1-7",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-8",
+        "node": "stone-1-8",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-9",
+        "node": "stone-1-9",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-1-10",
+        "node": "stone-1-10",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-0",
+        "node": "stone-2-0",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-1",
+        "node": "stone-2-1",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-2",
+        "node": "stone-2-2",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-3",
+        "node": "stone-2-3",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-4",
+        "node": "stone-2-4",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-5",
+        "node": "stone-2-5",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-6",
+        "node": "stone-2-6",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-7",
+        "node": "stone-2-7",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-8",
+        "node": "stone-2-8",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-9",
+        "node": "stone-2-9",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-10",
+        "node": "stone-2-10",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-11",
+        "node": "stone-2-11",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-2-12",
+        "node": "stone-2-12",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-0",
+        "node": "stone-3-0",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-1",
+        "node": "stone-3-1",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-2",
+        "node": "stone-3-2",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-3",
+        "node": "stone-3-3",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-4",
+        "node": "stone-3-4",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-5",
+        "node": "stone-3-5",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-6",
+        "node": "stone-3-6",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-7",
+        "node": "stone-3-7",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-8",
+        "node": "stone-3-8",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-9",
+        "node": "stone-3-9",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-10",
+        "node": "stone-3-10",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "stone-3-11",
+        "node": "stone-3-11",
+        "materialId": "stone",
+        "material": "stone",
+        "group": "static"
+      },
+      {
+        "id": "coping-0",
+        "node": "coping-0",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-1",
+        "node": "coping-1",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-2",
+        "node": "coping-2",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-3",
+        "node": "coping-3",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-4",
+        "node": "coping-4",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-5",
+        "node": "coping-5",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-6",
+        "node": "coping-6",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-7",
+        "node": "coping-7",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-8",
+        "node": "coping-8",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-9",
+        "node": "coping-9",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-10",
+        "node": "coping-10",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "coping-11",
+        "node": "coping-11",
+        "materialId": "coping",
+        "material": "coping",
+        "group": "static"
+      },
+      {
+        "id": "post--1",
+        "node": "post--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "tie--1",
+        "node": "tie--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rafter--1--1",
+        "node": "rafter--1--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "brace--1--1",
+        "node": "brace--1--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rafter--1-1",
+        "node": "rafter--1-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "brace--1-1",
+        "node": "brace--1-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "axle-bearing--1",
+        "node": "axle-bearing--1",
+        "materialId": "iron",
+        "material": "iron",
+        "group": "static"
+      },
+      {
+        "id": "post-1",
+        "node": "post-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "tie-1",
+        "node": "tie-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rafter-1--1",
+        "node": "rafter-1--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "brace-1--1",
+        "node": "brace-1--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rafter-1-1",
+        "node": "rafter-1-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "brace-1-1",
+        "node": "brace-1-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "axle-bearing-1",
+        "node": "axle-bearing-1",
+        "materialId": "iron",
+        "material": "iron",
+        "group": "static"
+      },
+      {
+        "id": "ridge",
+        "node": "ridge",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-0",
+        "node": "roof-board--1-0",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-1",
+        "node": "roof-board--1-1",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-2",
+        "node": "roof-board--1-2",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-3",
+        "node": "roof-board--1-3",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-4",
+        "node": "roof-board--1-4",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-5",
+        "node": "roof-board--1-5",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-6",
+        "node": "roof-board--1-6",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-7",
+        "node": "roof-board--1-7",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-8",
+        "node": "roof-board--1-8",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-9",
+        "node": "roof-board--1-9",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-10",
+        "node": "roof-board--1-10",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-11",
+        "node": "roof-board--1-11",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-12",
+        "node": "roof-board--1-12",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board--1-13",
+        "node": "roof-board--1-13",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-0",
+        "node": "roof-board-1-0",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-1",
+        "node": "roof-board-1-1",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-2",
+        "node": "roof-board-1-2",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-3",
+        "node": "roof-board-1-3",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-4",
+        "node": "roof-board-1-4",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-5",
+        "node": "roof-board-1-5",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-6",
+        "node": "roof-board-1-6",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-7",
+        "node": "roof-board-1-7",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-8",
+        "node": "roof-board-1-8",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-9",
+        "node": "roof-board-1-9",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-10",
+        "node": "roof-board-1-10",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-11",
+        "node": "roof-board-1-11",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-12",
+        "node": "roof-board-1-12",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-board-1-13",
+        "node": "roof-board-1-13",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "roof-ridge-cover",
+        "node": "roof-ridge-cover",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "fascia--1",
+        "node": "fascia--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "fascia-1",
+        "node": "fascia-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-0",
+        "node": "rope-coil-0",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-1",
+        "node": "rope-coil-1",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-2",
+        "node": "rope-coil-2",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-3",
+        "node": "rope-coil-3",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-4",
+        "node": "rope-coil-4",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-5",
+        "node": "rope-coil-5",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-6",
+        "node": "rope-coil-6",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-7",
+        "node": "rope-coil-7",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-8",
+        "node": "rope-coil-8",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-9",
+        "node": "rope-coil-9",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "rope-coil-10",
+        "node": "rope-coil-10",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "bucket-shell",
+        "node": "bucket-shell",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "bucket-bottom",
+        "node": "bucket-bottom",
+        "materialId": "roof",
+        "material": "roof",
+        "group": "static"
+      },
+      {
+        "id": "bucket-band-0.06",
+        "node": "bucket-band-0.06",
+        "materialId": "iron",
+        "material": "iron",
+        "group": "static"
+      },
+      {
+        "id": "bucket-band-0.26",
+        "node": "bucket-band-0.26",
+        "materialId": "iron",
+        "material": "iron",
+        "group": "static"
+      },
+      {
+        "id": "bucket-handle",
+        "node": "bucket-handle",
+        "materialId": "iron",
+        "material": "iron",
+        "group": "static"
+      },
+      {
+        "id": "hanging-rope",
+        "node": "hanging-rope",
+        "materialId": "rope",
+        "material": "rope",
+        "group": "static"
+      },
+      {
+        "id": "windlass",
+        "node": "windlass",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "windlass-pivot"
+      },
+      {
+        "id": "spool-flange--1",
+        "node": "spool-flange--1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "windlass-pivot"
+      },
+      {
+        "id": "spool-flange-1",
+        "node": "spool-flange-1",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "windlass-pivot"
+      },
+      {
+        "id": "crank-arm",
+        "node": "crank-arm",
+        "materialId": "iron",
+        "material": "iron",
+        "group": "windlass-pivot"
+      },
+      {
+        "id": "crank-grip",
+        "node": "crank-grip",
+        "materialId": "timber",
+        "material": "timber",
+        "group": "windlass-pivot"
+      }
+    ],
+    "joints": [
+      {
+        "id": "windlass-pivot",
+        "node": "windlass-pivot",
+        "kind": "revolute",
+        "pivot": [
+          0,
+          1.9,
+          0
+        ],
+        "axis": [
+          1,
+          0,
+          0
+        ],
+        "angleUnit": "degrees",
+        "limits": [
+          -180,
+          180
+        ],
+        "angle": 0
+      }
+    ],
+    "delivery": {
+      "version": 1,
+      "mode": "editable",
+      "identity": "node-per-part",
+      "movingGroups": "separate"
+    }
+  },
+  "id": "stone-well",
+  "version": "1.1.0",
+  "title": "Stone well",
+  "description": "Open masonry shaft, timber shelter, windlass and suspended bucket.",
+  "controls": [
+    {
+      "key": "diameter",
+      "label": "Outside diameter",
+      "kind": "range",
+      "group": "shape",
+      "min": 1.8,
+      "max": 3.2,
+      "step": 0.05,
+      "default": 2.2,
+      "hint": "Outside masonry diameter. Shaft stays open with 25 cm walls.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "stone",
+        "coping",
+        "post",
+        "windlass",
+        "roof-board"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "wallHeight",
+      "label": "Wall height",
+      "kind": "range",
+      "group": "shape",
+      "min": 0.65,
+      "max": 1.4,
+      "step": 0.05,
+      "default": 0.95,
+      "hint": "Ground to coping top. Timber and mechanism follow the wall.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "stone",
+        "coping",
+        "post",
+        "windlass",
+        "bucket-shell"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "roofSize",
+      "label": "Roof size",
+      "kind": "range",
+      "group": "shape",
+      "ratioBasis": "width",
+      "min": 1.15,
+      "max": 1.6,
+      "step": 0.05,
+      "default": 1.35,
+      "hint": "Roof width as a multiple of well diameter. Depth is 85 percent of width.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "roof-board",
+        "rafter",
+        "ridge"
+      ],
+      "unit": "ratio",
+      "inputUnit": "dimensionless",
+      "displayUnit": "ratio"
+    },
+    {
+      "key": "roof",
+      "label": "Timber roof",
+      "kind": "toggle",
+      "group": "construction",
+      "default": true,
+      "hint": "Roof boards, rafters and braces; posts remain with an open top.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "roof-board",
+        "rafter",
+        "ridge",
+        "fascia",
+        "tie",
+        "brace",
+        "post"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "bucket",
+      "label": "Suspended bucket",
+      "kind": "toggle",
+      "group": "construction",
+      "default": true,
+      "hint": "Bucket, handle and hanging rope. Requires the windlass.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "bucket",
+        "hanging-rope"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "windlass",
+      "label": "Windlass mechanism",
+      "kind": "toggle",
+      "group": "construction",
+      "default": true,
+      "hint": "Axle, bearings, crank and rope spool. Remove the bucket before disabling.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "windlass",
+        "axle-bearing",
+        "spool-flange",
+        "crank",
+        "rope-coil"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "key": "bucketDrop",
+      "label": "Bucket drop",
+      "kind": "range",
+      "group": "construction",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0,
+      "hint": "Lowers the bucket from its default height and lengthens the hanging rope.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "bucket",
+        "hanging-rope"
+      ],
+      "unit": "m",
+      "inputUnit": "m",
+      "displayUnit": "m"
+    },
+    {
+      "key": "color.stone",
+      "label": "stone",
+      "kind": "color",
+      "group": "colors",
+      "default": "#898880",
+      "role": "stone",
+      "hint": "Color of stone parts.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "stone"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.coping",
+      "label": "coping",
+      "kind": "color",
+      "group": "colors",
+      "default": "#b2ac96",
+      "role": "coping",
+      "hint": "Color of coping parts.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "coping"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.timber",
+      "label": "timber",
+      "kind": "color",
+      "group": "colors",
+      "default": "#62432e",
+      "role": "timber",
+      "hint": "Color of timber parts.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "timber"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.roof",
+      "label": "roof",
+      "kind": "color",
+      "group": "colors",
+      "default": "#a77342",
+      "role": "roof",
+      "hint": "Color of roof parts.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "roof"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.iron",
+      "label": "iron",
+      "kind": "color",
+      "group": "colors",
+      "default": "#343b3b",
+      "role": "iron",
+      "hint": "Color of iron parts.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "iron"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "key": "color.rope",
+      "label": "rope",
+      "kind": "color",
+      "group": "colors",
+      "default": "#bca879",
+      "role": "rope",
+      "hint": "Color of rope parts.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "rope"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    }
+  ],
+  "defaults": {
+    "diameter": 2.2,
+    "wallHeight": 0.95,
+    "roofSize": 1.35,
+    "roof": true,
+    "bucket": true,
+    "windlass": true,
+    "bucketDrop": 0,
+    "color.stone": "#898880",
+    "color.coping": "#b2ac96",
+    "color.timber": "#62432e",
+    "color.roof": "#a77342",
+    "color.iron": "#343b3b",
+    "color.rope": "#bca879"
+  },
+  "presets": [
+    {
+      "id": "village",
+      "name": "Village well",
+      "description": "Warm timber above a modest stone shaft.",
+      "parameters": {}
+    },
+    {
+      "id": "courtyard",
+      "name": "Courtyard well",
+      "description": "Compact open-top well with a lowered suspended bucket.",
+      "parameters": {
+        "diameter": 1.8,
+        "wallHeight": 0.7,
+        "roofSize": 1.2,
+        "roof": false,
+        "bucketDrop": 0.35
+      }
+    },
+    {
+      "id": "market",
+      "name": "Market well",
+      "description": "Broad sheltered shaft with its bucket removed.",
+      "parameters": {
+        "diameter": 3,
+        "wallHeight": 1.25,
+        "roofSize": 1.5,
+        "bucket": false
+      }
+    }
+  ],
+  "palettes": [
+    {
+      "id": "warm",
+      "label": "Weathered stone and oak",
+      "colors": [
+        "#898880",
+        "#b2ac96",
+        "#62432e",
+        "#a77342",
+        "#343b3b",
+        "#bca879"
+      ],
+      "parameters": {
+        "color.stone": "#898880",
+        "color.coping": "#b2ac96",
+        "color.timber": "#62432e",
+        "color.roof": "#a77342",
+        "color.iron": "#343b3b",
+        "color.rope": "#bca879"
+      }
+    }
+  ],
+  "constraints": [
+    "Static prop in meters. Diameter 1.8–3.2 m; wall 0.65–1.4 m; roof multiplier 1.15–1.6. Open shaft without floor or underground lining. Roof removal retains posts. Bucket needs the windlass; bucket drop lengthens the rope. No collision or animation."
+  ],
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "configuration": {
+    "kind": "default"
+  },
+  "source": {
+    "entry": "examples/recipes/stone-well/index.ts",
+    "exportName": "stoneWellRecipe",
+    "sha256": "20d09d4bf12ebdb53c63ee69069498fabe8009327f1d5ebf12979a3531f4c4d2",
+    "files": {
+      "examples/recipes/stone-well/index.ts": "c856284c2be9433cb1b092883801f940878e90ea16883350af33721877896348",
+      "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "src/catalog/build.ts": "cb9eee04337244055efd058948a6fb440975ec25315b16f61915a02015c7e904",
+      "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+      "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "src/recipes/legacy-v1/stone-well.ts": "f26840964ac986d5d9ff8013ce0ef9c2719cfed33a1f8c030c1f1bbcc52dbe4b",
+      "src/recipes/types.ts": "5ec1e3ee4a39ffe8932751b38596c360fb4f818bc512e20918cbce017d6695da"
+    }
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "thirdParty": "Three ConvexGeometry/ConvexHull and BufferGeometryUtils MIT; see THIRD-PARTY.txt"
+  }
+}

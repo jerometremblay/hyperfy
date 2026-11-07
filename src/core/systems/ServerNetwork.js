@@ -458,6 +458,7 @@ export class ServerNetwork extends System {
 
       // send snapshot
       const sent = socket.send('snapshot', {
+        clientBuild: this.clientBuild || null,
         playerSession: session || null,
         id: socket.id,
         serverTime: performance.now(),

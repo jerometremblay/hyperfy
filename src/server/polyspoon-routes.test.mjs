@@ -122,6 +122,15 @@ test('connected admins can register a sandboxed recipe; permissions and limits a
   })
   await server.ready()
   t.after(async () => { await server.close(); await rm(dir, { recursive: true, force: true }) })
+  const previousCdn = process.env.POLYFORK_CDN_URL
+  process.env.POLYFORK_CDN_URL = 'https://polyfork.dev/c/abc123/'
+  t.after(() => { if (previousCdn === undefined) delete process.env.POLYFORK_CDN_URL; else process.env.POLYFORK_CDN_URL = previousCdn })
+  const cdn = token => server.inject({ method: 'GET', url: '/api/polyspoon/cdn', headers: { authorization: `Bearer ${token}` } })
+  assert.equal((await cdn('bad')).statusCode, 401)
+  assert.equal((await cdn('valid')).json().url, 'https://polyfork.dev/c/abc123/')
+  admin = false
+  assert.equal((await cdn('valid')).statusCode, 403)
+  admin = true
   const post = (token, source = 'source') => server.inject({ method: 'POST', url: '/api/polyspoon/recipes', headers: { authorization: `Bearer ${token}` }, payload: { source } })
   assert.equal((await post('bad')).statusCode, 401)
   const postAsset = token => server.inject({ method: 'POST', url: '/api/polyspoon/recipes', headers: { authorization: `Bearer ${token}` }, payload: { assetUrl: 'https://polyspoon.com/asset/example' } })

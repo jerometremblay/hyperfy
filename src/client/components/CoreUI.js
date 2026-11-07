@@ -20,6 +20,7 @@ import { ChevronDoubleUpIcon, HandIcon } from './Icons'
 import { ProfilerPanel } from './ProfilerPanel'
 import { Sidebar } from './Sidebar'
 import { XRSidebar } from './XRSidebar'
+import { ClientUpdateNotice } from './ClientUpdateNotice'
 import { PoseEditorPanel, SittingPoseButton } from './PoseEditorPanel'
 
 export function CoreUI({ world }) {
@@ -109,6 +110,7 @@ export function CoreUI({ world }) {
       `}
     >
       {disconnected && <Disconnected />}
+      {ready && !xr && <ClientUpdateNotice world={world} />}
       {!ui.reticleSuppressors && <Reticle world={world} />}
       {ready && <ActionPrompt world={world} visible={!ui.reticleSuppressors && !xr} />}
       {<Toast world={world} />}

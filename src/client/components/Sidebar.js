@@ -71,6 +71,7 @@ import { PromptBoxPanel, UndoPromptBox } from './PromptBoxPanel'
 import { isPromptBox } from '../../core/extras/promptBoxTools'
 import { importPolyspoonRecipe, refreshPolyspoonRecipe } from '../../core/extras/polyspoonImport'
 import { AudioOutputField } from './AudioOutputField'
+import { PolyforkCatalog } from './PolyforkCatalog'
 
 const mainSectionPanes = ['prefs']
 const worldSectionPanes = ['world', 'docs', 'apps', 'add']
@@ -1009,7 +1010,7 @@ function Apps({ world, hidden }) {
     appsState.perf = perf
   }, [query, perf])
   return (
-    <Pane width={perf ? '40rem' : '20rem'} hidden={hidden}>
+    <Pane width={perf ? 'fit-content' : '20rem'} hidden={hidden}>
       <div
         className='apps'
         css={css`
@@ -1066,6 +1067,9 @@ function Apps({ world, hidden }) {
           }
           .apps-content {
             flex: 1;
+            width: ${perf ? 'max-content' : '100%'};
+            max-width: 100%;
+            overflow-x: auto;
             overflow-y: auto;
           }
         `}
@@ -1092,7 +1096,7 @@ function Apps({ world, hidden }) {
             appsState.scrollTop = contentRef.current.scrollTop
           }}
         >
-          <AppsList world={world} query={query} perf={perf} refresh={refresh} setRefresh={setRefresh} />
+          <AppsList world={world} query={query} perf={perf} hidden={hidden} refresh={refresh} setRefresh={setRefresh} />
         </div>
       </div>
     </Pane>
@@ -1105,6 +1109,7 @@ function Add({ world, hidden }) {
   const [creatingPromptBox, setCreatingPromptBox] = useState(false)
   const [promptBoxError, setPromptBoxError] = useState('')
   const { isAdmin } = useRank(world, world.entities.player)
+  const [polyforkOpen, setPolyforkOpen] = useState(false)
   const [recipeUrl, setRecipeUrl] = useState('')
   const [addingRecipe, setAddingRecipe] = useState(false)
   const [recipeBlueprint, setRecipeBlueprint] = useState(null)
@@ -1245,8 +1250,13 @@ function Add({ world, hidden }) {
               {recipeError && <div role='alert'>{recipeError}</div>}
             </form>
           )}
+          {isAdmin && polyforkOpen && <PolyforkCatalog world={world} onClose={() => setPolyforkOpen(false)} onPlace={blueprint => { setPolyforkOpen(false); add(blueprint) }} />}
           {promptBoxError && <p role='alert'>{promptBoxError}</p>}
           <div className='add-items'>
+            {isAdmin && <div className='add-item' role='button' tabIndex={0} onClick={() => setPolyforkOpen(true)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPolyforkOpen(true) } }}>
+              <div className='add-item-image' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6ac4dc' }}><SparkleIcon size='3rem' /></div>
+              <div className='add-item-name'>New Polyfork Object</div>
+            </div>}
             <div className='add-item' onClick={async () => {
               if (creatingPromptBox) return
               setCreatingPromptBox(true)

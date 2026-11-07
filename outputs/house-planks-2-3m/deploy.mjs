@@ -1,0 +1,31 @@
+import fs from 'node:fs/promises'
+import assert from 'node:assert/strict'
+import {loadProfile,makeClient} from '../../tools/worldsync/src/deployment.mjs'
+const dir=new URL('./',import.meta.url)
+const before=JSON.parse(await fs.readFile(new URL('before.json',dir)))
+const validation=JSON.parse(await fs.readFile(new URL('validation.json',dir)))
+assert.equal(validation.valid,true)
+const source=await fs.readFile(new URL('source.js',dir),'utf8')
+const profile=await loadProfile('/Users/jerome/metaverse/hyperfy-world-jerome','online-world')
+assert.equal(profile.apiUrl,'https://monstre.duckdns.org:3333/api/agent')
+const c=makeClient(profile)
+const b=await c.request('/apps/'+before.blueprint.id)
+assert.deepEqual(b,before.blueprint,'House changed since capture')
+const e=await c.request('/entities/'+before.entity.id)
+for(const k of ['id','blueprint','position','quaternion','scale','pinned']) assert.deepEqual(e[k],before.entity[k])
+assert(!e.mover&&!e.uploader,'House is being edited')
+await fs.writeFile(new URL('pre-deploy.json',dir),JSON.stringify({blueprint:b,entity:e},null,2))
+const uploaded=await c.request('/scripts',{method:'POST',json:{source}})
+assert.equal((await c.requestBytes('/assets/'+uploaded.url.slice(8))).bytes.toString(),source)
+const latest=await c.request('/entities/'+e.id)
+for(const k of ['position','quaternion','scale']) assert.deepEqual(latest[k],e[k])
+assert(!latest.mover&&!latest.uploader)
+const props={...b.props,initialDoors:latest.state.doors,initialLighting:latest.state.lighting}
+const updated=await c.request('/apps/'+b.id,{method:'PATCH',json:{version:b.version,script:uploaded.url,props}})
+await new Promise(r=>setTimeout(r,1500))
+const after=await c.request('/entities/'+e.id)
+assert.deepEqual(after,latest,'House placement or runtime state changed')
+assert.equal((await c.request('/apps/'+b.id)).script,uploaded.url)
+const report={target:profile.apiUrl,entityId:e.id,blueprintId:b.id,previousVersion:b.version,version:updated.version,verified:true,sourceReadback:true,statePreserved:true,validation}
+await fs.writeFile(new URL('deployment.json',dir),JSON.stringify(report,null,2))
+console.log(report)

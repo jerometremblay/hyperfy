@@ -26,10 +26,21 @@ const defaultStats = {
   fileBytes: 0,
 }
 
-export function AppsList({ world, query, perf, refresh, setRefresh }) {
+export function AppsList({ world, query, perf, hidden, refresh, setRefresh }) {
   const [sort, setSort] = useState('count')
   const [asc, setAsc] = useState(false)
   const [target, setTarget] = useState(null)
+  const [, setProfileVersion] = useState(0)
+  useEffect(() => {
+    world.profiler.setAppsView(perf && !hidden)
+    return () => world.profiler.setAppsView(false)
+  }, [world, perf, hidden])
+  useEffect(() => {
+    if (!perf) return
+    const update = () => setProfileVersion(n => n + 1)
+    world.profiler.on('change', update)
+    return () => world.profiler.off('change', update)
+  }, [world, perf])
   let items = useMemo(() => {
     const itemMap = new Map() // id -> { blueprint, count }
     let items = []
@@ -67,6 +78,44 @@ export function AppsList({ world, query, perf, refresh, setRefresh }) {
     }
     return items
   }, [refresh])
+  {
+    const profiler = world.profiler
+    const samples = new Map(profiler.rows.map(row => [row.id, row]))
+    const totals = new Map()
+    if (perf && profiler.active && profiler.allowed()) {
+      for (const entity of world.entities.items.values()) {
+        const row = samples.get(entity.data.id)
+        if (!entity.isApp || !row) continue
+        const id = entity.data.blueprint
+        const total = totals.get(id) || {
+          cpu: 0,
+          serverCpu: 0,
+          network: 0,
+          lights: 0,
+          samples: 0,
+          serverMissing: false,
+        }
+        total.samples++
+        total.cpu += row.cpu
+        total.network += row.network
+        total.lights += row.lights
+        if (row.serverCpu == null || !profiler.serverReady()) total.serverMissing = true
+        else total.serverCpu += row.serverCpu
+        totals.set(id, total)
+      }
+    }
+    items = items.map(item => {
+      const sample = totals.get(item.blueprint.id)
+      const total = sample?.samples === item.count ? sample : null
+      return {
+        ...item,
+        cpu: total?.cpu ?? null,
+        serverCpu: total && !total.serverMissing ? total.serverCpu : null,
+        network: total?.network ?? null,
+        lights: total?.lights ?? null,
+      }
+    })
+  }
   items = useMemo(() => {
     let newItems = items
     if (query) {
@@ -143,44 +192,25 @@ export function AppsList({ world, query, perf, refresh, setRefresh }) {
       className={cls('appslist', { hideperf: !perf })}
       css={css`
         flex: 1;
+        display: table;
+        width: ${perf ? 'max-content' : '100%'};
+        min-width: 100%;
         .appslist-head {
-          position: sticky;
-          top: 0;
-          display: flex;
-          align-items: center;
-          padding: 0.6rem 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          margin: 0 0 0.3125rem;
+          display: table-row;
         }
         .appslist-headitem {
+          display: table-cell;
+          position: sticky;
+          top: 0;
+          padding: 0.6rem 0.5rem;
+          vertical-align: middle;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           font-size: 1rem;
           font-weight: 500;
           white-space: nowrap;
-          text-overflow: ellipsis;
-          overflow: hidden;
+          text-align: right;
           &.name {
-            flex: 1;
-          }
-          &.code {
-            width: 3rem;
-            text-align: right;
-          }
-          &.count,
-          &.geometries,
-          &.triangles {
-            width: 4rem;
-            text-align: right;
-          }
-          &.textureSize,
-          &.fileSize {
-            width: 5rem;
-            text-align: right;
-          }
-          &.actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            width: 5.45rem;
+            padding-left: 1rem;
           }
           &:hover:not(.active) {
             cursor: pointer;
@@ -190,50 +220,33 @@ export function AppsList({ world, query, perf, refresh, setRefresh }) {
           }
         }
         .appslist-rows {
-          /* overflow-y: auto;
-          padding-bottom: 1.25rem;
-          max-height: 18.75rem; */
+          display: table-row-group;
         }
         .appslist-row {
-          display: flex;
-          align-items: center;
-          padding: 0.6rem 1rem;
+          display: table-row;
           &:hover {
             cursor: pointer;
             background: rgba(255, 255, 255, 0.03);
           }
         }
         .appslist-rowitem {
+          display: table-cell;
+          padding: 0.6rem 0.5rem;
+          vertical-align: middle;
           font-size: 1rem;
           color: rgba(255, 255, 255, 0.8);
           white-space: nowrap;
-          text-overflow: ellipsis;
-          overflow: hidden;
+          text-align: right;
           &.name {
-            flex: 1;
-          }
-          &.code {
-            width: 3rem;
-            text-align: right;
-          }
-          &.count,
-          &.geometries,
-          &.triangles {
-            width: 4rem;
-            text-align: right;
-          }
-          &.textureSize,
-          &.fileSize {
-            width: 5rem;
-            text-align: right;
+            padding-left: 1rem;
+            text-align: left;
           }
           &.actions {
-            width: 5.45rem;
-            display: flex;
-            justify-content: flex-end;
+            padding-right: 1rem;
           }
         }
         .appslist-action {
+          display: inline-flex;
           margin-left: 0.625rem;
           color: #5d6077;
           &.active {
@@ -253,7 +266,8 @@ export function AppsList({ world, query, perf, refresh, setRefresh }) {
             &.geometries,
             &.triangles,
             &.textureSize,
-            &.fileSize {
+            &.fileSize,
+            &.profile {
               display: none;
             }
           }
@@ -310,12 +324,27 @@ export function AppsList({ world, query, perf, refresh, setRefresh }) {
         >
           <HardDriveIcon size={16} />
         </div>
+        {[
+          ['cpu', 'Client CPU', 'Client script CPU (ms/s), summed across instances'],
+          ['serverCpu', 'Server CPU', 'Server script CPU (ms/s), summed across instances'],
+          ['network', 'Network', 'Network traffic (B/s), summed across instances'],
+          ['lights', 'Lights', 'Mounted lights, summed across instances'],
+        ].map(([key, label, title]) => (
+          <div
+            key={key}
+            className={cls('appslist-headitem profile', { active: sort === key })}
+            onClick={() => reorder(key)}
+            title={title}
+          >
+            {label}
+          </div>
+        ))}
         <div className='appslist-headitem actions' />
       </div>
       <div className='appslist-rows'>
         {items.map(item => (
           <div key={item.blueprint.id} className='appslist-row'>
-            <div className='appslist-rowitem name' onClick={() => inspect(item)}>
+            <div className='appslist-rowitem name' onClick={() => inspect(item)} title={item.name}>
               <span>{item.name}</span>
             </div>
             <div className='appslist-rowitem count'>
@@ -336,6 +365,11 @@ export function AppsList({ world, query, perf, refresh, setRefresh }) {
             <div className='appslist-rowitem fileSize'>
               <span>{item.fileSize}</span>
             </div>
+            {['cpu', 'serverCpu', 'network', 'lights'].map(key => (
+              <div key={key} className='appslist-rowitem profile'>
+                <span>{item[key] == null ? '—' : String(Math.round(item[key] * 100) / 100)}</span>
+              </div>
+            ))}
             <div className={'appslist-rowitem actions'}>
               {!item.blueprint.scene && (
                 <>

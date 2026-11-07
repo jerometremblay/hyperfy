@@ -1,0 +1,1115 @@
+{
+  "formatVersion": 1,
+  "kind": "polyspoon.model-controls",
+  "title": "cognac-leather-sofa",
+  "family": "cognac-leather-sofa",
+  "familyVersion": "1.1.0",
+  "recipeVersion": null,
+  "units": {
+    "length": "m",
+    "up": "+Y",
+    "handedness": "right"
+  },
+  "parameters": [],
+  "applied": {
+    "seatCount": 3,
+    "seatWidth": 0.7,
+    "seatDepth": 0.66,
+    "backDepth": 0.22,
+    "armDepth": 0.84,
+    "seatRadius": 0.08,
+    "backRadius": 0.09,
+    "armRadius": 0.09,
+    "bevelSize": 20,
+    "bevelThickness": 18,
+    "color.leather": "#8a4f2b",
+    "color.leatherDark": "#6d3b22",
+    "color.piping": "#b8774b",
+    "color.wood": "#2b1b13"
+  },
+  "appearance": null,
+  "presets": [],
+  "palettes": [],
+  "materials": [
+    {
+      "name": "wood-sofa-part-0",
+      "baseColor": [
+        0.024157632443547246,
+        0.010960094003125918,
+        0.006512090790025684,
+        1
+      ],
+      "hex": "#2b1b13",
+      "metallic": 0.02,
+      "roughness": 0.78
+    },
+    {
+      "name": "wood-sofa-part-1",
+      "baseColor": [
+        0.024157632443547246,
+        0.010960094003125918,
+        0.006512090790025684,
+        1
+      ],
+      "hex": "#2b1b13",
+      "metallic": 0.02,
+      "roughness": 0.78
+    },
+    {
+      "name": "wood-sofa-part-2",
+      "baseColor": [
+        0.024157632443547246,
+        0.010960094003125918,
+        0.006512090790025684,
+        1
+      ],
+      "hex": "#2b1b13",
+      "metallic": 0.02,
+      "roughness": 0.78
+    },
+    {
+      "name": "wood-sofa-part-3",
+      "baseColor": [
+        0.024157632443547246,
+        0.010960094003125918,
+        0.006512090790025684,
+        1
+      ],
+      "hex": "#2b1b13",
+      "metallic": 0.02,
+      "roughness": 0.78
+    },
+    {
+      "name": "leatherDark-sofa-part-4",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.53
+    },
+    {
+      "name": "leather-sofa-part-5",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.5
+    },
+    {
+      "name": "leatherDark-sofa-part-6",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.55
+    },
+    {
+      "name": "leather-sofa-part-7",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.47
+    },
+    {
+      "name": "piping-sofa-part-8",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-9",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-10",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-11",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-12",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-13",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-14",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-15",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-16",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-17",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-18",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-19",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-20",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-21",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-22",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-23",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-24",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-25",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-26",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-27",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "leather-sofa-part-28",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.47
+    },
+    {
+      "name": "piping-sofa-part-29",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-30",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-31",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-32",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-sofa-part-33",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-34",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-35",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-36",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-37",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-38",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-39",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-40",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-41",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-42",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-43",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-44",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-45",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-46",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-47",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "piping-sofa-part-48",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.64
+    },
+    {
+      "name": "leather-seat-cushion-1-part-0",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.44
+    },
+    {
+      "name": "piping-seat-cushion-1-part-1",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-1-part-2",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-1-part-3",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-1-part-4",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "leather-back-cushion-1-part-0",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.46
+    },
+    {
+      "name": "piping-back-cushion-1-part-1",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-1-part-2",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-1-part-3",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-1-part-4",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "leatherDark-back-cushion-1-part-5",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.62
+    },
+    {
+      "name": "leather-seat-cushion-2-part-0",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.44
+    },
+    {
+      "name": "piping-seat-cushion-2-part-1",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-2-part-2",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-2-part-3",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-2-part-4",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "leather-back-cushion-2-part-0",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.46
+    },
+    {
+      "name": "piping-back-cushion-2-part-1",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-2-part-2",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-2-part-3",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-2-part-4",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "leatherDark-back-cushion-2-part-5",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.62
+    },
+    {
+      "name": "leather-seat-cushion-3-part-0",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.44
+    },
+    {
+      "name": "piping-seat-cushion-3-part-1",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-3-part-2",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-3-part-3",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-seat-cushion-3-part-4",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "leather-back-cushion-3-part-0",
+      "baseColor": [
+        0.2541520943200296,
+        0.0781874217970207,
+        0.024157632443547246,
+        1
+      ],
+      "hex": "#8a4f2b",
+      "metallic": 0.02,
+      "roughness": 0.46
+    },
+    {
+      "name": "piping-back-cushion-3-part-1",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-3-part-2",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-3-part-3",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "piping-back-cushion-3-part-4",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.58
+    },
+    {
+      "name": "leatherDark-back-cushion-3-part-5",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.62
+    },
+    {
+      "name": "piping-sofa-part-49",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.62
+    },
+    {
+      "name": "piping-sofa-part-50",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.62
+    },
+    {
+      "name": "piping-sofa-part-51",
+      "baseColor": [
+        0.4793201830913402,
+        0.1844749944900301,
+        0.07036009568874305,
+        1
+      ],
+      "hex": "#b8774b",
+      "metallic": 0.02,
+      "roughness": 0.62
+    },
+    {
+      "name": "leatherDark-sofa-part-52",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.68
+    },
+    {
+      "name": "leatherDark-sofa-part-53",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.68
+    },
+    {
+      "name": "leatherDark-sofa-part-54",
+      "baseColor": [
+        0.15292615198613213,
+        0.04373502925049377,
+        0.015996293361446288,
+        1
+      ],
+      "hex": "#6d3b22",
+      "metallic": 0.02,
+      "roughness": 0.68
+    }
+  ],
+  "bounds": {
+    "min": [
+      -1.3190051736831663,
+      -0.0022465630932453073,
+      -0.4529999935626985
+    ],
+    "max": [
+      1.3190051736831663,
+      1.075680068876301,
+      0.43300000037997977
+    ],
+    "dimensions": [
+      2.6380103473663326,
+      1.0779266319695464,
+      0.8859999939426783
+    ]
+  },
+  "formats": [
+    "glb",
+    "obj",
+    "fbx",
+    "usdz"
+  ],
+  "note": "This recipe is not a built-in family, so knob metadata is not listed; applied values are the exact saved design."
+}

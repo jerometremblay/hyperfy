@@ -1,0 +1,17 @@
+{
+  "name": "recipe-bench",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.22.1"
+  },
+  "scripts": {
+    "rebuild": "node build.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.1",
+    "typescript": "7.0.2"
+  }
+}

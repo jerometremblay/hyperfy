@@ -176,7 +176,14 @@ export class ClientNetwork extends System {
     // console.log('<-', method, data)
   }
 
+  onClientBuild(build) {
+    const loaded = document.querySelector('script[type="module"][src]')?.getAttribute('src')
+    this.updateAvailable = typeof build === 'string' && !!loaded && build !== loaded
+    this.world.emit('client-update', this.updateAvailable)
+  }
+
   onSnapshot(data) {
+    this.onClientBuild(data.clientBuild)
     // The server already placed us at the endpoint; do not repeat arrival after loading.
     if (data.portalArrival) {
       this.world.apps.worldMethods.setQueryParam(null, 'portalId', null)

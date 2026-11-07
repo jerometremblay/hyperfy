@@ -1,0 +1,25 @@
+{
+  "formatVersion": 1,
+  "bundleVersion": "1.2.0",
+  "toolkit": {
+    "recipe": "bench",
+    "recipeVersion": "1.1.0",
+    "deliveryRevision": 3,
+    "sha256": "09831a9f297372b663ef8705e1b0c63c0b9f8649b9b129cc244bec161aaad4bb",
+    "sourceHash": "b206980cfff82780dc384261c85e50432dce2ab410d87203fd36cc25990e43ed"
+  },
+  "apps": [
+    "codex"
+  ],
+  "files": {
+    ".agents/skills/polyspoon/SKILL.md": "d564e17df81d16ef4ece75c9ea173af88452945f5d911c055bac0dae9747e47b",
+    ".polyspoon/runtime.mjs": "46b9c9105452e929476f4779893a7a1d84d77680a3d0adf9acb4b1b34505b578",
+    ".polyspoon/bootstrap.mjs": "6da92acabf137e62eb85a6f68b731db3a7268a464c9d562156b9f2f2babf9520",
+    ".polyspoon/support.mjs": "65d4e0cf1aec31b322b0b9897c00869418fcd09e0e0433bfd36773dfa61cc983",
+    ".polyspoon/formats.mjs": "3a1c391fdd9358c5fa8bc2a24534ce8bfa27d0200d8b18f9312ac5481e9fa1a4",
+    ".polyspoon/model-controls.json": "b8247de02e4b8e4324552d2196fe58c32564af0fd758f67a094382b207f8fc44",
+    ".polyspoon/toolkit.zip": "09831a9f297372b663ef8705e1b0c63c0b9f8649b9b129cc244bec161aaad4bb",
+    ".polyspoon/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    ".polyspoon/NOTICE": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122"
+  }
+}

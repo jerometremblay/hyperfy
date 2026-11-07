@@ -1,0 +1,88 @@
+(!) Failed to run dependency scan. Skipping dependency pre-bundling. Error:   Failed to scan for dependencies from entries:
+  /private/tmp/polyspoon-vm-share/source/environment.html
+/private/tmp/polyspoon-vm-share/source/fox.html
+/private/tmp/polyspoon-vm-share/source/index.html
+/private/tmp/polyspoon-vm-share/source/kit-review.html
+/private/tmp/polyspoon-vm-share/source/rigged.html
+/private/tmp/polyspoon-vm-share/source/hosted/public/index.html
+/private/tmp/polyspoon-vm-share/source/hosted/app/index.html
+/private/tmp/polyspoon-vm-share/source/tests/fixtures/review-defects/viewer.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/bench/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/boulder/0.5.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/boulder/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/cottage/0.5.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/cottage/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/conifer/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/crate/0.5.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/crate/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/conifer/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/fence/0.5.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/fence/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/planter/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/planter/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/stone-well/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/stone-well/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/stylized-humanoid/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/stylized-fox/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/tree/0.5.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/tree/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/wheelbarrow/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/treasure-chest/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/treasure-chest/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/wheelbarrow/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/work-lantern/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/public/procedural-modules/work-lantern/0.5.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-1UMBs3/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-5giCqR/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-9vEWrg/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-BKHf8d/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-Ezf8mV/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-KEyx9z/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-J0P0un/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-LyXmeS/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-N4tUTl/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-q9V6G5/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-leLLu6/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-tRM5z7/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-ti89mQ/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/authority-uW3YzW/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/boulder/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/cognac-leather-sofa/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/conifer/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/bench/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/crate/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/cottage/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/fence/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/planter/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/stone-well/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/stylized-fox/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/stylized-humanoid/1.0.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/tree/0.6.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/treasure-chest/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/wheelbarrow/1.1.0/example.html
+/private/tmp/polyspoon-vm-share/source/evidence/revision14/delivery/module-repair/fresh-output-0Q3pk4/work-lantern/0.6.0/example.html
+
+  Build failed with 2 errors:
+
+[31m[PARSE_ERROR] [0mExpected a semicolon or an implicit semicolon after a statement, but found none
+ -  in evidence/revision14/delivery/module-repair/authority-N4tUTl/bench/1.1.0/asset.mjs at 45907..45907
+ [38;5;240m │[0m 
+ [38;5;240m │[0m [38;5;115mHelp[0m: Try inserting a semicolon here
+
+[31m[PARSE_ERROR] [0mExpected a semicolon or an implicit semicolon after a statement, but found none
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m evidence/revision14/delivery/module-repair/authority-LyXmeS/bench/1.1.0/asset.mjs:1:8 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m1 │[0m [38;5;249mc[0m[38;5;249mh[0m[38;5;249ma[0m[38;5;249mn[0m[38;5;249mg[0m[38;5;249me[0m[38;5;249md[0m[38;5;249m [0m[38;5;249mr[0m[38;5;249mu[0m[38;5;249mn[0m[38;5;249mt[0m[38;5;249mi[0m[38;5;249mm[0m[38;5;249me[0m
+ [38;5;240m  │[0m        │ 
+ [38;5;240m  │[0m        ╰─ 
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: Try inserting a semicolon here
+[38;5;246m───╯[0m
+
+    at aggregateBindingErrorsIntoJsError (file:///private/tmp/polyspoon-vm-share/source/node_modules/rolldown/dist/shared/error-Bj1xBdEY.mjs:49:18)
+    at unwrapBindingResult (file:///private/tmp/polyspoon-vm-share/source/node_modules/rolldown/dist/shared/error-Bj1xBdEY.mjs:19:128)
+    at scan (file:///private/tmp/polyspoon-vm-share/source/node_modules/rolldown/dist/experimental-index.mjs:241:3)
+    at async Object.build (/private/tmp/polyspoon-vm-share/source/node_modules/vite/dist/node/chunks/node.js:27898:3)
+    at async scan (/private/tmp/polyspoon-vm-share/source/node_modules/vite/dist/node/chunks/node.js:27837:4)
+    at async <anonymous> (/private/tmp/polyspoon-vm-share/source/node_modules/vite/dist/node/chunks/node.js:35613:15)

@@ -62,6 +62,27 @@ function fixture() {
   }
 }
 
+test('Apps performance view samples without the overlay and releases sampling when closed', () => {
+  const { profiler, app } = fixture()
+  app('a')
+  profiler.setAppsView(true)
+  assert.equal(profiler.active, true)
+  assert.equal(profiler.details, false)
+  assert.equal(profiler.overlay, undefined)
+  profiler.sample(1)
+  assert.equal(profiler.rows.length, 1)
+  profiler.toggle(true)
+  profiler.setAppsView(false)
+  assert.equal(profiler.active, true)
+  profiler.toggle(false)
+  assert.equal(profiler.active, false)
+  profiler.setAppsView(true)
+  profiler.setAppsView(false)
+  assert.equal(profiler.active, false)
+  assert.equal(profiler.rows.length, 0)
+  profiler.destroy()
+})
+
 test('off mode is inert; permissions, role loss and disconnect dispose every orb resource', () => {
   const { world, profiler, app, setAdmin } = fixture()
   app('a')

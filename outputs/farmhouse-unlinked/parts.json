@@ -1,0 +1,123 @@
+{
+  "blueprint": {
+    "name": "Farmhouse",
+    "url": "https://polyspoon.com/asset/9eac83188f27044be322d2e562b520d428bf261c54bd45efb87a412da2b05237?offset=48",
+    "model": "polyspoon://fb63358af656c47c22e7828f5adb4b2ddf82a5a313c42a71332f1ee1df2d02b1",
+    "script": null,
+    "props": {
+      "length": 1.5,
+      "width": 1,
+      "chairs": 4,
+      "chairStyle": "spindle",
+      "setting": false,
+      "colorway": "farmhouse",
+      "shape": "round"
+    },
+    "image": null,
+    "preload": false,
+    "public": false,
+    "locked": false,
+    "unique": false,
+    "scene": false,
+    "disabled": false,
+    "id": "Io1ikeh2RJ",
+    "version": 21
+  },
+  "transforms": [
+    {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "position": [
+        5.71910055201814e-17,
+        0,
+        0.934
+      ],
+      "quaternion": [
+        0,
+        -0.9995500337489875,
+        0,
+        -0.029995500202495626
+      ]
+    },
+    {
+      "position": [
+        -0.99,
+        0,
+        1.2124003311558797e-16
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865476,
+        0,
+        0.7071067811865475
+      ]
+    },
+    {
+      "position": [
+        -1.7157301656054419e-16,
+        0,
+        -0.934
+      ],
+      "quaternion": [
+        0,
+        0.02999550020249575,
+        0,
+        0.9995500337489875
+      ]
+    },
+    {
+      "position": [
+        0.99,
+        0,
+        -2.4248006623117594e-16
+      ],
+      "quaternion": [
+        0,
+        -0.7279986285974186,
+        0,
+        0.6855785854008845
+      ]
+    }
+  ],
+  "counts": [
+    7,
+    18,
+    18,
+    18,
+    18
+  ],
+  "entities": [
+    {
+      "id": "BNOtoeFUw7",
+      "blueprint": "Io1ikeh2RJ",
+      "position": [
+        38.74452828306172,
+        0.12096717663691132,
+        8.655169323135702
+      ],
+      "quaternion": [
+        0,
+        -0.537299608346824,
+        0,
+        0.8433914458128858
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pinned": false
+    }
+  ]
+}

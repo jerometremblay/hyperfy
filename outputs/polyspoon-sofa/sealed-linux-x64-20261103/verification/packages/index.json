@@ -1,0 +1,305 @@
+{
+  "formatVersion": 2,
+  "packages": [
+    {
+      "id": "work-lantern",
+      "version": "0.6.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/work-lantern-0.6.0-source.3.zip",
+      "sha256": "deb1e7cc64fbb295f2f0f29965b5205654e621909e4248cd6ff2f4c230801718",
+      "bytes": 617046,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "cottage",
+      "version": "0.6.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/cottage-0.6.0-source.3.zip",
+      "sha256": "dd7689ed85cd706830339b7acd722583315271439d2fb906dab733644a71caf2",
+      "bytes": 620449,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "tree",
+      "version": "0.6.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/tree-0.6.0-source.3.zip",
+      "sha256": "38673fe017143675b832eeb26fe0e9cb6a0183f22758970f2c228bd3866663f5",
+      "bytes": 615892,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "fence",
+      "version": "0.6.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/fence-0.6.0-source.3.zip",
+      "sha256": "1b8b16c24bffdc25f967b567badceaa827a122de99a860d0a296277077c546fe",
+      "bytes": 616234,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "crate",
+      "version": "0.6.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/crate-0.6.0-source.3.zip",
+      "sha256": "034609569523f883b537c5ae2c268e2e52a4fb1f1fc4cd0cfbe4d0f7f9fffe5e",
+      "bytes": 615672,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "boulder",
+      "version": "0.6.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/boulder-0.6.0-source.3.zip",
+      "sha256": "a4cdb824437ae449216a7f52879eef5b5833ffe470292f16fb23d340d44acf57",
+      "bytes": 615666,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "bench",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/bench-1.1.0-source.3.zip",
+      "sha256": "3d1287c0dc5e92cf13bd0b2461eb247a5b74af4e5fbeb992b94f3cf38f4d1b23",
+      "bytes": 612266,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "planter",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/planter-1.1.0-source.3.zip",
+      "sha256": "1a26cfc3bf0d6d030b6db61fd866854b21c3ea923ebb3256d69a62f9def889fd",
+      "bytes": 611801,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "treasure-chest",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/treasure-chest-1.1.0-source.3.zip",
+      "sha256": "f80bc75441185a64b5867d488d18564f03a8071856b61700bda208a76683bada",
+      "bytes": 612934,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "wheelbarrow",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/wheelbarrow-1.1.0-source.3.zip",
+      "sha256": "6cf1184da72389db03b310d88df7d9560afe373f4797bfe926c0c1806f83ec8c",
+      "bytes": 613001,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "stone-well",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/stone-well-1.1.0-source.3.zip",
+      "sha256": "4832e0b104710b0b7197d572c49f558b02a7d6ac8d34f316303da994970145a0",
+      "bytes": 613649,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "conifer",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/conifer-1.1.0-source.3.zip",
+      "sha256": "4cc60b5088ed09e753f743195b5da84a2f7f2f3e70105af46f1aad11901d679d",
+      "bytes": 611692,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "stylized-humanoid",
+      "version": "1.0.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/stylized-humanoid-1.0.0-source.3.zip",
+      "sha256": "c33bda3be06818805dd766f514816cf87e05398cfa9a14bfdb70ce586e8d6f14",
+      "bytes": 612445,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "stylized-fox",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/stylized-fox-1.1.0-source.3.zip",
+      "sha256": "0a5a59fed00351dfb3c1e17bf880e9ffa2c232dcfb382eca2c8baf6b907c778a",
+      "bytes": 612469,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    },
+    {
+      "id": "cognac-leather-sofa",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/cognac-leather-sofa-1.1.0-source.3.zip",
+      "sha256": "b4b158fb83ccd7d5ba35c4dafdb07bc8d4203dc5f943fd3a1e1f4f1fdd4fc338",
+      "bytes": 613802,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    }
+  ]
+}

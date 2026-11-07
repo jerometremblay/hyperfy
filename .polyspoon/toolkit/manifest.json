@@ -1,0 +1,357 @@
+{
+  "formatVersion": 2,
+  "deliveryRevision": 3,
+  "recipe": {
+    "id": "bench",
+    "version": "1.1.0",
+    "entry": "examples/recipes/bench/index.ts",
+    "exportName": "benchRecipe"
+  },
+  "configuration": {
+    "path": "config.json",
+    "kind": "default"
+  },
+  "controls": "controls.json",
+  "dependencies": {
+    "three": "0.186.1",
+    "typescript": "7.0.2"
+  },
+  "toolchain": {
+    "node": "22.22.1",
+    "build": "npm run rebuild -- --config config.json --out output.glb"
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "contentPaths": [
+      "config.json"
+    ],
+    "thirdParty": "dependency-licenses.json"
+  },
+  "provenance": {
+    "kind": "author-declaration",
+    "author": "Woodland Workshop project authors",
+    "statement": "Original project-authored starter implementation and parameter content; third-party dependencies retain upstream terms.",
+    "contentDesignation": "Original supplied default and curated preset parameter content for bench; external material and private edits excluded.",
+    "reviewStatus": "not-established-by-packaging",
+    "sourceHash": "b206980cfff82780dc384261c85e50432dce2ab410d87203fd36cc25990e43ed"
+  },
+  "files": {
+    "build.mjs": {
+      "sha256": "04335708bf649668d09842ae0f31becbc4384738adac4352d89d5fc435aa62db",
+      "bytes": 1253
+    },
+    "config.json": {
+      "sha256": "240713e1f9de1403f0123b64e2a1dc829e1a50cc7b73b6e0d4f8fcf1e576ff6c",
+      "bytes": 321
+    },
+    "controls.json": {
+      "sha256": "fbb578e4d98c70424e0223ff58a514765c9550bdc4eed278afc0ead4aad61afe",
+      "bytes": 3292
+    },
+    "dependency-licenses.json": {
+      "sha256": "5b40a6de218850b0c1c2eeab0ee06491ffba6b86cf7ce1eb069367dbe3e269bf",
+      "bytes": 9607
+    },
+    "examples/recipes/bench/index.ts": {
+      "sha256": "d05a88b48cb1f235e4e44504230719f1311fd7a6dc15cda2bef93e43316782e9",
+      "bytes": 8831
+    },
+    "examples/recipes/conifer/index.ts": {
+      "sha256": "707e1033d592f281b7610eba2e77b3593d97f124b5a7c3c00ef3a44a72b8f66f",
+      "bytes": 9408
+    },
+    "examples/recipes/planter/index.ts": {
+      "sha256": "f0d0d836f6c2878fa1430274d0cf300f58dfcbedefb116cbd8f60212d8b0350f",
+      "bytes": 8128
+    },
+    "examples/recipes/stone-well/index.ts": {
+      "sha256": "c856284c2be9433cb1b092883801f940878e90ea16883350af33721877896348",
+      "bytes": 14675
+    },
+    "examples/recipes/stylized-fox/index.ts": {
+      "sha256": "e43bf708c97d4aed4fa355ea34f9d48dc376b265412cdc30d5cfebb020e1c49d",
+      "bytes": 13968
+    },
+    "examples/recipes/stylized-humanoid/index.ts": {
+      "sha256": "d109d6a93259f0477b48c2e7ff44cb9d505d96b35e1219f6c1714dadacf376af",
+      "bytes": 11789
+    },
+    "examples/recipes/treasure-chest/index.ts": {
+      "sha256": "c1e9b7a2140da6839bae1ae76f686342651fa8908fcde4589fa533563140b89c",
+      "bytes": 12217
+    },
+    "examples/recipes/wheelbarrow/index.ts": {
+      "sha256": "3e052ce5dbc2b7362ad7974ec5e2a0061916bc4dcbf85d52fce72e6e6df54922",
+      "bytes": 12171
+    },
+    "LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "LICENSES/-typescript-typescript-linux-x64.txt": {
+      "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+      "bytes": 9197
+    },
+    "LICENSES/Apache-2.0.txt": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    "LICENSES/CC0-1.0.txt": {
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "bytes": 7048
+    },
+    "LICENSES/three.txt": {
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+      "bytes": 1081
+    },
+    "LICENSES/typescript-NOTICE.txt": {
+      "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+      "bytes": 48860
+    },
+    "LICENSES/typescript.txt": {
+      "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+      "bytes": 9197
+    },
+    "NOTICE": {
+      "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+      "bytes": 615
+    },
+    "package-lock.json": {
+      "sha256": "82b371326629f726a71da3d309a678326f3824694c884acbc8b2e346f7113b14",
+      "bytes": 11727
+    },
+    "package.json": {
+      "sha256": "9270ef60ae84c4ac8294f0a55fa5b2fd8d21a38baaf3f74330c66c66b2b17c87",
+      "bytes": 288
+    },
+    "REBUILD.md": {
+      "sha256": "dc4d259ccbd9d7dc9b6f9cd439990acbe899c3d66fadb1932fb287df9f2e1a9f",
+      "bytes": 1708
+    },
+    "runner.ts": {
+      "sha256": "aee1c6d9bc00e04a517781ae44dbe2a3c74f0208ba6f35a165dacbd70132e7a9",
+      "bytes": 2731
+    },
+    "scripts/node-platform.ts": {
+      "sha256": "5cb288d3360839e1e814cdb00d70ae8f8cd5e2499f3b46c21e7d6088f3d9eee4",
+      "bytes": 484
+    },
+    "src/catalog/appearance.ts": {
+      "sha256": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "bytes": 5850
+    },
+    "src/catalog/build.ts": {
+      "sha256": "14aadccd4bfd1739a95276360c45e78afbe1e68ff840b6b748f0909628851f5f",
+      "bytes": 1471
+    },
+    "src/catalog/delivery.ts": {
+      "sha256": "516529bded5253e151e86d7d83cbb6356f274ec3add16db7b66d9d26049fca27",
+      "bytes": 390
+    },
+    "src/catalog/export.ts": {
+      "sha256": "5473a5611be3ef728adbdaf57a597d224dcee4b716950cc89c732315f872346d",
+      "bytes": 6181
+    },
+    "src/catalog/index.ts": {
+      "sha256": "34e45e4355feb2edd90548e52dfca3ecde596f679b873df063ed8515a1ca4619",
+      "bytes": 2571
+    },
+    "src/catalog/semantics.ts": {
+      "sha256": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "bytes": 11195
+    },
+    "src/catalog/types.ts": {
+      "sha256": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "bytes": 674
+    },
+    "src/engine/construction-migration.ts": {
+      "sha256": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "bytes": 2489
+    },
+    "src/engine/convex-stone.ts": {
+      "sha256": "50d0641fd34c999c428ec5d6bb047d22d729b31334f2fe0973fb448c668aa755",
+      "bytes": 2176
+    },
+    "src/engine/geometry.ts": {
+      "sha256": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+      "bytes": 7704
+    },
+    "src/engine/parameters.ts": {
+      "sha256": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "bytes": 5819
+    },
+    "src/engine/roof.ts": {
+      "sha256": "4a0cb05b4d06ebfde8fc63ff949c17df454a9d8164efdddb555aad6d0d2bf763",
+      "bytes": 3019
+    },
+    "src/engine/style.ts": {
+      "sha256": "af5d9fb2ee32c028109b8b5fb0c0d3130e9f93c3dffea855690877af37c91e20",
+      "bytes": 392
+    },
+    "src/engine/timber.ts": {
+      "sha256": "9e58b9511ba427526b668a1cc8a9508c68afdc15fa9be32674abf1a8b7ecf461",
+      "bytes": 777
+    },
+    "src/families/assembly.ts": {
+      "sha256": "bacdf7af9aee38a3456e61bbce6145e7a72c4b27b31d78af26072b52ddaf5f19",
+      "bytes": 4328
+    },
+    "src/families/boulder.ts": {
+      "sha256": "f24399e4ff802b0bb372f2ab71702fc3dc5c7c67a88a13a5efd962d694eea523",
+      "bytes": 6818
+    },
+    "src/families/config.ts": {
+      "sha256": "44e3537f114edea55a1a4a8821d88e8565df54637baaec100aff5c3cdbee0e36",
+      "bytes": 41141
+    },
+    "src/families/cottage.ts": {
+      "sha256": "0714a3cf86972ad423fa0883677e797069638566600977bd6474784c1b8f6aec",
+      "bytes": 16741
+    },
+    "src/families/crate.ts": {
+      "sha256": "f427ffe54d70aabdc9e40299f0753d561ada3503efdbb05ded77b77738ce151e",
+      "bytes": 3311
+    },
+    "src/families/fence.ts": {
+      "sha256": "49f8409703a7c01c7473bef846e5a562ec5aa7b8243b55f7775f7add0eecda02",
+      "bytes": 2528
+    },
+    "src/families/index.ts": {
+      "sha256": "a6adc5b6581906fbbda5b69fbd88498de7a941a50c1a3f3d18e78017824a59c5",
+      "bytes": 787
+    },
+    "src/families/legacy-config.ts": {
+      "sha256": "4d250c98245d6dc73e9f2715be9cd718254156531066cd19590349b441aebb39",
+      "bytes": 2276
+    },
+    "src/families/legacy-typed-config.ts": {
+      "sha256": "ef889d69010ba7b73d20353c63968fa39d1c795ca768ff79af0015451f5ce47d",
+      "bytes": 2951
+    },
+    "src/families/revision2-config.ts": {
+      "sha256": "aa80d74774bcb9f741d57c6fd8595d972e6d3e83a7fa3826fb6ae1dcc128d961",
+      "bytes": 23832
+    },
+    "src/families/revision3-config.ts": {
+      "sha256": "553031d6cdd15119c30e478e2b79c7db4433a00f985d80973dd7b02c30d68954",
+      "bytes": 38472
+    },
+    "src/families/revision4-config.ts": {
+      "sha256": "b671492205cd1aab3607f57db5b598721302474a07e9343586d4f3967e777343",
+      "bytes": 41576
+    },
+    "src/families/tree.ts": {
+      "sha256": "d8782885092fe97bfae5713b99c2ad66607526a0170d952522bf1386ed3369f9",
+      "bytes": 4299
+    },
+    "src/lantern/config.ts": {
+      "sha256": "b531822e4975c30b8cb2e3a71852b97f252e887aa809fffebaecac0e3edf9093",
+      "bytes": 8803
+    },
+    "src/lantern/generator.ts": {
+      "sha256": "d97476a03c6597c0422abdc4c48dad16b2ec52f76101ebbbd98cded89117ecc5",
+      "bytes": 6314
+    },
+    "src/lantern/geometry.ts": {
+      "sha256": "72d1963a5bee9b211d44ba296c3fa3e3b291e9ecca8b510f5acc8f868d89f440",
+      "bytes": 601
+    },
+    "src/lantern/inspect.ts": {
+      "sha256": "a395eaca317e22c27f25b424cf98d91c3b8fb9ea3156fe2ee09890b558ccfd49",
+      "bytes": 2614
+    },
+    "src/lantern/revision2-config.ts": {
+      "sha256": "25200fdb4bac1da0c50528447e634ac3e058cebb4dd29bea712f3608a61c6ad7",
+      "bytes": 8934
+    },
+    "src/lantern/revision3-config.ts": {
+      "sha256": "d1f78f9a6b31e7dbf291e891428f0767d5881aa8f1ceaf244a9947eef7babcf7",
+      "bytes": 8612
+    },
+    "src/lantern/revision4-config.ts": {
+      "sha256": "c200f53f66b907ef9ec7e73f9de52fd16310c5aaaa01f23eaa52df041554d107",
+      "bytes": 10130
+    },
+    "src/lantern/rustic.ts": {
+      "sha256": "46c96cb453b21adbb8b8100c20add5f32abec1cab9c7862124a334db0a34504a",
+      "bytes": 5404
+    },
+    "src/recipes/builtins.ts": {
+      "sha256": "5b609bf811dcc0b1874a8a9bb269af346e1147d0c929818ebdc6700ffd900c2b",
+      "bytes": 4843
+    },
+    "src/recipes/index.ts": {
+      "sha256": "cc9b76a3c4e5cd7584a6b919814a87eace16863b8bada84731772983bc15c068",
+      "bytes": 1081
+    },
+    "src/recipes/legacy-v1/bench.ts": {
+      "sha256": "d71d6c0741f48f36787cc642813d469a3bd4659858bcadfdbd7fb9cfc53bdb13",
+      "bytes": 3617
+    },
+    "src/recipes/legacy-v1/conifer.ts": {
+      "sha256": "65dd6bb89d20617c689b6081be780492f85c0ad7be66a4bc597121127d8920f8",
+      "bytes": 2349
+    },
+    "src/recipes/legacy-v1/planter.ts": {
+      "sha256": "c6ed1f78b474f593afec76954fa06746eeb51aa41912a8f13c7508002093ac81",
+      "bytes": 3034
+    },
+    "src/recipes/legacy-v1/stone-well.ts": {
+      "sha256": "f26840964ac986d5d9ff8013ce0ef9c2719cfed33a1f8c030c1f1bbcc52dbe4b",
+      "bytes": 3573
+    },
+    "src/recipes/legacy-v1/treasure-chest.ts": {
+      "sha256": "35efbe7ec7857a5015d38797a29ebe8353348235946ba627e65f67e7f2f608d5",
+      "bytes": 3138
+    },
+    "src/recipes/legacy-v1/wheelbarrow.ts": {
+      "sha256": "d90e5a9b1feb104d8a8509b72978373b242441ca47a63fc087cce19117d86c32",
+      "bytes": 3257
+    },
+    "src/recipes/registry.ts": {
+      "sha256": "15e6e733aa16d0d42b84c2e8b92951f59c57d31fb65da691306a8e21f7b7e63a",
+      "bytes": 4955
+    },
+    "src/recipes/rigged.ts": {
+      "sha256": "a2d1d9025fa19d4c2dc3cf8ec4e6d600c2d7c7d1e50cc0e7ed6dc159b97416a4",
+      "bytes": 1247
+    },
+    "src/recipes/types.ts": {
+      "sha256": "cf3704bb5d069ad820890a5304ff41d1eba59d9793ce57551a9e617ccc89781e",
+      "bytes": 689
+    },
+    "src/rigging/export.ts": {
+      "sha256": "bd240c7f4bdee1e06ebe225aa752da85c663c04bfb4422e99bec44a6b18d1288",
+      "bytes": 1778
+    },
+    "src/rigging/fox-geometry.ts": {
+      "sha256": "f9246ce2ccc97de401bae273c6abbab99e3e7743759b92c9ffe2937e72ba2b54",
+      "bytes": 1536
+    },
+    "src/rigging/fox-motion.ts": {
+      "sha256": "a2a1a52b88f203e39c2fd81ae36e5246601ee7094794a318af6fe6b6da702ca8",
+      "bytes": 4355
+    },
+    "src/rigging/ik.ts": {
+      "sha256": "c830d8b30f49d7b351d5e6f495fe11252ba6b7f17230e2bfdf56f7e24ccc6ea6",
+      "bytes": 1737
+    },
+    "src/rigging/motion.ts": {
+      "sha256": "8a72911aa9b1f933513f65f728809ec1039f8bdf59e11ff1b0f6c47217012106",
+      "bytes": 3371
+    },
+    "src/rigging/skin.ts": {
+      "sha256": "a7cc9337482a4412d088f8f421a3d900f2b135b0c4466347522d2297c5bfb84f",
+      "bytes": 4614
+    },
+    "src/rigging/types.ts": {
+      "sha256": "dc2c7d8b2a84b31b4f6dcebd77613d5cd107ac9475852cdcecf041a813bba7a8",
+      "bytes": 789
+    },
+    "src/rigging/validation.ts": {
+      "sha256": "99f63557df28525fbc05556266acb059d67bb3144689b2a41a7ce01c61adabb3",
+      "bytes": 6593
+    }
+  }
+}

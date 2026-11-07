@@ -1,0 +1,56 @@
+{
+  "formatVersion": 1,
+  "packages": [
+    {
+      "id": "cognac-leather-sofa",
+      "version": "1.1.0",
+      "url": "procedural-modules/cognac-leather-sofa/1.1.0/asset.mjs",
+      "sha256": "bca43248232f29216f612d7b8badd8690ec32b4007ffa03c47914becb228cdee",
+      "bytes": 60661,
+      "dependencies": {
+        "three": "0.186.1"
+      },
+      "configuration": {
+        "kind": "default"
+      },
+      "files": {
+        "asset.mjs": {
+          "sha256": "bca43248232f29216f612d7b8badd8690ec32b4007ffa03c47914becb228cdee",
+          "bytes": 60661
+        },
+        "asset.d.mts": {
+          "sha256": "83038bfa9db2a58f415cefa5dc2928871caa00bdb142134df37b46245ff68542",
+          "bytes": 22119
+        },
+        "metadata.json": {
+          "sha256": "6bac6a4e22d0f7133d44632ae347b4348bf4ac3b6bab82ee8c419d4e8265f8a6",
+          "bytes": 32262
+        },
+        "README.md": {
+          "sha256": "bd36bcd47d04eb1465a42645bbd2df8cfcc0b71d1867446fd17951de34301419",
+          "bytes": 4352
+        },
+        "semantic-contract.md": {
+          "sha256": "520bb72d85433df842d8bc69c23e31bf44b52fc7ffb0dab704af7eb532f779dc",
+          "bytes": 5837
+        },
+        "LICENSE": {
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        "NOTICE": {
+          "sha256": "158811d49b6f88ae086d0dd76214e13be20a99a6b589add8711536fa52b76122",
+          "bytes": 615
+        },
+        "THIRD-PARTY.txt": {
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+          "bytes": 1081
+        },
+        "example.html": {
+          "sha256": "c79953bb69092f0426375a7022068b789167146f61c9475d6a1d38b089ebcceb",
+          "bytes": 530
+        }
+      }
+    }
+  ]
+}

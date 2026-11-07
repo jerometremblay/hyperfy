@@ -1,0 +1,1254 @@
+{
+  "formatVersion": 1,
+  "semantics": {
+    "version": 1,
+    "identity": {
+      "family": "work-lantern",
+      "recipeVersion": "0.6.0"
+    },
+    "coordinates": {
+      "lengthUnit": "m",
+      "up": "+Y",
+      "front": "+Z",
+      "origin": "ground-center",
+      "anchorSpace": "root"
+    },
+    "controls": [
+      {
+        "key": "bodyWidth",
+        "label": "Body width",
+        "min": 0.22,
+        "max": 0.44,
+        "step": 0.001,
+        "hint": "Widens the enclosure, hood and base together.",
+        "kind": "range",
+        "default": 0.32,
+        "group": "shape",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "enclosure",
+          "hood",
+          "base",
+          "handle"
+        ],
+        "unit": "cm",
+        "inputUnit": "m",
+        "displayUnit": "cm"
+      },
+      {
+        "key": "bodyHeight",
+        "label": "Body height",
+        "min": 0.18,
+        "max": 0.36,
+        "step": 0.001,
+        "hint": "Enclosure only, excluding the hood and handle.",
+        "kind": "range",
+        "default": 0.26,
+        "group": "shape",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "enclosure",
+          "hood",
+          "base",
+          "handle"
+        ],
+        "unit": "cm",
+        "inputUnit": "m",
+        "displayUnit": "cm"
+      },
+      {
+        "key": "handleClearance",
+        "label": "Handle opening",
+        "min": 0.075,
+        "max": 0.19,
+        "step": 0.001,
+        "hint": "Clear space above the hood, beneath the grip.",
+        "kind": "range",
+        "default": 0.115,
+        "group": "shape",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "enclosure",
+          "hood",
+          "base",
+          "handle"
+        ],
+        "unit": "cm",
+        "inputUnit": "m",
+        "displayUnit": "cm"
+      },
+      {
+        "kind": "choice",
+        "key": "frameWeight",
+        "label": "Frame weight",
+        "default": "heavy",
+        "options": [
+          {
+            "value": "light",
+            "label": "light"
+          },
+          {
+            "value": "heavy",
+            "label": "heavy"
+          }
+        ],
+        "group": "construction",
+        "hint": "Select frame weight.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "frameWeight"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "choice",
+        "key": "guardLayout",
+        "label": "Guard layout",
+        "default": "sparse",
+        "options": [
+          {
+            "value": "sparse",
+            "label": "sparse"
+          },
+          {
+            "value": "crossbar",
+            "label": "crossbar"
+          }
+        ],
+        "group": "construction",
+        "hint": "Select guard layout.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "guardLayout"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "choice",
+        "key": "detail",
+        "label": "Detail",
+        "default": "inspection",
+        "options": [
+          {
+            "value": "scene",
+            "label": "scene"
+          },
+          {
+            "value": "inspection",
+            "label": "inspection"
+          }
+        ],
+        "group": "construction",
+        "hint": "Select detail.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "detail"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "choice",
+        "key": "colorway",
+        "label": "Colorway",
+        "default": "forest",
+        "options": [
+          {
+            "value": "forest",
+            "label": "forest"
+          },
+          {
+            "value": "harbor",
+            "label": "harbor"
+          },
+          {
+            "value": "ember",
+            "label": "ember"
+          }
+        ],
+        "group": "colors",
+        "hint": "Select colorway.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "colorway"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "color",
+        "key": "color.body",
+        "label": "body",
+        "role": "body",
+        "default": "#526750",
+        "group": "colors",
+        "hint": "Changes only body color.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "body"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "kind": "color",
+        "key": "color.enclosure",
+        "label": "enclosure",
+        "role": "enclosure",
+        "default": "#eee1bf",
+        "group": "colors",
+        "hint": "Changes only enclosure color.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "enclosure"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "kind": "color",
+        "key": "color.structure",
+        "label": "structure",
+        "role": "structure",
+        "default": "#303b35",
+        "group": "colors",
+        "hint": "Changes only structure color.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "structure"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "kind": "color",
+        "key": "color.accent",
+        "label": "accent",
+        "role": "accent",
+        "default": "#d2a449",
+        "group": "colors",
+        "hint": "Changes only accent color.",
+        "affects": [
+          "material"
+        ],
+        "targets": [
+          "accent"
+        ],
+        "unit": "color",
+        "inputUnit": "color",
+        "displayUnit": "color"
+      },
+      {
+        "kind": "choice",
+        "default": "octagonal",
+        "options": [
+          {
+            "value": "square",
+            "label": "Square"
+          },
+          {
+            "value": "octagonal",
+            "label": "Octagonal"
+          }
+        ],
+        "key": "enclosureProfile",
+        "label": "Enclosure profile",
+        "group": "construction",
+        "hint": "Changes the light housing and retaining frames to square or eight-sided sections; guards follow the profile.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "enclosure",
+          "lower-frame",
+          "upper-frame",
+          "guard-upright-*"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "range",
+        "ratioBasis": "width",
+        "default": 0.18,
+        "min": 0.08,
+        "max": 0.3,
+        "step": 0.01,
+        "key": "hoodFlare",
+        "label": "Hood flare",
+        "group": "construction",
+        "hint": "Adds this fraction of body width to each hood side; the top collar stays fitted.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "hood"
+        ],
+        "unit": "ratio",
+        "inputUnit": "dimensionless",
+        "displayUnit": "ratio"
+      },
+      {
+        "kind": "choice",
+        "default": "arched",
+        "options": [
+          {
+            "value": "arched",
+            "label": "Arched"
+          },
+          {
+            "value": "square",
+            "label": "Square"
+          }
+        ],
+        "key": "handleProfile",
+        "label": "Carry handle",
+        "group": "construction",
+        "hint": "Chooses a curved tubular carry hoop or a square band while keeping the requested clear height.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "handle"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "integer",
+        "default": 4,
+        "min": 3,
+        "max": 6,
+        "key": "guardCount",
+        "label": "Guard count",
+        "group": "construction",
+        "hint": "Distributes three to six tapered vertical guards around the enclosure.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "guard-upright-*"
+        ],
+        "step": 1,
+        "unit": "count",
+        "inputUnit": "integer",
+        "displayUnit": "count"
+      },
+      {
+        "kind": "choice",
+        "key": "construction",
+        "label": "Lantern construction",
+        "default": "rustic",
+        "options": [
+          {
+            "value": "rustic",
+            "label": "Rustic oil lantern"
+          },
+          {
+            "value": "utility",
+            "label": "Utility lamp"
+          }
+        ],
+        "group": "construction",
+        "hint": "Rebuilds reservoir, vessel and ventilated cap as a connected construction.",
+        "affects": [
+          "geometry",
+          "topology"
+        ],
+        "targets": [
+          "oil-reservoir",
+          "enclosure",
+          "hood",
+          "handle"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      },
+      {
+        "kind": "range",
+        "key": "hoodRise",
+        "label": "Cap rise",
+        "default": 1,
+        "min": 0.75,
+        "max": 1.25,
+        "step": 0.05,
+        "group": "construction",
+        "ratioBasis": "normalized",
+        "hint": "Raises the cap, vents and carry seats together.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "hood",
+          "vented-cap",
+          "handle"
+        ],
+        "unit": "ratio",
+        "inputUnit": "dimensionless",
+        "displayUnit": "ratio"
+      },
+      {
+        "kind": "choice",
+        "key": "carryHoop",
+        "label": "Rustic carry hoop",
+        "default": "oval",
+        "options": [
+          {
+            "value": "oval",
+            "label": "Oval"
+          },
+          {
+            "value": "round",
+            "label": "Round"
+          },
+          {
+            "value": "tall",
+            "label": "Tall oval"
+          }
+        ],
+        "group": "construction",
+        "hint": "Changes the rustic hoop aspect while retaining its mountings.",
+        "affects": [
+          "geometry"
+        ],
+        "targets": [
+          "handle"
+        ],
+        "unit": "none",
+        "inputUnit": "none",
+        "displayUnit": "none"
+      }
+    ],
+    "anchors": {
+      "ground": [
+        0,
+        0,
+        0
+      ],
+      "carry": [
+        0,
+        0.7422750357891931,
+        0
+      ]
+    },
+    "materials": [
+      {
+        "id": "accent"
+      },
+      {
+        "id": "body"
+      },
+      {
+        "id": "enclosure"
+      },
+      {
+        "id": "structure"
+      }
+    ],
+    "parts": [
+      {
+        "id": "foot",
+        "node": "foot",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "oil-reservoir",
+        "node": "oil-reservoir",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "burner-collar",
+        "node": "burner-collar",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "enclosure",
+        "node": "enclosure",
+        "materialId": "enclosure",
+        "material": "enclosure",
+        "group": "static"
+      },
+      {
+        "id": "lower-frame",
+        "node": "lower-frame",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "upper-frame",
+        "node": "upper-frame",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "guard-upright-0",
+        "node": "guard-upright-0",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "guard-upright-1",
+        "node": "guard-upright-1",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "guard-upright-2",
+        "node": "guard-upright-2",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "guard-upright-3",
+        "node": "guard-upright-3",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "hood",
+        "node": "hood",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "vent-core",
+        "node": "vent-core",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "vent-divider-0",
+        "node": "vent-divider-0",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "vent-divider-1",
+        "node": "vent-divider-1",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "vent-divider-2",
+        "node": "vent-divider-2",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "vent-divider-3",
+        "node": "vent-divider-3",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "vented-cap",
+        "node": "vented-cap",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "handle",
+        "node": "handle",
+        "materialId": "structure",
+        "material": "structure",
+        "group": "static"
+      },
+      {
+        "id": "handle-seat--1",
+        "node": "handle-seat--1",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "handle-rivet--1",
+        "node": "handle-rivet--1",
+        "materialId": "accent",
+        "material": "accent",
+        "group": "static"
+      },
+      {
+        "id": "handle-seat-1",
+        "node": "handle-seat-1",
+        "materialId": "body",
+        "material": "body",
+        "group": "static"
+      },
+      {
+        "id": "handle-rivet-1",
+        "node": "handle-rivet-1",
+        "materialId": "accent",
+        "material": "accent",
+        "group": "static"
+      }
+    ],
+    "joints": [],
+    "delivery": {
+      "version": 1,
+      "mode": "editable",
+      "identity": "node-per-part",
+      "movingGroups": "separate"
+    }
+  },
+  "id": "work-lantern",
+  "version": "0.6.0",
+  "title": "Work lantern",
+  "description": "A rustic vessel or utility light with adjustable hood and carry hoop.",
+  "controls": [
+    {
+      "key": "bodyWidth",
+      "label": "Body width",
+      "min": 0.22,
+      "max": 0.44,
+      "step": 0.001,
+      "hint": "Widens the enclosure, hood and base together.",
+      "kind": "range",
+      "default": 0.32,
+      "group": "shape",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "enclosure",
+        "hood",
+        "base",
+        "handle"
+      ],
+      "unit": "cm",
+      "inputUnit": "m",
+      "displayUnit": "cm"
+    },
+    {
+      "key": "bodyHeight",
+      "label": "Body height",
+      "min": 0.18,
+      "max": 0.36,
+      "step": 0.001,
+      "hint": "Enclosure only, excluding the hood and handle.",
+      "kind": "range",
+      "default": 0.26,
+      "group": "shape",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "enclosure",
+        "hood",
+        "base",
+        "handle"
+      ],
+      "unit": "cm",
+      "inputUnit": "m",
+      "displayUnit": "cm"
+    },
+    {
+      "key": "handleClearance",
+      "label": "Handle opening",
+      "min": 0.075,
+      "max": 0.19,
+      "step": 0.001,
+      "hint": "Clear space above the hood, beneath the grip.",
+      "kind": "range",
+      "default": 0.115,
+      "group": "shape",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "enclosure",
+        "hood",
+        "base",
+        "handle"
+      ],
+      "unit": "cm",
+      "inputUnit": "m",
+      "displayUnit": "cm"
+    },
+    {
+      "kind": "choice",
+      "key": "frameWeight",
+      "label": "Frame weight",
+      "default": "heavy",
+      "options": [
+        {
+          "value": "light",
+          "label": "light"
+        },
+        {
+          "value": "heavy",
+          "label": "heavy"
+        }
+      ],
+      "group": "construction",
+      "hint": "Select frame weight.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "frameWeight"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "choice",
+      "key": "guardLayout",
+      "label": "Guard layout",
+      "default": "sparse",
+      "options": [
+        {
+          "value": "sparse",
+          "label": "sparse"
+        },
+        {
+          "value": "crossbar",
+          "label": "crossbar"
+        }
+      ],
+      "group": "construction",
+      "hint": "Select guard layout.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "guardLayout"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "choice",
+      "key": "detail",
+      "label": "Detail",
+      "default": "inspection",
+      "options": [
+        {
+          "value": "scene",
+          "label": "scene"
+        },
+        {
+          "value": "inspection",
+          "label": "inspection"
+        }
+      ],
+      "group": "construction",
+      "hint": "Select detail.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "detail"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "choice",
+      "key": "colorway",
+      "label": "Colorway",
+      "default": "forest",
+      "options": [
+        {
+          "value": "forest",
+          "label": "forest"
+        },
+        {
+          "value": "harbor",
+          "label": "harbor"
+        },
+        {
+          "value": "ember",
+          "label": "ember"
+        }
+      ],
+      "group": "colors",
+      "hint": "Select colorway.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "colorway"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "color",
+      "key": "color.body",
+      "label": "body",
+      "role": "body",
+      "default": "#526750",
+      "group": "colors",
+      "hint": "Changes only body color.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "body"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "kind": "color",
+      "key": "color.enclosure",
+      "label": "enclosure",
+      "role": "enclosure",
+      "default": "#eee1bf",
+      "group": "colors",
+      "hint": "Changes only enclosure color.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "enclosure"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "kind": "color",
+      "key": "color.structure",
+      "label": "structure",
+      "role": "structure",
+      "default": "#303b35",
+      "group": "colors",
+      "hint": "Changes only structure color.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "structure"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "kind": "color",
+      "key": "color.accent",
+      "label": "accent",
+      "role": "accent",
+      "default": "#d2a449",
+      "group": "colors",
+      "hint": "Changes only accent color.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "accent"
+      ],
+      "unit": "color",
+      "inputUnit": "color",
+      "displayUnit": "color"
+    },
+    {
+      "kind": "choice",
+      "default": "octagonal",
+      "options": [
+        {
+          "value": "square",
+          "label": "Square"
+        },
+        {
+          "value": "octagonal",
+          "label": "Octagonal"
+        }
+      ],
+      "key": "enclosureProfile",
+      "label": "Enclosure profile",
+      "group": "construction",
+      "hint": "Changes the light housing and retaining frames to square or eight-sided sections; guards follow the profile.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "enclosure",
+        "lower-frame",
+        "upper-frame",
+        "guard-upright-*"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "range",
+      "ratioBasis": "width",
+      "default": 0.18,
+      "min": 0.08,
+      "max": 0.3,
+      "step": 0.01,
+      "key": "hoodFlare",
+      "label": "Hood flare",
+      "group": "construction",
+      "hint": "Adds this fraction of body width to each hood side; the top collar stays fitted.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "hood"
+      ],
+      "unit": "ratio",
+      "inputUnit": "dimensionless",
+      "displayUnit": "ratio"
+    },
+    {
+      "kind": "choice",
+      "default": "arched",
+      "options": [
+        {
+          "value": "arched",
+          "label": "Arched"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "key": "handleProfile",
+      "label": "Carry handle",
+      "group": "construction",
+      "hint": "Chooses a curved tubular carry hoop or a square band while keeping the requested clear height.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "handle"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "integer",
+      "default": 4,
+      "min": 3,
+      "max": 6,
+      "key": "guardCount",
+      "label": "Guard count",
+      "group": "construction",
+      "hint": "Distributes three to six tapered vertical guards around the enclosure.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "guard-upright-*"
+      ],
+      "step": 1,
+      "unit": "count",
+      "inputUnit": "integer",
+      "displayUnit": "count"
+    },
+    {
+      "kind": "choice",
+      "key": "construction",
+      "label": "Lantern construction",
+      "default": "rustic",
+      "options": [
+        {
+          "value": "rustic",
+          "label": "Rustic oil lantern"
+        },
+        {
+          "value": "utility",
+          "label": "Utility lamp"
+        }
+      ],
+      "group": "construction",
+      "hint": "Rebuilds reservoir, vessel and ventilated cap as a connected construction.",
+      "affects": [
+        "geometry",
+        "topology"
+      ],
+      "targets": [
+        "oil-reservoir",
+        "enclosure",
+        "hood",
+        "handle"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    },
+    {
+      "kind": "range",
+      "key": "hoodRise",
+      "label": "Cap rise",
+      "default": 1,
+      "min": 0.75,
+      "max": 1.25,
+      "step": 0.05,
+      "group": "construction",
+      "ratioBasis": "normalized",
+      "hint": "Raises the cap, vents and carry seats together.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "hood",
+        "vented-cap",
+        "handle"
+      ],
+      "unit": "ratio",
+      "inputUnit": "dimensionless",
+      "displayUnit": "ratio"
+    },
+    {
+      "kind": "choice",
+      "key": "carryHoop",
+      "label": "Rustic carry hoop",
+      "default": "oval",
+      "options": [
+        {
+          "value": "oval",
+          "label": "Oval"
+        },
+        {
+          "value": "round",
+          "label": "Round"
+        },
+        {
+          "value": "tall",
+          "label": "Tall oval"
+        }
+      ],
+      "group": "construction",
+      "hint": "Changes the rustic hoop aspect while retaining its mountings.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "handle"
+      ],
+      "unit": "none",
+      "inputUnit": "none",
+      "displayUnit": "none"
+    }
+  ],
+  "defaults": {
+    "bodyWidth": 0.32,
+    "bodyHeight": 0.26,
+    "handleClearance": 0.115,
+    "frameWeight": "heavy",
+    "guardLayout": "sparse",
+    "detail": "inspection",
+    "colorway": "forest",
+    "color.body": "#526750",
+    "color.enclosure": "#eee1bf",
+    "color.structure": "#303b35",
+    "color.accent": "#d2a449",
+    "enclosureProfile": "octagonal",
+    "hoodFlare": 0.18,
+    "handleProfile": "arched",
+    "guardCount": 4,
+    "construction": "rustic",
+    "hoodRise": 1,
+    "carryHoop": "oval"
+  },
+  "presets": [
+    {
+      "id": "field",
+      "name": "Rustic field lantern",
+      "description": "Octagonal oil vessel, oval hoop and raised cap",
+      "parameters": {
+        "bodyWidth": 0.32,
+        "bodyHeight": 0.26,
+        "handleClearance": 0.115,
+        "colorway": "forest",
+        "construction": "rustic",
+        "hoodRise": 1.1,
+        "carryHoop": "oval",
+        "guardCount": 4
+      }
+    },
+    {
+      "id": "harbor",
+      "name": "Harbor utility lamp",
+      "description": "Broad utility housing and square carry band",
+      "parameters": {
+        "bodyWidth": 0.4,
+        "bodyHeight": 0.235,
+        "handleClearance": 0.13,
+        "colorway": "harbor",
+        "construction": "utility",
+        "enclosureProfile": "square",
+        "hoodFlare": 0.22,
+        "handleProfile": "square",
+        "guardCount": 4
+      }
+    },
+    {
+      "id": "trail",
+      "name": "Tall trail oil lantern",
+      "description": "Narrow reservoir and tall carry hoop",
+      "parameters": {
+        "bodyWidth": 0.24,
+        "bodyHeight": 0.285,
+        "handleClearance": 0.14,
+        "colorway": "ember",
+        "construction": "rustic",
+        "enclosureProfile": "octagonal",
+        "hoodFlare": 0.1,
+        "hoodRise": 1.2,
+        "carryHoop": "tall",
+        "guardCount": 6,
+        "frameWeight": "light"
+      }
+    }
+  ],
+  "palettes": [
+    {
+      "id": "forest",
+      "label": "Forest & cream",
+      "colors": [
+        "#526750",
+        "#eee1bf",
+        "#303b35"
+      ]
+    },
+    {
+      "id": "harbor",
+      "label": "Harbor & chalk",
+      "colors": [
+        "#3e777b",
+        "#e9e4d3",
+        "#293b43"
+      ]
+    },
+    {
+      "id": "ember",
+      "label": "Ember & sand",
+      "colors": [
+        "#ad6149",
+        "#f0ddba",
+        "#4b3933"
+      ]
+    }
+  ],
+  "constraints": [
+    "bodyHeight <= 1.35 × bodyWidth; handleClearance <= 0.65 × bodyWidth"
+  ],
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "configuration": {
+    "kind": "default"
+  },
+  "source": {
+    "entry": "src/recipes/builtins.ts",
+    "exportName": "lanternRecipe",
+    "sha256": "7c7b16190a405677bba664bffa18ef5bf120ddb6e4ffcab0cc3bac33b92c14ec",
+    "files": {
+      "src/catalog/appearance.ts": "5b482d99e316a94919c0a4e09bd2dff145be47b245551a6b4a9c2ea85de5b6f5",
+      "src/catalog/build.ts": "cb9eee04337244055efd058948a6fb440975ec25315b16f61915a02015c7e904",
+      "src/catalog/semantics.ts": "ac6da1ff7d612b626b54b2d9f86996da638052d0064dbc184f90aa10b1ee6517",
+      "src/catalog/types.ts": "57984d79ed766ed5b8ed648ef8113e5fdd30e4db7b75370a586e55d1e2f3bd0b",
+      "src/engine/construction-migration.ts": "81c32bff674d0049dccfc5ae488d56944e12aeed99c287a971e2b65ad357965c",
+      "src/engine/convex-stone.ts": "50d0641fd34c999c428ec5d6bb047d22d729b31334f2fe0973fb448c668aa755",
+      "src/engine/geometry.ts": "8b7375d6bc43fb43a3123a9cd2c89efda406cb4a6632c320fec9584bd9ce399b",
+      "src/engine/parameters.ts": "54ecaf8c19361fb3ad8ceeae255f932e63e17023624e2c99d59347813d062a37",
+      "src/engine/roof.ts": "4a0cb05b4d06ebfde8fc63ff949c17df454a9d8164efdddb555aad6d0d2bf763",
+      "src/engine/style.ts": "af5d9fb2ee32c028109b8b5fb0c0d3130e9f93c3dffea855690877af37c91e20",
+      "src/engine/timber.ts": "9e58b9511ba427526b668a1cc8a9508c68afdc15fa9be32674abf1a8b7ecf461",
+      "src/families/assembly.ts": "bacdf7af9aee38a3456e61bbce6145e7a72c4b27b31d78af26072b52ddaf5f19",
+      "src/families/boulder.ts": "f24399e4ff802b0bb372f2ab71702fc3dc5c7c67a88a13a5efd962d694eea523",
+      "src/families/config.ts": "44e3537f114edea55a1a4a8821d88e8565df54637baaec100aff5c3cdbee0e36",
+      "src/families/cottage.ts": "0714a3cf86972ad423fa0883677e797069638566600977bd6474784c1b8f6aec",
+      "src/families/crate.ts": "f427ffe54d70aabdc9e40299f0753d561ada3503efdbb05ded77b77738ce151e",
+      "src/families/fence.ts": "49f8409703a7c01c7473bef846e5a562ec5aa7b8243b55f7775f7add0eecda02",
+      "src/families/index.ts": "a6adc5b6581906fbbda5b69fbd88498de7a941a50c1a3f3d18e78017824a59c5",
+      "src/families/legacy-config.ts": "4d250c98245d6dc73e9f2715be9cd718254156531066cd19590349b441aebb39",
+      "src/families/legacy-typed-config.ts": "ef889d69010ba7b73d20353c63968fa39d1c795ca768ff79af0015451f5ce47d",
+      "src/families/revision2-config.ts": "aa80d74774bcb9f741d57c6fd8595d972e6d3e83a7fa3826fb6ae1dcc128d961",
+      "src/families/revision3-config.ts": "553031d6cdd15119c30e478e2b79c7db4433a00f985d80973dd7b02c30d68954",
+      "src/families/revision4-config.ts": "b671492205cd1aab3607f57db5b598721302474a07e9343586d4f3967e777343",
+      "src/families/tree.ts": "d8782885092fe97bfae5713b99c2ad66607526a0170d952522bf1386ed3369f9",
+      "src/lantern/config.ts": "b531822e4975c30b8cb2e3a71852b97f252e887aa809fffebaecac0e3edf9093",
+      "src/lantern/generator.ts": "d97476a03c6597c0422abdc4c48dad16b2ec52f76101ebbbd98cded89117ecc5",
+      "src/lantern/geometry.ts": "72d1963a5bee9b211d44ba296c3fa3e3b291e9ecca8b510f5acc8f868d89f440",
+      "src/lantern/revision2-config.ts": "25200fdb4bac1da0c50528447e634ac3e058cebb4dd29bea712f3608a61c6ad7",
+      "src/lantern/revision3-config.ts": "d1f78f9a6b31e7dbf291e891428f0767d5881aa8f1ceaf244a9947eef7babcf7",
+      "src/lantern/revision4-config.ts": "c200f53f66b907ef9ec7e73f9de52fd16310c5aaaa01f23eaa52df041554d107",
+      "src/lantern/rustic.ts": "46c96cb453b21adbb8b8100c20add5f32abec1cab9c7862124a334db0a34504a",
+      "src/recipes/builtins.ts": "5b609bf811dcc0b1874a8a9bb269af346e1147d0c929818ebdc6700ffd900c2b",
+      "src/recipes/types.ts": "5ec1e3ee4a39ffe8932751b38596c360fb4f818bc512e20918cbce017d6695da"
+    }
+  },
+  "licenses": {
+    "software": "Apache-2.0",
+    "content": "CC0-1.0",
+    "thirdParty": "Three ConvexGeometry/ConvexHull and BufferGeometryUtils MIT; see THIRD-PARTY.txt"
+  }
+}

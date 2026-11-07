@@ -1,0 +1,63 @@
+{
+  "family": "bench",
+  "config": {
+    "formatVersion": 1,
+    "family": "bench",
+    "familyVersion": "1.1.0",
+    "requested": {},
+    "applied": {
+      "width": 1.6,
+      "depth": 0.45,
+      "seatHeight": 0.45,
+      "slatCount": 4,
+      "backrest": true,
+      "backHeight": 0.35,
+      "colorway": "oak",
+      "color.wood": "#b88654",
+      "color.frame": "#604532"
+    }
+  },
+  "source": {
+    "currentExecutableSourceHash": "b72a0af9e5130bd7e2afa5cacefa6965c57f1e8b6170ec811658f9de844f6a7b",
+    "modifiedSourcePaths": [],
+    "matchesPackagedSource": true
+  },
+  "geometry": {
+    "errors": [],
+    "parts": 16,
+    "triangles": 1024,
+    "vertices": 3072,
+    "bounds": {
+      "min": [
+        -0.800000011920929,
+        -5.364418020903372e-9,
+        -0.22500000056624414
+      ],
+      "max": [
+        0.800000011920929,
+        0.7999999983608723,
+        0.22500000056624414
+      ]
+    }
+  },
+  "dimensions": [
+    1.600000023841858,
+    0.8000000037252903,
+    0.4500000011324883
+  ],
+  "bounds": {
+    "min": [
+      -0.800000011920929,
+      -5.364418020903372e-9,
+      -0.22500000056624414
+    ],
+    "max": [
+      0.800000011920929,
+      0.7999999983608723,
+      0.22500000056624414
+    ]
+  },
+  "geometryHash": "4f3963ccccebc7de47b35d46c530cebdaa675566c8e9624bd389dbd2af433308",
+  "glbHash": "21d07cc62557fbb90bc717f082c1ccfc82790dac6119f78e18488a865d7851ae",
+  "glbBytes": 91572
+}

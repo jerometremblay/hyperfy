@@ -1,0 +1,25 @@
+{
+  "formatVersion": 2,
+  "packages": [
+    {
+      "id": "cognac-leather-sofa",
+      "version": "1.1.0",
+      "deliveryRevision": 3,
+      "url": "recipe-packages/cognac-leather-sofa-1.1.0-source.3.zip",
+      "sha256": "b4b158fb83ccd7d5ba35c4dafdb07bc8d4203dc5f943fd3a1e1f4f1fdd4fc338",
+      "bytes": 613802,
+      "configuration": {
+        "path": "config.json",
+        "kind": "default"
+      },
+      "licenses": {
+        "software": "Apache-2.0",
+        "content": "CC0-1.0",
+        "contentPaths": [
+          "config.json"
+        ],
+        "thirdParty": "dependency-licenses.json"
+      }
+    }
+  ]
+}

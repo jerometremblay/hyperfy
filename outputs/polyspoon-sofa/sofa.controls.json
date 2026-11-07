@@ -1,0 +1,274 @@
+{
+  "id": "cognac-leather-sofa",
+  "version": "1.1.0",
+  "controls": [
+    {
+      "key": "seatCount",
+      "label": "Seats",
+      "kind": "integer",
+      "group": "construction",
+      "unit": "count",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 3,
+      "hint": "Number of cushions and seats.",
+      "affects": [
+        "topology"
+      ],
+      "targets": [
+        "seat",
+        "back"
+      ]
+    },
+    {
+      "key": "seatWidth",
+      "label": "Seat width",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.55,
+      "max": 0.95,
+      "step": 0.01,
+      "default": 0.7,
+      "hint": "Width of each cushion in metres.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat",
+        "back"
+      ]
+    },
+    {
+      "key": "seatDepth",
+      "label": "Seat cushion depth",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.55,
+      "max": 0.75,
+      "step": 0.01,
+      "default": 0.66,
+      "hint": "Depth of the seat cushion extrusion.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat"
+      ]
+    },
+    {
+      "key": "backDepth",
+      "label": "Back cushion depth",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.16,
+      "max": 0.28,
+      "step": 0.01,
+      "default": 0.22,
+      "hint": "Depth of the back cushion extrusion.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "back"
+      ]
+    },
+    {
+      "key": "armDepth",
+      "label": "Arm depth",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.75,
+      "max": 0.95,
+      "step": 0.01,
+      "default": 0.84,
+      "hint": "Depth of the arm extrusion.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "arms"
+      ]
+    },
+    {
+      "key": "seatRadius",
+      "label": "Seat corner radius",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.05,
+      "max": 0.1,
+      "step": 0.01,
+      "default": 0.08,
+      "hint": "Roundness of the seat cushion profile.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat"
+      ]
+    },
+    {
+      "key": "backRadius",
+      "label": "Back corner radius",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.05,
+      "max": 0.12,
+      "step": 0.01,
+      "default": 0.09,
+      "hint": "Roundness of the back cushion profile.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "back"
+      ]
+    },
+    {
+      "key": "armRadius",
+      "label": "Arm corner radius",
+      "kind": "range",
+      "group": "shape",
+      "unit": "m",
+      "min": 0.05,
+      "max": 0.11,
+      "step": 0.01,
+      "default": 0.09,
+      "hint": "Roundness of the arm profile.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "arms"
+      ]
+    },
+    {
+      "key": "bevelSize",
+      "label": "Bevel size (mm)",
+      "kind": "integer",
+      "group": "shape",
+      "unit": "mm",
+      "min": 2,
+      "max": 22,
+      "step": 1,
+      "default": 20,
+      "hint": "Seat cushion bevel size; other panels scale proportionally.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat",
+        "back",
+        "arms"
+      ]
+    },
+    {
+      "key": "bevelThickness",
+      "label": "Bevel depth (mm)",
+      "kind": "integer",
+      "group": "shape",
+      "unit": "mm",
+      "min": 2,
+      "max": 25,
+      "step": 1,
+      "default": 18,
+      "hint": "Seat cushion bevel depth; other panels scale proportionally.",
+      "affects": [
+        "geometry"
+      ],
+      "targets": [
+        "seat",
+        "back",
+        "arms"
+      ]
+    },
+    {
+      "key": "color.leather",
+      "label": "Leather",
+      "kind": "color",
+      "group": "colors",
+      "unit": "color",
+      "default": "#8a4f2b",
+      "role": "leather",
+      "hint": "Arms and all cushions.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "arms",
+        "seat",
+        "back"
+      ]
+    },
+    {
+      "key": "color.leatherDark",
+      "label": "Dark leather",
+      "kind": "color",
+      "group": "colors",
+      "unit": "color",
+      "default": "#6d3b22",
+      "role": "leatherDark",
+      "hint": "Base and seams.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "base"
+      ]
+    },
+    {
+      "key": "color.piping",
+      "label": "Piping",
+      "kind": "color",
+      "group": "colors",
+      "unit": "color",
+      "default": "#b8774b",
+      "role": "piping",
+      "hint": "Piping and stitching.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "piping"
+      ]
+    },
+    {
+      "key": "color.wood",
+      "label": "Feet",
+      "kind": "color",
+      "group": "colors",
+      "unit": "color",
+      "default": "#2b1b13",
+      "role": "wood",
+      "hint": "Wooden feet.",
+      "affects": [
+        "material"
+      ],
+      "targets": [
+        "feet"
+      ]
+    }
+  ],
+  "applied": {
+    "seatCount": 3,
+    "seatWidth": 0.7,
+    "seatDepth": 0.66,
+    "backDepth": 0.22,
+    "armDepth": 0.84,
+    "seatRadius": 0.08,
+    "backRadius": 0.09,
+    "armRadius": 0.09,
+    "bevelSize": 20,
+    "bevelThickness": 18,
+    "color.leather": "#8a4f2b",
+    "color.leatherDark": "#6d3b22",
+    "color.piping": "#b8774b",
+    "color.wood": "#2b1b13"
+  }
+}

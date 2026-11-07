@@ -18,3 +18,7 @@ test('browser input packets decode to the server browser-input handler', () => {
 
   assert.deepEqual(readPacket(writePacket('browserInput', data)), ['onBrowserInput', data])
 })
+
+test('client build notifications decode without changing existing packet IDs', () => {
+  assert.deepEqual(readPacket(writePacket('clientBuild', '/index-new.js')), ['onClientBuild', '/index-new.js'])
+})

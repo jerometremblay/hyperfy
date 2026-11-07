@@ -81,12 +81,13 @@ const clientHtmlDest = path.join(rootDir, 'build/public/index.html')
         name: 'client-finalize-plugin',
         setup(build) {
           build.onEnd(async result => {
+            if (result.errors.length) return
             // copy over public files
             await fs.copy(
               path.join(rootDir, 'node_modules/three/examples/jsm/libs/draco/gltf'),
               path.join(clientBuildDir, 'draco')
             )
-            await fs.copy(clientPublicDir, clientBuildDir)
+            await fs.copy(clientPublicDir, clientBuildDir, { filter: source => source !== clientHtmlSrc })
             // copy physx wasm to public
             const physxWasmSrc = path.join(rootDir, 'src/core/physx-js-webidl.wasm')
             const physxWasmDest = path.join(rootDir, 'build/public/physx-js-webidl.wasm')
@@ -105,7 +106,8 @@ const clientHtmlDest = path.join(rootDir, 'build/public/index.html')
             htmlContent = htmlContent.replace('{jsPath}', jsPath)
             htmlContent = htmlContent.replace('{particlesPath}', particlesPath)
             htmlContent = htmlContent.replaceAll('{buildId}', Date.now())
-            await fs.writeFile(clientHtmlDest, htmlContent)
+            await fs.writeFile(`${clientHtmlDest}.tmp`, htmlContent)
+            await fs.rename(`${clientHtmlDest}.tmp`, clientHtmlDest)
           })
         },
       },

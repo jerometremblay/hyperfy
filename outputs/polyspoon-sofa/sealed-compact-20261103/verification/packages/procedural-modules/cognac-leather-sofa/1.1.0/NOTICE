@@ -1,0 +1,8 @@
+Woodland Workshop
+
+Project-authored software is licensed under Apache License 2.0. See LICENSE.
+
+The CC0 designation is limited to original starter content explicitly listed in docs/licensing.md and package manifests. It does not apply to all repository files, third-party material, research references, Unity fixtures/templates, or a user's private designs.
+
+Dependencies retain their original licenses. Source packages include dependency-licenses.json and upstream license/notice texts. No third-party dependency source is bundled into generator source archives; npm installs the pinned dependencies separately.
+

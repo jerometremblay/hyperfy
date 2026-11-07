@@ -117,14 +117,14 @@ export function ProfilerPanel({ world }) {
       <header>
         <h2>Object profiler</h2>
         <button
-          aria-expanded={profiler.active}
+          aria-expanded={profiler.details}
           aria-controls='object-profiler-details'
-          onClick={() => profiler.toggle(!profiler.active)}
+          onClick={() => profiler.toggle(!profiler.details)}
         >
-          {profiler.active ? 'Hide details' : 'Show details'}
+          {profiler.details ? 'Hide details' : 'Show details'}
         </button>
       </header>
-      {profiler.active && (
+      {profiler.details && (
         <div id='object-profiler-details'>
           <label>
             Rank and color by
