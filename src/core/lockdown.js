@@ -1,3 +1,8 @@
+import { cleanFunctionPrototype } from './extras/cleanIntrinsics.js'
+
+// before lockdown: swap out built-ins a browser has marked with undeletable additions (iPhone Brave)
+cleanFunctionPrototype()
+
 lockdown({
   // TODO: in production we may want to flip these
   // but for now this lets us see errors during dev
