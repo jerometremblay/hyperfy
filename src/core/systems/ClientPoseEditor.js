@@ -3,6 +3,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { ControlPriorities } from '../extras/ControlPriorities'
 import { getAvatarFocus } from '../extras/avatarFocus'
 import { getMatchingSeatPose } from '../extras/seatPose'
+import { Layers } from '../extras/Layers'
 import { exportPose } from '../extras/exportPose'
 import { downloadFile } from '../extras/downloadFile'
 import {
@@ -1144,6 +1145,66 @@ export class ClientPoseEditor extends System {
     this.endHistoryGroup()
     this.emitState()
     return changed
+  }
+
+  fitFeetToGeometry() {
+    const session = this.session
+    if (!session || session.applying || !this.world.physics?.raycast) return false
+    const down = new THREE.Vector3(0, -1, 0)
+    const mask = Layers.environment.group | Layers.prop.group
+    const targets = {}
+    session.previewScene.updateWorldMatrix(true, true)
+    for (const name of ['leftFoot', 'rightFoot']) {
+      const chain = LIMBS[name]
+      const root = this.getBone(chain.root)
+      const middle = this.getBone(chain.middle)
+      const foot = this.getBone(chain.end)
+      if (!root || !middle || !foot) {
+        session.error = 'This avatar needs both leg chains for automatic foot fitting.'
+        this.emitState()
+        return false
+      }
+      const hip = root.getWorldPosition(new THREE.Vector3())
+      const knee = middle.getWorldPosition(new THREE.Vector3())
+      const ankle = foot.getWorldPosition(new THREE.Vector3())
+      const length = hip.distanceTo(knee) + knee.distanceTo(ankle)
+      const origin = new THREE.Vector3(ankle.x, hip.y + 0.05, ankle.z)
+      const hit = this.world.physics.raycast(origin, down, length + 0.15, mask)
+      if (!hit || hit.normal.y < 0.8 || hip.distanceTo(hit.point) >= length - 0.005) {
+        session.error = 'Could not find reachable support under both feet. Adjust the pose or placement and try again.'
+        this.emitState()
+        return false
+      }
+      // Physics reuses its hit object, so copy the point before the next query.
+      targets[name] = session.previewScene.worldToLocal(hit.point.clone()).toArray()
+    }
+    const previousPose = copyJSON(session.pose)
+    const previousTargets = copyJSON(session.ikTargets)
+    this.beginHistoryGroup()
+    let success = true
+    for (const name of ['leftFoot', 'rightFoot']) {
+      session.ikTargets[name] = targets[name]
+      if (!this.solveIK(name, false)) {
+        success = false
+        break
+      }
+      const actual = sceneLocalPosition(session.previewScene, this.getBone(LIMBS[name].end))
+      if (!actual || new THREE.Vector3(...actual).distanceTo(new THREE.Vector3(...targets[name])) > 0.05) {
+        success = false
+        break
+      }
+    }
+    if (!success) {
+      session.pose = previousPose
+      session.ikTargets = previousTargets
+      this.applyPoseToPreview()
+      session.error = 'Joint limits prevent the feet from reaching the detected support.'
+    } else {
+      session.error = null
+    }
+    this.endHistoryGroup()
+    this.emitState()
+    return success
   }
 
   getBackrestChain() {

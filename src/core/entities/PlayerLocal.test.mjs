@@ -141,6 +141,34 @@ test('applying a seated pose recalibrates desktop eyes and XR head tracking', ()
   assert.equal(player.seatedEyeOffset, null)
 })
 
+test('selecting a vertical support starts a cancellable leaning effect', () => {
+  const camera = new THREE.PerspectiveCamera()
+  camera.position.set(0, 1, 1)
+  camera.lookAt(0, 0, 0)
+  const sent = []
+  const player = {
+    data: { effect: null },
+    grounded: true,
+    base: new THREE.Object3D(),
+    world: {
+      camera,
+      physics: { raycast(origin, direction) {
+        const distance = -origin.y / direction.y
+        return { point: origin.clone().addScaledVector(direction, distance), normal: new THREE.Vector3(0, 0, 1) }
+      } },
+      emit() {},
+    },
+    setEffect(effect) { this.data.effect = effect; sent.push(effect) },
+  }
+  const ray = new THREE.Raycaster()
+  camera.updateMatrixWorld(true)
+  ray.setFromCamera(new THREE.Vector2(), camera)
+  assert.equal(PlayerLocal.prototype.sitAtSurface.call(player, ray.ray.origin, ray.ray.direction), true)
+  assert.equal(sent[0].freeSit.kind, 'leanFloor')
+  assert.equal(sent[0].cancellable, true)
+  assert.equal(sent[0].freeze, true)
+})
+
 test('re-centers XR yaw to the seated avatar head', () => {
   const camera = new THREE.PerspectiveCamera()
   camera.position.y = 1.6

@@ -16,6 +16,8 @@ import { ControlPriorities } from '../extras/ControlPriorities'
 import { isBoolean, isNumber } from 'lodash-es'
 import { hasRank, Ranks } from '../extras/ranks'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
+import { findFreeSittingSurface, fitFreeSittingPose, getFreeSittingPose } from '../extras/autoSit'
+import { setFreeSitBlend, updateFreeSitBlend } from '../extras/freeSitBlend'
 import { getAvatarCameraFocus, getAvatarEyePosition } from '../extras/avatarFocus'
 import { XR_HAND_BONES } from '../extras/handTracking'
 import { isEmoteUrl, sanitizeName, sanitizePlayerSelfModify } from '../extras/entityModifyPolicy'
@@ -55,6 +57,8 @@ const FIRST_PERSON_SCROLL_DELAY = 0.3
 const CAMERA_DEFAULT_NEAR = 0.2
 const CAMERA_CLOSE_NEAR = 0.05
 const CAMERA_NEAR_BLEND_RANGE = 0.5
+const FREE_SIT_TURN_STEP = Math.PI / 12
+const FREE_SIT_TURN_REPEAT = 0.22
 
 const v1 = new THREE.Vector3()
 const v2 = new THREE.Vector3()
@@ -292,16 +296,86 @@ export class PlayerLocal extends Entity {
 
   applySeatPose() {
     this.seatedEyeOffset = null
+    this.syncFreeSitControls?.()
     if (!this.avatar) return
     const avatarUrl = this.getAvatarUrl()
     const seatPose = getMatchingSeatPose(this.data, avatarUrl)
+    const freeSit = getFreeSittingPose(this.data.effect)
     const defaultPose = !seatPose && this.data.effect?.anchorId ? getDefaultSittingPose() : null
-    this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
-    this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
-    this.avatar.setPoseOverride(seatPose?.pose || defaultPose)
+    if (!seatPose && freeSit && this.data.effect?.freeSit?.pose && this.data.effect.freeSit.target) {
+      setFreeSitBlend(this, this.avatar, freeSit, this.data.effect.freeSit.target)
+      return
+    }
+    this.freeSitBlend = null
+    this.avatar.position.set(...(seatPose?.offset || freeSit?.offset || [0, 0, 0]))
+    this.avatar.quaternion.set(...(seatPose?.rotation || freeSit?.rotation || [0, 0, 0, 1]))
+    this.avatar.setPoseOverride(seatPose?.pose || freeSit?.pose || defaultPose)
     if (this.isXR) {
       this.xrHeadCalibrationPending = true
       if (this.data.effect?.anchorId) this.xrHeadRecenterPending = true
+    }
+  }
+
+  sitAtSurface(origin, direction) {
+    if (this.data.effect || this.isXR || this.flying || !this.grounded || this.poseEditorActive) return false
+    let freeSit = findFreeSittingSurface(this.world.physics, origin, direction, this.base)
+    if (!freeSit) {
+      this.world.emit('toast', 'Choose a nearby surface to sit or lean against.')
+      return false
+    }
+    if (freeSit.horizontal) {
+      freeSit = fitFreeSittingPose(this.world.physics, freeSit, this.base, this.avatar)
+      if (!freeSit) {
+        this.world.emit('toast', 'Could not find a sitting pose that fits here. Try another point.')
+        return false
+      }
+      delete freeSit.contacts
+    }
+    this.setEffect({ freeSit, freeze: true, cancellable: true })
+    if (freeSit.pose) this.world.emit('toast', 'Use Q and E to rotate. Move or jump to stand.')
+    return true
+  }
+
+  syncFreeSitControls() {
+    if (!this.freeSitControl) return
+    const active = !!this.data.effect?.freeSit?.pose && !this.poseEditorActive && !this.world.builder?.enabled
+    this.freeSitControl.keyQ.capture = active
+    this.freeSitControl.keyE.capture = active
+  }
+
+  rotateFreeSit(angle) {
+    const effect = this.data.effect
+    const seat = effect?.freeSit
+    if (!seat?.pose || this.poseEditorActive || this.world.builder?.enabled) return false
+    const current = getFreeSittingPose(effect)
+    if (!current) return false
+    const worldRotation = this.base.quaternion.clone().multiply(new THREE.Quaternion(...current.rotation))
+    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(worldRotation).applyAxisAngle(UP, angle)
+    const fitted = fitFreeSittingPose(this.world.physics, seat, this.base, this.avatar, direction)
+    if (!fitted) return false
+    delete fitted.contacts
+    const safe = sanitizePlayerSelfModify({ ef: { ...effect, freeSit: fitted } }, this.data.id)
+    if (!safe?.ef) return false
+    // Updating a seat must not end the effect or run its cleanup callback.
+    this.data.effect = safe.ef
+    this.applySeatPose()
+    this.world.network.send('entityModified', { id: this.data.id, ef: safe.ef })
+    return true
+  }
+
+  updateFreeSitRotation(delta) {
+    this.syncFreeSitControls()
+    const control = this.freeSitControl
+    if (!control?.keyQ.capture || this.world.controls.isInputFocused?.()) return
+    const direction = Number(control.keyQ.down) - Number(control.keyE.down)
+    if (!direction) {
+      this.freeSitTurnTimer = 0
+      return
+    }
+    this.freeSitTurnTimer = (this.freeSitTurnTimer || 0) - delta
+    if (this.freeSitTurnTimer <= 0) {
+      this.rotateFreeSit(direction * FREE_SIT_TURN_STEP)
+      this.freeSitTurnTimer = FREE_SIT_TURN_REPEAT
     }
   }
 
@@ -343,6 +417,11 @@ export class PlayerLocal extends Entity {
         }
       },
     })
+    this.freeSitControl = this.world.controls.bind({ priority: ControlPriorities.CORE_UI })
+    this.freeSitControl.keyQ.onPress = this.freeSitControl.keyE.onPress = () => {
+      this.freeSitTurnTimer = 0
+    }
+    this.syncFreeSitControls()
     const expressions = ['happy', 'angry', 'sad', 'relaxed', 'surprised']
     expressions.forEach((name, i) => {
       this.control[`digit${i + 1}`].onPress = () => {
@@ -637,6 +716,8 @@ export class PlayerLocal extends Entity {
     this.destroyed = true
     this.world.graphics?.off('render-style', this.updateBubble)
 
+    this.freeSitControl?.release()
+    this.freeSitControl = null
     this.control?.release()
     this.control = null
     this.world.off('xrSession', this.onXRSession)
@@ -990,6 +1071,7 @@ export class PlayerLocal extends Entity {
   }
 
   update(delta) {
+    updateFreeSitBlend(this, delta)
     this.avatar?.setExpressions(this.data.x)
     this.avatar?.setSpeaking(this.speaking)
     if (this.poseEditorActive) {
@@ -1008,6 +1090,8 @@ export class PlayerLocal extends Entity {
       this.updateEffectDuration(delta)
       return
     }
+
+    this.updateFreeSitRotation(delta)
 
     const xr = this.isXR
     const freeze = this.data.effect?.freeze
@@ -1339,6 +1423,7 @@ export class PlayerLocal extends Entity {
   }
 
   updateFacing(delta, cameraYaw, orthographic = false) {
+    if (this.data.effect?.freeSit) return
     if (this.scriptedPose?.root) return
     if (!this.moving && !this.firstPerson && this.data.effect?.turn !== true) return
     const faceMovement = orthographic && this.moving && this.data.effect?.turn !== true

@@ -8,6 +8,8 @@ import { hasRank, Ranks } from '../extras/ranks'
 import { BufferedLerpVector3 } from '../extras/BufferedLerpVector3'
 import { BufferedLerpQuaternion } from '../extras/BufferedLerpQuaternion'
 import { getDefaultSittingPose, getMatchingSeatPose } from '../extras/seatPose'
+import { getFreeSittingPose } from '../extras/autoSit'
+import { setFreeSitBlend, updateFreeSitBlend } from '../extras/freeSitBlend'
 import { cloneHandTrackingPose } from '../extras/handTracking'
 import { stylePlayerBubble } from '../extras/playerBubble'
 
@@ -132,10 +134,16 @@ export class PlayerRemote extends Entity {
     if (!this.avatar) return
     const avatarUrl = this.data.sessionAvatar || this.data.avatar || 'asset://avatar.vrm'
     const seatPose = getMatchingSeatPose(this.data, avatarUrl)
+    const freeSit = getFreeSittingPose(this.data.effect)
     const defaultPose = !seatPose && this.data.effect?.anchorId ? getDefaultSittingPose() : null
-    this.avatar.position.set(...(seatPose?.offset || [0, 0, 0]))
-    this.avatar.quaternion.set(...(seatPose?.rotation || [0, 0, 0, 1]))
-    this.avatar.setPoseOverride(seatPose?.pose || defaultPose)
+    if (!seatPose && freeSit && this.data.effect?.freeSit?.pose && this.data.effect.freeSit.target) {
+      setFreeSitBlend(this, this.avatar, freeSit, this.data.effect.freeSit.target)
+      return
+    }
+    this.freeSitBlend = null
+    this.avatar.position.set(...(seatPose?.offset || freeSit?.offset || [0, 0, 0]))
+    this.avatar.quaternion.set(...(seatPose?.rotation || freeSit?.rotation || [0, 0, 0, 1]))
+    this.avatar.setPoseOverride(seatPose?.pose || freeSit?.pose || defaultPose)
   }
 
   getAnchorMatrix() {
@@ -165,6 +173,7 @@ export class PlayerRemote extends Entity {
   }
 
   update(delta) {
+    updateFreeSitBlend(this, delta)
     this.avatar?.setExpressions(this.data.x)
     this.avatar?.setSpeaking(this.speaking)
     const anchor = this.getAnchorMatrix()

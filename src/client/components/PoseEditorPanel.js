@@ -3,6 +3,7 @@
 import { css } from '@firebolt-dev/css'
 import { jsx as createJSX } from '@firebolt-dev/jsx/jsx-runtime'
 import { useEffect, useState } from 'react'
+import * as THREE from '../../core/extras/three'
 
 const AXES = ['x', 'y', 'z']
 const LIMBS = [
@@ -20,11 +21,65 @@ const GUIDES = [
 ]
 
 export function SittingPoseButton({ world, player }) {
-  if (!player?.data.effect?.anchorId || player.isXR || world.poseEditor?.session) return null
+  const [, setRevision] = useState(0)
+  const [selecting, setSelecting] = useState(false)
+  useEffect(() => {
+    const update = () => setRevision(value => value + 1)
+    world.on('player', update)
+    return () => world.off('player', update)
+  }, [world])
+  useEffect(() => {
+    if (!selecting || !player) return
+    const viewport = world.graphics.viewport
+    const previousCursor = viewport.style.cursor
+    viewport.style.cursor = 'crosshair'
+    const onPointerDown = event => {
+      if (event.button !== 0 || event.target?.closest?.('.coreui')) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      const rect = viewport.getBoundingClientRect()
+      if (!rect.width || !rect.height) return
+      const pointer = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        1 - ((event.clientY - rect.top) / rect.height) * 2
+      )
+      world.camera.updateWorldMatrix(true, false)
+      const raycaster = new THREE.Raycaster()
+      raycaster.setFromCamera(pointer, world.camera)
+      if (player.sitAtSurface(raycaster.ray.origin, raycaster.ray.direction)) setSelecting(false)
+    }
+    const onKeyDown = event => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      setSelecting(false)
+    }
+    viewport.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => {
+      viewport.removeEventListener('pointerdown', onPointerDown, true)
+      document.removeEventListener('keydown', onKeyDown, true)
+      viewport.style.cursor = previousCursor
+    }
+  }, [selecting, player, world])
+  useEffect(() => {
+    if (!player || player.data.effect || player.isXR || world.poseEditor?.session) setSelecting(false)
+  }, [player, player?.data.effect, player?.isXR, world.poseEditor?.session])
+  if (!player || player.isXR || world.poseEditor?.session) return null
+  const anchored = !!player.data.effect?.anchorId
+  if (player.data.effect && !anchored && !player.data.effect.freeSit) return null
   return (
     <button
       type='button'
-      onClick={() => world.poseEditor.open(player)}
+      onClick={() => {
+        if (anchored) return world.poseEditor.open(player)
+        if (player.data.effect?.freeSit) return player.setEffect(null)
+        if (!selecting) {
+          player.control?.pointer?.unlock()
+          world.emit('toast', 'Click a nearby surface to sit. Press Escape to cancel.')
+        }
+        setSelecting(!selecting)
+      }}
       css={css`
         position: absolute;
         right: 1.5rem;
@@ -43,7 +98,7 @@ export function SittingPoseButton({ world, player }) {
         }
       `}
     >
-      Customize sitting
+      {anchored ? 'Customize sitting' : player.data.effect?.freeSit ? 'Stand up' : selecting ? 'Cancel sitting' : 'Sit'}
     </button>
   )
 }
@@ -477,6 +532,14 @@ export function PoseEditorPanel({ world }) {
             onChange={value => editor.setPlacementYaw(value)}
           />
           <GuideButtons state={state} editor={editor} />
+          <button
+            className='pose-editor-button'
+            type='button'
+            disabled={state.applying}
+            onClick={() => editor.fitFeetToGeometry()}
+          >
+            Fit feet to surfaces
+          </button>
           {Number.isFinite(state.guides?.floorY) && (
             <RangeControl
               {...historyInteraction}

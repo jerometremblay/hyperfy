@@ -920,6 +920,38 @@ test('draws a seat-aligned floor guide and removes it with the preview', () => {
   assert.equal(scene.children.includes(guide), false)
 })
 
+test('automatic foot fitting rejects missing or unreachable support without changing the pose', () => {
+  const { editor, engineWorld, player } = createFixture()
+  editor.open(player)
+  const bones = {}
+  for (const side of ['left', 'right']) {
+    const root = new THREE.Bone()
+    const knee = new THREE.Bone()
+    const foot = new THREE.Bone()
+    knee.position.y = -0.5
+    foot.position.y = -0.5
+    root.add(knee)
+    knee.add(foot)
+    editor.session.previewScene.add(root)
+    bones[`${side}UpperLeg`] = root
+    bones[`${side}LowerLeg`] = knee
+    bones[`${side}Foot`] = foot
+  }
+  editor.getBone = name => bones[name] || null
+  const before = JSON.stringify(editor.session.pose)
+  engineWorld.physics = { raycast: () => null }
+  assert.equal(editor.fitFeetToGeometry(), false)
+  assert.match(editor.session.error, /reachable support/)
+  assert.equal(JSON.stringify(editor.session.pose), before)
+  engineWorld.physics.raycast = origin => ({
+    point: origin.clone().add(new THREE.Vector3(0, -0.2, 0)),
+    normal: new THREE.Vector3(1, 0, 0),
+  })
+  assert.equal(editor.fitFeetToGeometry(), false)
+  assert.equal(JSON.stringify(editor.session.pose), before)
+  editor.close()
+})
+
 test('edits placement and normalized pose locally, then submits only on Apply', () => {
   const { editor, hips, networkMessages, player } = createFixture()
 
