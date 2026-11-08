@@ -196,3 +196,81 @@ a {
   text-decoration: none;
   color: inherit;
 }
+
+/* boot watchdog (index.html): why the world did not start */
+.boot-error {
+  position: fixed;
+  left: 50%;
+  z-index: 100000;
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgb(22 22 28 / 0.97);
+  color: white;
+  font-family: 'Rubik', sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+/* nothing was drawn: in the middle */
+.boot-error.blocking {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+/* the app runs but is slow: small, at the bottom, out of the way */
+.boot-error.notice {
+  bottom: 1rem;
+  transform: translateX(-50%);
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: 35vh;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  background: rgb(22 22 28 / 0.85);
+  /* only its buttons take the pointer: the world under it stays usable */
+  pointer-events: none;
+}
+.boot-error.notice button,
+.boot-error.notice .boot-error-detail {
+  pointer-events: auto;
+}
+.boot-error.notice .boot-error-title {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+.boot-error.notice .boot-error-actions {
+  margin-top: 0.5rem;
+}
+.boot-error-title {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.boot-error-hint {
+  color: rgba(255, 255, 255, 0.75);
+}
+.boot-error-detail {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fca5a5;
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.boot-error-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.boot-error-actions button {
+  padding: 0.4rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}

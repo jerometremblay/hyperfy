@@ -46,6 +46,8 @@ export function Client({ wsUrl, onSetup }) {
       }
       const config = { viewport, cssLayer, ui, wsUrl, baseEnvironment, storage: createClientScriptStorage(storage) }
       onSetup?.(world, config)
+      // the boot watchdog in index.html stops waiting once the local player is in
+      world.on('ready', () => globalThis.__worldBoot?.ready?.())
       world.init(config)
     }
     init()

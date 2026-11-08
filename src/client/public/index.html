@@ -30,6 +30,184 @@
     <script>
       window.PARTICLES_PATH = '{particlesPath}'
     </script>
+    <script>
+      // Boot watchdog: if the world does not start, say why instead of leaving a black screen. It runs before
+      // the app (and before SES lockdown); the app calls window.__worldBoot.ready() once the local player is
+      // in, which stops it and removes any message.
+      // - Nothing drawn yet (the app script failed or was blocked): a message in the middle, 8 s after a
+      //   startup error or at 60 s.
+      // - The app is running but slow: a notice at the bottom at 60 s, never in the way.
+      // - Errors from scripts of another origin ("Script error.", eg added by the browser) are not treated as a
+      //   startup failure on their own. Tests may shorten the waits with window.__worldBootTimings.
+      ;(function () {
+        var timing = window.__worldBootTimings || {}
+        var ERROR_WAIT = timing.error || 8000
+        var SLOW_WAIT = timing.slow || 60000
+        var ready = false
+        var dismissed = false
+        var firstError = null
+        var opaqueError = false
+        var box = null
+        var timers = []
+        // SES logs each intrinsic property it removes ("Removing intrinsics.%ArrayPrototype%.x") just before it
+        // deletes it. When lockdown fails on a property a browser script added, the last one names it (WebKit's
+        // own message only says "Unable to delete property.")
+        var lastRemoval = ''
+        try {
+          var warn = console.warn
+          console.warn = function () {
+            var first = arguments[0]
+            if (!ready && typeof first === 'string' && first.indexOf('Removing ') === 0) lastRemoval = first
+            return warn.apply(console, arguments)
+          }
+        } catch (err) {
+          // keep the original console
+        }
+        var later = function (run, ms) {
+          timers.push(setTimeout(run, ms))
+        }
+        var watch = null
+        var stop = function () {
+          for (var i = 0; i < timers.length; i++) clearTimeout(timers[i])
+          timers = []
+          if (watch) clearInterval(watch)
+          watch = null
+        }
+        var previousFocus = null
+        var remove = function () {
+          if (!box) return
+          // give focus back if it is still in the message
+          if (box.contains(document.activeElement)) {
+            try {
+              if (previousFocus && previousFocus.focus && previousFocus !== document.body) previousFocus.focus()
+              else document.activeElement.blur()
+            } catch (err) {
+              // nothing to restore
+            }
+          }
+          if (box.parentNode) box.parentNode.removeChild(box)
+          box = null
+        }
+        var started = function () {
+          var root = document.getElementById('root')
+          return !!(root && root.firstChild)
+        }
+        var text = function (value) {
+          if (!value) return ''
+          if (typeof value === 'string') return value
+          return String(value.message || value)
+        }
+        var show = function (kind, title, cause) {
+          if (ready || dismissed || box) return
+          box = document.createElement('div')
+          box.className = 'boot-error ' + kind
+          box.setAttribute('role', 'alert')
+          var heading = document.createElement('div')
+          heading.className = 'boot-error-title'
+          heading.textContent = title
+          box.appendChild(heading)
+          var hint = document.createElement('div')
+          hint.className = 'boot-error-hint'
+          hint.textContent =
+            'If you use a content blocker (for example Brave Shields), turn it off for this site and reload, or open the page in another browser.'
+          box.appendChild(hint)
+          if (cause) {
+            var pre = document.createElement('pre')
+            pre.className = 'boot-error-detail'
+            pre.textContent = cause.slice(0, 600)
+            box.appendChild(pre)
+          }
+          var row = document.createElement('div')
+          row.className = 'boot-error-actions'
+          var reload = document.createElement('button')
+          reload.type = 'button'
+          reload.textContent = 'Reload'
+          reload.onclick = function () {
+            location.reload()
+          }
+          var close = document.createElement('button')
+          close.type = 'button'
+          close.textContent = 'Close'
+          close.onclick = function () {
+            dismissed = true
+            stop()
+            remove()
+          }
+          row.appendChild(reload)
+          row.appendChild(close)
+          box.appendChild(row)
+          // keys stay in the message: the game's controls listen on window and would take Tab and Enter
+          var keep = function (event) {
+            event.stopPropagation()
+          }
+          box.addEventListener('keydown', keep)
+          box.addEventListener('keyup', keep)
+          document.body.appendChild(box)
+          // the world is not ready yet, so taking focus here does not take it from the game
+          previousFocus = document.activeElement
+          reload.focus()
+          // if the app starts drawing after all, move the message out of the way
+          if (kind === 'blocking' && !watch) {
+            watch = setInterval(function () {
+              if (!box || !started()) return
+              clearInterval(watch)
+              watch = null
+              remove()
+              show('notice', 'The world is taking long to start.', detail())
+            }, 1000)
+          }
+        }
+        // the last SES removal names the culprit only when the error came before lockdown finished (after it,
+        // the intrinsics are frozen and that removal had succeeded)
+        var culprit = ''
+        var lockedDown = function () {
+          try {
+            return Object.isFrozen(Object.prototype)
+          } catch (err) {
+            return false
+          }
+        }
+        var detail = function () {
+          if (firstError) return culprit ? firstError + '\n(' + culprit + ')' : firstError
+          return opaqueError
+            ? 'Script error. (from a script of another origin, for example one added by the browser)'
+            : ''
+        }
+        // 8 s after a startup error: only when nothing was drawn (a running app may still recover)
+        var afterError = function () {
+          if (!started()) show('blocking', 'This browser could not start the world.', detail())
+        }
+        var whenSlow = function () {
+          if (!started()) show('blocking', 'The world did not start.', detail())
+          else show('notice', 'The world is taking long to start.', detail())
+        }
+        window.addEventListener('error', function (event) {
+          if (ready || dismissed) return
+          if (!event.error && /^Script error\.?$/.test(event.message || '')) {
+            opaqueError = true
+            return
+          }
+          if (firstError) return
+          firstError = text(event.error) || event.message || 'Unknown error'
+          culprit = lockedDown() ? '' : lastRemoval
+          later(afterError, ERROR_WAIT)
+        })
+        window.addEventListener('unhandledrejection', function (event) {
+          if (ready || dismissed || firstError) return
+          firstError = text(event.reason) || 'Unhandled rejection'
+          culprit = lockedDown() ? '' : lastRemoval
+          later(afterError, ERROR_WAIT)
+        })
+        later(whenSlow, SLOW_WAIT)
+        window.__worldBoot = {
+          ready: function () {
+            ready = true
+            stop()
+            remove()
+          },
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="loading-preview" style="position: fixed; inset: 0; background: black; pointer-events: none">
