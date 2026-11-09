@@ -13,7 +13,7 @@ import { warn } from '../extras/warn'
 import { applyCreateOptions, splitCreateOptions } from '../extras/createOptions'
 import { internalEvents } from '../extras/internalEvents'
 import { resolveOpenURL } from '../extras/worldOpenPolicy'
-import { toScriptError } from '../extras/scriptValues'
+import { callForScript, toScriptError } from '../extras/scriptValues'
 import { createEventLedger } from '../extras/appEventQueue'
 
 const _rayOrigin = new THREE.Vector3()
@@ -465,6 +465,23 @@ export class Apps extends System {
       },
     }
     this.appMethods = {
+      attachGeometry(entity) {
+        const model = entity.polyspoon
+        if (!model?.attach || !model.setPartRotation) throw new Error('This app has no native geometry')
+        model.attach()
+        return Object.freeze({
+          setPartRotation(name, axis, value) {
+            return callForScript(() => {
+              if (entity.polyspoon !== model) throw new Error('This geometry is no longer attached')
+              return model.setPartRotation(name, axis, value)
+            }, entity, [])
+          },
+        })
+      },
+      setModelPartRotation(entity, name, axis, value) {
+        if (!entity.polyspoon?.setPartRotation) throw new Error('This app has no native model')
+        return entity.polyspoon.setPartRotation(name, axis, value)
+      },
       setTransform(entity, position, quaternion) {
         requireServer(world, entity, 'setTransform')
         const transform = copyAppTransform(position, quaternion)

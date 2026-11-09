@@ -57,7 +57,7 @@ export async function importPolyspoonRecipe(world, input, fetcher = fetch, param
 // Preserve the existing blueprint and transform; only its approved recipe changes.
 export async function refreshPolyspoonRecipe(world, app, fetcher = fetch) {
   const initial = world.blueprints.get(app.data.blueprint)
-  if (!initial || !/^polyspoon:\/\/[a-f0-9]{64}$/.test(initial.model || '') || !initial.url || initial.frozen) {
+  if (!initial || !/^(?:polyspoon|polyfork):\/\/[a-f0-9]{64}$/.test(initial.model || '') || !initial.url || initial.frozen) {
     throw new Error('This object has no refreshable recipe source')
   }
   const paramsJson = JSON.stringify(initial.props || {})
@@ -79,26 +79,36 @@ export async function refreshPolyspoonRecipe(world, app, fetcher = fetch) {
   return true
 }
 
-export async function importPolyforkModel(world, asset, fetcher = fetch, params = {}, { hd = false, cdnBase = '' } = {}) {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asset.id || '')) throw new Error('Invalid Polyfork model')
-  if (hd && !cdnBase) {
-    const config = await fetcher(`${world.network.apiUrl}/polyspoon/cdn`, {
-      headers: { Authorization: `Bearer ${world.network.authToken}` },
-    })
+async function polyforkCdn(world, fetcher, hd, cdnBase) {
+  if (!hd) return ''
+  if (!cdnBase) {
+    const config = await fetcher(`${world.network.apiUrl}/polyspoon/cdn`, { headers: { Authorization: `Bearer ${world.network.authToken}` } })
     const data = await config.json().catch(() => ({}))
     if (!config.ok) throw new Error(data.error || 'Could not read Polyfork configuration')
     cdnBase = data.url || ''
   }
-  if (hd && !/^https:\/\/polyfork\.dev\/c\/[a-f0-9]+\/$/.test(cdnBase)) throw new Error('Configure a Polyfork CDN URL to use HD models')
+  if (!/^https:\/\/polyfork\.dev\/c\/[a-f0-9]+\/$/.test(cdnBase)) throw new Error('Configure a Polyfork CDN URL to use HD models')
+  return cdnBase
+}
+
+export async function loadPolyforkSource(world, asset, fetcher = fetch, { hd = false, cdnBase = '' } = {}) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asset.id || '')) throw new Error('Invalid Polyfork model')
+  cdnBase = await polyforkCdn(world, fetcher, hd, cdnBase)
   const url = new URL(hd ? `${cdnBase}${asset.id}-hd.mjs` : `https://polyfork.dev/cdn/${asset.id}.mjs`)
-  const source = await downloadRecipe(url, fetcher)
-  const result = await fetcher(`${world.network.apiUrl}/polyspoon/recipes`, {
+  return downloadRecipe(url, fetcher)
+}
+
+export async function importPolyforkModel(world, asset, fetcher = fetch, params = {}, options = {}) {
+  const { hd = false } = options
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(asset.id || '')) throw new Error('Invalid Polyfork model')
+  const cdnBase = await polyforkCdn(world, fetcher, hd, options.cdnBase || '')
+  const result = await fetcher(`${world.network.apiUrl}/polyspoon/native-recipes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${world.network.authToken}` },
-    body: JSON.stringify({ source, format: 'polyfork', params }),
+    body: JSON.stringify({ id: asset.id, hd, cdnBase, params }),
   })
   const data = await result.json().catch(() => ({}))
   if (!result.ok) throw new Error(data.error || 'Could not add the Polyfork model')
-  if (!/^polyspoon:\/\/[a-f0-9]{64}$/.test(data.model || '')) throw new Error('Invalid response from the world')
-  return { name: String(asset.title || asset.id).slice(0, 100), url: `https://polyfork.dev/asset/${asset.id}${hd ? '?edition=hd' : ''}`, model: data.model, script: null, props: {}, image: null, preload: false, public: false, locked: false, unique: false, scene: false, disabled: false }
+  if (!/^polyfork:\/\/[a-f0-9]{64}$/.test(data.model || '')) throw new Error('Invalid response from the world')
+  return { name: String(asset.title || asset.id).slice(0, 100), url: `https://polyfork.dev/asset/${asset.id}${hd ? '?edition=hd' : ''}`, model: data.model, script: null, props: params, image: null, preload: false, public: false, locked: false, unique: false, scene: false, disabled: false }
 }

@@ -71,8 +71,9 @@ test('cleaner preserves approved recipe assets even before they are placed', asy
   const worldDir = await fs.mkdtemp(path.join(os.tmpdir(), 'recipe-cleaner-'))
   const oldClean = process.env.CLEAN
   const hash = 'a'.repeat(64)
+  const nativeHash = 'b'.repeat(64)
   process.env.CLEAN = 'true'
-  allAssets = [`${hash}.js`, 'orphan.jpg']
+  allAssets = [`${hash}.js`, `${nativeHash}.js`, 'orphan.jpg']
   deleted.length = 0
   const db = table => {
     if (table === 'blueprints' || table === 'entities') return Promise.resolve([])
@@ -82,6 +83,7 @@ test('cleaner preserves approved recipe assets even before they are placed', asy
   try {
     await fs.ensureDir(path.join(worldDir, 'polyspoon-recipes'))
     await fs.writeFile(path.join(worldDir, 'polyspoon-recipes', hash), '')
+    await fs.writeFile(path.join(worldDir, 'polyspoon-recipes', `native-${nativeHash}.mjs`), 'source')
     await cleaner.init({ db, worldDir })
     assert.deepEqual(deleted, ['orphan.jpg'])
   } finally {

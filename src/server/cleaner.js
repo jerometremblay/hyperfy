@@ -51,6 +51,8 @@ class Cleaner {
     }
     for (const hash of recipes) {
       if (/^[a-f0-9]{64}$/.test(hash)) assetsToKeep.add(`${hash}.js`)
+      const native = /^native-([a-f0-9]{64})\.mjs$/.exec(hash)
+      if (native) assetsToKeep.add(`${native[1]}.js`)
     }
     // Read before deleting anything. Corrupt/unreadable storage must abort cleaning.
     let storage

@@ -64,6 +64,27 @@ the standard edition. Uncheck **Prefer HD edition** to use standard models. A br
 used to fetch HD modules directly from Polyfork; the original model page is
 retained for refresh.
 
+New Polyfork imports use `polyfork://` models. The server downloads the module
+directly from Polyfork, stores the exact source and a content-addressed compiled
+module, and runs the module in an SES compartment with Three.js supplied by
+Hyperfy. The model's original Three.js groups and pivots remain intact in one
+geometry attachment. In the script editor, the **Polyfork .mjs** tab displays
+the saved source alongside the separate **App script** tab. Previously imported `polyspoon://` models
+continue to use their existing worker path; refresh a Polyfork object to import
+it again with the native path. Native modules run on the world thread, so unlike
+worker recipes they cannot be interrupted by a timeout. Only direct Polyfork
+CDN downloads are accepted for this path.
+
+Native models create a static collider for the complete model. An app can opt
+into script-controlled attachment with `props.__manualGeometry = true`, then
+call `const geometry = app.attachGeometry()` and
+`geometry.setPartRotation('door', 'y', angle)`. The module is selected by the
+blueprint and loaded by Hyperfy; app scripts do not use JavaScript imports.
+The rotation preserves the model's own pivot and rebuilds its static collider.
+Use this for discrete changes, not per-frame animation.
+Worldsync and `.hyp` export do not yet package native Polyfork modules; retain
+the registry and assets in whole-world backups.
+
 The recipe worker carries generated RGBA data textures and grouped physical
 materials into Hyperfy at their original dimensions. The worker accepts textures
 up to 2048 pixels per dimension and applies bounded total texture and geometry limits. Unsupported

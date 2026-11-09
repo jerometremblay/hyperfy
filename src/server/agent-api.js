@@ -8,6 +8,7 @@ const asset = { type: 'string', pattern: '^asset://[a-f0-9]{64}\\.[a-z0-9]+$' }
 const externalAsset = { type: 'string', pattern: '^[Hh][Tt][Tt][Pp][Ss]?://' }
 const sourceAsset = { anyOf: [asset, externalAsset] }
 const polyspoonModel = { type: 'string', pattern: '^polyspoon://[a-f0-9]{64}$' }
+const polyforkModel = { type: 'string', pattern: '^polyfork://[a-f0-9]{64}$' }
 const optionalString = { anyOf: [{ type: 'string' }, { type: 'null' }] }
 const descriptor = {
   anyOf: [
@@ -22,7 +23,7 @@ const descriptor = {
 const blueprintFields = {
   name: { type: 'string', maxLength: 256 },
   desc: { anyOf: [{ type: 'string', maxLength: 4096 }, { type: 'null' }] },
-  model: { anyOf: [sourceAsset, polyspoonModel, { const: 'script-only' }, { type: 'null' }] },
+  model: { anyOf: [sourceAsset, polyspoonModel, polyforkModel, { const: 'script-only' }, { type: 'null' }] },
   script: { anyOf: [sourceAsset, { type: 'null' }] },
   image: descriptor,
   author: optionalString,
@@ -98,6 +99,9 @@ export async function agentAPI(fastify, { world, assets, polyspoonRegistry, read
       item => item.isApp && item.data.blueprint === blueprintId && item.data.id !== excludedId
     )
   const checkAssets = async data => {
+    if (typeof data.model === 'string' && data.model.startsWith('polyfork://')) {
+      if (!(await polyspoonRegistry?.hasNative(data.model.slice('polyfork://'.length)))) fail(400, 'Polyfork model is not approved')
+    }
     if (typeof data.model === 'string' && data.model.startsWith('polyspoon://')) {
       const hash = data.model.slice('polyspoon://'.length)
       if (!(await polyspoonRegistry?.has(hash))) fail(400, 'Polyspoon recipe is not approved')

@@ -19,6 +19,8 @@ import { createScriptResponse, toHostFetchOptions } from '../extras/scriptFetch'
 import { createEventQueue } from '../extras/appEventQueue'
 import { briefError, createLogOnce } from '../extras/logOnce'
 import { createPolyspoonModel, runtimePolyspoonHash } from '../extras/polyspoon'
+import { runtimePolyforkHash, loadNativePolyfork } from '../extras/nativePolyfork'
+import { createNativePolyforkModel } from '../extras/nativePolyforkModel'
 
 // Exact shipped WorldPortal assets only: custom scripts keep their own behavior.
 function legacyPortalRoot(blueprint) {
@@ -125,7 +127,11 @@ export class App extends Entity {
       else if (blueprint.model && blueprint.model.trim() !== '' && blueprint.model !== 'script-only') {
         try {
           // check if it's a splat file
-          if (runtimePolyspoonHash(blueprint.model)) {
+          if (runtimePolyforkHash(blueprint.model)) {
+            const source = await this.world.loader.loadNativePolyfork(blueprint.model)
+            polyspoon = createNativePolyforkModel(loadNativePolyfork(source), blueprint.props)
+            root = polyspoon.root
+          } else if (runtimePolyspoonHash(blueprint.model)) {
             const source = await this.world.loader.loadPolyspoonRecipe(blueprint.model)
             const recipe = await this.world.loader.buildPolyspoonRecipe(source, blueprint.props)
             polyspoon = createPolyspoonModel(this.world, recipe, blueprint.props)
@@ -675,7 +681,7 @@ export class App extends Entity {
     if (!this.blueprint) return
     const legacyPortal = legacyPortalRoot(this.blueprint)
     if (legacyPortal) return legacyPortal
-    if (runtimePolyspoonHash(this.blueprint.model)) return this.root.clone(true)
+    if (runtimePolyspoonHash(this.blueprint.model) || runtimePolyforkHash(this.blueprint.model)) return this.root.clone(true)
     const type = this.blueprint.model.endsWith('vrm') ? 'avatar' : 'model'
     let glb = this.world.loader.get(type, this.blueprint.model)
     if (!glb) return

@@ -36,6 +36,36 @@ try {
 const { Apps, Entities, Blueprints, Scripts, ServerNetwork, Vector3, Quaternion, fruitStallFixture } = runtime
 const stripScript = 'asset://strip.js'
 
+test('native geometry handle attaches and rejects use after the model is replaced', t => {
+  const { world, parent } = fixture(t)
+  let attached = 0
+  const calls = []
+  const model = { attach: () => attached++, setPartRotation: (...args) => { calls.push(args); return true } }
+  parent.polyspoon = model
+  const geometry = world.apps.appMethods.attachGeometry(parent)
+  assert.equal(attached, 1)
+  assert.equal(geometry.setPartRotation('door', 'y', 1), true)
+  assert.deepEqual(calls, [['door', 'y', 1]])
+  parent.polyspoon = null
+  assert.throws(() => geometry.setPartRotation('door', 'y', 0), /no longer attached/)
+})
+
+test('native app script attaches manually configured geometry during app startup', async t => {
+  const { world } = fixture(t)
+  world.isPreview = true
+  world.stage.scene = { add() {}, remove() {} }
+  world.stage.insertRaycastObject = () => ({ destroy() {} })
+  const executable = new Scripts(world).evaluate('app.attachGeometry()')
+  world.loader.get = () => executable
+  world.loader.loadNativePolyfork = async () => 'var PolyforkModule = {createAsset: () => new globalThis.__polyforkThree.Group()}'
+  world.blueprints.add({ id: 'native-bp', version: 0, model: `polyfork://${'a'.repeat(64)}`, script: 'asset://native.js', props: { __manualGeometry: true } })
+  const app = world.entities.add({ id: 'native', type: 'app', blueprint: 'native-bp', position: [0, 0, 0], quaternion: [0, 0, 0, 1], scale: [1, 1, 1], state: {} })
+  await app.build()
+  assert.equal(app.scriptError, null)
+  assert.deepEqual(app.root.children.map(node => node.name), ['nativegeometry'])
+  app.destroy()
+})
+
 test('asset recipe builds and releases nodes through the app lifecycle', async t => {
   const { world } = fixture(t)
   world.isPreview = true

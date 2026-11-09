@@ -195,6 +195,17 @@ test('script-only source works without inventing a model', async t => {
   assert.equal(compiled.assets.some(asset => asset.source.endsWith('/chair.glb')), false)
 })
 
+test('an existing native Polyfork model remains a destination-owned reference', async t => {
+  const root = await makeProject(t)
+  const manifestPath = path.join(root, 'objects', 'furniture', 'chair', 'object.json')
+  const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
+  manifest.blueprint.model = `polyfork://${'a'.repeat(64)}`
+  await fs.writeFile(manifestPath, JSON.stringify(manifest))
+  const compiled = await compileSingleObject(root, 'furniture/chair')
+  assert.equal(compiled.blueprint.model, manifest.blueprint.model)
+  assert.ok(compiled.warnings.some(item => item.code === 'external-asset' && item.path === 'blueprint.model'))
+})
+
 test('rejects path traversal, missing references, invalid transforms, and unresolved LFS pointers', async t => {
   const root = await makeProject(t)
   const manifestPath = path.join(root, 'objects', 'furniture', 'chair', 'object.json')

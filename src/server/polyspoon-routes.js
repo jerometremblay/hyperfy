@@ -4,12 +4,15 @@ import { clientIpKey } from './uploadLimits.js'
 import { parseBearer } from './uploadPolicy.js'
 import { compilePolyspoonRecipe } from './compilePolyspoonRecipe.js'
 import { compilePolyforkRecipe } from './compilePolyforkRecipe.js'
+import { compileNativePolyfork } from './compileNativePolyfork.js'
+import { resolveNativePolyfork } from './resolveNativePolyfork.js'
 import { resolvePolyspoonAsset, applyPolyspoonCatalogPreset } from './polyspoonCatalog.js'
 
 export async function polyspoonRoutes(fastify, {
   polyspoonRegistry, assets, world, readJWT, getSocket, limits,
   clientIpHeader = '', slotTimeoutMs = 0, minFreeBytes = 0,
   compileRecipe = compilePolyspoonRecipe, resolveAsset = resolvePolyspoonAsset,
+  resolveNative = resolveNativePolyfork, compileNative = compileNativePolyfork,
 }) {
   fastify.get('/api/polyspoon/sandboxed-recipes/:hash', async (request, reply) => {
     const { hash } = request.params
@@ -23,6 +26,14 @@ export async function polyspoonRoutes(fastify, {
       .header('X-Content-Type-Options', 'nosniff')
       .type('text/plain; charset=utf-8')
       .send(bytes)
+  })
+
+  fastify.get('/api/polyspoon/native-recipes/:hash', async (request, reply) => {
+    const { hash } = request.params
+    if (!/^[a-f0-9]{64}$/.test(hash) || !(await polyspoonRegistry.hasNative(hash))) return reply.code(404).send()
+    const bytes = await assets.read(`${hash}.js`)
+    if (!bytes || createHash('sha256').update(bytes).digest('hex') !== hash) return reply.code(404).send()
+    return reply.header('Cache-Control', 'no-store').header('X-Content-Type-Options', 'nosniff').type('text/plain; charset=utf-8').send(bytes)
   })
 
   // The public download endpoint is also used in deployments without registration.
@@ -76,6 +87,50 @@ export async function polyspoonRoutes(fastify, {
     reply.raw.once('close', onClose)
     req.raw.once('aborted', onClose)
   }
+  fastify.get('/api/polyspoon/native-source/:hash', async (req, reply) => {
+    const token = parseBearer(req.headers.authorization)
+    const data = token && await readJWT(token)
+    const socket = data?.userId && getSocket(data.userId)
+    const code = status(socket)
+    if (code) return reply.code(code).send()
+    const source = await polyspoonRegistry.readNativeSource(req.params.hash)
+    if (source === null) return reply.code(404).send()
+    return reply.header('Cache-Control', 'no-store').type('text/plain; charset=utf-8').send(source)
+  })
+
+  fastify.post('/api/polyspoon/native-recipes', {
+    bodyLimit: 70000, config: { decompress: false }, onRequest: authenticate,
+    onResponse: (req, reply, done) => { req.recipeLease?.release(); done() },
+  }, async (req, reply) => {
+    const lease = req.recipeLease
+    lease.start()
+    try {
+      const { id, hd, cdnBase, params = {} } = req.body || {}
+      if (!params || typeof params !== 'object' || Array.isArray(params) || Buffer.byteLength(JSON.stringify(params)) > 65536) return reply.code(400).send({ error: 'Invalid or oversized model parameters' })
+      let source, compiled
+      try {
+        source = await resolveNative({ id, hd, cdnBase })
+        compiled = await compileNative(source)
+      } catch { return reply.code(400).send({ error: 'Could not obtain or compile the Polyfork model' }) }
+      const sourceHash = createHash('sha256').update(source).digest('hex')
+      const bytes = Buffer.from(`${compiled}\n// source-sha256:${sourceHash}\n`)
+      if (bytes.length > 512000) return reply.code(400).send({ error: 'Compiled Polyfork model is too large' })
+      if (minFreeBytes > 0 && typeof assets.freeSpace === 'function') {
+        const space = await assets.freeSpace().catch(() => null)
+        if (space && space.free - bytes.length - Buffer.byteLength(source) < Math.min(minFreeBytes, Math.floor(space.total * 0.2))) return reply.code(507).send({ error: 'The server is out of storage' })
+      }
+      const fit = lease.confirm(bytes.length + Buffer.byteLength(source))
+      if (!fit.ok) return reply.code(fit.status).send({ error: fit.error })
+      const code = status(req.recipeSocket)
+      if (code) return reply.code(code).send({ error: 'Your session or permissions changed' })
+      const hash = createHash('sha256').update(bytes).digest('hex')
+      const created = await assets.upload({ name: `${hash}.js`, buffer: bytes })
+      if (created !== false) lease.commit(bytes.length + Buffer.byteLength(source))
+      if (status(req.recipeSocket)) return reply.code(403).send({ error: 'Your session or permissions changed' })
+      await polyspoonRegistry.approveNative(hash, source)
+      return reply.code(201).send({ model: `polyfork://${hash}` })
+    } finally { lease.release() }
+  })
   fastify.post('/api/polyspoon/recipes', {
     bodyLimit: 3200000,
     config: { decompress: false },

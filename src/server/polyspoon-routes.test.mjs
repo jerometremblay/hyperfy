@@ -119,6 +119,8 @@ test('connected admins can register a sandboxed recipe; permissions and limits a
     limits: createUploadLimits(readUploadLimitsEnv({})),
     compileRecipe: async source => { if (revokeDuringCompile) admin = false; return `compiled:${source}` },
     resolveAsset: async () => { resolvedAssets++; return { source: 'catalog-source', name: 'Lamp', hint: 'lamp' } },
+    resolveNative: async ({id}) => { if (id !== 'door') throw Error('bad source'); return 'original Polyfork source' },
+    compileNative: async () => 'verified native bundle',
   })
   await server.ready()
   t.after(async () => { await server.close(); await rm(dir, { recursive: true, force: true }) })
@@ -133,14 +135,25 @@ test('connected admins can register a sandboxed recipe; permissions and limits a
   admin = true
   const post = (token, source = 'source') => server.inject({ method: 'POST', url: '/api/polyspoon/recipes', headers: { authorization: `Bearer ${token}` }, payload: { source } })
   assert.equal((await post('bad')).statusCode, 401)
+  const native = token => server.inject({ method: 'POST', url: '/api/polyspoon/native-recipes', headers: { authorization: `Bearer ${token}` }, payload: { id: 'door', hd: false } })
+  assert.equal((await native('bad')).statusCode, 401)
   const postAsset = token => server.inject({ method: 'POST', url: '/api/polyspoon/recipes', headers: { authorization: `Bearer ${token}` }, payload: { assetUrl: 'https://polyspoon.com/asset/example' } })
   assert.equal((await postAsset('bad')).statusCode, 401)
   assert.equal(resolvedAssets, 0)
   admin = false
   assert.equal((await post('valid')).statusCode, 403)
+  assert.equal((await native('valid')).statusCode, 403)
   assert.equal((await postAsset('valid')).statusCode, 403)
   assert.equal(resolvedAssets, 0)
   admin = true
+  const nativeResult = await native('valid')
+  assert.equal(nativeResult.statusCode, 201)
+  const nativeHash = nativeResult.json().model.slice('polyfork://'.length)
+  assert.equal(await registry.hasNative(nativeHash), true)
+  assert.match((await server.inject({ method: 'GET', url: `/api/polyspoon/native-recipes/${nativeHash}` })).body, /^verified native bundle/)
+  assert.equal((await server.inject({ method: 'GET', url: `/api/polyspoon/native-source/${nativeHash}` })).statusCode, 401)
+  assert.equal((await server.inject({ method: 'GET', url: `/api/polyspoon/native-source/${nativeHash}`, headers: { authorization: 'Bearer valid' } })).body, 'original Polyfork source')
+  files.clear()
   rejectSandbox = true
   assert.equal((await post('valid')).statusCode, 400)
   assert.equal(files.size, 0)

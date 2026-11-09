@@ -5,6 +5,7 @@ import { hashFile } from '../../core/utils-client'
 // editor will remember a single script so you can flip between tabs without hitting save (eg viewing docs)
 const cached = {
   key: null,
+  scriptUrl: null,
   viewState: null,
   value: null,
   model: null,
@@ -42,6 +43,7 @@ export function ScriptEditor({ app, onHandle }) {
   const saveState = () => {
     if (editor) {
       cached.key = key
+      cached.scriptUrl = app.blueprint?.script || null
       cached.viewState = editor.saveViewState()
       cached.model = editor.getModel()
       cached.value = editor.getValue()
@@ -77,7 +79,7 @@ export function ScriptEditor({ app, onHandle }) {
     load().then(monaco => {
       if (dead) return
       // only use cached if it matches this key
-      const state = cached.key === key ? cached : null
+      const state = cached.key === key && cached.scriptUrl === (app.blueprint?.script || null) ? cached : null
       const initialCode = state?.value ?? app.script?.code ?? '// …'
       const uri = monaco.Uri.parse(`inmemory://model/${key}`)
       let model = monaco.editor.getModel(uri)

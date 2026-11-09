@@ -69,7 +69,7 @@ import { useRank } from './useRank'
 import { Ranks } from '../../core/extras/ranks'
 import { PromptBoxPanel, UndoPromptBox } from './PromptBoxPanel'
 import { isPromptBox } from '../../core/extras/promptBoxTools'
-import { importPolyspoonRecipe, refreshPolyspoonRecipe } from '../../core/extras/polyspoonImport'
+import { importPolyspoonRecipe, refreshPolyspoonRecipe, loadPolyforkSource } from '../../core/extras/polyspoonImport'
 import { AudioOutputField } from './AudioOutputField'
 import { PolyforkCatalog } from './PolyforkCatalog'
 
@@ -267,7 +267,7 @@ export function Sidebar({ world, ui, xr = false }) {
         {ui.pane === 'apps' && <Apps world={world} hidden={!ui.active} />}
         {ui.pane === 'add' && <Add world={world} hidden={!ui.active} />}
         {ui.pane === 'app' && <App key={ui.app.data.id} world={world} hidden={!ui.active} />}
-        {ui.pane === 'script' && <Script key={ui.app.data.id} world={world} hidden={!ui.active} />}
+        {ui.pane === 'script' && <Script key={ui.app.data.id} world={world} hidden={!ui.active} isAdmin={isAdmin} />}
         {ui.pane === 'nodes' && <Nodes key={ui.app.data.id} world={world} hidden={!ui.active} />}
         {ui.pane === 'meta' && <Meta key={ui.app.data.id} world={world} hidden={!ui.active} />}
         {ui.pane === 'players' && <Players world={world} hidden={!ui.active} />}
@@ -1325,7 +1325,7 @@ function App({ world, hidden }) {
   let recipeSource = null
   try {
     const url = new URL(blueprint.url)
-    if (/^polyspoon:\/\/[a-f0-9]{64}$/.test(blueprint.model || '') && url.protocol === 'https:' && !url.username && !url.password) recipeSource = url.href
+    if (/^(?:polyspoon|polyfork):\/\/[a-f0-9]{64}$/.test(blueprint.model || '') && url.protocol === 'https:' && !url.username && !url.password) recipeSource = url.href
   } catch {}
   const refreshRecipe = async () => {
     if (refreshing) return
@@ -1923,13 +1923,30 @@ function AppField({ world, props, field, value, modify }) {
   return null
 }
 
-function Script({ world, hidden }) {
+function Script({ world, hidden, isAdmin }) {
   const app = world.ui.state.app
   const containerRef = useRef()
   const resizeRef = useRef()
   const resizeBottomRef = useRef()
   const resizeCornerRef = useRef()
   const [handle, setHandle] = useState(null)
+  const [sourceTab, setSourceTab] = useState('app')
+  const [modelSource, setModelSource] = useState('Loading Polyfork source…')
+  const sourceUrl = app.blueprint?.url || ''
+  const sourceModel = app.blueprint?.model || ''
+  const isPolyfork = isAdmin && /^(?:polyspoon|polyfork):\/\/[a-f0-9]{64}$/.test(sourceModel) && /^https:\/\/polyfork\.dev\/asset\/[a-z0-9-]+(?:\?edition=hd)?$/.test(sourceUrl)
+  useEffect(() => {
+    if (!isPolyfork || sourceTab !== 'model') return
+    let cancelled = false
+    setModelSource('Loading Polyfork source…')
+    const match = /^https:\/\/polyfork\.dev\/asset\/([a-z0-9-]+)(\?edition=hd)?$/.exec(sourceUrl)
+    const hash = /^polyfork:\/\/([a-f0-9]{64})$/.exec(sourceModel)?.[1]
+    const load = hash ? fetch(`${world.network.apiUrl}/polyspoon/native-source/${hash}`, { headers: { Authorization: `Bearer ${world.network.authToken}` } }).then(response => { if (!response.ok) throw new Error('Could not load saved Polyfork source'); return response.text() }) : loadPolyforkSource(world, { id: match[1] }, fetch, {
+      hd: !!match[2], cdnBase: globalThis.localStorage?.getItem('polyforkCdnBase') || '',
+    })
+    load.then(value => { if (!cancelled) setModelSource(value) }, error => { if (!cancelled) setModelSource(error.message) })
+    return () => { cancelled = true }
+  }, [isPolyfork, sourceTab, sourceUrl, sourceModel, world])
   useEffect(() => {
     const container = containerRef.current
     const minW = 250
@@ -2050,6 +2067,53 @@ function Script({ world, hidden }) {
             color: white;
           }
         }
+        .script-tabs {
+          display: flex;
+          gap: 0.25rem;
+          padding: 0 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .script-tab {
+          border: 0;
+          border-bottom: 2px solid transparent;
+          padding: 0.65rem 0.75rem;
+          background: transparent;
+          color: rgba(255, 255, 255, 0.6);
+          cursor: pointer;
+          &[aria-selected='true'] {
+            color: white;
+            border-bottom-color: #8c80ff;
+          }
+        }
+        .script-editor {
+          display: flex;
+          flex: 1;
+          min-height: 0;
+        }
+        .script-editor[hidden] { display: none; }
+        .model-source {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          min-height: 0;
+        }
+        .model-source-note {
+          padding: 0.5rem 1rem;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 0.75rem;
+        }
+        .model-source textarea {
+          flex: 1;
+          width: 100%;
+          min-height: 0;
+          resize: none;
+          border: 0;
+          padding: 0.75rem 1rem;
+          background: transparent;
+          color: #eee;
+          font: 12px monospace;
+          white-space: pre;
+        }
         .script-resizer {
           position: absolute;
           top: 0;
@@ -2083,11 +2147,21 @@ function Script({ world, hidden }) {
     >
       <div className='script-head'>
         <div className='script-title'>Script: {app.blueprint?.name}</div>
-        <div className='script-btn' onClick={() => handle?.save()}>
+        {(!isPolyfork || sourceTab === 'app') && <div className='script-btn' onClick={() => handle?.save()}>
           <SaveIcon size='1.125rem' />
-        </div>
+        </div>}
       </div>
-      <ScriptEditor key={app.data.id} app={app} onHandle={setHandle} />
+      {isPolyfork && <div className='script-tabs' role='tablist' aria-label='App source files'>
+        <button className='script-tab' type='button' role='tab' aria-selected={sourceTab === 'app'} onClick={() => setSourceTab('app')}>App script</button>
+        <button className='script-tab' type='button' role='tab' aria-selected={sourceTab === 'model'} onClick={() => setSourceTab('model')}>Polyfork .mjs</button>
+      </div>}
+      <div className='script-editor' hidden={isPolyfork && sourceTab === 'model'}>
+        <ScriptEditor key={app.data.id} app={app} onHandle={setHandle} />
+      </div>
+      {isPolyfork && sourceTab === 'model' && <div className='model-source' role='tabpanel'>
+        <span className='model-source-note'>{sourceModel.startsWith('polyfork:') ? 'Source saved with this model (read-only).' : 'Current source from Polyfork; it may differ from the imported version (read-only).'}</span>
+        <textarea readOnly value={modelSource} spellCheck={false} aria-label='Polyfork model source' />
+      </div>}
       <div className='script-resizer' ref={resizeRef} />
       <div className='script-resizer-bottom' ref={resizeBottomRef} />
       <div className='script-resizer-corner' ref={resizeCornerRef} />

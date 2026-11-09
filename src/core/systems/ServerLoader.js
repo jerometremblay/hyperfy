@@ -14,6 +14,7 @@ import { createEmoteFactory } from '../extras/createEmoteFactory'
 import { recipeFromSandbox, runtimePolyspoonHash } from '../extras/polyspoon'
 import { createHash } from 'node:crypto'
 import { Worker } from 'node:worker_threads'
+import { runtimePolyforkHash } from '../extras/nativePolyfork'
 
 /**
  * Server Loader System
@@ -69,6 +70,14 @@ export class ServerLoader extends System {
       promise.catch(() => this.polyspoonRecipes.delete(hash))
     }
     return this.polyspoonRecipes.get(hash)
+  }
+
+  async loadNativePolyfork(model) {
+    const hash = runtimePolyforkHash(model)
+    if (!hash || !(await this.polyspoonRegistry?.hasNative(hash))) throw new Error('Polyfork model is not approved')
+    const bytes = await this.assets.read(`${hash}.js`)
+    if (!bytes || createHash('sha256').update(bytes).digest('hex') !== hash) throw new Error('Polyfork model is missing or corrupt')
+    return bytes.toString('utf8')
   }
 
   async buildPolyspoonRecipe(source, props) {

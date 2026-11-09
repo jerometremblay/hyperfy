@@ -149,7 +149,10 @@ export async function createObjectAssetResolver(root, object) {
     await addExtraAssets(extraAssets)
     const compiled = structuredClone(blueprint)
     if (compiled.model && compiled.model !== 'script-only') {
-      compiled.model = await resolveUrl(
+      if (/^polyfork:\/\/[a-f0-9]{64}$/.test(compiled.model)) {
+        // Existing native recipes are destination-owned; worldsync does not package them.
+        warnings.push({ code: 'external-asset', path: 'blueprint.model' })
+      } else compiled.model = await resolveUrl(
         compiled.model,
         compiled.model.toLowerCase().endsWith('.vrm') ? 'avatar' : 'model',
         'blueprint.model'

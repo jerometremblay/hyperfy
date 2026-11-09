@@ -16,6 +16,7 @@ import Hls from 'hls.js/dist/hls.js'
 import { detectSplatFormat } from '../utils/splatFormats'
 import { getSparkModule } from '../utils/sparkCache'
 import { recipeFromSandbox, runtimePolyspoonHash } from '../extras/polyspoon'
+import { runtimePolyforkHash } from '../extras/nativePolyfork'
 // Streaming loader removed - using Spark.js native handling for all formats
 
 // THREE.Cache.enabled = true
@@ -59,6 +60,14 @@ export class ClientLoader extends System {
       promise.catch(() => this.polyspoonRecipes.delete(hash))
     }
     return this.polyspoonRecipes.get(hash)
+  }
+
+  async loadNativePolyfork(model) {
+    const hash = runtimePolyforkHash(model)
+    if (!hash) throw new Error('Invalid Polyfork model')
+    const response = await fetch(`${this.world.network.apiUrl}/polyspoon/native-recipes/${hash}`)
+    if (!response.ok) throw new Error(`Polyfork model request failed (${response.status})`)
+    return response.text()
   }
 
   async buildPolyspoonRecipe(source, props) {
