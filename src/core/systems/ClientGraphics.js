@@ -735,6 +735,10 @@ export class ClientGraphics extends System {
       }
       renderer.toneMappingExposure = destinationWorld.environment?.renderExposure ?? toneMappingExposure
       renderer.render(destinationWorld.stage.scene, view.camera)
+    } catch (error) {
+      if (destinationWorld === this.world) throw error
+      console.error('[portal preview] render failed', error)
+      uniforms.linked.value = false
     } finally {
       if (SparkRenderer) SparkRenderer.sparkOverride = previousSpark
       for (const [mesh, value] of visible) mesh.visible = value

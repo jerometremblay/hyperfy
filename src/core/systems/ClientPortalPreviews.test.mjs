@@ -80,6 +80,30 @@ test('portals share one replica and union of endpoint subscriptions, then releas
   manager.destroy()
 })
 
+test('a preview update failure does not escape into the host update', async t => {
+  t.mock.method(globalThis, 'fetch', async () => ({
+    ok: true,
+    json: async () => ({
+      preview: { version: 1, wsUrl: 'ws://remote.example/portal-preview', apiUrl: 'https://remote.example/api' },
+    }),
+  }))
+  const { world, manager, portal } = fixture()
+  world.graphics.portals.add(portal(''))
+  manager.update()
+  await new Promise(setImmediate)
+  const entry = manager.worlds.values().next().value
+  const remote = entry.remote
+  assert.equal(remote.network.apiUrl, 'https://remote.example/api')
+  remote.tick = () => {
+    throw new Error('broken preview')
+  }
+  assert.doesNotThrow(() => manager.update())
+  assert.equal(remote.disposed, true)
+  assert.equal(entry.remote, null)
+  assert.equal(entry.error, 'Remote preview update failed')
+  manager.destroy()
+})
+
 test('covered previews stop remote work while enabled backs and other endpoints keep the shared replica', async t => {
   let now = 0
   t.mock.method(performance, 'now', () => now)

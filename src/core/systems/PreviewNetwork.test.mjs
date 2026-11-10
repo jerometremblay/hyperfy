@@ -159,3 +159,46 @@ test('saved vanilla snapshot needs no socket and retains fixed daylight when set
   world.network.setSubscriptions([''])
   world.destroy()
 })
+
+test('failed preview models and scripts use the host crash block and leave other objects running', async () => {
+  const world = fixture()
+  let blocks = 0
+  world.crashBlockLoader = {
+    get: () => ({
+      toNodes: () => {
+        blocks++
+        return world.entities.get('healthy').root.clone(true)
+      },
+    }),
+  }
+  world.loader.loadNativePolyfork = async () => {
+    throw new Error('unsupported model')
+  }
+  world.loader.results.set('script/asset://bad.js', world.scripts.evaluate("throw Error('bad script')"))
+  const entity = (id, blueprint) => ({
+    id,
+    type: 'app',
+    blueprint,
+    position: [0, 0, 0],
+    quaternion: [0, 0, 0, 1],
+    scale: [1, 1, 1],
+    state: {},
+  })
+  world.network.apply(
+    snapshot(
+      [entity('healthy', 'ok'), entity('bad-model', 'model'), entity('bad-script', 'script')],
+      [
+        { id: 'ok', version: 1, model: 'script-only', props: {} },
+        { id: 'model', version: 1, model: `polyfork://${'a'.repeat(64)}`, props: {} },
+        { id: 'script', version: 1, model: 'script-only', script: 'asset://bad.js', props: {} },
+      ]
+    )
+  )
+  await new Promise(resolve => setImmediate(resolve))
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(blocks, 2)
+  assert.equal(world.entities.get('bad-model').building, false)
+  assert.equal(world.entities.get('bad-script').building, false)
+  assert.equal(world.entities.get('healthy').building, false)
+  world.destroy()
+})

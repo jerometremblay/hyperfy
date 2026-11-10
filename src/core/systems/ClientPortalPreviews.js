@@ -60,8 +60,17 @@ export class ClientPortalPreviews extends System {
           entry.remote.network.setSubscriptions(ids)
           entry.subscriptions = subscriptions
         }
-        entry.remote.tick(now)
-        if (entry.remote.network.frozen) this.cullSnapshot(entry.remote)
+        try {
+          entry.remote.tick(now)
+          if (entry.remote.network.frozen) this.cullSnapshot(entry.remote)
+        } catch (error) {
+          console.error('[portal preview] update failed', error)
+          entry.error = 'Remote preview update failed'
+          entry.remote.destroy()
+          entry.remote = null
+          scheduleRetry(entry, now)
+          continue
+        }
         for (const portal of portals) {
           const matrix = entry.remote.network.endpoints.get(portal.target)
           if (matrix && entry.remote.network.ready) {
@@ -117,6 +126,7 @@ export class ClientPortalPreviews extends System {
         snapshot = await response.json()
       }
       remote = createPreviewWorld(this.world, entry.key)
+      remote.network.apiUrl = status?.preview?.apiUrl
       // Root-relative environment resources belong to the destination host.
       const baseEnvironment = {
         model: null,
@@ -135,7 +145,6 @@ export class ClientPortalPreviews extends System {
         remote.destroy()
         return
       }
-      remote.network.apiUrl = status?.preview?.apiUrl
       entry.remote?.destroy()
       entry.remote = remote
       entry.refreshAt = snapshot

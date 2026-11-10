@@ -91,6 +91,19 @@ export class App extends Entity {
   }
 
   async build(crashed) {
+    if (!this.world.isPreview) return this.buildInternal(crashed)
+    const build = this.n + 1
+    try {
+      return await this.buildInternal(crashed)
+    } catch (err) {
+      console.error(`[portal preview] app build failed (entity ${this.data.id})`, err)
+      if (this.n !== build || this.destroyed) return
+      this.building = false
+      if (!crashed) this.crash()
+    }
+  }
+
+  async buildInternal(crashed) {
     this.building = true
     const n = ++this.n
     const failureVersion = this.physicsFailureVersion
@@ -117,7 +130,7 @@ export class App extends Entity {
       root.depth = 1
     }
     // otherwise we can load the model and script
-    else {
+    else if (!crashed) {
       // Older bundled portals delegate both status and travel to the native primitive.
       const legacyPortal = legacyPortalRoot(blueprint)
       if (legacyPortal) {
@@ -178,8 +191,9 @@ export class App extends Entity {
     if (crashed) {
       polyspoon?.dispose()
       polyspoon = null
-      let glb = this.world.loader.get('model', 'asset://crash-block.glb')
-      if (!glb) glb = await this.world.loader.load('model', 'asset://crash-block.glb')
+      const loader = this.world.crashBlockLoader || this.world.loader
+      let glb = loader.get('model', 'asset://crash-block.glb')
+      if (!glb) glb = await loader.load('model', 'asset://crash-block.glb')
       root = glb.toNodes()
     }
     // if a new build happened while we were fetching, stop here
@@ -681,7 +695,8 @@ export class App extends Entity {
     if (!this.blueprint) return
     const legacyPortal = legacyPortalRoot(this.blueprint)
     if (legacyPortal) return legacyPortal
-    if (runtimePolyspoonHash(this.blueprint.model) || runtimePolyforkHash(this.blueprint.model)) return this.root.clone(true)
+    if (runtimePolyspoonHash(this.blueprint.model) || runtimePolyforkHash(this.blueprint.model))
+      return this.root.clone(true)
     const type = this.blueprint.model.endsWith('vrm') ? 'avatar' : 'model'
     let glb = this.world.loader.get(type, this.blueprint.model)
     if (!glb) return

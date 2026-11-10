@@ -8,6 +8,7 @@ import { PreviewNetwork } from './systems/PreviewNetwork'
 export function createPreviewWorld(primary, destinationURL) {
   const world = new World({ preview: true })
   world.destinationURL = destinationURL
+  world.crashBlockLoader = primary.loader
   world.storage = new Map()
   world.xr = { session: null }
   world.livekit = { isMuted: () => true }
